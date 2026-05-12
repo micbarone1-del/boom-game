@@ -546,14 +546,20 @@ function GymBoard({ code }: { code: string }) {
               const trapPlayer = players.find((p) => p.id === trap.triggered_by);
               if (!trapPlayer) return null;
               return (
-                <div className="absolute top-3 right-3 z-10">
+                <div className="absolute top-3 right-3 z-20 ink-border-sm rounded-2xl bg-white px-2 py-1 flex flex-col items-center gap-1">
                   <PlayerToken
                     avatar={trapPlayer.avatar_url}
                     username={trapPlayer.username}
-                    size={64}
+                    size={56}
                     active
-                    showName
+                    showName={false}
                   />
+                  <span
+                    className="text-xs font-black truncate max-w-[88px]"
+                    style={{ color: "var(--boom-ink)" }}
+                  >
+                    {trapPlayer.username}
+                  </span>
                 </div>
               );
             })()}

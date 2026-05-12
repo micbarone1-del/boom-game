@@ -206,21 +206,21 @@ function GymBoard({ code }: { code: string }) {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
+          <button
+            onClick={startGame}
+            disabled={players.length === 0 || starting || !!trap}
+            className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            {room?.current_turn_player_id
+              ? starting
+                ? "BOOMING…"
+                : "RESTART"
+              : starting
+                ? "IGNITING…"
+                : "START GAME"}
+          </button>
           <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
-            <button
-              onClick={startGame}
-              disabled={players.length === 0 || starting || !!trap}
-              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}
-            >
-              {room?.current_turn_player_id
-                ? starting
-                  ? "BOOMING…"
-                  : "RESTART"
-                : starting
-                  ? "IGNITING…"
-                  : "START GAME"}
-            </button>
             <div>
               <div className="text-xs font-bold">JOIN CODE</div>
               <div

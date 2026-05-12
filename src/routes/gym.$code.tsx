@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Bomb, Zap, Flame, Trophy, Coffee, ArrowLeft, Dumbbell, Flag } from "lucide-react";
+import { Bomb, Zap, Flame, Trophy, Coffee, ArrowLeft, Dumbbell, Flag, Settings } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/gym/$code")({
@@ -53,6 +53,7 @@ function GymBoard({ code }: { code: string }) {
   const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
   const [showFinalRanking, setShowFinalRanking] = useState(false);
   const [restarting, setRestarting] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
 
   useEffect(() => {
     const finished = players.filter((p) => p.finished_at);
@@ -211,6 +212,13 @@ function GymBoard({ code }: { code: string }) {
               : starting
                 ? "IGNITING…"
                 : "START GAME"}
+          </button>
+          <button
+            onClick={() => setShowCustomize(true)}
+            className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
+            title="Customize exercises and reps"
+          >
+            <Settings size={16} /> CUSTOMIZE
           </button>
           <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
             <div>

@@ -181,6 +181,10 @@
     border-radius: var(--radius);
     text-transform: uppercase;
     transition: transform 0.08s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
   }
   .btn-boom:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 0 var(--boom-ink); }
   .btn-boom:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 0 var(--boom-ink); }

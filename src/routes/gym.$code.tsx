@@ -600,6 +600,9 @@ function GymBoard({ code }: { code: string }) {
           onClose={() => setShowCustomize(false)}
         />
       )}
+      {landed && (
+        <CellMascot key={landed.key} type={landed.type} username={landed.username} />
+      )}
     </div>
   );
 }

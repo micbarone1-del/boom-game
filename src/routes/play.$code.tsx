@@ -132,9 +132,9 @@ function PlayPage() {
       const exercise = cell.exercise ?? "Workout";
       await supabase.from("players").update({ current_space: target }).eq("id", me.id);
       // Wait for the hop animation to finish on every screen before starting the timer.
-      // 220ms per cell + realtime latency buffer + landing mascot pop.
+      // 220ms per cell + realtime latency buffer.
       const distance = Math.max(1, Math.abs(target - me.current_space));
-      const hopMs = distance * 220 + 1400;
+      const hopMs = distance * 220 + 600;
       await new Promise((r) => setTimeout(r, hopMs));
       await supabase
         .from("rooms")
@@ -145,7 +145,8 @@ function PlayPage() {
             exercise,
             reps,
             triggered_by: me.id,
-            started_at: Date.now(),
+            // Start 3s in the future so all clients show a 3-2-1 countdown first.
+            started_at: Date.now() + 3000,
             awaiting_verification: false,
           } satisfies Trap,
         })

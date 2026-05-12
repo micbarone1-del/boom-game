@@ -74,6 +74,11 @@ function GymBoard({ code }: { code: string }) {
         if (prev === undefined) setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
         continue;
       }
+      // Restart / teleport back to start: snap, don't hop all the way back.
+      if (p.current_space === 0 || Math.abs(p.current_space - prev) > 6) {
+        setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
+        continue;
+      }
       const from = prev;
       const to = p.current_space;
       const step = to > from ? 1 : -1;
@@ -341,7 +346,11 @@ function GymBoard({ code }: { code: string }) {
               <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
                 {row.map(({ space, col }) => {
                   const cell = getCell(space);
-                  const here = players.filter((p) => (hopSpaces[p.id] ?? p.current_space) === space);
+                  const here = players.filter((p) => {
+                    const s = hopSpaces[p.id] ?? p.current_space;
+                    // Players that haven't rolled yet (space 0) park on the START cell.
+                    return (s === 0 ? 1 : s) === space;
+                  });
                   const bg =
                     cell.type === "start" ? "var(--boom-green)" :
                     cell.type === "finish" ? "var(--boom-yellow)" :

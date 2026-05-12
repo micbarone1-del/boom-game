@@ -19,7 +19,7 @@ function PlayPage() {
 
   useEffect(() => {
     const s = loadPlayerSession();
-    if (s?.roomCode === code) setPlayerId(s.playerId);
+    if (s && s.roomCode === code) setPlayerId(s.playerId);
   }, [code]);
 
   const me = players.find((p) => p.id === playerId);

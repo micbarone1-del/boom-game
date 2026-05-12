@@ -288,10 +288,10 @@ function PlayPage() {
             <p className="mt-4 font-bold">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
           )}
         </div>
-      ) : (
+      ) : me.finished_at ? null : (
         <button
           onClick={onRoll}
-          disabled={!isMyTurn || rolling || room?.locked}
+          disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at}
           className="ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
         >

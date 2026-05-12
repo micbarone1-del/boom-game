@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, BOARD, getCell, finishPlayer, type Trap } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { Bomb, Zap, Flame, Trophy, Coffee, ArrowLeft, Dumbbell, Flag } from "lucide-react";
@@ -63,7 +63,7 @@ function GymBoard({ code }: { code: string }) {
       });
       const latest = newOnes[newOnes.length - 1];
       setWinnerOverlay(latest.username);
-      const t = setTimeout(() => setWinnerOverlay(null), 5000);
+      const t = setTimeout(() => setWinnerOverlay(null), 3200);
       return () => clearTimeout(t);
     }
   }, [players, seenFinishers]);
@@ -201,14 +201,14 @@ function GymBoard({ code }: { code: string }) {
       )}
 
       {/* Board */}
-      <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative overflow-hidden">
+      <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative">
         <img
           src={bombMascot}
           alt="Boom mascot"
           width={1024}
           height={1024}
           loading="lazy"
-          className="absolute -bottom-6 -right-6 w-40 md:w-56 opacity-90 pointer-events-none anim-fuse"
+          className="absolute -bottom-10 -right-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-20"
         />
         <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}>
           {Array.from({ length: BOARD_SIZE }, (_, i) => i + 1).map((space) => {
@@ -233,34 +233,45 @@ function GymBoard({ code }: { code: string }) {
             return (
               <div
                 key={space}
-                className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1"
+                className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center overflow-hidden"
                 style={{ background: bg }}
+                title={describeCell(cell)}
               >
                 <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
                   {space}
                 </span>
-                {cell.type === "easy" && <Dumbbell size={14} />}
-                {cell.type === "medium" && (
-                  <div className="flex items-center"><Dumbbell size={12} /><Dumbbell size={12} /></div>
+                {(cell.type === "easy" || cell.type === "medium" || cell.type === "hard") && (
+                  <>
+                    {cell.type === "easy" && <Dumbbell size={12} />}
+                    {cell.type === "medium" && <div className="flex"><Dumbbell size={11}/><Dumbbell size={11}/></div>}
+                    {cell.type === "hard" && <Bomb size={14} />}
+                    <span className="text-[8px] leading-tight font-black px-0.5 line-clamp-2" style={{ color: "var(--boom-ink)" }}>
+                      {cell.exercise}
+                    </span>
+                  </>
                 )}
-                {cell.type === "hard" && <Bomb size={16} />}
-                {cell.type === "rest" && <Coffee size={16} />}
+                {cell.type === "rest" && (
+                  <>
+                    <Coffee size={14} />
+                    <span className="text-[8px] font-black">REST</span>
+                  </>
+                )}
                 {cell.type === "boost" && (
                   <div className="flex flex-col items-center leading-none">
-                    <Zap size={14} fill="currentColor" />
-                    <span className="text-[9px] font-black">+{cell.delta}</span>
+                    <Zap size={12} fill="currentColor" />
+                    <span className="text-[9px] font-black">BLAST +{cell.delta}</span>
                   </div>
                 )}
                 {cell.type === "setback" && (
                   <div className="flex flex-col items-center leading-none text-white">
-                    <ArrowLeft size={14} />
-                    <span className="text-[9px] font-black">{cell.delta}</span>
+                    <ArrowLeft size={12} />
+                    <span className="text-[9px] font-black">BACK {cell.delta}</span>
                   </div>
                 )}
                 {cell.type === "start" && <Flag size={14} />}
                 {cell.type === "finish" && <Trophy size={16} />}
                 {here.length > 0 && (
-                  <div className="absolute inset-0 flex flex-wrap gap-0.5 items-center justify-center p-0.5">
+                  <div className="absolute inset-0 flex flex-wrap gap-0.5 items-center justify-center p-0.5 bg-black/10">
                     {here.slice(0, 4).map((p) => (
                       <PlayerToken
                         key={p.id}
@@ -346,9 +357,16 @@ function GymBoard({ code }: { code: string }) {
       {/* BOOM modal */}
       {trap && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
-          <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom">
+          <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom relative">
+            <img
+              src={bombMascot}
+              alt=""
+              width={1024}
+              height={1024}
+              className={`mx-auto w-40 h-40 -mt-24 ${trap.awaiting_verification ? "anim-mascot-pop" : "anim-shake"} drop-shadow-[0_0_30px_rgba(255,180,0,0.9)]`}
+            />
             <div
-              className="comic-shadow"
+              className="comic-shadow mt-2"
               style={{
                 fontFamily: "'Luckiest Guy', cursive",
                 fontSize: "clamp(5rem, 16vw, 10rem)",
@@ -358,7 +376,9 @@ function GymBoard({ code }: { code: string }) {
             >
               BOOM!
             </div>
-            <p className="text-2xl font-black mt-2">TRAP TRIGGERED!</p>
+            <p className="text-2xl font-black mt-2">
+              {players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!
+            </p>
             <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
               Do {trap.reps} {trap.exercise}!
             </p>
@@ -398,8 +418,16 @@ function GymBoard({ code }: { code: string }) {
 
       {/* Winner KA-BOOM overlay */}
       {winnerOverlay && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-6 pointer-events-none">
-          <div className="text-center anim-mega-boom">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none anim-flash-bg overflow-hidden">
+          <img
+            src={bombMascot}
+            alt=""
+            width={1024}
+            height={1024}
+            className="absolute anim-mascot-explode"
+            style={{ width: "70vmin", height: "70vmin" }}
+          />
+          <div className="text-center anim-mega-boom relative z-10">
             <div
               className="comic-shadow anim-spin-slow"
               style={{

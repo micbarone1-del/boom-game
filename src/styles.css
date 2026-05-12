@@ -253,44 +253,14 @@
   }
   .anim-flash-bg { animation: flash-bg 2.6s ease-out both; }
 
-  /* Per-cell mascot animations */
-  @keyframes wiggle {
-    0%,100% { transform: rotate(-12deg); }
-    50% { transform: rotate(12deg); }
+  /* Player landing pop — plays once when a token mounts at a new cell */
+  @keyframes land-pop {
+    0%   { transform: translateY(-22px) scale(0.4); opacity: 0; }
+    55%  { transform: translateY(2px)   scale(1.25); opacity: 1; }
+    75%  { transform: translateY(-3px)  scale(0.95); }
+    100% { transform: translateY(0)     scale(1); }
   }
-  .anim-wiggle { animation: wiggle 0.7s ease-in-out infinite; display: inline-block; }
-
-  @keyframes flex-pump {
-    0%,100% { transform: scale(1); }
-    50% { transform: scale(1.25); }
-  }
-  .anim-flex { animation: flex-pump 0.8s ease-in-out infinite; display: inline-block; }
-
-  @keyframes skull-shiver {
-    0%,100% { transform: translate(0,0) rotate(0); }
-    25% { transform: translate(-1px,1px) rotate(-6deg); }
-    75% { transform: translate(1px,-1px) rotate(6deg); }
-  }
-  .anim-skull { animation: skull-shiver 0.25s infinite; display: inline-block; }
-
-  @keyframes snore {
-    0%,100% { transform: scale(1) translateY(0); opacity: 1; }
-    50% { transform: scale(1.1) translateY(-2px); opacity: 0.8; }
-  }
-  .anim-snore { animation: snore 2.2s ease-in-out infinite; display: inline-block; }
-
-  @keyframes rocket-up {
-    0% { transform: translateY(2px) rotate(-30deg); }
-    50% { transform: translateY(-4px) rotate(-20deg) scale(1.15); }
-    100% { transform: translateY(2px) rotate(-30deg); }
-  }
-  .anim-rocket { animation: rocket-up 0.9s ease-in-out infinite; display: inline-block; }
-
-  @keyframes snail-crawl {
-    0%,100% { transform: translateX(-3px) rotate(-3deg); }
-    50% { transform: translateX(3px) rotate(3deg); }
-  }
-  .anim-snail { animation: snail-crawl 1.6s ease-in-out infinite; display: inline-block; }
+  .anim-land { animation: land-pop 0.55s cubic-bezier(.2,.9,.3,1.4) both; }
 
   /* Flame travelling across the trap modal */
   @keyframes flame-travel {

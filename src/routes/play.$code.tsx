@@ -188,7 +188,14 @@ function PlayPage() {
           >
             <Camera size={20} />
           </button>
-          <PlayerToken avatar={me.avatar_url} username={me.username} size={56} active={isMyTurn} />
+          <PlayerToken
+            key={`me-${me.current_space}`}
+            avatar={me.avatar_url}
+            username={me.username}
+            size={56}
+            active={isMyTurn}
+            className="anim-land"
+          />
         </div>
       </header>
 

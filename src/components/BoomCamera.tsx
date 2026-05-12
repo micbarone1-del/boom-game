@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Video, X, RefreshCw, Download, Square } from "lucide-react";
+import { Camera, Video, X, RefreshCw, Download, Square, ArrowLeft, Share2 } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 type Mode = "photo" | "video";
@@ -22,6 +22,7 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
   const [recording, setRecording] = useState(false);
   const [preview, setPreview] = useState<{ url: string; type: "image" | "video"; ext: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
   // Preload mascot into an Image so we can draw it onto canvas.
   useEffect(() => {
@@ -167,14 +168,36 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
     setRecording(false);
   };
 
-  const download = () => {
+  const download = async () => {
     if (!preview) return;
-    const a = document.createElement("a");
-    a.href = preview.url;
-    a.download = `boom-${Date.now()}.${preview.ext}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    setSaveMsg(null);
+    try {
+      const res = await fetch(preview.url);
+      const blob = await res.blob();
+      const filename = `boom-${Date.now()}.${preview.ext}`;
+      const file = new File([blob], filename, { type: blob.type });
+      // Prefer the Web Share API on mobile so iOS users get "Save to Photos".
+      const navAny = navigator as any;
+      if (navAny.canShare && navAny.canShare({ files: [file] })) {
+        try {
+          await navAny.share({ files: [file], title: "BOOM!", text: "BOOM!" });
+          setSaveMsg("Shared!");
+          return;
+        } catch (e: any) {
+          if (e?.name === "AbortError") return;
+        }
+      }
+      // Fallback: trigger a download
+      const a = document.createElement("a");
+      a.href = preview.url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setSaveMsg("Saved to your downloads.");
+    } catch (e: any) {
+      setSaveMsg(e?.message || "Couldn't save. Long-press the preview to save manually.");
+    }
   };
 
   const closeAll = () => {
@@ -184,6 +207,15 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[80] bg-black flex flex-col">
+      <div className="absolute top-3 left-3 z-10">
+        <button
+          onClick={closeAll}
+          className="ink-border-sm rounded-full bg-white px-3 h-10 flex items-center gap-1 font-black text-sm"
+          title="Back"
+        >
+          <ArrowLeft size={18} /> BACK
+        </button>
+      </div>
       <div className="absolute top-3 right-3 z-10 flex gap-2">
         <button
           onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
@@ -248,6 +280,14 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
       {/* Preview modal */}
       {preview && (
         <div className="absolute inset-0 z-20 bg-black/90 flex flex-col p-4 gap-3">
+          <div className="flex justify-start">
+            <button
+              onClick={() => { URL.revokeObjectURL(preview.url); setPreview(null); setSaveMsg(null); }}
+              className="ink-border-sm rounded-full bg-white px-3 h-10 flex items-center gap-1 font-black text-sm"
+            >
+              <ArrowLeft size={18} /> BACK
+            </button>
+          </div>
           <div className="flex-1 flex items-center justify-center overflow-hidden">
             {preview.type === "image" ? (
               <img src={preview.url} alt="Capture" className="max-h-full max-w-full ink-border rounded-2xl" />
@@ -257,7 +297,7 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
           </div>
           <div className="flex gap-2 justify-center flex-wrap">
             <button
-              onClick={() => { URL.revokeObjectURL(preview.url); setPreview(null); }}
+              onClick={() => { URL.revokeObjectURL(preview.url); setPreview(null); setSaveMsg(null); }}
               className="ink-border-sm rounded-xl px-4 py-2 bg-white font-black"
             >
               RETAKE
@@ -267,9 +307,14 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
               className="btn-boom flex items-center gap-2"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >
-              <Download size={18} /> SAVE
+              {typeof navigator !== "undefined" && (navigator as any).canShare
+                ? (<><Share2 size={18} /> SAVE / SHARE</>)
+                : (<><Download size={18} /> SAVE</>)}
             </button>
           </div>
+          {saveMsg && (
+            <div className="text-center text-white font-black text-sm">{saveMsg}</div>
+          )}
           <p className="text-xs text-white/80 text-center">
             On iPhone, long-press the preview and choose <b>Save to Photos</b>. Then share to Instagram, WhatsApp, anywhere!
           </p>

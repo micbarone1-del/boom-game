@@ -6,7 +6,7 @@ import { useRoom } from "@/hooks/use-room";
 import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Bomb, Flame, Trophy, Flag, Settings } from "lucide-react";
+import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/gym/$code")({
@@ -307,27 +307,31 @@ function GymBoard({ code }: { code: string }) {
                 <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
                   {space}
                 </span>
-                {(cell.type === "easy" || cell.type === "medium" || cell.type === "hard") && (
+                {(cell.type === "easy" || cell.type === "medium") && (
                   <>
-                    <span className="text-base leading-none">
-                      {cell.type === "easy" && <span className="anim-wiggle">🤸</span>}
-                      {cell.type === "medium" && <span className="anim-flex">🏋️</span>}
-                      {cell.type === "hard" && <span className="anim-skull">💀</span>}
-                    </span>
+                    <Dumbbell size={14} />
                     <span className="text-[8px] leading-tight font-black px-0.5 line-clamp-2" style={{ color: "var(--boom-ink)" }}>
+                      {cell.exercise}
+                    </span>
+                  </>
+                )}
+                {cell.type === "hard" && (
+                  <>
+                    <Flame size={14} className="text-white" />
+                    <span className="text-[8px] leading-tight font-black px-0.5 line-clamp-2 text-white">
                       {cell.exercise}
                     </span>
                   </>
                 )}
                 {cell.type === "rest" && (
                   <>
-                    <span className="text-base leading-none anim-snore">😴</span>
+                    <Coffee size={16} />
                     <span className="text-[8px] font-black">REST</span>
                   </>
                 )}
                 {cell.type === "boost" && (
                   <div className="flex flex-col items-center leading-none">
-                    <span className="text-base leading-none anim-rocket">🚀</span>
+                    <Zap size={14} />
                     <span className="text-[9px] font-black">
                       {cell.delta && cell.delta >= 10 ? `MEGA +${cell.delta}` : `BLAST +${cell.delta}`}
                     </span>
@@ -335,7 +339,7 @@ function GymBoard({ code }: { code: string }) {
                 )}
                 {cell.type === "setback" && (
                   <div className="flex flex-col items-center leading-none text-white">
-                    <span className="text-base leading-none anim-snail">🐌</span>
+                    <ArrowLeft size={14} />
                     <span className="text-[9px] font-black">
                       {cell.delta && cell.delta <= -50 ? "TO START" : `BACK ${cell.delta}`}
                     </span>
@@ -354,7 +358,7 @@ function GymBoard({ code }: { code: string }) {
                       const dy = Math.sin(angle) * r;
                       return (
                         <div
-                          key={p.id}
+                          key={`${p.id}-${p.current_space}`}
                           className="absolute"
                           style={{
                             right: 2,
@@ -369,6 +373,7 @@ function GymBoard({ code }: { code: string }) {
                             size={22}
                             active={room?.current_turn_player_id === p.id}
                             showName={false}
+                            className="anim-land"
                           />
                         </div>
                       );

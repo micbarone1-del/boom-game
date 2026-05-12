@@ -357,22 +357,6 @@ function PlayPage() {
             className="absolute anim-mascot-explode"
             style={{ width: "60vmin", height: "60vmin" }}
           />
-          <div className="relative text-center anim-mega-boom z-10">
-            <div
-              className="comic-shadow anim-spin-slow"
-              style={{
-                fontFamily: "'Luckiest Guy', cursive",
-                fontSize: "clamp(6rem, 22vw, 14rem)",
-                color: "var(--boom-yellow)",
-                lineHeight: 1,
-              }}
-            >
-              KA-BOOM!
-            </div>
-            <div className="text-3xl font-black mt-4 text-white comic-shadow">
-              {winnerOverlay} FINISHED THE GAME! 🏆
-            </div>
-          </div>
         </div>
       )}
 

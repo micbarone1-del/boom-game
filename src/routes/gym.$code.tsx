@@ -54,6 +54,7 @@ function GymBoard({ code }: { code: string }) {
   const [showFinalRanking, setShowFinalRanking] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
+  const [qrZoom, setQrZoom] = useState(false);
 
   useEffect(() => {
     const finished = players.filter((p) => p.finished_at);
@@ -229,13 +230,39 @@ function GymBoard({ code }: { code: string }) {
               >
                 {code}
               </div>
+              <button
+                onClick={() => navigator.clipboard?.writeText(joinUrl)}
+                className="text-[10px] font-bold underline mt-1 break-all text-left"
+                title="Copy join link"
+              >
+                Tap to copy link
+              </button>
             </div>
-            <div className="bg-white p-1">
-              <QRCodeSVG value={joinUrl} size={140} />
-            </div>
+            <button
+              onClick={() => setQrZoom(true)}
+              className="bg-white p-1"
+              title="Tap to enlarge QR"
+            >
+              <QRCodeSVG value={joinUrl} size={160} level="H" />
+            </button>
           </div>
         </div>
       </header>
+      {qrZoom && (
+        <div
+          onClick={() => setQrZoom(false)}
+          className="fixed inset-0 z-[70] bg-black/90 flex flex-col items-center justify-center p-6 gap-4 cursor-pointer"
+        >
+          <div className="bg-white p-4 ink-border rounded-2xl">
+            <QRCodeSVG value={joinUrl} size={Math.min(520, window.innerWidth - 80)} level="H" />
+          </div>
+          <div className="text-white font-black text-2xl" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            {code}
+          </div>
+          <div className="text-white text-xs break-all max-w-md text-center opacity-80">{joinUrl}</div>
+          <div className="text-white text-xs opacity-60">Tap anywhere to close</div>
+        </div>
+      )}
       {startError && (
         <div className="ink-border-sm rounded-xl bg-white p-2 text-sm font-black">{startError}</div>
       )}

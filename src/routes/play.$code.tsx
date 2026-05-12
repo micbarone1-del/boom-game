@@ -136,6 +136,14 @@ function PlayPage() {
     }
     const finalCell = getEffectiveCell(final, overrides);
 
+    // Two-stage movement: first hop to the dice target so the boost/setback
+    // cell is clearly visible, pause, then hop to the actual final cell.
+    if (final !== target) {
+      const firstDistance = Math.max(1, Math.abs(target - me.current_space));
+      await supabase.from("players").update({ current_space: target }).eq("id", me.id);
+      await new Promise((r) => setTimeout(r, firstDistance * 220 + 500));
+    }
+
     // Exercise destination -> lock with trap (after hop animation finishes).
     if (finalCell.type === "easy" || finalCell.type === "medium" || finalCell.type === "hard") {
       const tier = finalCell.tier ?? 1;

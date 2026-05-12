@@ -14,7 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      players: {
+        Row: {
+          avatar_url: string | null
+          current_space: number
+          fitness_level: number
+          id: string
+          joined_at: string
+          room_code: string
+          status: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          current_space?: number
+          fitness_level?: number
+          id?: string
+          joined_at?: string
+          room_code: string
+          status?: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          current_space?: number
+          fitness_level?: number
+          id?: string
+          joined_at?: string
+          room_code?: string
+          status?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_room_code_fkey"
+            columns: ["room_code"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          code: string
+          created_at: string
+          current_turn_player_id: string | null
+          difficulty_multiplier: number
+          host_id: string
+          last_dice: number | null
+          locked: boolean
+          status: string
+          trap: Json | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_turn_player_id?: string | null
+          difficulty_multiplier?: number
+          host_id?: string
+          last_dice?: number | null
+          locked?: boolean
+          status?: string
+          trap?: Json | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_turn_player_id?: string | null
+          difficulty_multiplier?: number
+          host_id?: string
+          last_dice?: number | null
+          locked?: boolean
+          status?: string
+          trap?: Json | null
+        }
+        Relationships: []
+      }
+      workout_logs: {
+        Row: {
+          created_at: string
+          exercise_name: string
+          id: string
+          player_id: string
+          room_code: string
+          target_reps: number
+          time_taken_ms: number | null
+          verified_by_judge: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          exercise_name: string
+          id?: string
+          player_id: string
+          room_code: string
+          target_reps: number
+          time_taken_ms?: number | null
+          verified_by_judge?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          exercise_name?: string
+          id?: string
+          player_id?: string
+          room_code?: string
+          target_reps?: number
+          time_taken_ms?: number | null
+          verified_by_judge?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

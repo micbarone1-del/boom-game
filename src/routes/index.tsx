@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Flame, Tv, Smartphone, Bomb } from "lucide-react";
+import { Tv, Smartphone } from "lucide-react";
+import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -10,10 +11,13 @@ function Index() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 gap-8">
       <div className="text-center">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <Bomb size={56} style={{ color: "var(--boom-ink)" }} />
-          <Flame size={56} fill="currentColor" className="anim-fuse" style={{ color: "var(--boom-orange)" }} />
-        </div>
+        <img
+          src={bombMascot}
+          alt="BOOM mascot — excited cartoon bomb with a lit fuse"
+          width={1024}
+          height={1024}
+          className="mx-auto w-40 md:w-56 anim-fuse"
+        />
         <h1
           className="comic-shadow"
           style={{

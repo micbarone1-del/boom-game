@@ -1,0 +1,208 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import { supabase } from "@/integrations/supabase/client";
+import { useRoom } from "@/hooks/use-room";
+import { generateRoomCode, BOARD_SIZE, TRAP_SPACES, BOOST_SPACES } from "@/lib/game";
+import { PlayerToken } from "@/components/PlayerToken";
+import { FuseTimer } from "@/components/FuseTimer";
+import { Bomb, Zap, Flame } from "lucide-react";
+
+export const Route = createFileRoute("/gym/$code")({
+  component: GymView,
+});
+
+function GymView() {
+  const { code: codeParam } = Route.useParams();
+  const navigate = useNavigate();
+  const [code, setCode] = useState<string | null>(codeParam === "new" ? null : codeParam);
+  const [creating, setCreating] = useState(codeParam === "new");
+
+  useEffect(() => {
+    if (codeParam !== "new") return;
+    const create = async () => {
+      const newCode = generateRoomCode();
+      const { error } = await supabase.from("rooms").insert({ code: newCode });
+      if (!error) {
+        setCode(newCode);
+        setCreating(false);
+        navigate({ to: "/gym/$code", params: { code: newCode }, replace: true });
+      }
+    };
+    create();
+  }, [codeParam, navigate]);
+
+  if (creating || !code) {
+    return <div className="min-h-screen flex items-center justify-center text-3xl">Igniting fuse…</div>;
+  }
+
+  return <GymBoard code={code} />;
+}
+
+function GymBoard({ code }: { code: string }) {
+  const { room, players } = useRoom(code);
+  const trap = room?.trap as any;
+  const joinUrl = typeof window !== "undefined" ? `${window.location.origin}/join?code=${code}` : "";
+
+  // Defuse / Blow Up handlers (judge buttons)
+  const defuse = async () => {
+    if (!room || !trap) return;
+    const triggerPlayer = players.find((p) => p.id === trap.triggered_by);
+    if (!triggerPlayer) return;
+    const dice = room.last_dice ?? 0;
+    const newSpace = Math.min(BOARD_SIZE, triggerPlayer.current_space + dice);
+    const finalSpace = BOOST_SPACES.has(newSpace) ? Math.min(BOARD_SIZE, newSpace + 5) : newSpace;
+    await supabase.from("players").update({ current_space: finalSpace }).eq("id", triggerPlayer.id);
+    // pass turn
+    const order = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+    const idx = order.findIndex((p) => p.id === triggerPlayer.id);
+    const next = order[(idx + 1) % order.length];
+    await supabase.from("workout_logs").insert({
+      room_code: code,
+      player_id: triggerPlayer.id,
+      exercise_name: trap.exercise,
+      target_reps: trap.reps,
+      time_taken_ms: Date.now() - trap.started_at,
+      verified_by_judge: true,
+    });
+    await supabase.from("rooms").update({
+      trap: null,
+      locked: false,
+      current_turn_player_id: next.id,
+      last_dice: null,
+    }).eq("code", code);
+  };
+
+  const blowUp = async () => {
+    if (!trap) return;
+    // Reset awaiting_verification — player must redo
+    await supabase.from("rooms").update({
+      trap: { ...trap, awaiting_verification: false },
+    }).eq("code", code);
+  };
+
+  return (
+    <div className="min-h-screen p-6 flex flex-col gap-4">
+      <header className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <Bomb size={40} />
+          <div>
+            <div style={{ fontFamily: "'Luckiest Guy', cursive" }} className="text-4xl text-[var(--boom-red)] comic-shadow">
+              BOOM!
+            </div>
+            <div className="text-sm font-bold">Gym Screen</div>
+          </div>
+        </div>
+        <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
+          <div>
+            <div className="text-xs font-bold">JOIN CODE</div>
+            <div className="text-3xl font-black tracking-wider" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+              {code}
+            </div>
+          </div>
+          <div className="bg-white p-1">
+            <QRCodeSVG value={joinUrl} size={88} />
+          </div>
+        </div>
+      </header>
+
+      {/* Board */}
+      <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative overflow-hidden">
+        <div
+          className="grid gap-1.5"
+          style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}
+        >
+          {Array.from({ length: BOARD_SIZE }, (_, i) => i + 1).map((space) => {
+            const isTrap = TRAP_SPACES.has(space);
+            const isBoost = BOOST_SPACES.has(space);
+            const here = players.filter((p) => p.current_space === space);
+            const bg = isTrap ? "var(--boom-red)" : isBoost ? "var(--boom-blue)" : space % 2 ? "var(--boom-yellow)" : "var(--boom-orange)";
+            return (
+              <div
+                key={space}
+                className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1"
+                style={{ background: bg }}
+              >
+                <span className="text-xs font-black" style={{ color: "var(--boom-ink)" }}>{space}</span>
+                {isTrap && <Bomb size={16} />}
+                {isBoost && <Zap size={16} fill="currentColor" />}
+                {here.length > 0 && (
+                  <div className="absolute inset-0 flex flex-wrap gap-0.5 items-center justify-center p-0.5">
+                    {here.slice(0, 4).map((p) => (
+                      <PlayerToken key={p.id} avatar={p.avatar_url} username={p.username} size={28}
+                        active={room?.current_turn_player_id === p.id} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Players strip */}
+      <div className="ink-border rounded-2xl p-3 bg-white flex gap-4 overflow-x-auto">
+        {players.length === 0 && (
+          <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
+        )}
+        {players.map((p) => {
+          const isTurn = room?.current_turn_player_id === p.id;
+          return (
+            <div key={p.id} className={`flex flex-col items-center gap-1 px-2 ${isTurn ? "anim-shake" : ""}`}>
+              <PlayerToken avatar={p.avatar_url} username={p.username} size={64} active={isTurn} />
+              <span className="text-xs">Lvl {p.fitness_level} · #{p.current_space}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* BOOM modal */}
+      {trap && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+          <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom">
+            <div
+              className="comic-shadow"
+              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(5rem, 16vw, 10rem)", color: "var(--boom-red)", lineHeight: 1 }}
+            >
+              BOOM!
+            </div>
+            <p className="text-2xl font-black mt-2">TRAP TRIGGERED!</p>
+            <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
+              Do {trap.reps} {trap.exercise}!
+            </p>
+            <div className="mt-4 flex justify-center">
+              <FuseTimer startedAt={trap.started_at} big />
+            </div>
+            {trap.awaiting_verification ? (
+              <div className="mt-6">
+                <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
+                  TEAM VERIFICATION REQUIRED!
+                </p>
+                <div className="flex gap-4 justify-center flex-wrap">
+                  <button
+                    onClick={defuse}
+                    className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
+                    style={{ background: "var(--boom-green)", color: "white" }}
+                  >
+                    DEFUSED
+                  </button>
+                  <button
+                    onClick={blowUp}
+                    className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
+                    style={{ background: "var(--boom-red)", color: "white" }}
+                  >
+                    BLOW IT UP
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-lg font-bold flex items-center justify-center gap-2">
+                <Flame className="anim-fuse" /> Get sweating!
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

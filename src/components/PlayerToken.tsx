@@ -1,11 +1,24 @@
 import { Flame } from "lucide-react";
 
+const PLAYER_COLORS = [
+  "#ef4444", "#3b82f6", "#22c55e", "#a855f7", "#f97316",
+  "#06b6d4", "#ec4899", "#eab308", "#14b8a6", "#8b5cf6",
+];
+
+export function playerColor(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return PLAYER_COLORS[h % PLAYER_COLORS.length];
+}
+
 export function PlayerToken({
   avatar,
   username,
   size = 56,
   active = false,
   showName = true,
+  showInitial = false,
+  ringColor,
   className = "",
 }: {
   avatar?: string | null;
@@ -13,8 +26,13 @@ export function PlayerToken({
   size?: number;
   active?: boolean;
   showName?: boolean;
+  showInitial?: boolean;
+  ringColor?: string;
   className?: string;
 }) {
+  const color = ringColor ?? playerColor(username);
+  const ring = Math.max(2, Math.round(size * 0.12));
+  const initial = username.slice(0, 1).toUpperCase();
   return (
     <div className={`flex flex-col items-center gap-1 ${className}`}>
       <div className="relative" style={{ width: size, height: size }}>
@@ -26,20 +44,41 @@ export function PlayerToken({
           <Flame size={Math.round(size * 0.45)} fill="currentColor" />
         </div>
         <div
-          className="rounded-full overflow-hidden ink-border-sm bg-white"
-          style={{ width: size, height: size, borderRadius: "9999px" }}
+          className="rounded-full overflow-hidden bg-white"
+          style={{
+            width: size,
+            height: size,
+            borderRadius: "9999px",
+            boxShadow: `0 0 0 ${ring}px ${color}, 0 0 0 ${ring + 2}px #111`,
+          }}
         >
           {avatar ? (
             <img src={avatar} alt={username} className="w-full h-full object-cover" />
           ) : (
             <div
-              className="w-full h-full flex items-center justify-center text-2xl font-black"
-              style={{ background: "var(--boom-yellow)", color: "var(--boom-ink)" }}
+              className="w-full h-full flex items-center justify-center font-black"
+              style={{ background: color, color: "white", fontSize: Math.round(size * 0.55) }}
             >
-              {username.slice(0, 1).toUpperCase()}
+              {initial}
             </div>
           )}
         </div>
+        {showInitial && avatar && (
+          <span
+            className="absolute -bottom-1 -right-1 rounded-full font-black flex items-center justify-center"
+            style={{
+              background: color,
+              color: "white",
+              width: Math.round(size * 0.55),
+              height: Math.round(size * 0.55),
+              fontSize: Math.round(size * 0.34),
+              boxShadow: "0 0 0 2px #111",
+              lineHeight: 1,
+            }}
+          >
+            {initial}
+          </span>
+        )}
       </div>
       {showName && (
         <span className="text-xs font-bold truncate max-w-[80px]" style={{ color: "var(--boom-ink)" }}>

@@ -10,6 +10,7 @@ export type Room = {
   trap: any;
   last_dice: number | null;
   status: string;
+  board_overrides: Record<string, { exercise?: string; reps?: number }> | null;
 };
 
 export type Player = {

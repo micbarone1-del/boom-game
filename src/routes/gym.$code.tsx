@@ -211,13 +211,6 @@ function GymBoard({ code }: { code: string }) {
 
   return (
     <div className="min-h-screen p-6 flex flex-col gap-4 relative">
-      <button
-        onClick={() => setShowCustomize(true)}
-        className="absolute top-2 right-2 z-30 ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
-        title="Customize exercises and reps"
-      >
-        <Settings size={16} /> CUSTOMIZE
-      </button>
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <Bomb size={40} />
@@ -230,6 +223,13 @@ function GymBoard({ code }: { code: string }) {
             </div>
             <div className="text-sm font-bold">Gym Screen</div>
           </div>
+          <button
+            onClick={() => setShowCustomize(true)}
+            className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
+            title="Customize exercises and reps"
+          >
+            <Settings size={16} /> CUSTOMIZE
+          </button>
         </div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
           <button

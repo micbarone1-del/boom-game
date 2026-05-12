@@ -150,8 +150,9 @@ function PlayPage() {
       const calc = calcRepsForTier(tier, me.fitness_level, room.difficulty_multiplier);
       const reps = getOverrideReps(final, overrides, calc) ?? calc;
       const exercise = finalCell.exercise ?? "Workout";
+      const hopFrom = final !== target ? target : me.current_space;
       await supabase.from("players").update({ current_space: final }).eq("id", me.id);
-      const distance = Math.max(1, Math.abs(final - me.current_space));
+      const distance = Math.max(1, Math.abs(final - hopFrom));
       const hopMs = distance * 220 + 600;
       await new Promise((r) => setTimeout(r, hopMs));
       await supabase

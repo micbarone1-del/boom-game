@@ -276,10 +276,14 @@ function PlayPage() {
               : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
           </p>
           <p className="text-3xl font-black">{trap.reps} {trap.exercise}</p>
-          <div className="flex justify-center">
+          <div className="flex justify-center py-2">
             <div
-              className="ink-border rounded-2xl px-6 py-3 bg-white"
-              style={{ color: "var(--boom-ink)" }}
+              className="ink-border rounded-2xl px-8 py-4 bg-white comic-shadow"
+              style={{
+                color: "var(--boom-ink)",
+                transform: "rotate(-3deg)",
+                boxShadow: "8px 8px 0 0 var(--boom-ink)",
+              }}
             >
               <FuseTimer startedAt={trap.started_at} big color="var(--boom-ink)" />
             </div>
@@ -413,7 +417,7 @@ function PlayPage() {
 
       {showCamera && <BoomCamera onClose={() => setShowCamera(false)} />}
       {myLanded && <CellMascot key={myLanded.key} type={myLanded.type} />}
-      {trap && <CountdownIntro startAt={trap.started_at} />}
+      {trap && <CountdownIntro startAt={trap.started_at} align="right" />}
     </main>
   );
 }

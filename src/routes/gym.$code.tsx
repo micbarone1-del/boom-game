@@ -548,7 +548,6 @@ function GymBoard({ code }: { code: string }) {
               return (
                 <div className="absolute top-3 right-3 z-10">
                   <PlayerToken
-                    avatar={trapPlayer.avatar}
                     username={trapPlayer.username}
                     size={64}
                     active

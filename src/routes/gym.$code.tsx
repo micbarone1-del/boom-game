@@ -309,9 +309,11 @@ function GymBoard({ code }: { code: string }) {
                 </span>
                 {(cell.type === "easy" || cell.type === "medium" || cell.type === "hard") && (
                   <>
-                    {cell.type === "easy" && <Dumbbell size={12} />}
-                    {cell.type === "medium" && <div className="flex"><Dumbbell size={11}/><Dumbbell size={11}/></div>}
-                    {cell.type === "hard" && <Bomb size={14} />}
+                    <span className="text-base leading-none">
+                      {cell.type === "easy" && <span className="anim-wiggle">🤸</span>}
+                      {cell.type === "medium" && <span className="anim-flex">🏋️</span>}
+                      {cell.type === "hard" && <span className="anim-skull">💀</span>}
+                    </span>
                     <span className="text-[8px] leading-tight font-black px-0.5 line-clamp-2" style={{ color: "var(--boom-ink)" }}>
                       {cell.exercise}
                     </span>
@@ -319,36 +321,63 @@ function GymBoard({ code }: { code: string }) {
                 )}
                 {cell.type === "rest" && (
                   <>
-                    <Coffee size={14} />
+                    <span className="text-base leading-none anim-snore">😴</span>
                     <span className="text-[8px] font-black">REST</span>
                   </>
                 )}
                 {cell.type === "boost" && (
                   <div className="flex flex-col items-center leading-none">
-                    <Zap size={12} fill="currentColor" />
-                    <span className="text-[9px] font-black">BLAST +{cell.delta}</span>
+                    <span className="text-base leading-none anim-rocket">🚀</span>
+                    <span className="text-[9px] font-black">
+                      {cell.delta && cell.delta >= 10 ? `MEGA +${cell.delta}` : `BLAST +${cell.delta}`}
+                    </span>
                   </div>
                 )}
                 {cell.type === "setback" && (
                   <div className="flex flex-col items-center leading-none text-white">
-                    <ArrowLeft size={12} />
-                    <span className="text-[9px] font-black">BACK {cell.delta}</span>
+                    <span className="text-base leading-none anim-snail">🐌</span>
+                    <span className="text-[9px] font-black">
+                      {cell.delta && cell.delta <= -50 ? "TO START" : `BACK ${cell.delta}`}
+                    </span>
                   </div>
                 )}
                 {cell.type === "start" && <Flag size={14} />}
                 {cell.type === "finish" && <Trophy size={16} />}
                 {here.length > 0 && (
-                  <div className="absolute inset-0 flex flex-wrap gap-0.5 items-center justify-center p-0.5 bg-black/10">
-                    {here.slice(0, 4).map((p) => (
-                      <PlayerToken
-                        key={p.id}
-                        avatar={p.avatar_url}
-                        username={p.username}
-                        size={28}
-                        active={room?.current_turn_player_id === p.id}
-                        showName={false}
-                      />
-                    ))}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {here.slice(0, 6).map((p, i) => {
+                      const n = Math.min(here.length, 6);
+                      // Spread tokens around bottom-right of the cell so the label stays readable.
+                      const angle = (Math.PI * (i + 0.5)) / Math.max(n, 1) - Math.PI / 2;
+                      const r = n === 1 ? 0 : 10;
+                      const dx = Math.cos(angle) * r;
+                      const dy = Math.sin(angle) * r;
+                      return (
+                        <div
+                          key={p.id}
+                          className="absolute"
+                          style={{
+                            right: 2,
+                            bottom: 2,
+                            transform: `translate(${dx}px, ${dy}px)`,
+                            zIndex: 10 + i,
+                          }}
+                        >
+                          <PlayerToken
+                            avatar={p.avatar_url}
+                            username={p.username}
+                            size={22}
+                            active={room?.current_turn_player_id === p.id}
+                            showName={false}
+                          />
+                        </div>
+                      );
+                    })}
+                    {here.length > 6 && (
+                      <span className="absolute top-0.5 right-0.5 text-[9px] font-black bg-white rounded-full px-1 ink-border-sm">
+                        +{here.length - 6}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, TRAP_SPACES, BOOST_SPACES, type Trap } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, TRAP_SPACES, BOOST_SPACES, finishPlayer, type Trap } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Bomb, Zap, Flame } from "lucide-react";
+import { Bomb, Zap, Flame, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -48,6 +48,24 @@ function GymBoard({ code }: { code: string }) {
     typeof window !== "undefined" ? `${window.location.origin}/join?code=${code}` : "";
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [winnerOverlay, setWinnerOverlay] = useState<string | null>(null);
+  const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const finished = players.filter((p) => p.finished_at);
+    const newOnes = finished.filter((p) => !seenFinishers.has(p.id));
+    if (newOnes.length > 0) {
+      setSeenFinishers((prev) => {
+        const n = new Set(prev);
+        newOnes.forEach((p) => n.add(p.id));
+        return n;
+      });
+      const latest = newOnes[newOnes.length - 1];
+      setWinnerOverlay(latest.username);
+      const t = setTimeout(() => setWinnerOverlay(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [players, seenFinishers]);
 
   const startGame = async () => {
     if (!room || players.length === 0 || starting) return;
@@ -88,10 +106,21 @@ function GymBoard({ code }: { code: string }) {
     const newSpace = Math.min(BOARD_SIZE, triggerPlayer.current_space + dice);
     const finalSpace = BOOST_SPACES.has(newSpace) ? Math.min(BOARD_SIZE, newSpace + 5) : newSpace;
     await supabase.from("players").update({ current_space: finalSpace }).eq("id", triggerPlayer.id);
-    // pass turn
+    // Victory check
+    if (finalSpace >= BOARD_SIZE) {
+      await finishPlayer(triggerPlayer.id, code);
+    }
+    // pass turn — skip finished players
     const order = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
     const idx = order.findIndex((p) => p.id === triggerPlayer.id);
-    const next = order[(idx + 1) % order.length];
+    let next = order[(idx + 1) % order.length];
+    for (let i = 1; i <= order.length; i++) {
+      const candidate = order[(idx + i) % order.length];
+      if (candidate.finished_at) continue;
+      if (finalSpace >= BOARD_SIZE && candidate.id === triggerPlayer.id) continue;
+      next = candidate;
+      break;
+    }
     await supabase.from("workout_logs").insert({
       room_code: code,
       player_id: triggerPlayer.id,
@@ -221,7 +250,7 @@ function GymBoard({ code }: { code: string }) {
         {players.length === 0 && (
           <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
         )}
-        {players.map((p) => {
+        {[...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p) => {
           const isTurn = room?.current_turn_player_id === p.id;
           return (
             <div
@@ -229,8 +258,9 @@ function GymBoard({ code }: { code: string }) {
               className={`flex flex-col items-center gap-1 px-2 ${isTurn ? "anim-shake" : ""}`}
             >
               <PlayerToken avatar={p.avatar_url} username={p.username} size={64} active={isTurn} />
-              <span className="text-xs">
-                Lvl {p.fitness_level} · #{p.current_space}
+              <span className="text-xs font-black flex items-center gap-1">
+                {p.finished_at && <Trophy size={12} />}
+                {p.finished_at ? `#${p.finish_rank}` : `Sp.${p.current_space}`} · {p.score ?? 0}pts
               </span>
             </div>
           );
@@ -286,6 +316,28 @@ function GymBoard({ code }: { code: string }) {
                 <Flame className="anim-fuse" /> Get sweating!
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Winner KA-BOOM overlay */}
+      {winnerOverlay && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-6 pointer-events-none">
+          <div className="text-center anim-mega-boom">
+            <div
+              className="comic-shadow anim-spin-slow"
+              style={{
+                fontFamily: "'Luckiest Guy', cursive",
+                fontSize: "clamp(8rem, 28vw, 22rem)",
+                color: "var(--boom-yellow)",
+                lineHeight: 1,
+              }}
+            >
+              KA-BOOM!
+            </div>
+            <div className="text-5xl font-black mt-6 text-white comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+              {winnerOverlay} BLEW UP THE FINISH LINE! 🏆💥
+            </div>
           </div>
         </div>
       )}

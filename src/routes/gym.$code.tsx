@@ -387,7 +387,7 @@ function GymBoard({ code }: { code: string }) {
                     >
                       {space === 1 && (
                         <span
-                          className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm md:text-base font-black tracking-widest whitespace-nowrap pointer-events-none"
+                          className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-black tracking-widest whitespace-nowrap pointer-events-none"
                           style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
                         >
                           START

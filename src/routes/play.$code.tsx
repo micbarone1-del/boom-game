@@ -350,7 +350,7 @@ function PlayPage() {
 
       {/* Winner mascot explosion overlay — non-blocking */}
       {winnerOverlay && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none anim-flash-bg overflow-hidden">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none overflow-hidden">
           <img
             src={bombMascot}
             alt=""

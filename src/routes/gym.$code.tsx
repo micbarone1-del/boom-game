@@ -374,8 +374,19 @@ function GymBoard({ code }: { code: string }) {
           return (
             <div
               key={p.id}
-              className={`flex flex-col items-center gap-1 px-2 ${isTurn ? "anim-shake" : ""}`}
+              className={`relative flex flex-col items-center gap-1 px-2 ${isTurn ? "anim-shake" : ""}`}
             >
+              <button
+                onClick={async () => {
+                  if (!confirm(`Remove ${p.username} from the game?`)) return;
+                  await supabase.from("players").delete().eq("id", p.id);
+                  if (room?.current_turn_player_id === p.id) {
+                    await supabase.from("rooms").update({ current_turn_player_id: null }).eq("code", code);
+                  }
+                }}
+                title="Remove player"
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white ink-border-sm text-xs font-black leading-none flex items-center justify-center hover:bg-[var(--boom-red)] hover:text-white"
+              >×</button>
               <PlayerToken avatar={p.avatar_url} username={p.username} size={64} active={isTurn} />
               <span className="text-xs font-black flex items-center gap-1">
                 {p.finished_at && <Trophy size={12} />}

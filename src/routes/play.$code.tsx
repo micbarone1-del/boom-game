@@ -127,9 +127,8 @@ function PlayPage() {
     // Exercise cell -> lock with trap, the gym screen will defuse after the player completes the reps.
     if (cell.type === "easy" || cell.type === "medium" || cell.type === "hard") {
       const tier = cell.tier ?? 1;
-      const reps =
-        getOverrideReps(target, overrides) ??
-        calcRepsForTier(tier, me.fitness_level, room.difficulty_multiplier);
+      const calc = calcRepsForTier(tier, me.fitness_level, room.difficulty_multiplier);
+      const reps = getOverrideReps(target, overrides, calc) ?? calc;
       const exercise = cell.exercise ?? "Workout";
       await supabase.from("players").update({ current_space: target }).eq("id", me.id);
       await supabase

@@ -28,6 +28,7 @@ function PlayPage() {
   const [rolling, setRolling] = useState(false);
   const [winnerOverlay, setWinnerOverlay] = useState<string | null>(null);
   const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
+  const [showFinalRanking, setShowFinalRanking] = useState(false);
 
   useEffect(() => {
     const s = loadPlayerSession();
@@ -46,10 +47,23 @@ function PlayPage() {
       });
       const latest = newOnes[newOnes.length - 1];
       setWinnerOverlay(latest.username);
-      const t = setTimeout(() => setWinnerOverlay(null), 3200);
+      const t = setTimeout(() => {
+        setWinnerOverlay(null);
+        setShowFinalRanking(true);
+      }, 2800);
       return () => clearTimeout(t);
     }
   }, [players, seenFinishers]);
+
+  // Auto-clear final ranking when host restarts (everyone back to space 0, no finishers)
+  useEffect(() => {
+    if (!showFinalRanking) return;
+    const stillFinished = players.some((p) => p.finished_at);
+    if (!stillFinished) {
+      setShowFinalRanking(false);
+      setSeenFinishers(new Set());
+    }
+  }, [players, showFinalRanking]);
 
   const me = players.find((p) => p.id === playerId);
   const trap = room?.trap as Trap | null;
@@ -292,6 +306,42 @@ function PlayPage() {
             <div className="text-3xl font-black mt-4 text-white comic-shadow">
               {winnerOverlay} FINISHED THE GAME! 🏆
             </div>
+          </div>
+        </div>
+      )}
+
+      {showFinalRanking && (
+        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 p-4">
+          <div className="ink-border rounded-3xl bg-white p-5 max-w-sm w-full text-center anim-boom">
+            <div className="text-3xl font-black comic-shadow mb-3" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+              FINAL RANKING
+            </div>
+            <div className="flex flex-col gap-1.5 text-left mb-4">
+              {[...players]
+                .sort((a, b) => {
+                  if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+                  if (a.finish_rank) return -1;
+                  if (b.finish_rank) return 1;
+                  return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
+                })
+                .map((p, i) => (
+                  <div key={p.id} className="flex items-center justify-between gap-2 p-2 rounded-lg ink-border-sm"
+                    style={{ background: i === 0 ? "var(--boom-yellow)" : "white" }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-black w-6 text-center">
+                        {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
+                      </span>
+                      <PlayerToken avatar={p.avatar_url} username={p.username} size={28} />
+                      <span className="font-black text-sm">{p.username}</span>
+                    </div>
+                    <span className="font-black text-sm" style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
+                  </div>
+                ))}
+            </div>
+            <button onClick={() => setShowFinalRanking(false)} className="ink-border-sm rounded-xl px-4 py-2 font-black text-sm">
+              CLOSE
+            </button>
+            <p className="text-xs opacity-70 mt-2">Waiting for the host to restart…</p>
           </div>
         </div>
       )}

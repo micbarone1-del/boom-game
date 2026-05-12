@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { savePlayerSession } from "@/lib/game";
 import { Bomb, LogIn, LogOut, UserCircle2 } from "lucide-react";
 
@@ -92,6 +93,14 @@ function JoinPage() {
     setSavedAvatar(null);
   };
 
+  const oauth = async (provider: "google" | "apple") => {
+    setAuthMsg(null);
+    const result = await lovable.auth.signInWithOAuth(provider, {
+      redirect_uri: window.location.origin + "/join" + (code ? `?code=${code}` : ""),
+    });
+    if (result.error) setAuthMsg((result.error as Error).message ?? "Sign-in failed");
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -170,6 +179,18 @@ function JoinPage() {
 
       {showAuth && !userId && (
         <form onSubmit={handleAuth} className="ink-border rounded-2xl bg-white p-4 w-full max-w-md mb-3 flex flex-col gap-2">
+          <div className="flex flex-col gap-2 mb-1">
+            <button type="button" onClick={() => oauth("google")}
+              className="ink-border-sm rounded-xl py-2 font-black text-sm bg-white flex items-center justify-center gap-2">
+              <span className="text-base">🔵</span> Continue with Google
+            </button>
+            <button type="button" onClick={() => oauth("apple")}
+              className="ink-border-sm rounded-xl py-2 font-black text-sm flex items-center justify-center gap-2"
+              style={{ background: "var(--boom-ink)", color: "white" }}>
+               Continue with Apple
+            </button>
+            <div className="text-center text-[10px] font-bold opacity-60">— or use email —</div>
+          </div>
           <div className="flex gap-2">
             <button type="button" onClick={() => setAuthMode("signin")}
               className={`flex-1 py-1 font-black text-sm rounded-md ${authMode==="signin"?"bg-[var(--boom-yellow)]":""}`}>

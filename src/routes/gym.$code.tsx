@@ -308,52 +308,21 @@ function GymBoard({ code }: { code: string }) {
                   {space}
                 </span>
                 {(cell.type === "easy" || cell.type === "medium") && (
-                  <>
-                    <Dumbbell size={14} />
-                    <span className="text-[8px] leading-tight font-black px-0.5 line-clamp-2" style={{ color: "var(--boom-ink)" }}>
-                      {cell.exercise}
-                    </span>
-                  </>
+                  <Dumbbell size={22} />
                 )}
-                {cell.type === "hard" && (
-                  <>
-                    <Flame size={14} className="text-white" />
-                    <span className="text-[8px] leading-tight font-black px-0.5 line-clamp-2 text-white">
-                      {cell.exercise}
-                    </span>
-                  </>
-                )}
-                {cell.type === "rest" && (
-                  <>
-                    <Coffee size={16} />
-                    <span className="text-[8px] font-black">REST</span>
-                  </>
-                )}
-                {cell.type === "boost" && (
-                  <div className="flex flex-col items-center leading-none">
-                    <Zap size={14} />
-                    <span className="text-[9px] font-black">
-                      {cell.delta && cell.delta >= 10 ? `MEGA +${cell.delta}` : `BLAST +${cell.delta}`}
-                    </span>
-                  </div>
-                )}
-                {cell.type === "setback" && (
-                  <div className="flex flex-col items-center leading-none text-white">
-                    <ArrowLeft size={14} />
-                    <span className="text-[9px] font-black">
-                      {cell.delta && cell.delta <= -50 ? "TO START" : `BACK ${cell.delta}`}
-                    </span>
-                  </div>
-                )}
-                {cell.type === "start" && <Flag size={14} />}
-                {cell.type === "finish" && <Trophy size={16} />}
+                {cell.type === "hard" && <Flame size={22} className="text-white" />}
+                {cell.type === "rest" && <Coffee size={22} />}
+                {cell.type === "boost" && <Zap size={22} />}
+                {cell.type === "setback" && <ArrowLeft size={22} className="text-white" />}
+                {cell.type === "start" && <Flag size={22} />}
+                {cell.type === "finish" && <Trophy size={22} />}
                 {here.length > 0 && (
                   <div className="absolute inset-0 pointer-events-none">
                     {here.slice(0, 6).map((p, i) => {
                       const n = Math.min(here.length, 6);
                       // Spread tokens around bottom-right of the cell so the label stays readable.
                       const angle = (Math.PI * (i + 0.5)) / Math.max(n, 1) - Math.PI / 2;
-                      const r = n === 1 ? 0 : 10;
+                      const r = n === 1 ? 0 : 12;
                       const dx = Math.cos(angle) * r;
                       const dy = Math.sin(angle) * r;
                       return (
@@ -370,9 +339,10 @@ function GymBoard({ code }: { code: string }) {
                           <PlayerToken
                             avatar={p.avatar_url}
                             username={p.username}
-                            size={22}
+                            size={30}
                             active={room?.current_turn_player_id === p.id}
                             showName={false}
+                            showInitial
                             className="anim-land"
                           />
                         </div>

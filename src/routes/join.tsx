@@ -141,12 +141,32 @@ function JoinPage() {
         }
       }
 
-      const { data: inserted, error: insErr } = await supabase.from("players").insert({
-        room_code: code, username, fitness_level: fitness, avatar_url, user_id: userId,
-      }).select().single();
-      if (insErr || !inserted) throw insErr || new Error("insert failed");
+      // If signed in, reuse an existing player row in this room instead of duplicating.
+      let playerRowId: string | null = null;
+      if (userId) {
+        const { data: existing } = await supabase
+          .from("players")
+          .select("id")
+          .eq("room_code", code)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (existing) {
+          await supabase
+            .from("players")
+            .update({ username, fitness_level: fitness, avatar_url, status: "active" })
+            .eq("id", existing.id);
+          playerRowId = existing.id;
+        }
+      }
+      if (!playerRowId) {
+        const { data: inserted, error: insErr } = await supabase.from("players").insert({
+          room_code: code, username, fitness_level: fitness, avatar_url, user_id: userId,
+        }).select().single();
+        if (insErr || !inserted) throw insErr || new Error("insert failed");
+        playerRowId = inserted.id;
+      }
 
-      savePlayerSession(code, inserted.id);
+      savePlayerSession(code, playerRowId);
 
       // Persist latest profile choices for signed-in players
       if (userId) {

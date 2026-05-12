@@ -55,7 +55,7 @@ const RAW_BOARD: Array<[CellType, number?]> = [
   ["hard"],          // 19
   ["rest"],          // 20
   ["medium"],        // 21
-  ["boost", 5],      // 22
+  ["boost", 10],     // 22  ← MEGA BLAST!
   ["easy"],          // 23
   ["medium"],        // 24
   ["hard"],          // 25
@@ -67,7 +67,7 @@ const RAW_BOARD: Array<[CellType, number?]> = [
   ["hard"],          // 31
   ["easy"],          // 32
   ["medium"],        // 33
-  ["setback", -4],   // 34
+  ["setback", -999], // 34  ← BACK TO START
   ["easy"],          // 35
   ["medium"],        // 36
   ["rest"],          // 37
@@ -154,9 +154,13 @@ export function describeCell(cell: Cell): string {
     case "rest":
       return "☕ Rest — skip your turn";
     case "boost":
-      return `⚡ Blast forward +${cell.delta}`;
+      return cell.delta && cell.delta >= 10
+        ? `🚀 MEGA BLAST +${cell.delta}!`
+        : `⚡ Blast forward +${cell.delta}`;
     case "setback":
-      return `⬅ Setback ${cell.delta}`;
+      return cell.delta && cell.delta <= -50
+        ? `🐌 BACK TO START!`
+        : `⬅ Setback ${cell.delta}`;
     case "easy":
       return `Easy: ${cell.exercise}`;
     case "medium":

@@ -26,6 +26,7 @@ export type Database = {
           room_code: string
           score: number
           status: string
+          user_id: string | null
           username: string
         }
         Insert: {
@@ -39,6 +40,7 @@ export type Database = {
           room_code: string
           score?: number
           status?: string
+          user_id?: string | null
           username: string
         }
         Update: {
@@ -52,6 +54,7 @@ export type Database = {
           room_code?: string
           score?: number
           status?: string
+          user_id?: string | null
           username?: string
         }
         Relationships: [
@@ -63,6 +66,39 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          fitness_level: number
+          games_finished: number
+          lifetime_score: number
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          fitness_level?: number
+          games_finished?: number
+          lifetime_score?: number
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          fitness_level?: number
+          games_finished?: number
+          lifetime_score?: number
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
       }
       rooms: {
         Row: {

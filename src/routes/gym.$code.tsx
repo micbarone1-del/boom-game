@@ -542,6 +542,117 @@ function GymBoard({ code }: { code: string }) {
           </div>
         </div>
       )}
+
+      {showCustomize && room && (
+        <CustomizeBoardModal
+          code={code}
+          overrides={(room.board_overrides ?? {}) as BoardOverrides}
+          onClose={() => setShowCustomize(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function CustomizeBoardModal({
+  code,
+  overrides,
+  onClose,
+}: {
+  code: string;
+  overrides: BoardOverrides;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState<BoardOverrides>(() => ({ ...overrides }));
+  const [saving, setSaving] = useState(false);
+  const exerciseCells = BOARD.filter(
+    (c) => c.type === "easy" || c.type === "medium" || c.type === "hard",
+  );
+
+  const update = (space: number, patch: { exercise?: string; reps?: number }) => {
+    setDraft((prev) => {
+      const cur = prev[String(space)] ?? {};
+      return { ...prev, [String(space)]: { ...cur, ...patch } };
+    });
+  };
+
+  const save = async () => {
+    setSaving(true);
+    // strip empty entries
+    const clean: BoardOverrides = {};
+    for (const [k, v] of Object.entries(draft)) {
+      const exercise = v.exercise?.trim();
+      const reps = v.reps && v.reps > 0 ? Math.round(v.reps) : undefined;
+      if (exercise || reps) clean[k] = { ...(exercise ? { exercise } : {}), ...(reps ? { reps } : {}) };
+    }
+    await supabase.from("rooms").update({ board_overrides: clean }).eq("code", code);
+    setSaving(false);
+    onClose();
+  };
+
+  const resetAll = () => setDraft({});
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+      <div className="ink-border rounded-3xl bg-white p-5 max-w-3xl w-full max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-2xl font-black comic-shadow flex items-center gap-2"
+            style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+            <Settings size={24} /> CUSTOMIZE BOARD
+          </div>
+          <button onClick={onClose} className="ink-border-sm rounded-lg w-8 h-8 font-black">×</button>
+        </div>
+        <p className="text-xs font-bold mb-3 opacity-70">
+          Override the exercise name or reps for any cell. Leave blank to use the defaults.
+        </p>
+        <div className="flex-1 overflow-y-auto pr-1">
+          <div className="grid gap-2">
+            {exerciseCells.map((c) => {
+              const o = draft[String(c.space)] ?? {};
+              const tierBg =
+                c.type === "easy" ? "var(--boom-yellow)" :
+                c.type === "medium" ? "var(--boom-orange)" : "var(--boom-red)";
+              return (
+                <div key={c.space} className="ink-border-sm rounded-xl p-2 flex items-center gap-2 flex-wrap">
+                  <span className="rounded-lg px-2 py-1 text-xs font-black ink-border-sm"
+                    style={{ background: tierBg, color: c.type === "hard" ? "white" : "black" }}>
+                    Sp.{c.space} · {c.type.toUpperCase()}
+                  </span>
+                  <input
+                    type="text"
+                    placeholder={c.exercise}
+                    value={o.exercise ?? ""}
+                    onChange={(e) => update(c.space, { exercise: e.target.value })}
+                    className="flex-1 min-w-[140px] ink-border-sm rounded-lg px-2 py-1 text-sm font-bold"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="auto reps"
+                    value={o.reps ?? ""}
+                    onChange={(e) => update(c.space, { reps: e.target.value ? Number(e.target.value) : undefined })}
+                    className="w-24 ink-border-sm rounded-lg px-2 py-1 text-sm font-bold"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex justify-between gap-2 mt-3">
+          <button onClick={resetAll} className="ink-border-sm rounded-xl px-3 py-2 font-black text-sm">
+            RESET ALL
+          </button>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="ink-border-sm rounded-xl px-3 py-2 font-black text-sm">
+              CANCEL
+            </button>
+            <button onClick={save} disabled={saving} className="btn-boom disabled:opacity-50"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+              {saving ? "SAVING…" : "SAVE"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

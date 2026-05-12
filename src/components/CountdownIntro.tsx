@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
  * the countdown is finished. Uses the same anchor on every client so phones
  * and the gym screen stay in sync.
  */
-export function CountdownIntro({ startAt, color = "white" }: { startAt: number; color?: string }) {
+export function CountdownIntro({ startAt, color = "var(--boom-red)" }: { startAt: number; color?: string }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 100);

@@ -339,7 +339,7 @@ function GymBoard({ code }: { code: string }) {
                     <div
                       key={space}
                       className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center"
-                      style={{ background: bg, gridColumn: col }}
+                      style={{ background: bg, gridColumn: col, gridRow: 1 }}
                       title={describeCell(cell)}
                     >
                       <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>

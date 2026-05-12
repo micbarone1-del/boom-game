@@ -271,7 +271,7 @@ function PlayPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-black w-5" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{i + 1}</span>
                     <PlayerToken avatar={p.avatar_url} username={p.username} size={28}
-                      active={room?.current_turn_player_id === p.id} />
+                      active={room?.current_turn_player_id === p.id} showName={false} />
                     <span className="text-sm font-black truncate max-w-[100px]">{p.username}{isMe ? " (you)" : ""}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs font-black">
@@ -349,7 +349,7 @@ function PlayPage() {
                       <span className="text-lg font-black w-6 text-center">
                         {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
                       </span>
-                      <PlayerToken avatar={p.avatar_url} username={p.username} size={28} />
+                      <PlayerToken avatar={p.avatar_url} username={p.username} size={28} showName={false} />
                       <span className="font-black text-sm">{p.username}</span>
                     </div>
                     <span className="font-black text-sm" style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>

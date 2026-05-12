@@ -102,6 +102,7 @@ export type Database = {
       }
       rooms: {
         Row: {
+          board_overrides: Json
           code: string
           created_at: string
           current_turn_player_id: string | null
@@ -113,6 +114,7 @@ export type Database = {
           trap: Json | null
         }
         Insert: {
+          board_overrides?: Json
           code: string
           created_at?: string
           current_turn_player_id?: string | null
@@ -124,6 +126,7 @@ export type Database = {
           trap?: Json | null
         }
         Update: {
+          board_overrides?: Json
           code?: string
           created_at?: string
           current_turn_player_id?: string | null

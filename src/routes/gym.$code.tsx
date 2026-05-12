@@ -80,7 +80,8 @@ function GymBoard({ code }: { code: string }) {
         continue;
       }
       // Restart / teleport back to start: snap, don't hop all the way back.
-      if (p.current_space === 0 || Math.abs(p.current_space - prev) > 6) {
+      // Boosts up to +10 should still animate, so we only snap on big setbacks.
+      if (p.current_space === 0 || Math.abs(p.current_space - prev) > 15) {
         setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
         continue;
       }

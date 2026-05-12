@@ -14,7 +14,7 @@ import {
 } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Bomb, Dice5, Trophy, Coffee, ArrowLeft, Zap } from "lucide-react";
+import { Bomb, Dice5, Trophy } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/play/$code")({

@@ -94,12 +94,18 @@ function PlayPage() {
       if (final >= BOARD_SIZE) {
         await finishPlayer(me.id, code);
       }
-      // Pass turn
+      // Pass turn — skip players who already finished (and the one who just finished)
       const order = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
       const idx = order.findIndex((p) => p.id === me.id);
-      // Skip players who already finished
-      const remaining = order.filter((p) => !p.finished_at && p.id !== me.id);
-      const next = remaining.length > 0 ? remaining[(remaining.findIndex((p) => order.indexOf(p) > idx) + remaining.length) % remaining.length] || remaining[0] : order[(idx + 1) % order.length];
+      const justFinished = final >= BOARD_SIZE;
+      let next = order[(idx + 1) % order.length];
+      for (let i = 1; i <= order.length; i++) {
+        const candidate = order[(idx + i) % order.length];
+        if (candidate.finished_at) continue;
+        if (justFinished && candidate.id === me.id) continue;
+        next = candidate;
+        break;
+      }
       await supabase.from("rooms").update({
         last_dice: dice,
         current_turn_player_id: next.id,

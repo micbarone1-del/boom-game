@@ -61,16 +61,24 @@ function GymBoard({ code }: { code: string }) {
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
   const prevRef = useRef<Record<string, number>>({});
+  const hopTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const orderedPlayers = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
   const hasGameProgress = players.some(
     (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
   );
   const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
 
+  // Clear any pending hop timeouts only when the component unmounts.
+  useEffect(() => {
+    return () => {
+      hopTimeoutsRef.current.forEach(clearTimeout);
+      hopTimeoutsRef.current = [];
+    };
+  }, []);
+
   // When a player's current_space changes, animate them through each cell.
   useEffect(() => {
     if (players.length === 0) return;
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
     const HOP_MS = 220;
     for (const p of players) {
       const prev = prevRef.current[p.id];
@@ -92,20 +100,19 @@ function GymBoard({ code }: { code: string }) {
       setHoppingIds((s) => { const n = new Set(s); n.add(p.id); return n; });
       for (let i = 1; i <= distance; i++) {
         const at = from + i * step;
-        timeouts.push(setTimeout(() => {
+        hopTimeoutsRef.current.push(setTimeout(() => {
           setHopSpaces((s) => ({ ...s, [p.id]: at }));
         }, i * HOP_MS));
       }
-      timeouts.push(setTimeout(() => {
+      hopTimeoutsRef.current.push(setTimeout(() => {
         setHoppingIds((s) => { const n = new Set(s); n.delete(p.id); return n; });
         if (to > 0) {
           const cell = getCell(to);
           setLanded({ id: p.id, type: cell.type, username: p.username, key: Date.now() });
-          timeouts.push(setTimeout(() => setLanded(null), 3200));
+          hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), 3200));
         }
       }, distance * HOP_MS));
     }
-    return () => timeouts.forEach(clearTimeout);
   }, [players]);
 
   useEffect(() => {

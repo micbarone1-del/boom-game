@@ -9,10 +9,12 @@ export function CountdownIntro({
   startAt,
   color = "var(--boom-red)",
   align = "center",
+  inline = false,
 }: {
   startAt: number;
   color?: string;
   align?: "center" | "right";
+  inline?: boolean;
 }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -22,6 +24,23 @@ export function CountdownIntro({
   const remaining = startAt - now;
   if (remaining <= 0) return null;
   const n = Math.max(1, Math.ceil(remaining / 1000));
+  if (inline) {
+    return (
+      <span
+        key={n}
+        className="anim-pop inline-flex items-center justify-center tabular-nums"
+        style={{
+          fontFamily: "'Luckiest Guy', cursive",
+          fontSize: "clamp(3rem, 10vmin, 5rem)",
+          color: "var(--boom-red)",
+          lineHeight: 1,
+          textShadow: "0 4px 0 rgba(0,0,0,0.25)",
+        }}
+      >
+        {n}
+      </span>
+    );
+  }
   const positionClass =
     align === "right"
       ? "fixed top-4 right-4 z-[80] pointer-events-none"

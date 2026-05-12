@@ -131,6 +131,9 @@ function PlayPage() {
       const reps = getOverrideReps(target, overrides, calc) ?? calc;
       const exercise = cell.exercise ?? "Workout";
       await supabase.from("players").update({ current_space: target }).eq("id", me.id);
+      // Wait for the hop animation to finish on every screen before starting the timer.
+      const hopMs = Math.max(0, Math.abs(target - me.current_space)) * 220 + 400;
+      await new Promise((r) => setTimeout(r, hopMs));
       await supabase
         .from("rooms")
         .update({
@@ -211,7 +214,7 @@ function PlayPage() {
             username={me.username}
             size={56}
             active={isMyTurn}
-            className="anim-land"
+            className={rolling ? "anim-hop" : "anim-land"}
           />
         </div>
       </header>
@@ -249,7 +252,25 @@ function PlayPage() {
               : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
           </p>
           <p className="text-2xl font-black mt-2">{trap.reps} {trap.exercise}</p>
-          <div className="mt-3"><FuseTimer startedAt={trap.started_at} /></div>
+          {(() => {
+            const trapCellType = getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type;
+            const cellColor =
+              trapCellType === "easy" ? "var(--boom-yellow)" :
+              trapCellType === "medium" ? "var(--boom-orange)" :
+              trapCellType === "hard" ? "var(--boom-red)" :
+              "var(--boom-yellow)";
+            const fg = trapCellType === "hard" ? "white" : "var(--boom-ink)";
+            return (
+              <div className="mt-3 flex justify-center">
+                <div
+                  className="ink-border rounded-2xl px-5 py-2"
+                  style={{ background: cellColor, color: fg }}
+                >
+                  <FuseTimer startedAt={trap.started_at} color={fg} />
+                </div>
+              </div>
+            );
+          })()}
           <div className="relative h-10 mt-2 overflow-hidden">
             <span className="absolute top-0 left-0 text-3xl anim-flame-travel">🔥</span>
           </div>
@@ -336,22 +357,6 @@ function PlayPage() {
             className="absolute anim-mascot-explode"
             style={{ width: "60vmin", height: "60vmin" }}
           />
-          <div className="relative text-center anim-mega-boom z-10">
-            <div
-              className="comic-shadow anim-spin-slow"
-              style={{
-                fontFamily: "'Luckiest Guy', cursive",
-                fontSize: "clamp(6rem, 22vw, 14rem)",
-                color: "var(--boom-yellow)",
-                lineHeight: 1,
-              }}
-            >
-              KA-BOOM!
-            </div>
-            <div className="text-3xl font-black mt-4 text-white comic-shadow">
-              {winnerOverlay} FINISHED THE GAME! 🏆
-            </div>
-          </div>
         </div>
       )}
 

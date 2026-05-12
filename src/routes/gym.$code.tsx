@@ -80,7 +80,8 @@ function GymBoard({ code }: { code: string }) {
         continue;
       }
       // Restart / teleport back to start: snap, don't hop all the way back.
-      if (p.current_space === 0 || Math.abs(p.current_space - prev) > 6) {
+      // Boosts up to +10 should still animate, so we only snap on big setbacks.
+      if (p.current_space === 0 || Math.abs(p.current_space - prev) > 15) {
         setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
         continue;
       }
@@ -370,8 +371,8 @@ function GymBoard({ code }: { code: string }) {
                     return (s === 0 ? 1 : s) === space;
                   });
                   const bg =
-                    cell.type === "start" ? "var(--boom-green)" :
-                    cell.type === "finish" ? "var(--boom-yellow)" :
+                    cell.type === "start" ? "white" :
+                    cell.type === "finish" ? "white" :
                     cell.type === "easy" ? "var(--boom-yellow)" :
                     cell.type === "medium" ? "var(--boom-orange)" :
                     cell.type === "hard" ? "var(--boom-red)" :
@@ -569,7 +570,12 @@ function GymBoard({ code }: { code: string }) {
                 "var(--boom-yellow)";
               return (
                 <div className="mt-4 flex justify-center">
-                  <FuseTimer startedAt={trap.started_at} big color={cellColor} />
+                  <div
+                    className="ink-border rounded-2xl px-6 py-3"
+                    style={{ background: cellColor, color: trapCellType === "hard" ? "white" : "var(--boom-ink)" }}
+                  >
+                    <FuseTimer startedAt={trap.started_at} big color={trapCellType === "hard" ? "white" : "var(--boom-ink)"} />
+                  </div>
                 </div>
               );
             })()}
@@ -628,22 +634,6 @@ function GymBoard({ code }: { code: string }) {
             className="absolute anim-mascot-explode"
             style={{ width: "70vmin", height: "70vmin" }}
           />
-          <div className="text-center anim-mega-boom relative z-10">
-            <div
-              className="comic-shadow anim-spin-slow"
-              style={{
-                fontFamily: "'Luckiest Guy', cursive",
-                fontSize: "clamp(8rem, 28vw, 22rem)",
-                color: "var(--boom-yellow)",
-                lineHeight: 1,
-              }}
-            >
-              KA-BOOM!
-            </div>
-            <div className="text-5xl font-black mt-6 text-white comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-              {winnerOverlay} BLEW UP THE FINISH LINE! 🏆💥
-            </div>
-          </div>
         </div>
       )}
 

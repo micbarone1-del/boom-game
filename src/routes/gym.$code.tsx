@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, TRAP_SPACES, BOOST_SPACES } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, TRAP_SPACES, BOOST_SPACES, type Trap } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { Bomb, Zap, Flame } from "lucide-react";
@@ -33,7 +33,9 @@ function GymView() {
   }, [codeParam, navigate]);
 
   if (creating || !code) {
-    return <div className="min-h-screen flex items-center justify-center text-3xl">Igniting fuse…</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-3xl">Igniting fuse…</div>
+    );
   }
 
   return <GymBoard code={code} />;
@@ -41,15 +43,31 @@ function GymView() {
 
 function GymBoard({ code }: { code: string }) {
   const { room, players } = useRoom(code);
-  const trap = room?.trap as any;
-  const joinUrl = typeof window !== "undefined" ? `${window.location.origin}/join?code=${code}` : "";
+  const trap = room?.trap as Trap | null;
+  const joinUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/join?code=${code}` : "";
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
-  // Gym screen is the host — auto-assign first turn whenever none is set.
-  useEffect(() => {
-    if (!room || room.current_turn_player_id || room.locked || players.length === 0) return;
+  const startGame = async () => {
+    if (!room || players.length === 0 || starting) return;
     const first = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at))[0];
-    supabase.from("rooms").update({ current_turn_player_id: first.id }).eq("code", code);
-  }, [room, players, code]);
+    if (!first) return;
+    setStarting(true);
+    setStartError(null);
+    const { error } = await supabase
+      .from("rooms")
+      .update({
+        status: "playing",
+        locked: false,
+        trap: null,
+        last_dice: null,
+        current_turn_player_id: first.id,
+      })
+      .eq("code", code);
+    if (error) setStartError("Couldn’t start the game. Smash it again!");
+    setStarting(false);
+  };
 
   // If the current turn player leaves or is missing, advance to the first available player.
   useEffect(() => {
@@ -82,20 +100,26 @@ function GymBoard({ code }: { code: string }) {
       time_taken_ms: Date.now() - trap.started_at,
       verified_by_judge: true,
     });
-    await supabase.from("rooms").update({
-      trap: null,
-      locked: false,
-      current_turn_player_id: next.id,
-      last_dice: null,
-    }).eq("code", code);
+    await supabase
+      .from("rooms")
+      .update({
+        trap: null,
+        locked: false,
+        current_turn_player_id: next.id,
+        last_dice: null,
+      })
+      .eq("code", code);
   };
 
   const blowUp = async () => {
     if (!trap) return;
     // Reset awaiting_verification — player must redo
-    await supabase.from("rooms").update({
-      trap: { ...trap, awaiting_verification: false },
-    }).eq("code", code);
+    await supabase
+      .from("rooms")
+      .update({
+        trap: { ...trap, awaiting_verification: false },
+      })
+      .eq("code", code);
   };
 
   return (
@@ -104,50 +128,85 @@ function GymBoard({ code }: { code: string }) {
         <div className="flex items-center gap-3">
           <Bomb size={40} />
           <div>
-            <div style={{ fontFamily: "'Luckiest Guy', cursive" }} className="text-4xl text-[var(--boom-red)] comic-shadow">
+            <div
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+              className="text-4xl text-[var(--boom-red)] comic-shadow"
+            >
               BOOM!
             </div>
             <div className="text-sm font-bold">Gym Screen</div>
           </div>
         </div>
-        <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
-          <div>
-            <div className="text-xs font-bold">JOIN CODE</div>
-            <div className="text-3xl font-black tracking-wider" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
-              {code}
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          <button
+            onClick={startGame}
+            disabled={players.length === 0 || starting || !!trap}
+            className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            {room?.current_turn_player_id
+              ? starting
+                ? "BOOMING…"
+                : "RESTART TURN"
+              : starting
+                ? "IGNITING…"
+                : "START GAME"}
+          </button>
+          <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
+            <div>
+              <div className="text-xs font-bold">JOIN CODE</div>
+              <div
+                className="text-3xl font-black tracking-wider"
+                style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+              >
+                {code}
+              </div>
             </div>
-          </div>
-          <div className="bg-white p-1">
-            <QRCodeSVG value={joinUrl} size={88} />
+            <div className="bg-white p-1">
+              <QRCodeSVG value={joinUrl} size={88} />
+            </div>
           </div>
         </div>
       </header>
+      {startError && (
+        <div className="ink-border-sm rounded-xl bg-white p-2 text-sm font-black">{startError}</div>
+      )}
 
       {/* Board */}
       <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative overflow-hidden">
-        <div
-          className="grid gap-1.5"
-          style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}
-        >
+        <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}>
           {Array.from({ length: BOARD_SIZE }, (_, i) => i + 1).map((space) => {
             const isTrap = TRAP_SPACES.has(space);
             const isBoost = BOOST_SPACES.has(space);
             const here = players.filter((p) => p.current_space === space);
-            const bg = isTrap ? "var(--boom-red)" : isBoost ? "var(--boom-blue)" : space % 2 ? "var(--boom-yellow)" : "var(--boom-orange)";
+            const bg = isTrap
+              ? "var(--boom-red)"
+              : isBoost
+                ? "var(--boom-blue)"
+                : space % 2
+                  ? "var(--boom-yellow)"
+                  : "var(--boom-orange)";
             return (
               <div
                 key={space}
                 className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1"
                 style={{ background: bg }}
               >
-                <span className="text-xs font-black" style={{ color: "var(--boom-ink)" }}>{space}</span>
+                <span className="text-xs font-black" style={{ color: "var(--boom-ink)" }}>
+                  {space}
+                </span>
                 {isTrap && <Bomb size={16} />}
                 {isBoost && <Zap size={16} fill="currentColor" />}
                 {here.length > 0 && (
                   <div className="absolute inset-0 flex flex-wrap gap-0.5 items-center justify-center p-0.5">
                     {here.slice(0, 4).map((p) => (
-                      <PlayerToken key={p.id} avatar={p.avatar_url} username={p.username} size={28}
-                        active={room?.current_turn_player_id === p.id} />
+                      <PlayerToken
+                        key={p.id}
+                        avatar={p.avatar_url}
+                        username={p.username}
+                        size={28}
+                        active={room?.current_turn_player_id === p.id}
+                      />
                     ))}
                   </div>
                 )}
@@ -165,9 +224,14 @@ function GymBoard({ code }: { code: string }) {
         {players.map((p) => {
           const isTurn = room?.current_turn_player_id === p.id;
           return (
-            <div key={p.id} className={`flex flex-col items-center gap-1 px-2 ${isTurn ? "anim-shake" : ""}`}>
+            <div
+              key={p.id}
+              className={`flex flex-col items-center gap-1 px-2 ${isTurn ? "anim-shake" : ""}`}
+            >
               <PlayerToken avatar={p.avatar_url} username={p.username} size={64} active={isTurn} />
-              <span className="text-xs">Lvl {p.fitness_level} · #{p.current_space}</span>
+              <span className="text-xs">
+                Lvl {p.fitness_level} · #{p.current_space}
+              </span>
             </div>
           );
         })}
@@ -179,7 +243,12 @@ function GymBoard({ code }: { code: string }) {
           <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom">
             <div
               className="comic-shadow"
-              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(5rem, 16vw, 10rem)", color: "var(--boom-red)", lineHeight: 1 }}
+              style={{
+                fontFamily: "'Luckiest Guy', cursive",
+                fontSize: "clamp(5rem, 16vw, 10rem)",
+                color: "var(--boom-red)",
+                lineHeight: 1,
+              }}
             >
               BOOM!
             </div>

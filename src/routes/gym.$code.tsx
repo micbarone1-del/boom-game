@@ -184,7 +184,14 @@ function GymBoard({ code }: { code: string }) {
   };
 
   return (
-    <div className="min-h-screen p-6 flex flex-col gap-4">
+    <div className="min-h-screen p-6 flex flex-col gap-4 relative">
+      <button
+        onClick={() => setShowCustomize(true)}
+        className="absolute top-2 right-2 z-30 ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
+        title="Customize exercises and reps"
+      >
+        <Settings size={16} /> CUSTOMIZE
+      </button>
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <Bomb size={40} />
@@ -199,14 +206,21 @@ function GymBoard({ code }: { code: string }) {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
-          <button
-            onClick={() => setShowCustomize(true)}
-            className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
-            title="Customize exercises and reps"
-          >
-            <Settings size={16} /> CUSTOMIZE
-          </button>
           <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
+            <button
+              onClick={startGame}
+              disabled={players.length === 0 || starting || !!trap}
+              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              {room?.current_turn_player_id
+                ? starting
+                  ? "BOOMING…"
+                  : "RESTART"
+                : starting
+                  ? "IGNITING…"
+                  : "START GAME"}
+            </button>
             <div>
               <div className="text-xs font-bold">JOIN CODE</div>
               <div
@@ -360,20 +374,6 @@ function GymBoard({ code }: { code: string }) {
 
       {/* Players strip */}
       <div className="ink-border rounded-2xl p-3 bg-white flex gap-4 overflow-x-auto">
-        <button
-          onClick={startGame}
-          disabled={players.length === 0 || starting || !!trap}
-          className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed self-center shrink-0"
-          style={{ fontFamily: "'Luckiest Guy', cursive" }}
-        >
-          {room?.current_turn_player_id
-            ? starting
-              ? "BOOMING…"
-              : "RESTART"
-            : starting
-              ? "IGNITING…"
-              : "START GAME"}
-        </button>
         {players.length === 0 && (
           <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
         )}

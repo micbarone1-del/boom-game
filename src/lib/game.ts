@@ -112,7 +112,10 @@ export function getCell(space: number): Cell {
   return BOARD[Math.max(0, Math.min(BOARD_SIZE, space) - 1)] ?? BOARD[0];
 }
 
-export type BoardOverrides = Record<string, { exercise?: string; reps?: number }>;
+export type BoardOverrides = Record<
+  string,
+  { exercise?: string; reps?: number; min_reps?: number; max_reps?: number }
+>;
 
 /** Returns the cell with any host overrides applied (custom exercise name). */
 export function getEffectiveCell(space: number, overrides?: BoardOverrides | null): Cell {
@@ -125,10 +128,30 @@ export function getEffectiveCell(space: number, overrides?: BoardOverrides | nul
   return base;
 }
 
-/** Returns the override reps for an exercise cell, or null to fall back to calc. */
-export function getOverrideReps(space: number, overrides?: BoardOverrides | null): number | null {
+/**
+ * Returns the override reps for an exercise cell, or null to fall back to the calc.
+ * Supports either a fixed `reps` override OR a `min_reps`/`max_reps` range
+ * (random value in that range, inclusive). If only one bound is set, the other
+ * defaults to the calc value supplied via `fallback`.
+ */
+export function getOverrideReps(
+  space: number,
+  overrides?: BoardOverrides | null,
+  fallback?: number,
+): number | null {
   const o = overrides?.[String(space)];
-  return o?.reps && o.reps > 0 ? o.reps : null;
+  if (!o) return null;
+  if (o.reps && o.reps > 0) return o.reps;
+  const hasMin = o.min_reps && o.min_reps > 0;
+  const hasMax = o.max_reps && o.max_reps > 0;
+  if (hasMin || hasMax) {
+    const lo = hasMin ? o.min_reps! : Math.max(1, fallback ?? 1);
+    const hi = hasMax ? o.max_reps! : Math.max(lo, fallback ?? lo);
+    const a = Math.min(lo, hi);
+    const b = Math.max(lo, hi);
+    return a + Math.floor(Math.random() * (b - a + 1));
+  }
+  return null;
 }
 
 /** Reps for a tier given the player's fitness level + room difficulty. Capped to keep things sane. */

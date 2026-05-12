@@ -44,6 +44,23 @@ function GymBoard({ code }: { code: string }) {
   const trap = room?.trap as any;
   const joinUrl = typeof window !== "undefined" ? `${window.location.origin}/join?code=${code}` : "";
 
+  // Gym screen is the host — auto-assign first turn whenever none is set.
+  useEffect(() => {
+    if (!room || room.current_turn_player_id || room.locked || players.length === 0) return;
+    const first = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at))[0];
+    supabase.from("rooms").update({ current_turn_player_id: first.id }).eq("code", code);
+  }, [room, players, code]);
+
+  // If the current turn player leaves or is missing, advance to the first available player.
+  useEffect(() => {
+    if (!room?.current_turn_player_id || players.length === 0) return;
+    const exists = players.some((p) => p.id === room.current_turn_player_id);
+    if (!exists) {
+      const first = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at))[0];
+      supabase.from("rooms").update({ current_turn_player_id: first.id }).eq("code", code);
+    }
+  }, [room, players, code]);
+
   // Defuse / Blow Up handlers (judge buttons)
   const defuse = async () => {
     if (!room || !trap) return;

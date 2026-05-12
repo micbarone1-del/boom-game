@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, TRAP_SPACES, BOOST_SPACES } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, TRAP_SPACES, BOOST_SPACES, type Trap } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { Bomb, Zap, Flame } from "lucide-react";
@@ -41,7 +41,7 @@ function GymView() {
 
 function GymBoard({ code }: { code: string }) {
   const { room, players } = useRoom(code);
-  const trap = room?.trap as any;
+  const trap = room?.trap as Trap | null;
   const joinUrl = typeof window !== "undefined" ? `${window.location.origin}/join?code=${code}` : "";
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);

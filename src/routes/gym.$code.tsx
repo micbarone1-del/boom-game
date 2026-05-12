@@ -249,13 +249,13 @@ function GymBoard({ code }: { code: string }) {
         </div>
         <div className="ml-auto flex items-center gap-3 flex-wrap justify-end pt-10">
           <button
-            onClick={startGame}
-            disabled={players.length === 0 || starting || !!trap}
+            onClick={room?.current_turn_player_id ? restartGame : startGame}
+            disabled={players.length === 0 || starting || restarting || !!trap}
             className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ fontFamily: "'Luckiest Guy', cursive" }}
           >
             {room?.current_turn_player_id
-              ? starting
+              ? restarting
                 ? "BOOMING…"
                 : "RESTART"
               : starting

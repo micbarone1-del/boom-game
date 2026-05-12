@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, TRAP_SPACES, BOOST_SPACES, finishPlayer, type Trap } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, BOARD, getCell, finishPlayer, type Trap } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Bomb, Zap, Flame, Trophy } from "lucide-react";
+import { Bomb, Zap, Flame, Trophy, Coffee, ArrowLeft, Dumbbell, Flag } from "lucide-react";
+import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -102,10 +103,8 @@ function GymBoard({ code }: { code: string }) {
     if (!room || !trap) return;
     const triggerPlayer = players.find((p) => p.id === trap.triggered_by);
     if (!triggerPlayer) return;
-    const dice = room.last_dice ?? 0;
-    const newSpace = Math.min(BOARD_SIZE, triggerPlayer.current_space + dice);
-    const finalSpace = BOOST_SPACES.has(newSpace) ? Math.min(BOARD_SIZE, newSpace + 5) : newSpace;
-    await supabase.from("players").update({ current_space: finalSpace }).eq("id", triggerPlayer.id);
+    // Player already moved to their target on roll. Defuse just clears the trap.
+    const finalSpace = triggerPlayer.current_space;
     // Victory check
     if (finalSpace >= BOARD_SIZE) {
       await finishPlayer(triggerPlayer.id, code);
@@ -203,29 +202,63 @@ function GymBoard({ code }: { code: string }) {
 
       {/* Board */}
       <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative overflow-hidden">
+        <img
+          src={bombMascot}
+          alt="Boom mascot"
+          width={1024}
+          height={1024}
+          loading="lazy"
+          className="absolute -bottom-6 -right-6 w-40 md:w-56 opacity-90 pointer-events-none anim-fuse"
+        />
         <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}>
           {Array.from({ length: BOARD_SIZE }, (_, i) => i + 1).map((space) => {
-            const isTrap = TRAP_SPACES.has(space);
-            const isBoost = BOOST_SPACES.has(space);
+            const cell = getCell(space);
             const here = players.filter((p) => p.current_space === space);
-            const bg = isTrap
-              ? "var(--boom-red)"
-              : isBoost
-                ? "var(--boom-blue)"
-                : space % 2
+            const bg =
+              cell.type === "start"
+                ? "var(--boom-green)"
+                : cell.type === "finish"
                   ? "var(--boom-yellow)"
-                  : "var(--boom-orange)";
+                  : cell.type === "easy"
+                    ? "var(--boom-yellow)"
+                    : cell.type === "medium"
+                      ? "var(--boom-orange)"
+                      : cell.type === "hard"
+                        ? "var(--boom-red)"
+                        : cell.type === "rest"
+                          ? "var(--boom-blue)"
+                          : cell.type === "boost"
+                            ? "var(--boom-green)"
+                            : "#7c3aed"; // setback purple
             return (
               <div
                 key={space}
                 className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1"
                 style={{ background: bg }}
               >
-                <span className="text-xs font-black" style={{ color: "var(--boom-ink)" }}>
+                <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
                   {space}
                 </span>
-                {isTrap && <Bomb size={16} />}
-                {isBoost && <Zap size={16} fill="currentColor" />}
+                {cell.type === "easy" && <Dumbbell size={14} />}
+                {cell.type === "medium" && (
+                  <div className="flex items-center"><Dumbbell size={12} /><Dumbbell size={12} /></div>
+                )}
+                {cell.type === "hard" && <Bomb size={16} />}
+                {cell.type === "rest" && <Coffee size={16} />}
+                {cell.type === "boost" && (
+                  <div className="flex flex-col items-center leading-none">
+                    <Zap size={14} fill="currentColor" />
+                    <span className="text-[9px] font-black">+{cell.delta}</span>
+                  </div>
+                )}
+                {cell.type === "setback" && (
+                  <div className="flex flex-col items-center leading-none text-white">
+                    <ArrowLeft size={14} />
+                    <span className="text-[9px] font-black">{cell.delta}</span>
+                  </div>
+                )}
+                {cell.type === "start" && <Flag size={14} />}
+                {cell.type === "finish" && <Trophy size={16} />}
                 {here.length > 0 && (
                   <div className="absolute inset-0 flex flex-wrap gap-0.5 items-center justify-center p-0.5">
                     {here.slice(0, 4).map((p) => (
@@ -242,6 +275,49 @@ function GymBoard({ code }: { code: string }) {
               </div>
             );
           })}
+        </div>
+        {/* Legend */}
+        <div className="mt-3 flex flex-wrap gap-2 text-xs font-black relative z-10">
+          {[
+            { c: "var(--boom-yellow)", l: "Easy" },
+            { c: "var(--boom-orange)", l: "Medium" },
+            { c: "var(--boom-red)", l: "Hard" },
+            { c: "var(--boom-blue)", l: "Rest" },
+            { c: "var(--boom-green)", l: "Blast +" },
+            { c: "#7c3aed", l: "Setback −" },
+          ].map((x) => (
+            <span key={x.l} className="ink-border-sm rounded-full px-2 py-1 flex items-center gap-1" style={{ background: x.c, color: "white" }}>
+              {x.l}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Live leaderboard — visible to everyone in the room */}
+      <div className="ink-border rounded-2xl bg-white p-3">
+        <div className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</div>
+        <div className="grid gap-1">
+          {[...players]
+            .sort((a, b) => {
+              if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+              if (a.finish_rank) return -1;
+              if (b.finish_rank) return 1;
+              return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
+            })
+            .map((p, i) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 px-2 py-1 rounded-lg" style={{ background: i === 0 ? "var(--boom-yellow)" : "transparent" }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-black w-6" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{i + 1}</span>
+                  <PlayerToken avatar={p.avatar_url} username={p.username} size={28} />
+                  <span className="text-sm font-black">{p.username}</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs font-black">
+                  <span>Sp.{p.current_space}</span>
+                  <span style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
+                  {p.finished_at && <Trophy size={14} />}
+                </div>
+              </div>
+            ))}
         </div>
       </div>
 

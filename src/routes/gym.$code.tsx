@@ -311,13 +311,8 @@ function GymBoard({ code }: { code: string }) {
               const rowSpaces = Array.from({ length: COLS }, (_, c) => rowIdx * COLS + c + 1)
                 .filter((s) => s <= BOARD_SIZE);
               const ordered = rowIdx % 2 === 1 ? [...rowSpaces].reverse() : rowSpaces;
-              const isLast = rowIdx === rows - 1;
-              // After even-index rows the path turns DOWN on the RIGHT.
-              // After odd-index rows it turns DOWN on the LEFT.
-              const turnRight = rowIdx % 2 === 0;
               return (
-                <div key={rowIdx}>
-                <div className="grid gap-1.5 relative" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
+                <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
                 {ordered.map((space) => {
                   const cell = getCell(space);
                   const here = players.filter((p) => p.current_space === space);
@@ -372,55 +367,6 @@ function GymBoard({ code }: { code: string }) {
                     </div>
                   );
                 })}
-                </div>
-                {!isLast && (
-                  <div className="relative h-6">
-                    <svg
-                      viewBox="0 0 100 24"
-                      preserveAspectRatio="none"
-                      className="absolute inset-0 w-full h-full"
-                      aria-hidden
-                    >
-                      {turnRight ? (
-                        <>
-                          <path
-                            d="M 95 0 Q 99 12 95 24"
-                            stroke="var(--boom-yellow)"
-                            strokeWidth="3"
-                            fill="none"
-                            strokeLinecap="round"
-                          />
-                          <polyline
-                            points="91,18 95,24 99,18"
-                            stroke="var(--boom-yellow)"
-                            strokeWidth="3"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <path
-                            d="M 5 0 Q 1 12 5 24"
-                            stroke="var(--boom-yellow)"
-                            strokeWidth="3"
-                            fill="none"
-                            strokeLinecap="round"
-                          />
-                          <polyline
-                            points="1,18 5,24 9,18"
-                            stroke="var(--boom-yellow)"
-                            strokeWidth="3"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </>
-                      )}
-                    </svg>
-                  </div>
-                )}
                 </div>
               );
             });

@@ -71,7 +71,8 @@ function GymBoard({ code }: { code: string }) {
       }, 2800);
       return () => clearTimeout(t);
     }
-  }, [players, seenFinishers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [players]);
 
   const restartGame = async () => {
     if (restarting) return;

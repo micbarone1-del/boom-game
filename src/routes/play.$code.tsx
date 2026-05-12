@@ -397,6 +397,7 @@ function PlayPage() {
       </div>
 
       {showCamera && <BoomCamera onClose={() => setShowCamera(false)} />}
+      {myLanded && <CellMascot key={myLanded.key} type={myLanded.type} />}
     </main>
   );
 }

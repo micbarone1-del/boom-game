@@ -346,6 +346,7 @@ function GymBoard({ code }: { code: string }) {
                         username={p.username}
                         size={28}
                         active={room?.current_turn_player_id === p.id}
+                        showName={false}
                       />
                     ))}
                   </div>

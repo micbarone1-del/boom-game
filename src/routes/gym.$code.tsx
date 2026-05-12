@@ -90,7 +90,7 @@ function GymBoard({ code }: { code: string }) {
         if (to > 0) {
           const cell = getCell(to);
           setLanded({ id: p.id, type: cell.type, username: p.username, key: Date.now() });
-          timeouts.push(setTimeout(() => setLanded(null), 1700));
+          timeouts.push(setTimeout(() => setLanded(null), 3200));
         }
       }, distance * HOP_MS));
     }

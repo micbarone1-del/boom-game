@@ -116,12 +116,24 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
     rafRef.current = null;
   };
 
+  const stopCamera = () => {
+    stopDrawLoop();
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) {
+      try { videoRef.current.pause(); } catch {}
+      videoRef.current.srcObject = null;
+    }
+  };
+
   const takePhoto = () => {
     const c = canvasRef.current;
     if (!c) return;
     c.toBlob((blob) => {
       if (!blob) return;
       const url = URL.createObjectURL(blob);
+      // Free the camera before showing the preview (prevents OOM on mobile Safari)
+      stopCamera();
       setPreview({ url, type: "image", ext: "jpg" });
     }, "image/jpeg", 0.92);
   };
@@ -141,6 +153,7 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
       const ext = (rec.mimeType || "").includes("mp4") ? "mp4" : "webm";
       const blob = new Blob(chunksRef.current, { type: rec.mimeType || "video/webm" });
       const url = URL.createObjectURL(blob);
+      stopCamera();
       setPreview({ url, type: "video", ext });
     };
     recorderRef.current = rec;

@@ -61,6 +61,11 @@ function GymBoard({ code }: { code: string }) {
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
   const prevRef = useRef<Record<string, number>>({});
+  const orderedPlayers = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+  const hasGameProgress = players.some(
+    (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
+  );
+  const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
 
   // When a player's current_space changes, animate them through each cell.
   useEffect(() => {
@@ -123,15 +128,26 @@ function GymBoard({ code }: { code: string }) {
   }, [players]);
 
   const restartGame = async () => {
-    if (restarting) return;
+    if (!room || players.length === 0 || restarting) return;
     setRestarting(true);
+    setStartError(null);
+    const first = orderedPlayers[0];
+    const resetSpaces = Object.fromEntries(players.map((p) => [p.id, 0]));
+    prevRef.current = resetSpaces;
+    setHopSpaces(resetSpaces);
+    setHoppingIds(new Set());
+    setLanded(null);
+    setWinnerOverlay(null);
+    setSeenFinishers(new Set());
+    setShowFinalRanking(false);
     try {
-      await supabase
+      const [{ error: playersError }, { error: logsError }, { error: roomError }] = await Promise.all([
+        supabase
         .from("players")
         .update({ current_space: 0, finished_at: null, finish_rank: null, score: 0, status: "active" })
-        .eq("room_code", code);
-      const first = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at))[0];
-      await supabase
+        .eq("room_code", code),
+        supabase.from("workout_logs").delete().eq("room_code", code),
+        supabase
         .from("rooms")
         .update({
           status: "playing",
@@ -140,9 +156,11 @@ function GymBoard({ code }: { code: string }) {
           last_dice: null,
           current_turn_player_id: first?.id ?? null,
         })
-        .eq("code", code);
-      setSeenFinishers(new Set());
-      setShowFinalRanking(false);
+        .eq("code", code),
+      ]);
+      if (playersError || logsError || roomError) {
+        setStartError("Couldn’t restart the game. Smash it again!");
+      }
     } finally {
       setRestarting(false);
     }
@@ -254,12 +272,12 @@ function GymBoard({ code }: { code: string }) {
         </div>
         <div className="ml-auto flex items-center gap-3 flex-wrap justify-end pt-10">
           <button
-            onClick={room?.current_turn_player_id ? restartGame : startGame}
-            disabled={players.length === 0 || starting || restarting || !!trap}
+            onClick={gameHasStarted ? restartGame : startGame}
+            disabled={players.length === 0 || starting || restarting}
             className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ fontFamily: "'Luckiest Guy', cursive" }}
           >
-            {room?.current_turn_player_id
+            {gameHasStarted
               ? restarting
                 ? "BOOMING…"
                 : "RESTART"
@@ -539,6 +557,14 @@ function GymBoard({ code }: { code: string }) {
                 </div>
               );
             })()}
+            <button
+              onClick={restartGame}
+              disabled={restarting}
+              className="mt-4 ink-border-sm rounded-xl px-4 py-2 font-black text-sm disabled:opacity-50"
+              style={{ background: "var(--boom-red)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              {restarting ? "RESETTING…" : "RESTART GAME"}
+            </button>
             {trap.awaiting_verification ? (
               <div className="mt-6">
                 <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>

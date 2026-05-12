@@ -15,16 +15,18 @@ export function CountdownIntro({ startAt, color = "white" }: { startAt: number; 
   if (remaining <= 0) return null;
   const n = Math.max(1, Math.ceil(remaining / 1000));
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80] pointer-events-none">
       <div
         key={n}
-        className="anim-pop comic-shadow"
+        className="anim-pop comic-shadow rounded-full ink-border bg-white flex items-center justify-center"
         style={{
           fontFamily: "'Luckiest Guy', cursive",
-          fontSize: "clamp(12rem, 50vmin, 28rem)",
+          fontSize: "clamp(3rem, 12vmin, 6rem)",
           color,
           lineHeight: 1,
-          textShadow: "0 8px 0 rgba(0,0,0,0.35)",
+          width: "clamp(5rem, 18vmin, 9rem)",
+          height: "clamp(5rem, 18vmin, 9rem)",
+          textShadow: "0 4px 0 rgba(0,0,0,0.25)",
         }}
       >
         {n}

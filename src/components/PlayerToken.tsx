@@ -5,11 +5,13 @@ export function PlayerToken({
   username,
   size = 56,
   active = false,
+  showName = true,
 }: {
   avatar?: string | null;
   username: string;
   size?: number;
   active?: boolean;
+  showName?: boolean;
 }) {
   return (
     <div className="flex flex-col items-center gap-1">
@@ -37,9 +39,11 @@ export function PlayerToken({
           )}
         </div>
       </div>
-      <span className="text-xs font-bold truncate max-w-[80px]" style={{ color: "var(--boom-ink)" }}>
-        {username}
-      </span>
+      {showName && (
+        <span className="text-xs font-bold truncate max-w-[80px]" style={{ color: "var(--boom-ink)" }}>
+          {username}
+        </span>
+      )}
     </div>
   );
 }

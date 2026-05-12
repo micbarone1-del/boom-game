@@ -18,6 +18,7 @@ import {
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
+import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Dice5, Trophy, Camera } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
@@ -403,6 +404,7 @@ function PlayPage() {
 
       {showCamera && <BoomCamera onClose={() => setShowCamera(false)} />}
       {myLanded && <CellMascot key={myLanded.key} type={myLanded.type} />}
+      {trap && <CountdownIntro startAt={trap.started_at} />}
     </main>
   );
 }

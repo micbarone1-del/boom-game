@@ -93,6 +93,26 @@ function JoinPage() {
     setSavedAvatar(null);
   };
 
+  const clearProfileFields = () => {
+    setUsername("");
+    setFitness(5);
+    setAvatarFile(null);
+    setSavedAvatar(null);
+  };
+
+  const deleteSavedProfile = async () => {
+    if (!userId) return;
+    if (!confirm("Delete your saved BOOM profile? Your name, avatar and fitness level will be wiped.")) return;
+    // Best-effort: clear out the row's profile fields (RLS only allows update on own row)
+    await supabase.from("profiles").update({
+      username: null,
+      avatar_url: null,
+      fitness_level: 5,
+      updated_at: new Date().toISOString(),
+    }).eq("user_id", userId);
+    clearProfileFields();
+  };
+
   const oauth = async (provider: "google" | "apple") => {
     setAuthMsg(null);
     const result = await lovable.auth.signInWithOAuth(provider, {
@@ -163,9 +183,14 @@ function JoinPage() {
               <UserCircle2 size={20} />
               <span className="truncate max-w-[180px]">{userEmail}</span>
             </div>
-            <button onClick={signOut} className="text-xs font-black flex items-center gap-1 underline">
-              <LogOut size={14}/> Sign out
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={deleteSavedProfile} className="text-xs font-black underline" style={{color:"var(--boom-red)"}}>
+                Delete profile
+              </button>
+              <button onClick={signOut} className="text-xs font-black flex items-center gap-1 underline">
+                <LogOut size={14}/> Sign out
+              </button>
+            </div>
           </>
         ) : (
           <>
@@ -251,8 +276,14 @@ function JoinPage() {
             className="w-full text-sm"
           />
           {(preview || savedAvatar) && (
-            <div className="mt-2 w-24 h-24 rounded-full overflow-hidden ink-border-sm">
-              <img src={preview ?? savedAvatar ?? ""} alt="preview" className="w-full h-full object-cover" />
+            <div className="mt-2 flex items-center gap-3">
+              <div className="w-24 h-24 rounded-full overflow-hidden ink-border-sm">
+                <img src={preview ?? savedAvatar ?? ""} alt="preview" className="w-full h-full object-cover" />
+              </div>
+              <button type="button" onClick={clearProfileFields}
+                className="text-xs font-black underline" style={{color:"var(--boom-red)"}}>
+                Clear
+              </button>
             </div>
           )}
         </label>

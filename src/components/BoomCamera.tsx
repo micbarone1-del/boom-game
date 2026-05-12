@@ -31,8 +31,9 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
     img.onload = () => { mascotRef.current = img; };
   }, []);
 
-  // Start camera (re-runs on facing change).
+  // Start camera (re-runs on facing change, or whenever the preview is closed).
   useEffect(() => {
+    if (preview) return; // don't hold the camera while previewing the capture
     let cancelled = false;
     const start = async () => {
       try {
@@ -59,7 +60,7 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
       streamRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facing]);
+  }, [facing, preview]);
 
   const drawFrame = () => {
     const v = videoRef.current;
@@ -116,12 +117,24 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
     rafRef.current = null;
   };
 
+  const stopCamera = () => {
+    stopDrawLoop();
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) {
+      try { videoRef.current.pause(); } catch {}
+      videoRef.current.srcObject = null;
+    }
+  };
+
   const takePhoto = () => {
     const c = canvasRef.current;
     if (!c) return;
     c.toBlob((blob) => {
       if (!blob) return;
       const url = URL.createObjectURL(blob);
+      // Free the camera before showing the preview (prevents OOM on mobile Safari)
+      stopCamera();
       setPreview({ url, type: "image", ext: "jpg" });
     }, "image/jpeg", 0.92);
   };
@@ -141,6 +154,7 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
       const ext = (rec.mimeType || "").includes("mp4") ? "mp4" : "webm";
       const blob = new Blob(chunksRef.current, { type: rec.mimeType || "video/webm" });
       const url = URL.createObjectURL(blob);
+      stopCamera();
       setPreview({ url, type: "video", ext });
     };
     recorderRef.current = rec;

@@ -231,7 +231,7 @@ function GymBoard({ code }: { code: string }) {
               </div>
             </div>
             <div className="bg-white p-1">
-              <QRCodeSVG value={joinUrl} size={88} />
+              <QRCodeSVG value={joinUrl} size={140} />
             </div>
           </div>
         </div>
@@ -603,7 +603,8 @@ function CustomizeBoardModal({
           <button onClick={onClose} className="ink-border-sm rounded-lg w-8 h-8 font-black">×</button>
         </div>
         <p className="text-xs font-bold mb-3 opacity-70">
-          Override the exercise name or reps for any cell. Leave blank to use the defaults.
+          Tap any field to change the exercise name or set a fixed rep count.
+          Leave a field empty to keep the default (the rep count auto-scales to each player's fitness level).
         </p>
         <div className="flex-1 overflow-y-auto pr-1">
           <div className="grid gap-2">
@@ -613,26 +614,32 @@ function CustomizeBoardModal({
                 c.type === "easy" ? "var(--boom-yellow)" :
                 c.type === "medium" ? "var(--boom-orange)" : "var(--boom-red)";
               return (
-                <div key={c.space} className="ink-border-sm rounded-xl p-2 flex items-center gap-2 flex-wrap">
+                <div key={c.space} className="ink-border-sm rounded-xl p-2 flex items-center gap-2 flex-wrap bg-white">
                   <span className="rounded-lg px-2 py-1 text-xs font-black ink-border-sm"
                     style={{ background: tierBg, color: c.type === "hard" ? "white" : "black" }}>
                     Sp.{c.space} · {c.type.toUpperCase()}
                   </span>
-                  <input
-                    type="text"
-                    placeholder={c.exercise}
-                    value={o.exercise ?? ""}
-                    onChange={(e) => update(c.space, { exercise: e.target.value })}
-                    className="flex-1 min-w-[140px] ink-border-sm rounded-lg px-2 py-1 text-sm font-bold"
-                  />
-                  <input
-                    type="number"
-                    min={1}
-                    placeholder="auto reps"
-                    value={o.reps ?? ""}
-                    onChange={(e) => update(c.space, { reps: e.target.value ? Number(e.target.value) : undefined })}
-                    className="w-24 ink-border-sm rounded-lg px-2 py-1 text-sm font-bold"
-                  />
+                  <label className="flex-1 min-w-[140px] flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black opacity-60">EXERCISE</span>
+                    <input
+                      type="text"
+                      placeholder={c.exercise}
+                      value={o.exercise ?? ""}
+                      onChange={(e) => update(c.space, { exercise: e.target.value })}
+                      className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
+                    />
+                  </label>
+                  <label className="w-24 flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black opacity-60">REPS</span>
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="auto"
+                      value={o.reps ?? ""}
+                      onChange={(e) => update(c.space, { reps: e.target.value ? Number(e.target.value) : undefined })}
+                      className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
+                    />
+                  </label>
                 </div>
               );
             })}

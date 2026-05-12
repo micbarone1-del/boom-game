@@ -557,6 +557,14 @@ function GymBoard({ code }: { code: string }) {
                 </div>
               );
             })()}
+            <button
+              onClick={restartGame}
+              disabled={restarting}
+              className="mt-4 ink-border-sm rounded-xl px-4 py-2 font-black text-sm disabled:opacity-50"
+              style={{ background: "var(--boom-red)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              {restarting ? "RESETTING…" : "RESTART GAME"}
+            </button>
             {trap.awaiting_verification ? (
               <div className="mt-6">
                 <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>

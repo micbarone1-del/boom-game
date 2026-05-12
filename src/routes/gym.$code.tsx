@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
@@ -57,28 +57,44 @@ function GymBoard({ code }: { code: string }) {
   const [showCustomize, setShowCustomize] = useState(false);
   const [qrZoom, setQrZoom] = useState(false);
   const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
-  const [prevSpaces, setPrevSpaces] = useState<Record<string, number>>({});
+  // Per-player rendered space (animated hop-by-hop toward the real current_space).
+  const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
+  const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
+  const prevRef = useRef<Record<string, number>>({});
 
-  // Detect a player moving to a new cell and trigger the mascot splash.
+  // When a player's current_space changes, animate them through each cell.
   useEffect(() => {
     if (players.length === 0) return;
-    let triggered: typeof landed = null;
-    const next: Record<string, number> = { ...prevSpaces };
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    const HOP_MS = 220;
     for (const p of players) {
-      const prev = prevSpaces[p.id];
-      next[p.id] = p.current_space;
-      if (prev !== undefined && prev !== p.current_space && p.current_space > 0) {
-        const cell = getCell(p.current_space);
-        triggered = { id: p.id, type: cell.type, username: p.username, key: Date.now() };
+      const prev = prevRef.current[p.id];
+      prevRef.current[p.id] = p.current_space;
+      if (prev === undefined || prev === p.current_space) {
+        if (prev === undefined) setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
+        continue;
       }
+      const from = prev;
+      const to = p.current_space;
+      const step = to > from ? 1 : -1;
+      const distance = Math.abs(to - from);
+      setHoppingIds((s) => { const n = new Set(s); n.add(p.id); return n; });
+      for (let i = 1; i <= distance; i++) {
+        const at = from + i * step;
+        timeouts.push(setTimeout(() => {
+          setHopSpaces((s) => ({ ...s, [p.id]: at }));
+        }, i * HOP_MS));
+      }
+      timeouts.push(setTimeout(() => {
+        setHoppingIds((s) => { const n = new Set(s); n.delete(p.id); return n; });
+        if (to > 0) {
+          const cell = getCell(to);
+          setLanded({ id: p.id, type: cell.type, username: p.username, key: Date.now() });
+          timeouts.push(setTimeout(() => setLanded(null), 1700));
+        }
+      }, distance * HOP_MS));
     }
-    setPrevSpaces(next);
-    if (triggered) {
-      setLanded(triggered);
-      const t = setTimeout(() => setLanded(null), 1700);
-      return () => clearTimeout(t);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => timeouts.forEach(clearTimeout);
   }, [players]);
 
   useEffect(() => {
@@ -325,7 +341,7 @@ function GymBoard({ code }: { code: string }) {
               <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
                 {row.map(({ space, col }) => {
                   const cell = getCell(space);
-                  const here = players.filter((p) => p.current_space === space);
+                  const here = players.filter((p) => (hopSpaces[p.id] ?? p.current_space) === space);
                   const bg =
                     cell.type === "start" ? "var(--boom-green)" :
                     cell.type === "finish" ? "var(--boom-yellow)" :
@@ -354,19 +370,25 @@ function GymBoard({ code }: { code: string }) {
                       {cell.type === "finish" && <Trophy size={22} />}
                       {here.length > 0 && (
                         <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-30 flex -space-x-2 pointer-events-none">
-                          {here.slice(0, 4).map((p, i) => (
-                            <div key={`${p.id}-${p.current_space}`} style={{ zIndex: 30 + i }}>
-                              <PlayerToken
-                                avatar={p.avatar_url}
-                                username={p.username}
-                                size={34}
-                                active={room?.current_turn_player_id === p.id}
-                                showName={false}
-                                showInitial
-                                className="anim-land"
-                              />
-                            </div>
-                          ))}
+                          {here.slice(0, 4).map((p, i) => {
+                            const isHopping = hoppingIds.has(p.id);
+                            return (
+                              <div
+                                key={`${p.id}-${hopSpaces[p.id] ?? p.current_space}`}
+                                style={{ zIndex: 30 + i }}
+                              >
+                                <PlayerToken
+                                  avatar={p.avatar_url}
+                                  username={p.username}
+                                  size={34}
+                                  active={room?.current_turn_player_id === p.id}
+                                  showName={false}
+                                  showInitial
+                                  className={isHopping ? "anim-hop" : "anim-land"}
+                                />
+                              </div>
+                            );
+                          })}
                           {here.length > 4 && (
                             <span className="text-[10px] font-black bg-white rounded-full px-1.5 py-0.5 ink-border-sm self-center">
                               +{here.length - 4}

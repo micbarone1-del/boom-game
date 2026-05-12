@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Flame } from "lucide-react";
 
-export function FuseTimer({ startedAt, big = false, color }: { startedAt: number; big?: boolean; color?: string }) {
+export function FuseTimer({ startedAt, big = false, color, hideBeforeStart = false }: { startedAt: number; big?: boolean; color?: string; hideBeforeStart?: boolean }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 100);
@@ -9,6 +9,7 @@ export function FuseTimer({ startedAt, big = false, color }: { startedAt: number
   }, []);
   const anchor = startedAt && !Number.isNaN(startedAt) ? startedAt : now;
   const elapsed = Math.max(0, now - anchor);
+  if (hideBeforeStart && now < anchor) return null;
   const sec = (elapsed / 1000).toFixed(1);
   return (
     <div className={`inline-flex items-center gap-2 ${big ? "text-6xl" : "text-2xl"} font-bold tabular-nums`}

@@ -75,10 +75,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "BOOM — The Workout Game" },
       { name: "description", content: "A chaotic real-time multiplayer party-fitness game. Roll the dice, dodge the traps, and BLAST through workout penalties with friends." },
       { property: "og:title", content: "BOOM — The Workout Game" },
-      { property: "og:description", content: "Roll, sweat, BOOM. The party-fitness game for your living room." },
+      { property: "og:description", content: "A chaotic real-time multiplayer party-fitness game. Roll the dice, dodge the traps, and BLAST through workout penalties with friends." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "BOOM — The Workout Game" },
+      { name: "twitter:description", content: "A chaotic real-time multiplayer party-fitness game. Roll the dice, dodge the traps, and BLAST through workout penalties with friends." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cdc37551-ae82-4e4c-8c1e-98c6994cf51a/id-preview-c558ff24--437eab89-7975-4b31-8ebc-8783f9915946.lovable.app-1778620529294.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cdc37551-ae82-4e4c-8c1e-98c6994cf51a/id-preview-c558ff24--437eab89-7975-4b31-8ebc-8783f9915946.lovable.app-1778620529294.png" },
     ],
     links: [
       {

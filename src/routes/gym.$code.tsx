@@ -43,13 +43,25 @@ function GymBoard({ code }: { code: string }) {
   const { room, players } = useRoom(code);
   const trap = room?.trap as any;
   const joinUrl = typeof window !== "undefined" ? `${window.location.origin}/join?code=${code}` : "";
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
-  // Gym screen is the host — auto-assign first turn whenever none is set.
-  useEffect(() => {
-    if (!room || room.current_turn_player_id || room.locked || players.length === 0) return;
+  const startGame = async () => {
+    if (!room || players.length === 0 || starting) return;
     const first = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at))[0];
-    supabase.from("rooms").update({ current_turn_player_id: first.id }).eq("code", code);
-  }, [room, players, code]);
+    if (!first) return;
+    setStarting(true);
+    setStartError(null);
+    const { error } = await supabase.from("rooms").update({
+      status: "playing",
+      locked: false,
+      trap: null,
+      last_dice: null,
+      current_turn_player_id: first.id,
+    }).eq("code", code);
+    if (error) setStartError("Couldn’t start the game. Smash it again!");
+    setStarting(false);
+  };
 
   // If the current turn player leaves or is missing, advance to the first available player.
   useEffect(() => {
@@ -110,7 +122,16 @@ function GymBoard({ code }: { code: string }) {
             <div className="text-sm font-bold">Gym Screen</div>
           </div>
         </div>
-        <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          <button
+            onClick={startGame}
+            disabled={players.length === 0 || starting || !!trap}
+            className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            {room?.current_turn_player_id ? (starting ? "BOOMING…" : "RESTART TURN") : (starting ? "IGNITING…" : "START GAME")}
+          </button>
+          <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
           <div>
             <div className="text-xs font-bold">JOIN CODE</div>
             <div className="text-3xl font-black tracking-wider" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
@@ -120,8 +141,10 @@ function GymBoard({ code }: { code: string }) {
           <div className="bg-white p-1">
             <QRCodeSVG value={joinUrl} size={88} />
           </div>
+          </div>
         </div>
       </header>
+      {startError && <div className="ink-border-sm rounded-xl bg-white p-2 text-sm font-black">{startError}</div>}
 
       {/* Board */}
       <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative overflow-hidden">

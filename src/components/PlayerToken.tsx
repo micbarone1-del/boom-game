@@ -6,15 +6,17 @@ export function PlayerToken({
   size = 56,
   active = false,
   showName = true,
+  className = "",
 }: {
   avatar?: string | null;
   username: string;
   size?: number;
   active?: boolean;
   showName?: boolean;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className={`flex flex-col items-center gap-1 ${className}`}>
       <div className="relative" style={{ width: size, height: size }}>
         {/* fuse */}
         <div

@@ -234,10 +234,18 @@ function PlayPage() {
         })()}
       </div>
 
-      {trap ? (
+      {trap ? (() => {
+        const trapCellType = getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type;
+        const cellColor =
+          trapCellType === "easy" ? "var(--boom-yellow)" :
+          trapCellType === "medium" ? "var(--boom-orange)" :
+          trapCellType === "hard" ? "var(--boom-red)" :
+          "var(--boom-yellow)";
+        const fg = trapCellType === "hard" ? "white" : "var(--boom-ink)";
+        return (
         <div
           className="fixed inset-0 z-[60] p-6 pt-10 text-center anim-boom flex flex-col items-center justify-center gap-4 overflow-y-auto"
-          style={{ background: "var(--boom-red)", color: "white" }}
+          style={{ background: cellColor, color: fg }}
         >
           <img
             src={mascotForCell(getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type)}
@@ -255,25 +263,14 @@ function PlayPage() {
               : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
           </p>
           <p className="text-3xl font-black">{trap.reps} {trap.exercise}</p>
-          {(() => {
-            const trapCellType = getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type;
-            const cellColor =
-              trapCellType === "easy" ? "var(--boom-yellow)" :
-              trapCellType === "medium" ? "var(--boom-orange)" :
-              trapCellType === "hard" ? "var(--boom-red)" :
-              "var(--boom-yellow)";
-            const fg = trapCellType === "hard" ? "white" : "var(--boom-ink)";
-            return (
-              <div className="flex justify-center">
-                <div
-                  className="ink-border rounded-2xl px-6 py-3"
-                  style={{ background: cellColor, color: fg }}
-                >
-                  <FuseTimer startedAt={trap.started_at} big color={fg} />
-                </div>
-              </div>
-            );
-          })()}
+          <div className="flex justify-center">
+            <div
+              className="ink-border rounded-2xl px-6 py-3 bg-white"
+              style={{ color: "var(--boom-ink)" }}
+            >
+              <FuseTimer startedAt={trap.started_at} big color="var(--boom-ink)" />
+            </div>
+          </div>
           <div className="relative h-10 w-full overflow-hidden">
             <span className="absolute top-0 left-0 text-3xl anim-flame-travel">🔥</span>
           </div>
@@ -291,7 +288,8 @@ function PlayPage() {
             <p className="font-bold text-lg">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
           )}
         </div>
-      ) : me.finished_at ? null : (
+        );
+      })() : me.finished_at ? null : (
         <button
           onClick={onRoll}
           disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at}

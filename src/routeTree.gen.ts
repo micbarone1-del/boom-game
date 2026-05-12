@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlayCodeRouteImport } from './routes/play.$code'
 import { Route as GymCodeRouteImport } from './routes/gym.$code'
 
 const JoinRoute = JoinRouteImport.update({
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayCodeRoute = PlayCodeRouteImport.update({
+  id: '/play/$code',
+  path: '/play/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GymCodeRoute = GymCodeRouteImport.update({
   id: '/gym/$code',
   path: '/gym/$code',
@@ -33,30 +39,34 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
   '/gym/$code': typeof GymCodeRoute
+  '/play/$code': typeof PlayCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
   '/gym/$code': typeof GymCodeRoute
+  '/play/$code': typeof PlayCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
   '/gym/$code': typeof GymCodeRoute
+  '/play/$code': typeof PlayCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/join' | '/gym/$code'
+  fullPaths: '/' | '/join' | '/gym/$code' | '/play/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/join' | '/gym/$code'
-  id: '__root__' | '/' | '/join' | '/gym/$code'
+  to: '/' | '/join' | '/gym/$code' | '/play/$code'
+  id: '__root__' | '/' | '/join' | '/gym/$code' | '/play/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   JoinRoute: typeof JoinRoute
   GymCodeRoute: typeof GymCodeRoute
+  PlayCodeRoute: typeof PlayCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/play/$code': {
+      id: '/play/$code'
+      path: '/play/$code'
+      fullPath: '/play/$code'
+      preLoaderRoute: typeof PlayCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gym/$code': {
       id: '/gym/$code'
       path: '/gym/$code'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   JoinRoute: JoinRoute,
   GymCodeRoute: GymCodeRoute,
+  PlayCodeRoute: PlayCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

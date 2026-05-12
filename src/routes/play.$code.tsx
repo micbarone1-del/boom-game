@@ -125,16 +125,25 @@ function PlayPage() {
     const overrides = (room.board_overrides ?? {}) as BoardOverrides;
     const cell = getEffectiveCell(target, overrides);
 
-    // Exercise cell -> lock with trap, the gym screen will defuse after the player completes the reps.
-    if (cell.type === "easy" || cell.type === "medium" || cell.type === "hard") {
-      const tier = cell.tier ?? 1;
+    // Apply any movement effect first; the destination cell decides what happens next.
+    let final = target;
+    if (cell.type === "boost" && cell.delta) {
+      final = Math.min(BOARD_SIZE, target + cell.delta);
+    } else if (cell.type === "setback" && cell.delta) {
+      final = Math.max(1, target + cell.delta); // delta is negative
+    } else if (cell.type === "finish") {
+      final = BOARD_SIZE;
+    }
+    const finalCell = getEffectiveCell(final, overrides);
+
+    // Exercise destination -> lock with trap (after hop animation finishes).
+    if (finalCell.type === "easy" || finalCell.type === "medium" || finalCell.type === "hard") {
+      const tier = finalCell.tier ?? 1;
       const calc = calcRepsForTier(tier, me.fitness_level, room.difficulty_multiplier);
-      const reps = getOverrideReps(target, overrides, calc) ?? calc;
-      const exercise = cell.exercise ?? "Workout";
-      await supabase.from("players").update({ current_space: target }).eq("id", me.id);
-      // Wait for the hop animation to finish on every screen before starting the timer.
-      // 220ms per cell + realtime latency buffer.
-      const distance = Math.max(1, Math.abs(target - me.current_space));
+      const reps = getOverrideReps(final, overrides, calc) ?? calc;
+      const exercise = finalCell.exercise ?? "Workout";
+      await supabase.from("players").update({ current_space: final }).eq("id", me.id);
+      const distance = Math.max(1, Math.abs(final - me.current_space));
       const hopMs = distance * 220 + 600;
       await new Promise((r) => setTimeout(r, hopMs));
       await supabase
@@ -153,16 +162,7 @@ function PlayPage() {
         })
         .eq("code", code);
     } else {
-      // Apply movement effect for non-exercise cells.
-      let final = target;
-      if (cell.type === "boost" && cell.delta) {
-        final = Math.min(BOARD_SIZE, target + cell.delta);
-      } else if (cell.type === "setback" && cell.delta) {
-        final = Math.max(1, target + cell.delta); // delta is negative
-      } else if (cell.type === "finish") {
-        final = BOARD_SIZE;
-      }
-      // rest cell -> just stay on target, lose the turn
+      // rest / boost-into-non-exercise / setback-into-non-exercise / finish
       await supabase.from("players").update({ current_space: final }).eq("id", me.id);
       if (final >= BOARD_SIZE) {
         await finishPlayer(me.id, code);

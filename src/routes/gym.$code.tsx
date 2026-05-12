@@ -723,8 +723,9 @@ function CustomizeBoardModal({
           <button onClick={onClose} className="ink-border-sm rounded-lg w-8 h-8 font-black">×</button>
         </div>
         <p className="text-xs font-bold mb-3 opacity-70">
-          Tap any field to change the exercise name or set a fixed rep count.
-          Leave a field empty to keep the default (the rep count auto-scales to each player's fitness level).
+          Tap any field to change the exercise name, lock a fixed rep count, or set a MIN/MAX
+          range so a random number of reps is picked each time. Leave fields empty to keep the
+          default (auto-scaled to each player's fitness level). FIXED beats MIN/MAX if both are set.
         </p>
         <div className="flex-1 overflow-y-auto pr-1">
           <div className="grid gap-2">
@@ -749,14 +750,36 @@ function CustomizeBoardModal({
                       className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
                     />
                   </label>
-                  <label className="w-24 flex flex-col gap-0.5">
-                    <span className="text-[10px] font-black opacity-60">REPS</span>
+                  <label className="w-20 flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black opacity-60">FIXED</span>
                     <input
                       type="number"
                       min={1}
                       placeholder="auto"
                       value={o.reps ?? ""}
                       onChange={(e) => update(c.space, { reps: e.target.value ? Number(e.target.value) : undefined })}
+                      className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
+                    />
+                  </label>
+                  <label className="w-20 flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black opacity-60">MIN</span>
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="—"
+                      value={o.min_reps ?? ""}
+                      onChange={(e) => update(c.space, { min_reps: e.target.value ? Number(e.target.value) : undefined })}
+                      className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
+                    />
+                  </label>
+                  <label className="w-20 flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black opacity-60">MAX</span>
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="—"
+                      value={o.max_reps ?? ""}
+                      onChange={(e) => update(c.space, { max_reps: e.target.value ? Number(e.target.value) : undefined })}
                       className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
                     />
                   </label>

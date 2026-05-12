@@ -21,6 +21,9 @@ export type Player = {
   current_space: number;
   status: string;
   joined_at: string;
+  score: number;
+  finished_at: string | null;
+  finish_rank: number | null;
 };
 
 export function useRoom(code: string | undefined) {

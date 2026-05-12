@@ -542,6 +542,21 @@ function GymBoard({ code }: { code: string }) {
       {trap && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom relative">
+            {(() => {
+              const trapPlayer = players.find((p) => p.id === trap.triggered_by);
+              if (!trapPlayer) return null;
+              return (
+                <div className="absolute top-3 right-3 z-10">
+                  <PlayerToken
+                    avatar={trapPlayer.avatar}
+                    username={trapPlayer.username}
+                    size={64}
+                    active
+                    showName
+                  />
+                </div>
+              );
+            })()}
             <img
               src={mascotForCell(getCell(players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0).type)}
               alt=""

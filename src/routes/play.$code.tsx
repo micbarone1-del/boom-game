@@ -367,6 +367,8 @@ function PlayPage() {
       <div className="text-center text-xs opacity-70 flex items-center justify-center gap-1">
         <Bomb size={12} /> BOOM — The Workout Game
       </div>
+
+      {showCamera && <BoomCamera onClose={() => setShowCamera(false)} />}
     </main>
   );
 }

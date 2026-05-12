@@ -131,6 +131,9 @@ function PlayPage() {
       const reps = getOverrideReps(target, overrides, calc) ?? calc;
       const exercise = cell.exercise ?? "Workout";
       await supabase.from("players").update({ current_space: target }).eq("id", me.id);
+      // Wait for the hop animation to finish on every screen before starting the timer.
+      const hopMs = Math.max(0, Math.abs(target - me.current_space)) * 220 + 400;
+      await new Promise((r) => setTimeout(r, hopMs));
       await supabase
         .from("rooms")
         .update({

@@ -1,26 +1,67 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { Flame, Tv, Smartphone, Bomb } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
-
 function Index() {
-  return <PlaceholderIndex />;
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center p-6 gap-8">
+      <div className="text-center">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <Bomb size={56} style={{ color: "var(--boom-ink)" }} />
+          <Flame size={56} fill="currentColor" className="anim-fuse" style={{ color: "var(--boom-orange)" }} />
+        </div>
+        <h1
+          className="comic-shadow"
+          style={{
+            fontFamily: "'Luckiest Guy', cursive",
+            fontSize: "clamp(4rem, 14vw, 9rem)",
+            color: "var(--boom-red)",
+            lineHeight: 1,
+          }}
+        >
+          BOOM!
+        </h1>
+        <p className="mt-2 text-xl md:text-2xl font-black" style={{ color: "var(--boom-ink)" }}>
+          THE WORKOUT GAME
+        </p>
+        <p className="mt-1 text-sm md:text-base" style={{ color: "var(--boom-ink)" }}>
+          Roll. Sweat. Defuse. Repeat.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 w-full max-w-3xl mt-4">
+        <Link
+          to="/gym/new"
+          className="ink-border rounded-3xl p-8 flex flex-col items-center gap-3 hover:-translate-y-1 transition-transform"
+          style={{ background: "var(--boom-yellow)" }}
+        >
+          <Tv size={64} style={{ color: "var(--boom-ink)" }} />
+          <h2 className="text-3xl font-black comic-shadow" style={{ color: "white" }}>
+            GYM SCREEN
+          </h2>
+          <p className="text-center font-bold" style={{ color: "var(--boom-ink)" }}>
+            Big TV / iPad master view. Shows the board for everyone.
+          </p>
+        </Link>
+
+        <Link
+          to="/join"
+          className="ink-border rounded-3xl p-8 flex flex-col items-center gap-3 hover:-translate-y-1 transition-transform"
+          style={{ background: "var(--boom-red)" }}
+        >
+          <Smartphone size={64} style={{ color: "white" }} />
+          <h2 className="text-3xl font-black comic-shadow" style={{ color: "white" }}>
+            JOIN GAME
+          </h2>
+          <p className="text-center font-bold" style={{ color: "white" }}>
+            Phone controller. Roll dice, log reps, judge form.
+          </p>
+        </Link>
+      </div>
+    </main>
+  );
 }

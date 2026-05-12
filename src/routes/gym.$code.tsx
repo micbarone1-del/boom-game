@@ -634,22 +634,6 @@ function GymBoard({ code }: { code: string }) {
             className="absolute anim-mascot-explode"
             style={{ width: "70vmin", height: "70vmin" }}
           />
-          <div className="text-center anim-mega-boom relative z-10">
-            <div
-              className="comic-shadow anim-spin-slow"
-              style={{
-                fontFamily: "'Luckiest Guy', cursive",
-                fontSize: "clamp(8rem, 28vw, 22rem)",
-                color: "var(--boom-yellow)",
-                lineHeight: 1,
-              }}
-            >
-              KA-BOOM!
-            </div>
-            <div className="text-5xl font-black mt-6 text-white comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-              {winnerOverlay} BLEW UP THE FINISH LINE! 🏆💥
-            </div>
-          </div>
         </div>
       )}
 

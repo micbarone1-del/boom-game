@@ -235,23 +235,26 @@ function PlayPage() {
       </div>
 
       {trap ? (
-        <div className="ink-border rounded-3xl p-6 text-center anim-boom relative overflow-visible" style={{ background: "var(--boom-red)", color: "white" }}>
+        <div
+          className="fixed inset-0 z-[60] p-6 pt-10 text-center anim-boom flex flex-col items-center justify-center gap-4 overflow-y-auto"
+          style={{ background: "var(--boom-red)", color: "white" }}
+        >
           <img
             src={mascotForCell(getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type)}
             alt=""
             width={1024}
             height={1024}
-            className="mx-auto w-32 h-32 -mt-16 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
+            className="w-40 h-40 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
           />
-          <div className="anim-mascot-bounce mt-2 inline-block">
-            <div className="text-5xl font-black comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>BOOM!</div>
+          <div className="anim-mascot-bounce inline-block">
+            <div className="text-6xl font-black comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>BOOM!</div>
           </div>
-          <p className="text-xl font-black mt-2">
+          <p className="text-xl font-black">
             {triggeredByMe
               ? "YOU ARE ABOUT TO EXPLODE!"
               : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
           </p>
-          <p className="text-2xl font-black mt-2">{trap.reps} {trap.exercise}</p>
+          <p className="text-3xl font-black">{trap.reps} {trap.exercise}</p>
           {(() => {
             const trapCellType = getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type;
             const cellColor =
@@ -261,31 +264,31 @@ function PlayPage() {
               "var(--boom-yellow)";
             const fg = trapCellType === "hard" ? "white" : "var(--boom-ink)";
             return (
-              <div className="mt-3 flex justify-center">
+              <div className="flex justify-center">
                 <div
-                  className="ink-border rounded-2xl px-5 py-2"
+                  className="ink-border rounded-2xl px-6 py-3"
                   style={{ background: cellColor, color: fg }}
                 >
-                  <FuseTimer startedAt={trap.started_at} color={fg} />
+                  <FuseTimer startedAt={trap.started_at} big color={fg} />
                 </div>
               </div>
             );
           })()}
-          <div className="relative h-10 mt-2 overflow-hidden">
+          <div className="relative h-10 w-full overflow-hidden">
             <span className="absolute top-0 left-0 text-3xl anim-flame-travel">🔥</span>
           </div>
           {triggeredByMe && (
             trap.awaiting_verification ? (
-              <p className="mt-4 font-bold">Waiting for the room to judge your form…</p>
+              <p className="font-bold text-lg">Waiting for the room to judge your form…</p>
             ) : (
-              <button onClick={onIDidIt} className="mt-5 ink-border rounded-2xl px-6 py-5 text-3xl font-black w-full"
+              <button onClick={onIDidIt} className="ink-border rounded-2xl px-6 py-6 text-4xl font-black w-full max-w-md"
                 style={{ background: "var(--boom-green)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}>
                 I DID IT!
               </button>
             )
           )}
           {!triggeredByMe && trap.awaiting_verification && (
-            <p className="mt-4 font-bold">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
+            <p className="font-bold text-lg">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
           )}
         </div>
       ) : me.finished_at ? null : (

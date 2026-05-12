@@ -23,6 +23,8 @@ export function mascotForCell(type: CellType): string {
 }
 
 export function CellMascot({ type, username }: { type: CellType; username?: string }) {
+  // Finish has its own dedicated explosion overlay — skip the cell splash.
+  if (type === "finish") return null;
   const f = FLAVOR[type];
   return (
     <div

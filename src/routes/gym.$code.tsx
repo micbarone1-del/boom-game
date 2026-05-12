@@ -386,32 +386,20 @@ function GymBoard({ code }: { code: string }) {
                       title={describeCell(cell)}
                     >
                       {space === 1 && (
-                        <>
-                          <div
-                            className="absolute -inset-3 rounded-3xl pointer-events-none -z-10"
-                            style={{ background: "var(--boom-green)", border: "3px solid var(--boom-ink)", boxShadow: "0 8px 0 0 var(--boom-ink)" }}
-                          />
-                          <span
-                            className="absolute -top-7 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md ink-border-sm text-sm md:text-base font-black tracking-widest whitespace-nowrap -z-10 anim-pop"
-                            style={{ background: "var(--boom-green)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
-                          >
-                            ★ START ★
-                          </span>
-                        </>
+                        <span
+                          className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm md:text-base font-black tracking-widest whitespace-nowrap pointer-events-none"
+                          style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
+                        >
+                          START
+                        </span>
                       )}
                       {space === BOARD_SIZE && (
-                        <>
-                          <div
-                            className="absolute -inset-3 rounded-3xl pointer-events-none -z-10"
-                            style={{ background: "var(--boom-yellow)", border: "3px solid var(--boom-ink)", boxShadow: "0 8px 0 0 var(--boom-ink)" }}
-                          />
-                          <span
-                            className="absolute -top-7 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md ink-border-sm text-sm md:text-base font-black tracking-widest whitespace-nowrap -z-10 anim-pop"
-                            style={{ background: "var(--boom-yellow)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
-                          >
-                            🏆 FINISH 🏆
-                          </span>
-                        </>
+                        <span
+                          className="absolute -top-6 left-1/2 -translate-x-1/2 text-sm md:text-base font-black tracking-widest whitespace-nowrap pointer-events-none"
+                          style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
+                        >
+                          FINISH
+                        </span>
                       )}
                       <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
                         {space}

@@ -302,13 +302,17 @@ function GymBoard({ code }: { code: string }) {
           loading="lazy"
           className="absolute -bottom-10 -right-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-20"
         />
-        {/* Zig-zag (snake) board: 6 rows of 10, every other row reversed */}
+        {/* Zig-zag (snake) board: rows of 11, every other row reversed so the path snakes */}
         <div className="flex flex-col gap-3 pt-6">
-          {Array.from({ length: 6 }, (_, rowIdx) => {
-            const rowSpaces = Array.from({ length: 10 }, (_, c) => rowIdx * 10 + c + 1);
-            const ordered = rowIdx % 2 === 1 ? [...rowSpaces].reverse() : rowSpaces;
-            return (
-              <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}>
+          {(() => {
+            const COLS = 11;
+            const rows = Math.ceil(BOARD_SIZE / COLS);
+            return Array.from({ length: rows }, (_, rowIdx) => {
+              const rowSpaces = Array.from({ length: COLS }, (_, c) => rowIdx * COLS + c + 1)
+                .filter((s) => s <= BOARD_SIZE);
+              const ordered = rowIdx % 2 === 1 ? [...rowSpaces].reverse() : rowSpaces;
+              return (
+                <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
                 {ordered.map((space) => {
                   const cell = getCell(space);
                   const here = players.filter((p) => p.current_space === space);
@@ -363,9 +367,10 @@ function GymBoard({ code }: { code: string }) {
                     </div>
                   );
                 })}
-              </div>
-            );
-          })}
+                </div>
+              );
+            });
+          })()}
         </div>
         {/* Legend */}
         <div className="mt-3 flex flex-wrap gap-2 text-xs font-black relative z-10">

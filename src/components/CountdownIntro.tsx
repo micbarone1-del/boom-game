@@ -5,7 +5,15 @@ import { useEffect, useState } from "react";
  * the countdown is finished. Uses the same anchor on every client so phones
  * and the gym screen stay in sync.
  */
-export function CountdownIntro({ startAt, color = "var(--boom-red)" }: { startAt: number; color?: string }) {
+export function CountdownIntro({
+  startAt,
+  color = "var(--boom-red)",
+  align = "center",
+}: {
+  startAt: number;
+  color?: string;
+  align?: "center" | "right";
+}) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 100);
@@ -14,8 +22,12 @@ export function CountdownIntro({ startAt, color = "var(--boom-red)" }: { startAt
   const remaining = startAt - now;
   if (remaining <= 0) return null;
   const n = Math.max(1, Math.ceil(remaining / 1000));
+  const positionClass =
+    align === "right"
+      ? "fixed top-4 right-4 z-[80] pointer-events-none"
+      : "fixed top-4 left-1/2 -translate-x-1/2 z-[80] pointer-events-none";
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80] pointer-events-none">
+    <div className={positionClass}>
       <div
         key={n}
         className="anim-pop comic-shadow rounded-full ink-border bg-white flex items-center justify-center"

@@ -46,7 +46,7 @@ function PlayPage() {
       });
       const latest = newOnes[newOnes.length - 1];
       setWinnerOverlay(latest.username);
-      const t = setTimeout(() => setWinnerOverlay(null), 4500);
+      const t = setTimeout(() => setWinnerOverlay(null), 3200);
       return () => clearTimeout(t);
     }
   }, [players, seenFinishers]);

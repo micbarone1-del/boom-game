@@ -63,7 +63,7 @@ function GymBoard({ code }: { code: string }) {
       });
       const latest = newOnes[newOnes.length - 1];
       setWinnerOverlay(latest.username);
-      const t = setTimeout(() => setWinnerOverlay(null), 5000);
+      const t = setTimeout(() => setWinnerOverlay(null), 3200);
       return () => clearTimeout(t);
     }
   }, [players, seenFinishers]);

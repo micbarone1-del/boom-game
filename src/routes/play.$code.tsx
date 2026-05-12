@@ -214,7 +214,7 @@ function PlayPage() {
             username={me.username}
             size={56}
             active={isMyTurn}
-            className="anim-land"
+            className={rolling ? "anim-hop" : "anim-land"}
           />
         </div>
       </header>
@@ -252,7 +252,25 @@ function PlayPage() {
               : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
           </p>
           <p className="text-2xl font-black mt-2">{trap.reps} {trap.exercise}</p>
-          <div className="mt-3"><FuseTimer startedAt={trap.started_at} /></div>
+          {(() => {
+            const trapCellType = getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type;
+            const cellColor =
+              trapCellType === "easy" ? "var(--boom-yellow)" :
+              trapCellType === "medium" ? "var(--boom-orange)" :
+              trapCellType === "hard" ? "var(--boom-red)" :
+              "var(--boom-yellow)";
+            const fg = trapCellType === "hard" ? "white" : "var(--boom-ink)";
+            return (
+              <div className="mt-3 flex justify-center">
+                <div
+                  className="ink-border rounded-2xl px-5 py-2"
+                  style={{ background: cellColor, color: fg }}
+                >
+                  <FuseTimer startedAt={trap.started_at} color={fg} />
+                </div>
+              </div>
+            );
+          })()}
           <div className="relative h-10 mt-2 overflow-hidden">
             <span className="absolute top-0 left-0 text-3xl anim-flame-travel">🔥</span>
           </div>

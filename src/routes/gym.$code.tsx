@@ -671,7 +671,10 @@ function CustomizeBoardModal({
     (c) => c.type === "easy" || c.type === "medium" || c.type === "hard",
   );
 
-  const update = (space: number, patch: { exercise?: string; reps?: number }) => {
+  const update = (
+    space: number,
+    patch: { exercise?: string; reps?: number; min_reps?: number; max_reps?: number },
+  ) => {
     setDraft((prev) => {
       const cur = prev[String(space)] ?? {};
       return { ...prev, [String(space)]: { ...cur, ...patch } };
@@ -685,7 +688,22 @@ function CustomizeBoardModal({
     for (const [k, v] of Object.entries(draft)) {
       const exercise = v.exercise?.trim();
       const reps = v.reps && v.reps > 0 ? Math.round(v.reps) : undefined;
-      if (exercise || reps) clean[k] = { ...(exercise ? { exercise } : {}), ...(reps ? { reps } : {}) };
+      let min = v.min_reps && v.min_reps > 0 ? Math.round(v.min_reps) : undefined;
+      let max = v.max_reps && v.max_reps > 0 ? Math.round(v.max_reps) : undefined;
+      // If a fixed reps value is provided, drop the range — fixed wins.
+      if (reps) { min = undefined; max = undefined; }
+      // Normalise so min <= max when both are set.
+      if (min !== undefined && max !== undefined && min > max) {
+        const t = min; min = max; max = t;
+      }
+      if (exercise || reps || min || max) {
+        clean[k] = {
+          ...(exercise ? { exercise } : {}),
+          ...(reps ? { reps } : {}),
+          ...(min ? { min_reps: min } : {}),
+          ...(max ? { max_reps: max } : {}),
+        };
+      }
     }
     await supabase.from("rooms").update({ board_overrides: clean }).eq("code", code);
     setSaving(false);

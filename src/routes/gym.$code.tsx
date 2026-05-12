@@ -6,7 +6,7 @@ import { useRoom } from "@/hooks/use-room";
 import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Bomb, Zap, Flame, Trophy, Coffee, ArrowLeft, Dumbbell, Flag, Settings } from "lucide-react";
+import { Bomb, Flame, Trophy, Flag, Settings } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/gym/$code")({

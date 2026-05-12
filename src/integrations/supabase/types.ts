@@ -18,30 +18,39 @@ export type Database = {
         Row: {
           avatar_url: string | null
           current_space: number
+          finish_rank: number | null
+          finished_at: string | null
           fitness_level: number
           id: string
           joined_at: string
           room_code: string
+          score: number
           status: string
           username: string
         }
         Insert: {
           avatar_url?: string | null
           current_space?: number
+          finish_rank?: number | null
+          finished_at?: string | null
           fitness_level?: number
           id?: string
           joined_at?: string
           room_code: string
+          score?: number
           status?: string
           username: string
         }
         Update: {
           avatar_url?: string | null
           current_space?: number
+          finish_rank?: number | null
+          finished_at?: string | null
           fitness_level?: number
           id?: string
           joined_at?: string
           room_code?: string
+          score?: number
           status?: string
           username?: string
         }

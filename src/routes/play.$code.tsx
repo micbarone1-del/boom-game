@@ -2,10 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { loadPlayerSession, rollDice, pickExercise, calcReps, TRAP_SPACES, BOOST_SPACES, BOARD_SIZE, type Trap } from "@/lib/game";
+import { loadPlayerSession, rollDice, pickExercise, calcReps, TRAP_SPACES, BOOST_SPACES, BOARD_SIZE, finishPlayer, type Trap } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Bomb, Dice5 } from "lucide-react";
+import { Bomb, Dice5, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/play/$code")({
   component: PlayPage,
@@ -16,11 +16,30 @@ function PlayPage() {
   const { room, players } = useRoom(code);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [rolling, setRolling] = useState(false);
+  const [winnerOverlay, setWinnerOverlay] = useState<string | null>(null);
+  const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const s = loadPlayerSession();
     if (s && s.roomCode === code) setPlayerId(s.playerId);
   }, [code]);
+
+  // Detect newly-finished players and trigger explosion overlay
+  useEffect(() => {
+    const finished = players.filter((p) => p.finished_at);
+    const newOnes = finished.filter((p) => !seenFinishers.has(p.id));
+    if (newOnes.length > 0) {
+      setSeenFinishers((prev) => {
+        const n = new Set(prev);
+        newOnes.forEach((p) => n.add(p.id));
+        return n;
+      });
+      const latest = newOnes[newOnes.length - 1];
+      setWinnerOverlay(latest.username);
+      const t = setTimeout(() => setWinnerOverlay(null), 4500);
+      return () => clearTimeout(t);
+    }
+  }, [players, seenFinishers]);
 
   const me = players.find((p) => p.id === playerId);
   const trap = room?.trap as Trap | null;
@@ -71,10 +90,22 @@ function PlayPage() {
       // Boost?
       const final = BOOST_SPACES.has(target) ? Math.min(BOARD_SIZE, target + 5) : target;
       await supabase.from("players").update({ current_space: final }).eq("id", me.id);
-      // Pass turn
+      // Check for victory
+      if (final >= BOARD_SIZE) {
+        await finishPlayer(me.id, code);
+      }
+      // Pass turn — skip players who already finished (and the one who just finished)
       const order = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
       const idx = order.findIndex((p) => p.id === me.id);
-      const next = order[(idx + 1) % order.length];
+      const justFinished = final >= BOARD_SIZE;
+      let next = order[(idx + 1) % order.length];
+      for (let i = 1; i <= order.length; i++) {
+        const candidate = order[(idx + i) % order.length];
+        if (candidate.finished_at) continue;
+        if (justFinished && candidate.id === me.id) continue;
+        next = candidate;
+        break;
+      }
       await supabase.from("rooms").update({
         last_dice: dice,
         current_turn_player_id: next.id,
@@ -144,17 +175,57 @@ function PlayPage() {
       )}
 
       <div className="ink-border rounded-2xl bg-white p-3">
-        <div className="text-sm font-black mb-2">PLAYERS</div>
+        <div className="text-sm font-black mb-2 flex items-center gap-2"><Trophy size={16}/> RANKING</div>
         <div className="flex gap-3 overflow-x-auto">
-          {players.map((p) => (
+          {[...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p, i) => (
             <div key={p.id} className="flex-shrink-0">
               <PlayerToken avatar={p.avatar_url} username={p.username} size={48}
                 active={room?.current_turn_player_id === p.id} />
-              <div className="text-center text-xs">#{p.current_space}</div>
+              <div className="text-center text-xs font-black">
+                {p.finished_at ? `🏆 #${p.finish_rank}` : `Sp.${p.current_space}`}
+              </div>
+              <div className="text-center text-xs" style={{ color: "var(--boom-red)" }}>
+                {p.score ?? 0} pts
+              </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Personal trophy badge */}
+      {me.finished_at && (
+        <div className="ink-border rounded-2xl p-4 text-center" style={{ background: "var(--boom-yellow)" }}>
+          <Trophy className="mx-auto" size={32} />
+          <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            FINISHED #{me.finish_rank}!
+          </div>
+          <div className="text-lg font-black" style={{ color: "var(--boom-red)" }}>
+            {me.score} POINTS
+          </div>
+        </div>
+      )}
+
+      {/* Winner explosion overlay */}
+      {winnerOverlay && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6 pointer-events-none">
+          <div className="text-center anim-mega-boom">
+            <div
+              className="comic-shadow anim-spin-slow"
+              style={{
+                fontFamily: "'Luckiest Guy', cursive",
+                fontSize: "clamp(6rem, 22vw, 14rem)",
+                color: "var(--boom-yellow)",
+                lineHeight: 1,
+              }}
+            >
+              KA-BOOM!
+            </div>
+            <div className="text-3xl font-black mt-4 text-white comic-shadow">
+              {winnerOverlay} FINISHED THE GAME! 💥🏆
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="text-center text-xs opacity-70 flex items-center justify-center gap-1">
         <Bomb size={12} /> BOOM — The Workout Game

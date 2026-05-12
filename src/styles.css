@@ -206,4 +206,18 @@
     80% { transform: translate(3px, 3px); }
   }
   .anim-shake { animation: shake 0.4s infinite; }
+
+  @keyframes mega-boom {
+    0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+    40% { transform: scale(1.6) rotate(15deg); opacity: 1; }
+    70% { transform: scale(0.9) rotate(-8deg); }
+    100% { transform: scale(1.1) rotate(0deg); opacity: 1; }
+  }
+  .anim-mega-boom { animation: mega-boom 0.9s cubic-bezier(.2,1.8,.4,1) both; }
+
+  @keyframes confetti-spin {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(360deg) scale(1.05); }
+  }
+  .anim-spin-slow { animation: confetti-spin 6s linear infinite; }
 }

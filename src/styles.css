@@ -262,6 +262,14 @@
   }
   .anim-land { animation: land-pop 0.55s cubic-bezier(.2,.9,.3,1.4) both; }
 
+  /* Hop animation — token jumps as it advances cell-by-cell */
+  @keyframes hop-jump {
+    0%   { transform: translateY(0) scale(1); }
+    45%  { transform: translateY(-14px) scale(1.08); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  .anim-hop { animation: hop-jump 0.22s ease-out both; }
+
   /* Big mascot landing splash — pops in, hangs, fades */
   @keyframes mascot-splash {
     0%   { transform: translate(-50%, -30%) scale(0.2) rotate(-25deg); opacity: 0; }

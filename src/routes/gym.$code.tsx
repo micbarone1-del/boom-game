@@ -514,9 +514,22 @@ function GymBoard({ code }: { code: string }) {
             <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
               Do {trap.reps} {trap.exercise}!
             </p>
-            <div className="mt-4 flex justify-center">
-              <FuseTimer startedAt={trap.started_at} big />
-            </div>
+            {(() => {
+              const trapCellType = getCell(players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0).type;
+              const cellColor =
+                trapCellType === "easy" ? "var(--boom-yellow)" :
+                trapCellType === "medium" ? "var(--boom-orange)" :
+                trapCellType === "hard" ? "var(--boom-red)" :
+                trapCellType === "rest" ? "var(--boom-blue)" :
+                trapCellType === "boost" ? "var(--boom-green)" :
+                trapCellType === "setback" ? "#7c3aed" :
+                "var(--boom-yellow)";
+              return (
+                <div className="mt-4 flex justify-center">
+                  <FuseTimer startedAt={trap.started_at} big color={cellColor} />
+                </div>
+              );
+            })()}
             {trap.awaiting_verification ? (
               <div className="mt-6">
                 <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>

@@ -6,6 +6,7 @@ import { useRoom } from "@/hooks/use-room";
 import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
+import { CellMascot } from "@/components/CellMascot";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
@@ -55,6 +56,30 @@ function GymBoard({ code }: { code: string }) {
   const [restarting, setRestarting] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [qrZoom, setQrZoom] = useState(false);
+  const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
+  const [prevSpaces, setPrevSpaces] = useState<Record<string, number>>({});
+
+  // Detect a player moving to a new cell and trigger the mascot splash.
+  useEffect(() => {
+    if (players.length === 0) return;
+    let triggered: typeof landed = null;
+    const next: Record<string, number> = { ...prevSpaces };
+    for (const p of players) {
+      const prev = prevSpaces[p.id];
+      next[p.id] = p.current_space;
+      if (prev !== undefined && prev !== p.current_space && p.current_space > 0) {
+        const cell = getCell(p.current_space);
+        triggered = { id: p.id, type: cell.type, username: p.username, key: Date.now() };
+      }
+    }
+    setPrevSpaces(next);
+    if (triggered) {
+      setLanded(triggered);
+      const t = setTimeout(() => setLanded(null), 1700);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [players]);
 
   useEffect(() => {
     const finished = players.filter((p) => p.finished_at);
@@ -277,84 +302,67 @@ function GymBoard({ code }: { code: string }) {
           loading="lazy"
           className="absolute -bottom-10 -right-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-20"
         />
-        <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}>
-          {Array.from({ length: BOARD_SIZE }, (_, i) => i + 1).map((space) => {
-            const cell = getCell(space);
-            const here = players.filter((p) => p.current_space === space);
-            const bg =
-              cell.type === "start"
-                ? "var(--boom-green)"
-                : cell.type === "finish"
-                  ? "var(--boom-yellow)"
-                  : cell.type === "easy"
-                    ? "var(--boom-yellow)"
-                    : cell.type === "medium"
-                      ? "var(--boom-orange)"
-                      : cell.type === "hard"
-                        ? "var(--boom-red)"
-                        : cell.type === "rest"
-                          ? "var(--boom-blue)"
-                          : cell.type === "boost"
-                            ? "var(--boom-green)"
-                            : "#7c3aed"; // setback purple
+        {/* Zig-zag (snake) board: 6 rows of 10, every other row reversed */}
+        <div className="flex flex-col gap-3 pt-6">
+          {Array.from({ length: 6 }, (_, rowIdx) => {
+            const rowSpaces = Array.from({ length: 10 }, (_, c) => rowIdx * 10 + c + 1);
+            const ordered = rowIdx % 2 === 1 ? [...rowSpaces].reverse() : rowSpaces;
             return (
-              <div
-                key={space}
-                className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center overflow-hidden"
-                style={{ background: bg }}
-                title={describeCell(cell)}
-              >
-                <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
-                  {space}
-                </span>
-                {(cell.type === "easy" || cell.type === "medium") && (
-                  <Dumbbell size={22} />
-                )}
-                {cell.type === "hard" && <Flame size={22} className="text-white" />}
-                {cell.type === "rest" && <Coffee size={22} />}
-                {cell.type === "boost" && <Zap size={22} />}
-                {cell.type === "setback" && <ArrowLeft size={22} className="text-white" />}
-                {cell.type === "start" && <Flag size={22} />}
-                {cell.type === "finish" && <Trophy size={22} />}
-                {here.length > 0 && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    {here.slice(0, 6).map((p, i) => {
-                      const n = Math.min(here.length, 6);
-                      // Spread tokens around bottom-right of the cell so the label stays readable.
-                      const angle = (Math.PI * (i + 0.5)) / Math.max(n, 1) - Math.PI / 2;
-                      const r = n === 1 ? 0 : 12;
-                      const dx = Math.cos(angle) * r;
-                      const dy = Math.sin(angle) * r;
-                      return (
-                        <div
-                          key={`${p.id}-${p.current_space}`}
-                          className="absolute"
-                          style={{
-                            right: 2,
-                            bottom: 2,
-                            transform: `translate(${dx}px, ${dy}px)`,
-                            zIndex: 10 + i,
-                          }}
-                        >
-                          <PlayerToken
-                            avatar={p.avatar_url}
-                            username={p.username}
-                            size={30}
-                            active={room?.current_turn_player_id === p.id}
-                            showName={false}
-                            showInitial
-                            className="anim-land"
-                          />
-                        </div>
-                      );
-                    })}
-                    {here.length > 6 && (
-                      <span className="absolute top-0.5 right-0.5 text-[9px] font-black bg-white rounded-full px-1 ink-border-sm">
-                        +{here.length - 6}
+              <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}>
+                {ordered.map((space) => {
+                  const cell = getCell(space);
+                  const here = players.filter((p) => p.current_space === space);
+                  const bg =
+                    cell.type === "start" ? "var(--boom-green)" :
+                    cell.type === "finish" ? "var(--boom-yellow)" :
+                    cell.type === "easy" ? "var(--boom-yellow)" :
+                    cell.type === "medium" ? "var(--boom-orange)" :
+                    cell.type === "hard" ? "var(--boom-red)" :
+                    cell.type === "rest" ? "var(--boom-blue)" :
+                    cell.type === "boost" ? "var(--boom-green)" :
+                    "#7c3aed";
+                  return (
+                    <div
+                      key={space}
+                      className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center"
+                      style={{ background: bg }}
+                      title={describeCell(cell)}
+                    >
+                      <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
+                        {space}
                       </span>
-                    )}
-                  </div>
-                )}
+                      {(cell.type === "easy" || cell.type === "medium") && <Dumbbell size={22} />}
+                      {cell.type === "hard" && <Flame size={22} className="text-white" />}
+                      {cell.type === "rest" && <Coffee size={22} />}
+                      {cell.type === "boost" && <Zap size={22} />}
+                      {cell.type === "setback" && <ArrowLeft size={22} className="text-white" />}
+                      {cell.type === "start" && <Flag size={22} />}
+                      {cell.type === "finish" && <Trophy size={22} />}
+                      {here.length > 0 && (
+                        <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-30 flex -space-x-2 pointer-events-none">
+                          {here.slice(0, 4).map((p, i) => (
+                            <div key={`${p.id}-${p.current_space}`} style={{ zIndex: 30 + i }}>
+                              <PlayerToken
+                                avatar={p.avatar_url}
+                                username={p.username}
+                                size={34}
+                                active={room?.current_turn_player_id === p.id}
+                                showName={false}
+                                showInitial
+                                className="anim-land"
+                              />
+                            </div>
+                          ))}
+                          {here.length > 4 && (
+                            <span className="text-[10px] font-black bg-white rounded-full px-1.5 py-0.5 ink-border-sm self-center">
+                              +{here.length - 4}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
@@ -591,6 +599,9 @@ function GymBoard({ code }: { code: string }) {
           overrides={(room.board_overrides ?? {}) as BoardOverrides}
           onClose={() => setShowCustomize(false)}
         />
+      )}
+      {landed && (
+        <CellMascot key={landed.key} type={landed.type} username={landed.username} />
       )}
     </div>
   );

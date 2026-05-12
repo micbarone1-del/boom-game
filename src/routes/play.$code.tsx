@@ -17,6 +17,7 @@ import {
 } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
+import { CellMascot } from "@/components/CellMascot";
 import { Bomb, Dice5, Trophy, Camera } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
@@ -34,11 +35,28 @@ function PlayPage() {
   const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
   const [showFinalRanking, setShowFinalRanking] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const [myPrevSpace, setMyPrevSpace] = useState<number | null>(null);
+  const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
 
   useEffect(() => {
     const s = loadPlayerSession();
     if (s && s.roomCode === code) setPlayerId(s.playerId);
   }, [code]);
+
+  // Mascot splash when MY token lands on a new cell
+  useEffect(() => {
+    const meNow = players.find((p) => p.id === playerId);
+    if (!meNow) return;
+    if (myPrevSpace !== null && myPrevSpace !== meNow.current_space && meNow.current_space > 0) {
+      const cell = getCell(meNow.current_space);
+      setMyLanded({ type: cell.type, key: Date.now() });
+      const t = setTimeout(() => setMyLanded(null), 1700);
+      setMyPrevSpace(meNow.current_space);
+      return () => clearTimeout(t);
+    }
+    setMyPrevSpace(meNow.current_space);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [players, playerId]);
 
   // Detect newly-finished players and trigger explosion overlay
   useEffect(() => {
@@ -379,6 +397,7 @@ function PlayPage() {
       </div>
 
       {showCamera && <BoomCamera onClose={() => setShowCamera(false)} />}
+      {myLanded && <CellMascot key={myLanded.key} type={myLanded.type} />}
     </main>
   );
 }

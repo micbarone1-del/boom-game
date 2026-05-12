@@ -1,0 +1,1 @@
+ALTER TABLE public.rooms ADD COLUMN IF NOT EXISTS board_overrides jsonb NOT NULL DEFAULT '{}'::jsonb;

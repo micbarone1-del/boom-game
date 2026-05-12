@@ -516,9 +516,14 @@ function GymBoard({ code }: { code: string }) {
                 </div>
               </div>
             ) : (
-              <p className="mt-4 text-lg font-bold flex items-center justify-center gap-2">
-                <Flame className="anim-fuse" /> Get sweating!
-              </p>
+              <>
+                <p className="mt-4 text-lg font-bold flex items-center justify-center gap-2">
+                  <Flame className="anim-fuse" /> Get sweating!
+                </p>
+                <div className="relative h-10 mt-2 overflow-hidden">
+                  <span className="absolute top-0 left-0 text-3xl anim-flame-travel">🔥</span>
+                </div>
+              </>
             )}
           </div>
         </div>

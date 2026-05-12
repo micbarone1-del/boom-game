@@ -50,7 +50,7 @@ function PlayPage() {
     if (myPrevSpace !== null && myPrevSpace !== meNow.current_space && meNow.current_space > 0) {
       const cell = getCell(meNow.current_space);
       setMyLanded({ type: cell.type, key: Date.now() });
-      const t = setTimeout(() => setMyLanded(null), 1700);
+      const t = setTimeout(() => setMyLanded(null), 3200);
       setMyPrevSpace(meNow.current_space);
       return () => clearTimeout(t);
     }

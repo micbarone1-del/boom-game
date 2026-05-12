@@ -31,8 +31,9 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
     img.onload = () => { mascotRef.current = img; };
   }, []);
 
-  // Start camera (re-runs on facing change).
+  // Start camera (re-runs on facing change, or whenever the preview is closed).
   useEffect(() => {
+    if (preview) return; // don't hold the camera while previewing the capture
     let cancelled = false;
     const start = async () => {
       try {
@@ -59,7 +60,7 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
       streamRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facing]);
+  }, [facing, preview]);
 
   const drawFrame = () => {
     const v = videoRef.current;

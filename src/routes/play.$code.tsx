@@ -226,6 +226,9 @@ function PlayPage() {
           </p>
           <p className="text-2xl font-black mt-2">{trap.reps} {trap.exercise}</p>
           <div className="mt-3"><FuseTimer startedAt={trap.started_at} /></div>
+          <div className="relative h-10 mt-2 overflow-hidden">
+            <span className="absolute top-0 left-0 text-3xl anim-flame-travel">🔥</span>
+          </div>
           {triggeredByMe && (
             trap.awaiting_verification ? (
               <p className="mt-4 font-bold">Waiting for the room to judge your form…</p>

@@ -6,6 +6,7 @@ import { useRoom } from "@/hooks/use-room";
 import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
+import { CellMascot } from "@/components/CellMascot";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
@@ -55,6 +56,30 @@ function GymBoard({ code }: { code: string }) {
   const [restarting, setRestarting] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [qrZoom, setQrZoom] = useState(false);
+  const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
+  const [prevSpaces, setPrevSpaces] = useState<Record<string, number>>({});
+
+  // Detect a player moving to a new cell and trigger the mascot splash.
+  useEffect(() => {
+    if (players.length === 0) return;
+    let triggered: typeof landed = null;
+    const next: Record<string, number> = { ...prevSpaces };
+    for (const p of players) {
+      const prev = prevSpaces[p.id];
+      next[p.id] = p.current_space;
+      if (prev !== undefined && prev !== p.current_space && p.current_space > 0) {
+        const cell = getCell(p.current_space);
+        triggered = { id: p.id, type: cell.type, username: p.username, key: Date.now() };
+      }
+    }
+    setPrevSpaces(next);
+    if (triggered) {
+      setLanded(triggered);
+      const t = setTimeout(() => setLanded(null), 1700);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [players]);
 
   useEffect(() => {
     const finished = players.filter((p) => p.finished_at);

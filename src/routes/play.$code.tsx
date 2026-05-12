@@ -17,7 +17,7 @@ import {
 } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { CellMascot } from "@/components/CellMascot";
+import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { Bomb, Dice5, Trophy, Camera } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
@@ -235,7 +235,7 @@ function PlayPage() {
       {trap ? (
         <div className="ink-border rounded-3xl p-6 text-center anim-boom relative overflow-visible" style={{ background: "var(--boom-red)", color: "white" }}>
           <img
-            src={bombMascot}
+            src={mascotForCell(getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type)}
             alt=""
             width={1024}
             height={1024}

@@ -6,7 +6,7 @@ import { useRoom } from "@/hooks/use-room";
 import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { CellMascot } from "@/components/CellMascot";
+import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
@@ -469,7 +469,7 @@ function GymBoard({ code }: { code: string }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom relative">
             <img
-              src={bombMascot}
+              src={mascotForCell(getCell(players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0).type)}
               alt=""
               width={1024}
               height={1024}

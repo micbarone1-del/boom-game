@@ -17,8 +17,9 @@ import {
 } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Bomb, Dice5, Trophy } from "lucide-react";
+import { Dice5, Trophy, Camera } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { BoomCamera } from "@/components/BoomCamera";
 
 export const Route = createFileRoute("/play/$code")({
   component: PlayPage,
@@ -32,6 +33,7 @@ function PlayPage() {
   const [winnerOverlay, setWinnerOverlay] = useState<string | null>(null);
   const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
   const [showFinalRanking, setShowFinalRanking] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
     const s = loadPlayerSession();
@@ -178,7 +180,16 @@ function PlayPage() {
             <div className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{code}</div>
           </div>
         </div>
-        <PlayerToken avatar={me.avatar_url} username={me.username} size={56} active={isMyTurn} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCamera(true)}
+            title="Take a photo or video with the BOOM! logo"
+            className="ink-border-sm rounded-full bg-white w-11 h-11 flex items-center justify-center"
+          >
+            <Camera size={20} />
+          </button>
+          <PlayerToken avatar={me.avatar_url} username={me.username} size={56} active={isMyTurn} />
+        </div>
       </header>
 
       <div className="ink-border rounded-2xl bg-white p-4 text-center">

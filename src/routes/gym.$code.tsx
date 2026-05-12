@@ -594,10 +594,22 @@ function GymBoard({ code }: { code: string }) {
               return (
                 <div className="mt-4 flex justify-center">
                   <div
-                    className="ink-border rounded-2xl px-6 py-3"
-                    style={{ background: cellColor, color: trapCellType === "hard" ? "white" : "var(--boom-ink)" }}
+                    className="ink-border anim-border-flash rounded-2xl px-6 py-3"
+                    style={{
+                      background: cellColor,
+                      color: trapCellType === "hard" ? "white" : "var(--boom-ink)",
+                      borderWidth: 4,
+                      transform: "rotate(-3deg)",
+                      minWidth: "12rem",
+                    }}
                   >
-                    <FuseTimer startedAt={trap.started_at} big color={trapCellType === "hard" ? "white" : "var(--boom-ink)"} />
+                    <CountdownIntro startAt={trap.started_at} inline />
+                    <FuseTimer
+                      startedAt={trap.started_at}
+                      big
+                      color={trapCellType === "hard" ? "white" : "var(--boom-ink)"}
+                      hideBeforeStart
+                    />
                   </div>
                 </div>
               );
@@ -711,7 +723,7 @@ function GymBoard({ code }: { code: string }) {
       {landed && (
         <CellMascot key={landed.key} type={landed.type} username={landed.username} />
       )}
-      {trap && <CountdownIntro startAt={trap.started_at} />}
+      {/* countdown rendered inline inside the timer box */}
     </div>
   );
 }

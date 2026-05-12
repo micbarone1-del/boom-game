@@ -283,14 +283,16 @@ function PlayPage() {
           <p className="text-3xl font-black">{trap.reps} {trap.exercise}</p>
           <div className="flex justify-center py-2">
             <div
-              className="ink-border rounded-2xl px-8 py-4 bg-white comic-shadow"
+              className="ink-border anim-border-flash rounded-2xl px-8 py-4 bg-white"
               style={{
                 color: "var(--boom-ink)",
                 transform: "rotate(-3deg)",
-                boxShadow: "8px 8px 0 0 var(--boom-ink)",
+                borderWidth: 4,
+                minWidth: "12rem",
               }}
             >
-              <FuseTimer startedAt={trap.started_at} big color="var(--boom-ink)" />
+              <CountdownIntro startAt={trap.started_at} inline />
+              <FuseTimer startedAt={trap.started_at} big color="var(--boom-ink)" hideBeforeStart />
             </div>
           </div>
           {triggeredByMe && (
@@ -422,7 +424,7 @@ function PlayPage() {
 
       {showCamera && <BoomCamera onClose={() => setShowCamera(false)} />}
       {myLanded && <CellMascot key={myLanded.key} type={myLanded.type} />}
-      {trap && <CountdownIntro startAt={trap.started_at} align="right" />}
+      {/* countdown rendered inline inside the timer box */}
     </main>
   );
 }

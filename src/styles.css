@@ -319,4 +319,15 @@
     filter: drop-shadow(0 0 10px var(--boom-orange));
     display: inline-block;
   }
+  @keyframes border-flash {
+    0%, 100% {
+      border-color: var(--boom-red);
+      box-shadow: 8px 8px 0 0 var(--boom-ink), 0 0 0 4px var(--boom-red), 0 0 24px 4px var(--boom-red);
+    }
+    50% {
+      border-color: var(--boom-yellow);
+      box-shadow: 8px 8px 0 0 var(--boom-ink), 0 0 0 4px var(--boom-yellow), 0 0 36px 8px var(--boom-yellow);
+    }
+  }
+  .anim-border-flash { animation: border-flash 0.55s ease-in-out infinite; }
 }

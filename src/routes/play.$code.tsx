@@ -291,11 +291,8 @@ function PlayPage() {
                 minWidth: "12rem",
               }}
             >
-              {Date.now() < trap.started_at ? (
-                <CountdownIntro startAt={trap.started_at} inline />
-              ) : (
-                <FuseTimer startedAt={trap.started_at} big color="var(--boom-ink)" />
-              )}
+              <CountdownIntro startAt={trap.started_at} inline />
+              <FuseTimer startedAt={trap.started_at} big color="var(--boom-ink)" hideBeforeStart />
             </div>
           </div>
           {triggeredByMe && (

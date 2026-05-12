@@ -392,7 +392,7 @@ function GymBoard({ code }: { code: string }) {
                             style={{ background: "var(--boom-green)", border: "3px solid var(--boom-ink)", boxShadow: "0 8px 0 0 var(--boom-ink)" }}
                           />
                           <span
-                            className="absolute -top-7 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md ink-border-sm text-sm md:text-base font-black tracking-widest whitespace-nowrap z-10 anim-pop"
+                            className="absolute -top-7 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md ink-border-sm text-sm md:text-base font-black tracking-widest whitespace-nowrap -z-10 anim-pop"
                             style={{ background: "var(--boom-green)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
                           >
                             ★ START ★
@@ -406,7 +406,7 @@ function GymBoard({ code }: { code: string }) {
                             style={{ background: "var(--boom-yellow)", border: "3px solid var(--boom-ink)", boxShadow: "0 8px 0 0 var(--boom-ink)" }}
                           />
                           <span
-                            className="absolute -top-7 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md ink-border-sm text-sm md:text-base font-black tracking-widest whitespace-nowrap z-10 anim-pop"
+                            className="absolute -top-7 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md ink-border-sm text-sm md:text-base font-black tracking-widest whitespace-nowrap -z-10 anim-pop"
                             style={{ background: "var(--boom-yellow)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
                           >
                             🏆 FINISH 🏆

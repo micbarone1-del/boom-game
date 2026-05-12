@@ -112,6 +112,25 @@ export function getCell(space: number): Cell {
   return BOARD[Math.max(0, Math.min(BOARD_SIZE, space) - 1)] ?? BOARD[0];
 }
 
+export type BoardOverrides = Record<string, { exercise?: string; reps?: number }>;
+
+/** Returns the cell with any host overrides applied (custom exercise name). */
+export function getEffectiveCell(space: number, overrides?: BoardOverrides | null): Cell {
+  const base = getCell(space);
+  const o = overrides?.[String(space)];
+  if (!o) return base;
+  if (base.type === "easy" || base.type === "medium" || base.type === "hard") {
+    return { ...base, exercise: o.exercise ?? base.exercise };
+  }
+  return base;
+}
+
+/** Returns the override reps for an exercise cell, or null to fall back to calc. */
+export function getOverrideReps(space: number, overrides?: BoardOverrides | null): number | null {
+  const o = overrides?.[String(space)];
+  return o?.reps && o.reps > 0 ? o.reps : null;
+}
+
 /** Reps for a tier given the player's fitness level + room difficulty. Capped to keep things sane. */
 export function calcRepsForTier(
   tier: 1 | 2 | 3,

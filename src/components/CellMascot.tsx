@@ -1,10 +1,11 @@
 import bombMascot from "@/assets/bomb-mascot.png";
+import { Flame } from "lucide-react";
 import type { CellType } from "@/lib/game";
 
-const FLAVOR: Record<CellType, { label: string; color: string; emoji: string; fx?: "sweat" | "heavy-sweat" | "steam" | "zoom" | "tears" }> = {
-  easy:    { label: "EASY PEASY!",   color: "var(--boom-yellow)", emoji: "😄", fx: undefined },
-  medium:  { label: "GETTIN' SWEATY!", color: "var(--boom-orange)", emoji: "😅", fx: "sweat" },
-  hard:    { label: "BEAST MODE!",   color: "var(--boom-red)",    emoji: "🥵🔥", fx: "heavy-sweat" },
+const FLAVOR: Record<CellType, { label: string; color: string; emoji: string; flame?: "sm" | "md" | "lg"; fx?: "sweat" | "heavy-sweat" | "steam" | "zoom" | "tears" }> = {
+  easy:    { label: "EASY PEASY!",   color: "var(--boom-yellow)", emoji: "😄",  flame: "sm" },
+  medium:  { label: "GETTIN' SWEATY!", color: "var(--boom-orange)", emoji: "😅", flame: "md", fx: "sweat" },
+  hard:    { label: "BEAST MODE!",   color: "var(--boom-red)",    emoji: "🥵", flame: "lg", fx: "heavy-sweat" },
   rest:    { label: "COFFEE BREAK!", color: "var(--boom-blue)",   emoji: "☕😌", fx: "steam" },
   boost:   { label: "ULTRA BLAST!",  color: "var(--boom-green)",  emoji: "⚡⚡⚡", fx: "zoom" },
   setback: { label: "OH NOOO!",      color: "#7c3aed",            emoji: "😭", fx: "tears" },
@@ -24,6 +25,20 @@ export function CellMascot({ type, username }: { type: CellType; username?: stri
         style={{ background: f.color, color: "white", minWidth: 260 }}
       >
         <div className="relative" style={{ width: 140, height: 140 }}>
+          {f.flame && (
+            <div
+              className="absolute left-1/2 -translate-x-1/2 anim-fuse z-20"
+              style={{
+                top: f.flame === "sm" ? -12 : f.flame === "md" ? -22 : -36,
+                color: "var(--boom-orange)",
+              }}
+            >
+              <Flame
+                size={f.flame === "sm" ? 28 : f.flame === "md" ? 48 : 72}
+                fill="currentColor"
+              />
+            </div>
+          )}
           <img
             src={bombMascot}
             alt=""

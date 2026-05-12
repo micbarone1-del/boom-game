@@ -7,6 +7,7 @@ import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlaye
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
+import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
@@ -700,6 +701,7 @@ function GymBoard({ code }: { code: string }) {
       {landed && (
         <CellMascot key={landed.key} type={landed.type} username={landed.username} />
       )}
+      {trap && <CountdownIntro startAt={trap.started_at} />}
     </div>
   );
 }

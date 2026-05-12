@@ -62,26 +62,33 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 1rem;
+  /* BOOM cartoon palette */
+  --background: oklch(0.97 0.05 90);
+  --foreground: oklch(0.18 0.04 50);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.18 0.04 50);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --popover-foreground: oklch(0.18 0.04 50);
+  --primary: oklch(0.65 0.27 27);          /* BOOM red */
+  --primary-foreground: oklch(0.99 0.02 90);
+  --secondary: oklch(0.85 0.2 85);          /* yellow */
+  --secondary-foreground: oklch(0.2 0.05 50);
+  --muted: oklch(0.94 0.04 85);
+  --muted-foreground: oklch(0.4 0.05 50);
+  --accent: oklch(0.78 0.21 60);            /* orange */
+  --accent-foreground: oklch(0.18 0.04 50);
+  --destructive: oklch(0.6 0.27 27);
+  --destructive-foreground: oklch(0.99 0.02 90);
+  --border: oklch(0.18 0.04 50);            /* thick black-ink outline */
+  --input: oklch(0.92 0.02 85);
+  --ring: oklch(0.65 0.27 27);
+  --boom-yellow: oklch(0.9 0.21 95);
+  --boom-orange: oklch(0.75 0.22 55);
+  --boom-red: oklch(0.65 0.27 27);
+  --boom-blue: oklch(0.65 0.2 240);
+  --boom-green: oklch(0.7 0.22 145);
+  --boom-ink: oklch(0.18 0.04 50);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -140,5 +147,62 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "Bangers", "Impact", system-ui, sans-serif;
+    letter-spacing: 0.02em;
+    background-image:
+      radial-gradient(circle at 10% 10%, color-mix(in oklab, var(--boom-yellow) 40%, transparent) 0, transparent 40%),
+      radial-gradient(circle at 90% 80%, color-mix(in oklab, var(--boom-orange) 35%, transparent) 0, transparent 45%);
   }
+}
+
+@layer components {
+  .ink-border {
+    border: 4px solid var(--boom-ink);
+    box-shadow: 6px 6px 0 0 var(--boom-ink);
+  }
+  .ink-border-sm {
+    border: 3px solid var(--boom-ink);
+    box-shadow: 3px 3px 0 0 var(--boom-ink);
+  }
+  .comic-shadow {
+    text-shadow:
+      3px 3px 0 var(--boom-ink),
+      -1px -1px 0 var(--boom-ink),
+      1px -1px 0 var(--boom-ink),
+      -1px 1px 0 var(--boom-ink);
+  }
+  .btn-boom {
+    @apply ink-border;
+    background: var(--boom-red);
+    color: white;
+    padding: 1rem 2rem;
+    font-size: 1.5rem;
+    border-radius: var(--radius);
+    text-transform: uppercase;
+    transition: transform 0.08s ease;
+  }
+  .btn-boom:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 0 var(--boom-ink); }
+  .btn-boom:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 0 var(--boom-ink); }
+
+  @keyframes boom-pop {
+    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+    60% { transform: scale(1.3) rotate(8deg); opacity: 1; }
+    100% { transform: scale(1) rotate(-4deg); opacity: 1; }
+  }
+  .anim-boom { animation: boom-pop 0.5s cubic-bezier(.2,1.6,.5,1) both; }
+
+  @keyframes fuse-flicker {
+    0%, 100% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 8px var(--boom-orange)); }
+    50% { transform: scale(1.15) rotate(4deg); filter: drop-shadow(0 0 14px var(--boom-yellow)); }
+  }
+  .anim-fuse { animation: fuse-flicker 0.5s infinite; }
+
+  @keyframes shake {
+    0%,100% { transform: translate(0,0); }
+    20% { transform: translate(-4px, 2px); }
+    40% { transform: translate(4px, -2px); }
+    60% { transform: translate(-3px, -3px); }
+    80% { transform: translate(3px, 3px); }
+  }
+  .anim-shake { animation: shake 0.4s infinite; }
 }

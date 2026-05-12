@@ -51,6 +51,8 @@ function GymBoard({ code }: { code: string }) {
   const [startError, setStartError] = useState<string | null>(null);
   const [winnerOverlay, setWinnerOverlay] = useState<string | null>(null);
   const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
+  const [showFinalRanking, setShowFinalRanking] = useState(false);
+  const [restarting, setRestarting] = useState(false);
 
   useEffect(() => {
     const finished = players.filter((p) => p.finished_at);
@@ -63,10 +65,39 @@ function GymBoard({ code }: { code: string }) {
       });
       const latest = newOnes[newOnes.length - 1];
       setWinnerOverlay(latest.username);
-      const t = setTimeout(() => setWinnerOverlay(null), 3200);
+      const t = setTimeout(() => {
+        setWinnerOverlay(null);
+        setShowFinalRanking(true);
+      }, 2800);
       return () => clearTimeout(t);
     }
   }, [players, seenFinishers]);
+
+  const restartGame = async () => {
+    if (restarting) return;
+    setRestarting(true);
+    try {
+      await supabase
+        .from("players")
+        .update({ current_space: 0, finished_at: null, finish_rank: null, score: 0, status: "active" })
+        .eq("room_code", code);
+      const first = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at))[0];
+      await supabase
+        .from("rooms")
+        .update({
+          status: "playing",
+          locked: false,
+          trap: null,
+          last_dice: null,
+          current_turn_player_id: first?.id ?? null,
+        })
+        .eq("code", code);
+      setSeenFinishers(new Set());
+      setShowFinalRanking(false);
+    } finally {
+      setRestarting(false);
+    }
+  };
 
   const startGame = async () => {
     if (!room || players.length === 0 || starting) return;
@@ -441,6 +472,52 @@ function GymBoard({ code }: { code: string }) {
             </div>
             <div className="text-5xl font-black mt-6 text-white comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
               {winnerOverlay} BLEW UP THE FINISH LINE! 🏆💥
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Final ranking modal — appears after the explosion */}
+      {showFinalRanking && (
+        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 p-6">
+          <div className="ink-border rounded-3xl bg-white p-6 max-w-lg w-full text-center anim-boom">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Trophy size={28} />
+              <div className="text-4xl font-black comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+                FINAL RANKING
+              </div>
+              <Trophy size={28} />
+            </div>
+            <div className="flex flex-col gap-2 text-left mb-5">
+              {[...players]
+                .sort((a, b) => {
+                  if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+                  if (a.finish_rank) return -1;
+                  if (b.finish_rank) return 1;
+                  return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
+                })
+                .map((p, i) => (
+                  <div key={p.id} className="flex items-center justify-between gap-3 p-2 rounded-xl ink-border-sm"
+                    style={{ background: i === 0 ? "var(--boom-yellow)" : "white" }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-black w-7 text-center" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+                        {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
+                      </span>
+                      <PlayerToken avatar={p.avatar_url} username={p.username} size={36} />
+                      <span className="font-black">{p.username}</span>
+                    </div>
+                    <span className="font-black" style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
+                  </div>
+                ))}
+            </div>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setShowFinalRanking(false)} className="ink-border-sm rounded-xl px-4 py-2 font-black text-sm">
+                CLOSE
+              </button>
+              <button onClick={restartGame} disabled={restarting} className="btn-boom disabled:opacity-50"
+                style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+                {restarting ? "RESETTING…" : "RESTART GAME"}
+              </button>
             </div>
           </div>
         </div>

@@ -387,7 +387,7 @@ function GymBoard({ code }: { code: string }) {
               <div key={p.id} className="flex items-center justify-between gap-3 px-2 py-1 rounded-lg" style={{ background: i === 0 ? "var(--boom-yellow)" : "transparent" }}>
                 <div className="flex items-center gap-2">
                   <span className="text-xl font-black w-6" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{i + 1}</span>
-                  <PlayerToken avatar={p.avatar_url} username={p.username} size={28} />
+                  <PlayerToken avatar={p.avatar_url} username={p.username} size={28} showName={false} />
                   <span className="text-sm font-black">{p.username}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs font-black">
@@ -551,7 +551,7 @@ function GymBoard({ code }: { code: string }) {
                       <span className="text-2xl font-black w-7 text-center" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
                         {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
                       </span>
-                      <PlayerToken avatar={p.avatar_url} username={p.username} size={36} />
+                      <PlayerToken avatar={p.avatar_url} username={p.username} size={36} showName={false} />
                       <span className="font-black">{p.username}</span>
                     </div>
                     <span className="font-black" style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>

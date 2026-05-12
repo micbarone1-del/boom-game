@@ -370,8 +370,8 @@ function GymBoard({ code }: { code: string }) {
                     return (s === 0 ? 1 : s) === space;
                   });
                   const bg =
-                    cell.type === "start" ? "var(--boom-green)" :
-                    cell.type === "finish" ? "var(--boom-yellow)" :
+                    cell.type === "start" ? "white" :
+                    cell.type === "finish" ? "white" :
                     cell.type === "easy" ? "var(--boom-yellow)" :
                     cell.type === "medium" ? "var(--boom-orange)" :
                     cell.type === "hard" ? "var(--boom-red)" :

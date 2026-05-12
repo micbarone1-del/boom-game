@@ -4,6 +4,9 @@ export const EXERCISES_EASY = ["Jumping Jacks", "High Knees", "Sit-ups", "Crunch
 export const EXERCISES_MEDIUM = ["Squats", "Lunges", "Push-ups", "Mountain Climbers"];
 export const EXERCISES_HARD = ["Burpees", "Plank-Ups", "Jump Squats", "Pike Push-ups"];
 
+/** Hard caps so we never ask for crazy numbers like 56 burpees. */
+const REP_CAP: Record<1 | 2 | 3, number> = { 1: 20, 2: 14, 3: 10 };
+
 export type CellType =
   | "start"
   | "easy"
@@ -21,6 +24,8 @@ export type Cell = {
   delta?: number;
   /** Reps multiplier for exercise tiers. */
   tier?: 1 | 2 | 3;
+  /** Pre-assigned exercise name for exercise cells. */
+  exercise?: string;
 };
 
 /**
@@ -93,9 +98,12 @@ const RAW_BOARD: Array<[CellType, number?]> = [
 
 export const BOARD: Cell[] = RAW_BOARD.map(([type, n], i) => {
   const space = i + 1;
-  if (type === "easy") return { space, type, tier: 1 };
-  if (type === "medium") return { space, type, tier: 2 };
-  if (type === "hard") return { space, type, tier: 3 };
+  if (type === "easy")
+    return { space, type, tier: 1, exercise: EXERCISES_EASY[i % EXERCISES_EASY.length] };
+  if (type === "medium")
+    return { space, type, tier: 2, exercise: EXERCISES_MEDIUM[i % EXERCISES_MEDIUM.length] };
+  if (type === "hard")
+    return { space, type, tier: 3, exercise: EXERCISES_HARD[i % EXERCISES_HARD.length] };
   if (type === "boost" || type === "setback") return { space, type, delta: n };
   return { space, type };
 });
@@ -104,19 +112,39 @@ export function getCell(space: number): Cell {
   return BOARD[Math.max(0, Math.min(BOARD_SIZE, space) - 1)] ?? BOARD[0];
 }
 
-export function pickExerciseForTier(tier: 1 | 2 | 3): string {
-  const pool = tier === 1 ? EXERCISES_EASY : tier === 2 ? EXERCISES_MEDIUM : EXERCISES_HARD;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-/** Reps for a tier given the player's fitness level + room difficulty. */
+/** Reps for a tier given the player's fitness level + room difficulty. Capped to keep things sane. */
 export function calcRepsForTier(
   tier: 1 | 2 | 3,
   fitnessLevel: number,
   multiplier: number,
 ): number {
-  const tierFactor = tier === 1 ? 0.6 : tier === 2 ? 1 : 1.6;
-  return Math.max(1, Math.round(fitnessLevel * multiplier * tierFactor));
+  // Average of fitness (1-10) and difficulty multiplier (default 5) on a 0-1 scale.
+  const intensity = (fitnessLevel + multiplier) / 20; // ~0.5 at defaults
+  const base = tier === 1 ? 14 : tier === 2 ? 10 : 7;
+  const reps = Math.round(base * (0.6 + intensity)); // defaults: easy 15, med 11, hard 8
+  return Math.max(2, Math.min(REP_CAP[tier], reps));
+}
+
+/** Human-readable activity label for any cell — used on board + player UI. */
+export function describeCell(cell: Cell): string {
+  switch (cell.type) {
+    case "start":
+      return "🚀 Start line";
+    case "finish":
+      return "🏆 FINISH!";
+    case "rest":
+      return "☕ Rest — skip your turn";
+    case "boost":
+      return `⚡ Blast forward +${cell.delta}`;
+    case "setback":
+      return `⬅ Setback ${cell.delta}`;
+    case "easy":
+      return `Easy: ${cell.exercise}`;
+    case "medium":
+      return `Medium: ${cell.exercise}`;
+    case "hard":
+      return `HARD: ${cell.exercise}`;
+  }
 }
 
 export const CELL_LABEL: Record<CellType, string> = {

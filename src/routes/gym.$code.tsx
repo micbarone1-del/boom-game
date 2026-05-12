@@ -570,7 +570,12 @@ function GymBoard({ code }: { code: string }) {
                 "var(--boom-yellow)";
               return (
                 <div className="mt-4 flex justify-center">
-                  <FuseTimer startedAt={trap.started_at} big color={cellColor} />
+                  <div
+                    className="ink-border rounded-2xl px-6 py-3"
+                    style={{ background: cellColor, color: trapCellType === "hard" ? "white" : "var(--boom-ink)" }}
+                  >
+                    <FuseTimer startedAt={trap.started_at} big color={trapCellType === "hard" ? "white" : "var(--boom-ink)"} />
+                  </div>
                 </div>
               );
             })()}

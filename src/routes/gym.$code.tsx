@@ -246,29 +246,29 @@ function GymBoard({ code }: { code: string }) {
                 ? "IGNITING…"
                 : "START GAME"}
           </button>
-          <div className="ink-border rounded-2xl p-3 bg-white flex items-center gap-4">
-            <div>
-              <div className="text-xs font-bold">JOIN CODE</div>
+          <div className="ink-border-sm rounded-xl p-1.5 bg-white flex items-center gap-2">
+            <div className="flex flex-col">
+              <div className="text-[9px] font-bold leading-none">JOIN</div>
               <div
-                className="text-3xl font-black tracking-wider"
+                className="text-base font-black tracking-wider leading-tight"
                 style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
               >
                 {code}
               </div>
               <button
                 onClick={() => navigator.clipboard?.writeText(joinUrl)}
-                className="text-[10px] font-bold underline mt-1 break-all text-left"
+                className="text-[8px] font-bold underline text-left"
                 title="Copy join link"
               >
-                Tap to copy link
+                copy link
               </button>
             </div>
             <button
               onClick={() => setQrZoom(true)}
-              className="bg-white p-1"
+              className="bg-white"
               title="Tap to enlarge QR"
             >
-              <QRCodeSVG value={joinUrl} size={160} level="H" />
+              <QRCodeSVG value={joinUrl} size={56} level="M" />
             </button>
           </div>
         </div>

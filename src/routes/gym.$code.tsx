@@ -219,7 +219,7 @@ function GymBoard({ code }: { code: string }) {
         <Settings size={16} /> CUSTOMIZE
       </button>
       <header className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
+        <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
           <Bomb size={40} />
           <div>
             <div
@@ -231,7 +231,7 @@ function GymBoard({ code }: { code: string }) {
             <div className="text-sm font-bold">Gym Screen</div>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-wrap justify-end pt-10">
+        <div className="ml-auto flex items-center gap-3 flex-wrap justify-end pt-10">
           <button
             onClick={startGame}
             disabled={players.length === 0 || starting || !!trap}

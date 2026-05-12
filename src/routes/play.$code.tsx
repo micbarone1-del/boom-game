@@ -53,7 +53,8 @@ function PlayPage() {
       }, 2800);
       return () => clearTimeout(t);
     }
-  }, [players, seenFinishers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [players]);
 
   // Auto-clear final ranking when host restarts (everyone back to space 0, no finishers)
   useEffect(() => {

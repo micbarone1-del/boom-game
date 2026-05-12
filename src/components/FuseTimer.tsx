@@ -18,10 +18,10 @@ export function FuseTimer({ startedAt, big = false, color }: { startedAt: number
   const elapsed = Math.max(0, now - anchor);
   const sec = (elapsed / 1000).toFixed(1);
   return (
-    <div className={`inline-flex items-center gap-2 ${big ? "text-6xl" : "text-2xl"} font-black comic-shadow`}
+    <div className={`inline-flex items-center gap-2 ${big ? "text-6xl" : "text-2xl"} font-bold tabular-nums`}
          style={{ color: color ?? "var(--boom-yellow)" }}>
       <Flame className="anim-fuse" fill="currentColor" size={big ? 64 : 28} />
-      <span style={{ fontFamily: "'Luckiest Guy', cursive" }}>{sec}s</span>
+      <span style={{ fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 600 }}>{sec}s</span>
     </div>
   );
 }

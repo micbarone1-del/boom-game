@@ -64,8 +64,8 @@ export function PlayerToken({
             <img src={avatar} alt={username} className="w-full h-full object-cover" />
           ) : (
             <div
-              className="w-full h-full flex items-center justify-center font-black"
-              style={{ background: color, color: "white", fontSize: Math.round(size * 0.55) }}
+              className="w-full h-full flex items-center justify-center"
+              style={{ background: color, color: "white", fontSize: Math.round(size * 0.5), fontWeight: 600, fontFamily: "system-ui, -apple-system, sans-serif" }}
             >
               {initial}
             </div>
@@ -73,13 +73,15 @@ export function PlayerToken({
         </div>
         {showInitial && avatar && (
           <span
-            className="absolute -bottom-1 -right-1 rounded-full font-black flex items-center justify-center"
+            className="absolute -bottom-1 -right-1 rounded-full flex items-center justify-center"
             style={{
               background: color,
               color: "white",
               width: Math.round(size * 0.55),
               height: Math.round(size * 0.55),
-              fontSize: Math.round(size * 0.34),
+              fontSize: Math.round(size * 0.32),
+              fontWeight: 600,
+              fontFamily: "system-ui, -apple-system, sans-serif",
               boxShadow: "0 0 0 2px #111",
               lineHeight: 1,
             }}

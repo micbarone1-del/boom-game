@@ -271,9 +271,6 @@ function PlayPage() {
               <FuseTimer startedAt={trap.started_at} big color="var(--boom-ink)" />
             </div>
           </div>
-          <div className="relative h-10 w-full overflow-hidden">
-            <span className="absolute top-0 left-0 text-3xl anim-flame-travel">🔥</span>
-          </div>
           {triggeredByMe && (
             trap.awaiting_verification ? (
               <p className="font-bold text-lg">Waiting for the room to judge your form…</p>

@@ -17,7 +17,7 @@ import {
 } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
-import { Dice5, Trophy, Camera } from "lucide-react";
+import { Bomb, Dice5, Trophy, Camera } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
 

@@ -5,9 +5,9 @@ import { useRoom } from "@/hooks/use-room";
 import {
   loadPlayerSession,
   rollDice,
-  pickExerciseForTier,
   calcRepsForTier,
   getCell,
+  describeCell,
   BOARD_SIZE,
   finishPlayer,
   type Trap,
@@ -89,7 +89,7 @@ function PlayPage() {
     if (cell.type === "easy" || cell.type === "medium" || cell.type === "hard") {
       const tier = cell.tier ?? 1;
       const reps = calcRepsForTier(tier, me.fitness_level, room.difficulty_multiplier);
-      const exercise = pickExerciseForTier(tier);
+      const exercise = cell.exercise ?? "Workout";
       await supabase.from("players").update({ current_space: target }).eq("id", me.id);
       await supabase
         .from("rooms")
@@ -166,26 +166,31 @@ function PlayPage() {
           #{me.current_space}
         </div>
         <div className="text-xs mt-1">Fitness Lvl {me.fitness_level} · Difficulty x{room?.difficulty_multiplier ?? 5}</div>
+        <div className="mt-1 text-sm font-black">{describeCell(getCell(me.current_space))}</div>
         {(() => {
-          const c = getCell(me.current_space);
-          const label =
-            c.type === "easy" ? "Easy exercise zone" :
-            c.type === "medium" ? "Medium exercise zone" :
-            c.type === "hard" ? "HARD exercise zone" :
-            c.type === "rest" ? "☕ Rest — do nothing" :
-            c.type === "boost" ? `⚡ Blast forward +${c.delta}` :
-            c.type === "setback" ? `⬅ Setback ${c.delta}` :
-            c.type === "finish" ? "🏆 FINISH!" :
-            "🚀 Start";
-          return <div className="mt-1 text-sm font-black">{label}</div>;
+          const next = getCell(Math.min(BOARD_SIZE, me.current_space + 1));
+          return (
+            <div className="text-xs opacity-70 mt-1">Next cell: {describeCell(next)}</div>
+          );
         })()}
       </div>
 
       {trap ? (
-        <div className="ink-border rounded-3xl p-6 text-center anim-boom" style={{ background: "var(--boom-red)", color: "white" }}>
-          <div className="text-5xl font-black comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>BOOM!</div>
+        <div className="ink-border rounded-3xl p-6 text-center anim-boom relative overflow-visible" style={{ background: "var(--boom-red)", color: "white" }}>
+          <img
+            src={bombMascot}
+            alt=""
+            width={1024}
+            height={1024}
+            className="mx-auto w-32 h-32 -mt-16 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
+          />
+          <div className="anim-mascot-bounce mt-2 inline-block">
+            <div className="text-5xl font-black comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>BOOM!</div>
+          </div>
           <p className="text-xl font-black mt-2">
-            {triggeredByMe ? "YOU stepped on a mine!" : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} got blasted!`}
+            {triggeredByMe
+              ? "YOU ARE ABOUT TO EXPLODE!"
+              : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
           </p>
           <p className="text-2xl font-black mt-2">{trap.reps} {trap.exercise}</p>
           <div className="mt-3"><FuseTimer startedAt={trap.started_at} /></div>
@@ -261,10 +266,18 @@ function PlayPage() {
         </div>
       )}
 
-      {/* Winner explosion overlay */}
+      {/* Winner mascot explosion overlay — non-blocking */}
       {winnerOverlay && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-6 pointer-events-none">
-          <div className="text-center anim-mega-boom">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none anim-flash-bg overflow-hidden">
+          <img
+            src={bombMascot}
+            alt=""
+            width={1024}
+            height={1024}
+            className="absolute anim-mascot-explode"
+            style={{ width: "60vmin", height: "60vmin" }}
+          />
+          <div className="relative text-center anim-mega-boom z-10">
             <div
               className="comic-shadow anim-spin-slow"
               style={{
@@ -277,7 +290,7 @@ function PlayPage() {
               KA-BOOM!
             </div>
             <div className="text-3xl font-black mt-4 text-white comic-shadow">
-              {winnerOverlay} FINISHED THE GAME! 💥🏆
+              {winnerOverlay} FINISHED THE GAME! 🏆
             </div>
           </div>
         </div>

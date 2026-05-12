@@ -268,7 +268,12 @@ function PlayPage() {
             className="w-40 h-40 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
           />
           <div className="anim-mascot-bounce inline-block">
-            <div className="text-6xl font-black comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive" }}>BOOM!</div>
+            <div
+              className="text-6xl font-black comic-shadow"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+            >
+              BOOM!
+            </div>
           </div>
           <p className="text-xl font-black">
             {triggeredByMe

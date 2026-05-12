@@ -1,8 +1,16 @@
 import { Flame } from "lucide-react";
 
+// Colors chosen to NOT clash with cell backgrounds
+// (cell bg uses yellow/orange/red/blue/green/purple).
 const PLAYER_COLORS = [
-  "#ef4444", "#3b82f6", "#22c55e", "#a855f7", "#f97316",
-  "#06b6d4", "#ec4899", "#eab308", "#14b8a6", "#8b5cf6",
+  "#ec4899", // hot pink
+  "#d946ef", // fuchsia
+  "#a3e635", // lime
+  "#22d3ee", // cyan
+  "#ffffff", // white
+  "#111111", // black
+  "#92400e", // brown
+  "#f472b6", // light pink
 ];
 
 export function playerColor(seed: string): string {

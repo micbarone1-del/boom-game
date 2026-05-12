@@ -405,7 +405,7 @@ function GymBoard({ code }: { code: string }) {
       </div>
 
       {/* Players strip */}
-      <div className="ink-border rounded-2xl p-3 bg-white flex gap-4 overflow-x-auto">
+      <div className="ink-border rounded-2xl p-3 pt-5 bg-white flex gap-6 overflow-x-auto">
         {players.length === 0 && (
           <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
         )}
@@ -414,7 +414,7 @@ function GymBoard({ code }: { code: string }) {
           return (
             <div
               key={p.id}
-              className={`relative flex flex-col items-center gap-1 px-2 ${isTurn ? "anim-shake" : ""}`}
+              className={`relative flex flex-col items-center gap-2 px-3 pt-2 ${isTurn ? "anim-shake" : ""}`}
             >
               <button
                 onClick={async () => {
@@ -425,10 +425,15 @@ function GymBoard({ code }: { code: string }) {
                   }
                 }}
                 title="Remove player"
-                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white ink-border-sm text-xs font-black leading-none flex items-center justify-center hover:bg-[var(--boom-red)] hover:text-white"
+                className="absolute -top-2 -right-2 z-20 w-6 h-6 rounded-full bg-white ink-border-sm text-xs font-black leading-none flex items-center justify-center hover:bg-[var(--boom-red)] hover:text-white"
               >×</button>
-              <PlayerToken avatar={p.avatar_url} username={p.username} size={64} active={isTurn} />
-              <span className="text-xs font-black flex items-center gap-1">
+              <div className="pt-2">
+                <PlayerToken avatar={p.avatar_url} username={p.username} size={56} active={isTurn} showName={false} showInitial />
+              </div>
+              <span className="text-xs font-black flex items-center gap-1 mt-1">
+                {p.username}
+              </span>
+              <span className="text-[11px] font-black flex items-center gap-1 opacity-80">
                 {p.finished_at && <Trophy size={12} />}
                 {p.finished_at ? `#${p.finish_rank}` : `Sp.${p.current_space}`} · {p.score ?? 0}pts
               </span>

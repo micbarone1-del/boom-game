@@ -2,10 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { loadPlayerSession, rollDice, pickExercise, calcReps, TRAP_SPACES, BOOST_SPACES, BOARD_SIZE, finishPlayer, type Trap } from "@/lib/game";
+import {
+  loadPlayerSession,
+  rollDice,
+  pickExerciseForTier,
+  calcRepsForTier,
+  getCell,
+  BOARD_SIZE,
+  finishPlayer,
+  type Trap,
+} from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { Bomb, Dice5, Trophy } from "lucide-react";
+import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/play/$code")({
   component: PlayPage,
@@ -73,24 +83,40 @@ function PlayPage() {
     const dice = rollDice();
     await new Promise((r) => setTimeout(r, 600));
     const target = Math.min(BOARD_SIZE, me.current_space + dice);
+    const cell = getCell(target);
 
-    if (TRAP_SPACES.has(target)) {
-      // Move to trap space, lock with trap
-      const reps = calcReps(me.fitness_level, room.difficulty_multiplier);
-      const exercise = pickExercise();
+    // Exercise cell -> lock with trap, the gym screen will defuse after the player completes the reps.
+    if (cell.type === "easy" || cell.type === "medium" || cell.type === "hard") {
+      const tier = cell.tier ?? 1;
+      const reps = calcRepsForTier(tier, me.fitness_level, room.difficulty_multiplier);
+      const exercise = pickExerciseForTier(tier);
       await supabase.from("players").update({ current_space: target }).eq("id", me.id);
-      await supabase.from("rooms").update({
-        locked: true,
-        last_dice: dice,
-        trap: {
-          exercise, reps, triggered_by: me.id, started_at: Date.now(), awaiting_verification: false,
-        } satisfies Trap,
-      }).eq("code", code);
+      await supabase
+        .from("rooms")
+        .update({
+          locked: true,
+          last_dice: dice,
+          trap: {
+            exercise,
+            reps,
+            triggered_by: me.id,
+            started_at: Date.now(),
+            awaiting_verification: false,
+          } satisfies Trap,
+        })
+        .eq("code", code);
     } else {
-      // Boost?
-      const final = BOOST_SPACES.has(target) ? Math.min(BOARD_SIZE, target + 5) : target;
+      // Apply movement effect for non-exercise cells.
+      let final = target;
+      if (cell.type === "boost" && cell.delta) {
+        final = Math.min(BOARD_SIZE, target + cell.delta);
+      } else if (cell.type === "setback" && cell.delta) {
+        final = Math.max(1, target + cell.delta); // delta is negative
+      } else if (cell.type === "finish") {
+        final = BOARD_SIZE;
+      }
+      // rest cell -> just stay on target, lose the turn
       await supabase.from("players").update({ current_space: final }).eq("id", me.id);
-      // Check for victory
       if (final >= BOARD_SIZE) {
         await finishPlayer(me.id, code);
       }
@@ -124,9 +150,12 @@ function PlayPage() {
   return (
     <main className="min-h-screen p-4 flex flex-col gap-4 max-w-md mx-auto">
       <header className="flex items-center justify-between">
-        <div>
-          <div className="text-xs font-bold opacity-70">ROOM</div>
-          <div className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{code}</div>
+        <div className="flex items-center gap-2">
+          <img src={bombMascot} alt="" width={1024} height={1024} loading="lazy" className="w-12 h-12 anim-fuse" />
+          <div>
+            <div className="text-xs font-bold opacity-70">ROOM</div>
+            <div className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{code}</div>
+          </div>
         </div>
         <PlayerToken avatar={me.avatar_url} username={me.username} size={56} active={isMyTurn} />
       </header>
@@ -137,6 +166,19 @@ function PlayPage() {
           #{me.current_space}
         </div>
         <div className="text-xs mt-1">Fitness Lvl {me.fitness_level} · Difficulty x{room?.difficulty_multiplier ?? 5}</div>
+        {(() => {
+          const c = getCell(me.current_space);
+          const label =
+            c.type === "easy" ? "Easy exercise zone" :
+            c.type === "medium" ? "Medium exercise zone" :
+            c.type === "hard" ? "HARD exercise zone" :
+            c.type === "rest" ? "☕ Rest — do nothing" :
+            c.type === "boost" ? `⚡ Blast forward +${c.delta}` :
+            c.type === "setback" ? `⬅ Setback ${c.delta}` :
+            c.type === "finish" ? "🏆 FINISH!" :
+            "🚀 Start";
+          return <div className="mt-1 text-sm font-black">{label}</div>;
+        })()}
       </div>
 
       {trap ? (
@@ -175,20 +217,34 @@ function PlayPage() {
       )}
 
       <div className="ink-border rounded-2xl bg-white p-3">
-        <div className="text-sm font-black mb-2 flex items-center gap-2"><Trophy size={16}/> RANKING</div>
-        <div className="flex gap-3 overflow-x-auto">
-          {[...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p, i) => (
-            <div key={p.id} className="flex-shrink-0">
-              <PlayerToken avatar={p.avatar_url} username={p.username} size={48}
-                active={room?.current_turn_player_id === p.id} />
-              <div className="text-center text-xs font-black">
-                {p.finished_at ? `🏆 #${p.finish_rank}` : `Sp.${p.current_space}`}
-              </div>
-              <div className="text-center text-xs" style={{ color: "var(--boom-red)" }}>
-                {p.score ?? 0} pts
-              </div>
-            </div>
-          ))}
+        <div className="text-base font-black mb-2 flex items-center gap-2"><Trophy size={18}/> LIVE LEADERBOARD</div>
+        <div className="flex flex-col gap-1">
+          {[...players]
+            .sort((a, b) => {
+              if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+              if (a.finish_rank) return -1;
+              if (b.finish_rank) return 1;
+              return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
+            })
+            .map((p, i) => {
+              const isMe = p.id === me.id;
+              return (
+                <div key={p.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg"
+                  style={{ background: i === 0 ? "var(--boom-yellow)" : isMe ? "var(--muted)" : "transparent" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black w-5" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{i + 1}</span>
+                    <PlayerToken avatar={p.avatar_url} username={p.username} size={28}
+                      active={room?.current_turn_player_id === p.id} />
+                    <span className="text-sm font-black truncate max-w-[100px]">{p.username}{isMe ? " (you)" : ""}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-black">
+                    <span>Sp.{p.current_space}</span>
+                    <span style={{ color: "var(--boom-red)" }}>{p.score ?? 0}pts</span>
+                    {p.finished_at && <Trophy size={14} />}
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
 

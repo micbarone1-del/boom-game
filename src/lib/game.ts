@@ -1,20 +1,134 @@
 export const BOARD_SIZE = 60;
 
-// Spaces (1-indexed) that are traps (Detonation Zones)
-export const TRAP_SPACES = new Set([6, 13, 19, 27, 34, 41, 48, 55]);
-// Spaces that are boosts (Blast Wave) — blast forward 5
-export const BOOST_SPACES = new Set([4, 11, 22, 31, 39, 47, 53]);
+export const EXERCISES_EASY = ["Jumping Jacks", "High Knees", "Sit-ups", "Crunches"];
+export const EXERCISES_MEDIUM = ["Squats", "Lunges", "Push-ups", "Mountain Climbers"];
+export const EXERCISES_HARD = ["Burpees", "Plank-Ups", "Jump Squats", "Pike Push-ups"];
 
-export const EXERCISES = [
-  "Burpees",
-  "Push-ups",
-  "Squats",
-  "Jumping Jacks",
-  "Mountain Climbers",
-  "Sit-ups",
-  "Lunges",
-  "High Knees",
+export type CellType =
+  | "start"
+  | "easy"
+  | "medium"
+  | "hard"
+  | "rest"
+  | "setback"
+  | "boost"
+  | "finish";
+
+export type Cell = {
+  space: number;
+  type: CellType;
+  /** Movement delta for setback/boost (negative for setback). */
+  delta?: number;
+  /** Reps multiplier for exercise tiers. */
+  tier?: 1 | 2 | 3;
+};
+
+/**
+ * Hand-tuned 60-space board.
+ * Distribution: 1 start, 1 finish, 3 rest, 7 setback, 8 boost,
+ * 41 exercise spaces split across easy/medium/hard tiers.
+ */
+const RAW_BOARD: Array<[CellType, number?]> = [
+  ["start"],         // 1
+  ["easy"],          // 2
+  ["easy"],          // 3
+  ["boost", 3],      // 4
+  ["medium"],        // 5
+  ["hard"],          // 6
+  ["easy"],          // 7
+  ["rest"],          // 8
+  ["medium"],        // 9
+  ["setback", -2],   // 10
+  ["boost", 4],      // 11
+  ["easy"],          // 12
+  ["hard"],          // 13
+  ["medium"],        // 14
+  ["easy"],          // 15
+  ["setback", -3],   // 16
+  ["medium"],        // 17
+  ["easy"],          // 18
+  ["hard"],          // 19
+  ["rest"],          // 20
+  ["medium"],        // 21
+  ["boost", 5],      // 22
+  ["easy"],          // 23
+  ["medium"],        // 24
+  ["hard"],          // 25
+  ["easy"],          // 26
+  ["setback", -2],   // 27
+  ["medium"],        // 28
+  ["easy"],          // 29
+  ["boost", 3],      // 30
+  ["hard"],          // 31
+  ["easy"],          // 32
+  ["medium"],        // 33
+  ["setback", -4],   // 34
+  ["easy"],          // 35
+  ["medium"],        // 36
+  ["rest"],          // 37
+  ["hard"],          // 38
+  ["boost", 4],      // 39
+  ["easy"],          // 40
+  ["medium"],        // 41
+  ["setback", -3],   // 42
+  ["hard"],          // 43
+  ["easy"],          // 44
+  ["boost", 3],      // 45
+  ["medium"],        // 46
+  ["easy"],          // 47
+  ["hard"],          // 48
+  ["setback", -2],   // 49
+  ["medium"],        // 50
+  ["easy"],          // 51
+  ["boost", 5],      // 52
+  ["hard"],          // 53
+  ["medium"],        // 54
+  ["setback", -3],   // 55
+  ["easy"],          // 56
+  ["medium"],        // 57
+  ["hard"],          // 58
+  ["boost", 2],      // 59
+  ["finish"],        // 60
 ];
+
+export const BOARD: Cell[] = RAW_BOARD.map(([type, n], i) => {
+  const space = i + 1;
+  if (type === "easy") return { space, type, tier: 1 };
+  if (type === "medium") return { space, type, tier: 2 };
+  if (type === "hard") return { space, type, tier: 3 };
+  if (type === "boost" || type === "setback") return { space, type, delta: n };
+  return { space, type };
+});
+
+export function getCell(space: number): Cell {
+  return BOARD[Math.max(0, Math.min(BOARD_SIZE, space) - 1)] ?? BOARD[0];
+}
+
+export function pickExerciseForTier(tier: 1 | 2 | 3): string {
+  const pool = tier === 1 ? EXERCISES_EASY : tier === 2 ? EXERCISES_MEDIUM : EXERCISES_HARD;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/** Reps for a tier given the player's fitness level + room difficulty. */
+export function calcRepsForTier(
+  tier: 1 | 2 | 3,
+  fitnessLevel: number,
+  multiplier: number,
+): number {
+  const tierFactor = tier === 1 ? 0.6 : tier === 2 ? 1 : 1.6;
+  return Math.max(1, Math.round(fitnessLevel * multiplier * tierFactor));
+}
+
+export const CELL_LABEL: Record<CellType, string> = {
+  start: "START",
+  easy: "EASY",
+  medium: "MED",
+  hard: "HARD",
+  rest: "REST",
+  setback: "BACK",
+  boost: "BLAST",
+  finish: "FINISH",
+};
 
 export function generateRoomCode(): string {
   const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -25,14 +139,6 @@ export function generateRoomCode(): string {
 
 export function rollDice(): number {
   return 1 + Math.floor(Math.random() * 6);
-}
-
-export function pickExercise(): string {
-  return EXERCISES[Math.floor(Math.random() * EXERCISES.length)];
-}
-
-export function calcReps(fitnessLevel: number, multiplier: number): number {
-  return Math.max(1, fitnessLevel * multiplier);
 }
 
 export const FINISH_BONUS = 250;

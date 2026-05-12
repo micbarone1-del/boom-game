@@ -302,18 +302,28 @@ function GymBoard({ code }: { code: string }) {
           loading="lazy"
           className="absolute -bottom-10 -right-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-20"
         />
-        {/* Zig-zag (snake) board: rows of 11, every other row reversed so the path snakes */}
-        <div className="flex flex-col gap-1 pt-6">
+        {/* Snake board: 10-cell horizontal rows joined by single-cell vertical connectors */}
+        <div className="flex flex-col gap-1.5 pt-6">
           {(() => {
-            const COLS = 11;
-            const rows = Math.ceil(BOARD_SIZE / COLS);
-            return Array.from({ length: rows }, (_, rowIdx) => {
-              const rowSpaces = Array.from({ length: COLS }, (_, c) => rowIdx * COLS + c + 1)
-                .filter((s) => s <= BOARD_SIZE);
-              const ordered = rowIdx % 2 === 1 ? [...rowSpaces].reverse() : rowSpaces;
-              return (
-                <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
-                {ordered.map((space) => {
+            const COLS = 10;
+            const LAP = 11; // 10 horizontal + 1 connector
+            const rows: { space: number; col: number }[][] = [];
+            for (let lap = 0; lap * LAP + 1 <= BOARD_SIZE; lap++) {
+              const lapStart = lap * LAP + 1;
+              const ltr = lap % 2 === 0;
+              const horizontal: { space: number; col: number }[] = [];
+              for (let i = 0; i < COLS; i++) {
+                const space = lapStart + i;
+                if (space > BOARD_SIZE) break;
+                horizontal.push({ space, col: ltr ? i + 1 : COLS - i });
+              }
+              if (horizontal.length > 0) rows.push(horizontal);
+              const conn = lapStart + COLS;
+              if (conn <= BOARD_SIZE) rows.push([{ space: conn, col: ltr ? COLS : 1 }]);
+            }
+            return rows.map((row, rowIdx) => (
+              <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
+                {row.map(({ space, col }) => {
                   const cell = getCell(space);
                   const here = players.filter((p) => p.current_space === space);
                   const bg =
@@ -329,7 +339,7 @@ function GymBoard({ code }: { code: string }) {
                     <div
                       key={space}
                       className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center"
-                      style={{ background: bg }}
+                      style={{ background: bg, gridColumn: col }}
                       title={describeCell(cell)}
                     >
                       <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
@@ -367,9 +377,8 @@ function GymBoard({ code }: { code: string }) {
                     </div>
                   );
                 })}
-                </div>
-              );
-            });
+              </div>
+            ));
           })()}
         </div>
         {/* Legend */}

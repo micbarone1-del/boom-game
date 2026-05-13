@@ -261,7 +261,7 @@ function GymBoard({ code }: { code: string }) {
         const at = from + i * step;
         hopTimeoutsRef.current.push(setTimeout(() => {
           setHopSpaces((s) => ({ ...s, [p.id]: at }));
-          sfx.play("hop");
+          void sfx.unlock().then(() => sfx.play("hop"));
         }, i * HOP_MS));
       }
       hopTimeoutsRef.current.push(setTimeout(() => {
@@ -296,7 +296,7 @@ function GymBoard({ code }: { code: string }) {
     for (const p of players) {
       if (!seenPlayerIdsRef.current.has(p.id)) {
         seenPlayerIdsRef.current.add(p.id);
-        sfx.play("playerJoin");
+        void sfx.unlock().then(() => sfx.play("playerJoin"));
       }
     }
   }, [players]);
@@ -341,7 +341,7 @@ function GymBoard({ code }: { code: string }) {
     const n = Math.max(1, Math.ceil(remaining / 1000));
     if (!countdownTicksRef.current.has(n)) {
       countdownTicksRef.current.add(n);
-      sfx.play("countdown");
+      void sfx.unlock().then(() => sfx.play("countdown"));
     }
   });
 
@@ -360,7 +360,7 @@ function GymBoard({ code }: { code: string }) {
     for (const p of players) {
       if (p.finished_at && !winnerSoundRef.current.has(p.id)) {
         winnerSoundRef.current.add(p.id);
-        sfx.play("win");
+        void sfx.unlock().then(() => sfx.play("win"));
       }
     }
   }, [players]);

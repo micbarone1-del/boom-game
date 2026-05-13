@@ -195,10 +195,9 @@ function PlayPage() {
     setRolling(true);
     setLastRoll(null);
     const dice = rollDice();
-    // Show the rolled number immediately so the player can see what they got
-    // — DB only learns about it after the hop animation finishes.
-    setLastRoll(dice);
     await new Promise((r) => setTimeout(r, 600));
+    // Reveal the rolled number AFTER the dice-shake animation finishes.
+    setLastRoll(dice);
     const target = Math.min(BOARD_SIZE, me.current_space + dice);
     const overrides = (room.board_overrides ?? {}) as BoardOverrides;
     const cell = getEffectiveCell(target, overrides);

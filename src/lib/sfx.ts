@@ -48,17 +48,19 @@ if (typeof window !== "undefined") {
       src.buffer = buf;
       src.connect(c.destination);
       src.start(0);
-      unlocked = true;
+      // Consider unlocked once the context is actually running.
+      if (c.state === "running") unlocked = true;
+      else c.resume().then(() => { unlocked = true; }).catch(() => {});
     } catch {}
-    if (unlocked) {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-      window.removeEventListener("touchstart", unlock);
-    }
   };
-  window.addEventListener("pointerdown", unlock, { passive: true });
-  window.addEventListener("keydown", unlock);
-  window.addEventListener("touchstart", unlock, { passive: true });
+  // Attach in capture phase so we receive the gesture even if a child
+  // stops propagation. Listeners stay attached — they're cheap and
+  // self-guard on `unlocked`.
+  const opts: AddEventListenerOptions = { capture: true, passive: true };
+  window.addEventListener("pointerdown", unlock, opts);
+  window.addEventListener("touchstart", unlock, opts);
+  window.addEventListener("click", unlock, { capture: true });
+  window.addEventListener("keydown", unlock, { capture: true });
 }
 
 function ac(): AudioContext | null {

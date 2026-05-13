@@ -39,6 +39,9 @@ function PlayPage() {
   const [showCamera, setShowCamera] = useState(false);
   const [myPrevSpace, setMyPrevSpace] = useState<number | null>(null);
   const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
+  // Local countdown anchor — only set once the landing mascot animation
+  // has finished, so the countdown isn't covered by the overlay.
+  const [playCountdownStart, setPlayCountdownStart] = useState<number | null>(null);
   // Tick to drive border-flash off when countdown ends.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -117,7 +120,8 @@ function PlayPage() {
       lastTrapKeyRef.current = key;
       countdownTicksRef.current = new Set();
     }
-    const remaining = trap.started_at - Date.now();
+    if (playCountdownStart === null) return;
+    const remaining = playCountdownStart - Date.now();
     if (remaining > 0) {
       const n = Math.max(1, Math.ceil(remaining / 1000));
       if (!countdownTicksRef.current.has(n)) {
@@ -126,6 +130,19 @@ function PlayPage() {
       }
     }
   });
+
+  // Arm/clear the local countdown anchor based on trap + landing animation.
+  useEffect(() => {
+    const trap = room?.trap as Trap | null;
+    if (!trap) {
+      setPlayCountdownStart(null);
+      return;
+    }
+    if (myLanded) return; // wait for landing splash to finish
+    if (playCountdownStart === null) {
+      setPlayCountdownStart(Date.now() + 3000);
+    }
+  }, [room, myLanded, playCountdownStart]);
 
   // Auto-clear final ranking when host restarts (everyone back to space 0, no finishers)
   useEffect(() => {
@@ -330,19 +347,34 @@ function PlayPage() {
           </p>
           <p className="text-3xl font-black">{trap.reps} {trap.exercise}</p>
           <div className="flex justify-center py-2">
-            <div
-              className={`ink-border rounded-2xl px-8 py-5 bg-white ${Date.now() < trap.started_at ? "anim-border-flash" : ""}`}
-              style={{
-                color: "var(--boom-ink)",
-                transform: "rotate(-3deg)",
-                borderWidth: 8,
-                boxShadow: "8px 8px 0 0 rgba(0,0,0,0.85)",
-                minWidth: "14rem",
-              }}
-            >
-              <CountdownIntro startAt={trap.started_at} inline />
-              <FuseTimer startedAt={trap.started_at} big color="var(--boom-ink)" hideBeforeStart />
-            </div>
+            {(() => {
+              const ready = playCountdownStart !== null;
+              const anchor = playCountdownStart ?? (trap.started_at + 1e12);
+              const inCountdown = Date.now() < anchor;
+              return (
+                <div
+                  className={`ink-border rounded-2xl px-8 py-5 bg-white ${ready && inCountdown ? "anim-border-flash" : ""}`}
+                  style={{
+                    color: "var(--boom-ink)",
+                    transform: "rotate(-3deg)",
+                    borderWidth: 8,
+                    boxShadow: "8px 8px 0 0 rgba(0,0,0,0.85)",
+                    minWidth: "14rem",
+                  }}
+                >
+                  {!ready ? (
+                    <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+                      GET READY…
+                    </div>
+                  ) : (
+                    <>
+                      <CountdownIntro startAt={anchor} inline />
+                      <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart />
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           {triggeredByMe && (
             trap.awaiting_verification ? (

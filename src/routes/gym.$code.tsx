@@ -109,6 +109,44 @@ function GymBoard({ code }: { code: string }) {
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !paused;
 
+  // Camera (board zoom/pan): scale 1 idle; scale 3 centered on the active
+  // token while a roll is animating or a trap is on the board. Pans live as
+  // the token hops cell to cell.
+  const boardWrapRef = useRef<HTMLDivElement>(null);
+  const boardInnerRef = useRef<HTMLDivElement>(null);
+  const [boardTransform, setBoardTransform] = useState("scale(1) translate(0px, 0px)");
+  const focusPlayerId = trap?.triggered_by ?? (hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null);
+  const focusSpace = focusPlayerId
+    ? trap
+      ? players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0
+      : hopSpaces[focusPlayerId] ?? 0
+    : 0;
+  const zoomActive = !!focusPlayerId && focusSpace > 0;
+  useEffect(() => {
+    const recalc = () => {
+      const inner = boardInnerRef.current;
+      const wrap = boardWrapRef.current;
+      if (!inner || !wrap) return;
+      if (!zoomActive) {
+        setBoardTransform("scale(1) translate(0px, 0px)");
+        return;
+      }
+      const cellEl = inner.querySelector(`[data-space="${focusSpace}"]`) as HTMLElement | null;
+      if (!cellEl) return;
+      const cx = cellEl.offsetLeft + cellEl.offsetWidth / 2;
+      const cy = cellEl.offsetTop + cellEl.offsetHeight / 2;
+      const Wc = wrap.clientWidth;
+      const Hc = wrap.clientHeight;
+      const scale = 3;
+      const tx = Wc / (2 * scale) - cx;
+      const ty = Hc / (2 * scale) - cy;
+      setBoardTransform(`scale(${scale}) translate(${tx}px, ${ty}px)`);
+    };
+    recalc();
+    window.addEventListener("resize", recalc);
+    return () => window.removeEventListener("resize", recalc);
+  }, [focusSpace, zoomActive, inPlayMode]);
+
   // Clear any pending hop timeouts only when the component unmounts.
   useEffect(() => {
     return () => {

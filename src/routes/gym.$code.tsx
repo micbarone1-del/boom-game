@@ -184,12 +184,12 @@ function GymBoard({ code }: { code: string }) {
 
   // Countdown beeps — one per second of the 3-2-1.
   useEffect(() => {
-    if (!trap || gymCountdownStart === null) {
+    if (!trap) {
       countdownTicksRef.current = new Set();
       return;
     }
-    const remaining = gymCountdownStart - Date.now();
-    if (remaining <= 0) return;
+    const remaining = trap.started_at - Date.now();
+    if (remaining <= 0 || remaining > 3500) return;
     const n = Math.max(1, Math.ceil(remaining / 1000));
     if (!countdownTicksRef.current.has(n)) {
       countdownTicksRef.current.add(n);
@@ -237,20 +237,6 @@ function GymBoard({ code }: { code: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players]);
 
-  // Reset / arm the gym-side countdown start when a trap appears or clears.
-  useEffect(() => {
-    if (!trap) {
-      setGymCountdownStart(null);
-      return;
-    }
-    const triggerHopping = trap.triggered_by ? hoppingIds.has(trap.triggered_by) : false;
-    // Wait for BOTH the hop to finish AND the landing mascot animation to clear,
-    // so the countdown is never covered by an overlay.
-    const landedActive = !!landed && landed.id === trap.triggered_by;
-    if (!triggerHopping && !landedActive && gymCountdownStart === null) {
-      setGymCountdownStart(Date.now() + 3000);
-    }
-  }, [trap, hoppingIds, landed, gymCountdownStart]);
 
   // Tick while the trap modal is open so border-flash can switch off when the
   // countdown completes.

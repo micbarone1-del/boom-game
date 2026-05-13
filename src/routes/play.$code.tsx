@@ -213,13 +213,15 @@ function PlayPage() {
     }
     const finalCell = getEffectiveCell(final, overrides);
 
-    // Two-stage movement: first hop to the dice target so the boost/setback
-    // cell is clearly visible, pause, then hop to the actual final cell.
-    if (final !== target) {
-      const firstDistance = Math.max(1, Math.abs(target - me.current_space));
-      await supabase.from("players").update({ current_space: target }).eq("id", me.id);
-      await new Promise((r) => setTimeout(r, firstDistance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS));
-    }
+    // Single-stage DB write: move the player straight to their final space.
+    // Writing twice (target then final) caused the trap to occasionally render
+    // before realtime delivered the second update, so the player UI showed
+    // the boost/setback cell number instead of the destination.
+    // The gym hop animation still visually passes through every cell.
+    await supabase.from("players").update({ current_space: final }).eq("id", me.id);
+    const totalDistance = Math.max(1, Math.abs(final - me.current_space));
+    const hopMs = totalDistance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
+    await new Promise((r) => setTimeout(r, hopMs));
 
     // Exercise destination -> lock with trap (after hop animation finishes).
     if (finalCell.type === "easy" || finalCell.type === "medium" || finalCell.type === "hard") {
@@ -227,11 +229,6 @@ function PlayPage() {
       const calc = calcRepsForTier(tier, me.fitness_level, room.difficulty_multiplier);
       const reps = getOverrideReps(final, overrides, calc) ?? calc;
       const exercise = finalCell.exercise ?? "Workout";
-      const hopFrom = final !== target ? target : me.current_space;
-      await supabase.from("players").update({ current_space: final }).eq("id", me.id);
-      const distance = Math.max(1, Math.abs(final - hopFrom));
-      const hopMs = distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
-      await new Promise((r) => setTimeout(r, hopMs));
       await supabase
         .from("rooms")
         .update({
@@ -250,7 +247,6 @@ function PlayPage() {
         .eq("code", code);
     } else {
       // rest / boost-into-non-exercise / setback-into-non-exercise / finish
-      await supabase.from("players").update({ current_space: final }).eq("id", me.id);
       if (final >= BOARD_SIZE) {
         await finishPlayer(me.id, code);
       }

@@ -516,9 +516,6 @@ function GymBoard({ code }: { code: string }) {
           <Settings size={16} /> CUSTOMIZE
         </button>
       )}
-      {/* Sound stays reachable in play mode so the host can unlock the
-          AudioContext at any time (browsers require an in-page gesture). */}
-      <SfxMuteButton className={`absolute top-2 z-40 ${inPlayMode ? "right-2" : "right-32"}`} />
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
           <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />

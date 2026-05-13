@@ -1027,13 +1027,6 @@ function GymBoard({ code }: { code: string }) {
                 >
                   DEFUSED
                 </button>
-                <button
-                  onClick={blowUp}
-                  className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
-                  style={{ background: "var(--boom-red)", color: "white" }}
-                >
-                  BLOW IT UP
-                </button>
               </div>
             </div>
           </div>

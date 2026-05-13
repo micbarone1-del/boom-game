@@ -76,7 +76,7 @@ function GymBoard({ code }: { code: string }) {
   const [qrZoom, setQrZoom] = useState(false);
   const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
   const [turnAnnounce, setTurnAnnounce] = useState<{ username: string; avatar: string | null; key: number } | null>(null);
-  const prevTurnRef = useRef<string | null>(null);
+  const prevTurnKeyRef = useRef<string | null>(null);
   // Per-player rendered space (animated hop-by-hop toward the real current_space).
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
@@ -180,20 +180,27 @@ function GymBoard({ code }: { code: string }) {
     prevStartedRef.current = started;
   }, [room]);
 
-  // Turn announcement — flash a "[NAME] ROLLS!" overlay each time the active
-  // player changes (and we're not in the middle of a trap/countdown).
+  // Turn announcement — flash a "[NAME] ROLLS!" overlay when the active turn
+  // changes. We key on (turn player id + last_dice) so that a RESTART (which
+  // sets last_dice back to null while keeping the same first player) ALSO
+  // re-fires the announcement, not just turn rotations.
   useEffect(() => {
     const tid = room?.current_turn_player_id ?? null;
-    if (!tid) { prevTurnRef.current = null; return; }
-    if (prevTurnRef.current === tid) return;
-    prevTurnRef.current = tid;
+    if (!tid) { prevTurnKeyRef.current = null; return; }
+    const key = `${tid}|${room?.last_dice ?? "null"}`;
+    if (prevTurnKeyRef.current === key) return;
+    const isFirst = prevTurnKeyRef.current === null;
+    prevTurnKeyRef.current = key;
     if (trap) return;
+    // Skip the very first render (just loaded the page) to avoid an
+    // overlay every time the host opens the gym screen mid-game.
+    if (isFirst) return;
     const player = players.find((p) => p.id === tid);
     if (!player) return;
     setTurnAnnounce({ username: player.username, avatar: player.avatar_url, key: Date.now() });
     const t = setTimeout(() => setTurnAnnounce(null), 2500);
     return () => clearTimeout(t);
-  }, [room?.current_turn_player_id, players, trap]);
+  }, [room?.current_turn_player_id, room?.last_dice, players, trap]);
 
   // Countdown beeps — one per second of the 3-2-1.
   useEffect(() => {

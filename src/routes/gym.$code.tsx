@@ -1166,6 +1166,34 @@ function GymBoard({ code }: { code: string }) {
           onClose={() => setShowCustomize(false)}
         />
       )}
+      {isPaused && gameHasStarted && (
+        <div className="fixed inset-0 z-[120] bg-black/90 flex flex-col items-center justify-center gap-6 p-6 text-center">
+          <Pause size={96} className="text-white" fill="currentColor" />
+          <div
+            className="text-6xl md:text-8xl font-black comic-shadow text-white"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            GAME PAUSED
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <button
+              onClick={() => { void sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}
+              className="btn-boom flex items-center gap-2"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              <Play size={20} fill="currentColor" /> PLAY
+            </button>
+            <button
+              onClick={restartGame}
+              disabled={restarting}
+              className="btn-boom disabled:opacity-50"
+              style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
+            >
+              {restarting ? "BOOMING…" : "RESTART"}
+            </button>
+          </div>
+        </div>
+      )}
       {landed && (
         <CellMascot key={landed.key} type={landed.type} username={landed.username} />
       )}

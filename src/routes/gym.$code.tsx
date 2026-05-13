@@ -717,6 +717,16 @@ function GymBoard({ code }: { code: string }) {
 
       {/* Board */}
       {inPlayMode && (
+      <img
+        src={bombMascot}
+        alt="Boom mascot"
+        width={1024}
+        height={1024}
+        loading="lazy"
+        className="fixed top-0 right-0 -translate-y-10 translate-x-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-30"
+      />
+      )}
+      {inPlayMode && (
       <div ref={boardWrapRef} className="ink-border rounded-3xl bg-white flex-1 relative overflow-hidden">
       <div
         ref={boardInnerRef}
@@ -733,14 +743,6 @@ function GymBoard({ code }: { code: string }) {
           willChange: "transform",
         }}
       >
-        <img
-          src={bombMascot}
-          alt="Boom mascot"
-          width={1024}
-          height={1024}
-          loading="lazy"
-          className="absolute -bottom-10 -right-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-20"
-        />
         {/* Snake board: 10-cell horizontal rows joined by single-cell vertical connectors */}
         <div className="flex flex-col gap-1.5 pt-6">
           {(() => {

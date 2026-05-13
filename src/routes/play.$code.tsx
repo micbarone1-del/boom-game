@@ -193,6 +193,8 @@ function PlayPage() {
 
   const onRoll = async () => {
     if (!room || !isMyTurn || room.locked) return;
+    void sfx.unlock();
+    sfx.play("gymSelect");
     setRolling(true);
     const dice = rollDice();
     await new Promise((r) => setTimeout(r, 600));
@@ -274,6 +276,7 @@ function PlayPage() {
 
   const onIDidIt = async () => {
     if (!trap || !triggeredByMe) return;
+    void sfx.unlock();
     sfx.play("didIt");
     await supabase.from("rooms").update({
       trap: { ...trap, awaiting_verification: true },

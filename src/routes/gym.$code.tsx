@@ -732,9 +732,10 @@ function GymBoard({ code }: { code: string }) {
                   <div
                     className={`ink-border rounded-2xl px-6 py-3 ${inCountdown ? "anim-border-flash" : ""}`}
                     style={{
-                      background: cellColor,
-                      color: trapCellType === "hard" ? "white" : "var(--boom-ink)",
-                      borderWidth: 6,
+                      background: "white",
+                      color: "var(--boom-ink)",
+                      borderWidth: 8,
+                      borderColor: cellColor,
                       transform: "rotate(-3deg)",
                       minWidth: "14rem",
                     }}
@@ -749,7 +750,7 @@ function GymBoard({ code }: { code: string }) {
                         <FuseTimer
                           startedAt={effectiveStart}
                           big
-                          color={trapCellType === "hard" ? "white" : "var(--boom-ink)"}
+                          color="var(--boom-ink)"
                           hideBeforeStart
                         />
                       </>

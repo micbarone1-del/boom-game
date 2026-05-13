@@ -377,7 +377,7 @@ function GymBoard({ code }: { code: string }) {
       <SfxMuteButton className="absolute top-2 right-32 z-40" />
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
-          <Bomb size={40} />
+          <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
           <div>
             <div
               style={{ fontFamily: "'Luckiest Guy', cursive" }}

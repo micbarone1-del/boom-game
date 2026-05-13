@@ -75,6 +75,8 @@ function GymBoard({ code }: { code: string }) {
   const [showCustomize, setShowCustomize] = useState(false);
   const [qrZoom, setQrZoom] = useState(false);
   const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
+  const [turnAnnounce, setTurnAnnounce] = useState<{ username: string; avatar: string | null; key: number } | null>(null);
+  const prevTurnRef = useRef<string | null>(null);
   // Per-player rendered space (animated hop-by-hop toward the real current_space).
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
@@ -177,6 +179,21 @@ function GymBoard({ code }: { code: string }) {
     if (started && !prevStartedRef.current) sfx.play("gameStart");
     prevStartedRef.current = started;
   }, [room]);
+
+  // Turn announcement — flash a "[NAME] ROLLS!" overlay each time the active
+  // player changes (and we're not in the middle of a trap/countdown).
+  useEffect(() => {
+    const tid = room?.current_turn_player_id ?? null;
+    if (!tid) { prevTurnRef.current = null; return; }
+    if (prevTurnRef.current === tid) return;
+    prevTurnRef.current = tid;
+    if (trap) return;
+    const player = players.find((p) => p.id === tid);
+    if (!player) return;
+    setTurnAnnounce({ username: player.username, avatar: player.avatar_url, key: Date.now() });
+    const t = setTimeout(() => setTurnAnnounce(null), 2500);
+    return () => clearTimeout(t);
+  }, [room?.current_turn_player_id, players, trap]);
 
   // Countdown beeps — one per second of the 3-2-1.
   useEffect(() => {

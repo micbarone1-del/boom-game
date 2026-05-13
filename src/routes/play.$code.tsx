@@ -32,6 +32,15 @@ import { BoomCamera } from "@/components/BoomCamera";
 
 export const Route = createFileRoute("/play/$code")({
   component: PlayPage,
+  head: ({ params }) => ({
+    meta: [
+      { title: `Play Room ${params.code} — BOOM!` },
+      { name: "description", content: "Your phone controller for a BOOM! workout game. Roll the dice, log reps, and judge your teammates' form." },
+      { property: "og:title", content: `BOOM! Player Controller — Room ${params.code}` },
+      { property: "og:description", content: "Phone controller for a BOOM! workout game session." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
 
 function PlayPage() {

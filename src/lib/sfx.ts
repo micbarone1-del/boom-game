@@ -276,6 +276,10 @@ export const sfx = {
   isMuted() {
     return muted;
   },
+  isUnlocked() {
+    const c = ac();
+    return !!c && c.state === "running" && !!_g.__boomSfx.unlocked;
+  },
   setMuted(v: boolean) {
     muted = v;
     if (!muted) void ensureReady();

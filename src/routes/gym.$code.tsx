@@ -593,7 +593,7 @@ function GymBoard({ code }: { code: string }) {
         style={{
           transform: boardTransform,
           transformOrigin: "top left",
-          transition: "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+          transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         <img

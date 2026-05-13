@@ -779,7 +779,7 @@ function GymBoard({ code }: { code: string }) {
                     <div
                       key={space}
                       data-space={space}
-                      onClick={() => sfx.play("gymSelect")}
+                      onClick={() => { if (!isPaused) sfx.play("gymSelect"); }}
                       className="@container aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
                       style={{ background: bg, gridColumn: col, gridRow: 1 }}
                       title={describeCell(cell)}
@@ -1043,13 +1043,14 @@ function GymBoard({ code }: { code: string }) {
               );
             })()}
             <button
-              onClick={() => { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
+              onClick={() => { if (!isPaused) { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); } }}
+              disabled={isPaused}
               className="mt-4 ink-border-sm rounded-xl px-4 py-2 font-black text-sm flex items-center gap-2 mx-auto"
               style={{ background: "var(--boom-ink)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}
             >
               <Pause size={16} fill="currentColor" /> PAUSE
             </button>
-            {Date.now() >= trap.started_at && (
+            {!isPaused && Date.now() >= trap.started_at && (
               <div className="mt-6">
                 <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
                   TEAM VERIFICATION
@@ -1070,7 +1071,7 @@ function GymBoard({ code }: { code: string }) {
       )}
 
       {/* Turn announcement overlay */}
-      {turnAnnounce && !trap && (
+      {turnAnnounce && !trap && !isPaused && (
         <div
           key={turnAnnounce.key}
           className="fixed inset-0 z-[45] flex flex-col items-center justify-center bg-black/70 pointer-events-none"

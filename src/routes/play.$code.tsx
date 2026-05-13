@@ -399,7 +399,7 @@ function PlayPage() {
       )}
 
       <div className="ink-border rounded-2xl bg-white p-3">
-        <div className="text-base font-black mb-2 flex items-center gap-2"><Trophy size={18}/> LIVE LEADERBOARD</div>
+        <h2 className="text-base font-black mb-2 flex items-center gap-2"><Trophy size={18}/> LIVE LEADERBOARD</h2>
         <div className="flex flex-col gap-1">
           {[...players]
             .sort((a, b) => {

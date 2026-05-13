@@ -57,15 +57,10 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
   return (
     <button
       onClick={() => {
-        if (muted || !sfx.isUnlocked()) {
-          sfx.setMuted(false);
-          setMuted(false);
-          void sfx.unlock();
-          sfx.play("gymSelect");
-        } else {
-          sfx.setMuted(true);
-          setMuted(true);
-        }
+        sfx.setMuted(false);
+        setMuted(false);
+        void sfx.unlock();
+        sfx.play("gymSelect");
       }}
       className={
         isWhite
@@ -75,11 +70,11 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
       style={
         isWhite
           ? undefined
-          : { fontFamily: "'Luckiest Guy', cursive", background: muted ? "#7c3aed" : "var(--boom-green)" }
+          : { fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-green)" }
       }
-      title={muted ? "Sound effects are off — tap to enable" : "Sound effects on — tap to mute"}
+      title="Tap to re-arm and test sound effects"
     >
-      {muted ? <VolumeX size={isWhite ? 16 : 18} /> : <Volume2 size={isWhite ? 16 : 18} />} SFX {muted ? "OFF" : "ON"}
+      {muted ? <VolumeX size={isWhite ? 16 : 18} /> : <Volume2 size={isWhite ? 16 : 18} />} SFX ON
     </button>
   );
 }

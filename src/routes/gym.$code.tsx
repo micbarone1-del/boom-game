@@ -459,6 +459,7 @@ function GymBoard({ code }: { code: string }) {
           trap: null,
           last_dice: null,
           current_turn_player_id: first?.id ?? null,
+          paused: false,
         })
         .eq("code", code);
 
@@ -494,6 +495,7 @@ function GymBoard({ code }: { code: string }) {
         trap: null,
         last_dice: null,
         current_turn_player_id: first.id,
+        paused: false,
       })
       .eq("code", code);
     if (error) setStartError("Couldn’t start the game. Smash it again!");

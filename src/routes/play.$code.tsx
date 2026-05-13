@@ -413,7 +413,7 @@ function PlayPage() {
             <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
           )}
           <span className="text-xl">
-            {rolling ? "ROLLING…" : lastRoll != null ? `YOU ROLLED ${lastRoll}` : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
+            {lastRoll != null ? `YOU ROLLED ${lastRoll}` : rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
           </span>
         </button>
       )}

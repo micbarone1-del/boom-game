@@ -450,20 +450,45 @@ function GymBoard({ code }: { code: string }) {
           </div>
         </div>
         <div className="ml-auto flex items-center gap-3 flex-wrap justify-end pt-10">
-          <button
-            onClick={gameHasStarted ? restartGame : startGame}
-            disabled={players.length === 0 || starting || restarting}
-            className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ fontFamily: "'Luckiest Guy', cursive" }}
-          >
-            {gameHasStarted
-              ? restarting
-                ? "BOOMING…"
-                : "RESTART"
-              : starting
-                ? "IGNITING…"
-                : "START GAME"}
-          </button>
+          {!gameHasStarted && (
+            <button
+              onClick={startGame}
+              disabled={players.length === 0 || starting}
+              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              {starting ? "IGNITING…" : "START GAME"}
+            </button>
+          )}
+          {gameHasStarted && !paused && (
+            <button
+              onClick={() => setPaused(true)}
+              className="btn-boom flex items-center gap-2"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              <Pause size={20} fill="currentColor" /> PAUSE
+            </button>
+          )}
+          {gameHasStarted && paused && (
+            <>
+              <button
+                onClick={() => setPaused(false)}
+                className="btn-boom flex items-center gap-2"
+                style={{ fontFamily: "'Luckiest Guy', cursive" }}
+              >
+                <Play size={20} fill="currentColor" /> PLAY
+              </button>
+              <button
+                onClick={restartGame}
+                disabled={restarting}
+                className="btn-boom disabled:opacity-50"
+                style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
+              >
+                {restarting ? "BOOMING…" : "RESTART"}
+              </button>
+            </>
+          )}
+          {!inPlayMode && (
           <div className="ink-border-sm rounded-xl p-1.5 bg-white flex items-center gap-2">
             <div className="flex flex-col">
               <div className="text-[9px] font-bold leading-none">JOIN</div>
@@ -489,6 +514,7 @@ function GymBoard({ code }: { code: string }) {
               <QRCodeSVG value={joinUrl} size={56} level="M" />
             </button>
           </div>
+          )}
         </div>
       </header>
       {qrZoom && (

@@ -63,6 +63,15 @@ function PlayPage() {
   const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
   const [myTurnFlash, setMyTurnFlash] = useState<number | null>(null);
   const prevMyTurnRef = useRef<boolean>(false);
+  const isPaused = !!room?.paused;
+  const pausedRef = useRef(false);
+  useEffect(() => {
+    pausedRef.current = isPaused;
+    if (!isPaused) return;
+    setRolling(false);
+    setMyLanded(null);
+    setMyTurnFlash(null);
+  }, [isPaused]);
   // Tick to drive border-flash off when countdown ends.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -82,6 +91,7 @@ function PlayPage() {
 
   // Mascot splash when MY token lands on a new cell
   useEffect(() => {
+    if (isPaused) return;
     const meNow = players.find((p) => p.id === playerId);
     if (!meNow) return;
     if (myPrevSpace !== null && myPrevSpace !== meNow.current_space && meNow.current_space > 0) {
@@ -101,10 +111,11 @@ function PlayPage() {
     }
     setMyPrevSpace(meNow.current_space);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [players, playerId]);
+  }, [players, playerId, isPaused]);
 
   // Detect newly-finished players and trigger explosion overlay
   useEffect(() => {
+    if (isPaused) return;
     const finished = players.filter((p) => p.finished_at);
     const newOnes = finished.filter((p) => !seenFinishers.has(p.id));
     if (newOnes.length > 0) {
@@ -122,7 +133,7 @@ function PlayPage() {
       return () => clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [players]);
+  }, [players, isPaused]);
 
   // Countdown beeps + clear when trap appears/disappears
   useEffect(() => {
@@ -157,6 +168,7 @@ function PlayPage() {
 
   // Full-screen flash when it becomes my turn (and we're not in a trap).
   useEffect(() => {
+    if (isPaused) return;
     const isTurn = !!me && room?.current_turn_player_id === me.id;
     if (isTurn && !prevMyTurnRef.current && !trap) {
       setMyTurnFlash(Date.now());
@@ -165,18 +177,18 @@ function PlayPage() {
       return () => clearTimeout(t);
     }
     prevMyTurnRef.current = isTurn;
-  }, [room?.current_turn_player_id, me, trap]);
+  }, [room?.current_turn_player_id, me, trap, isPaused]);
 
   // Auto-assign first turn if none set
   useEffect(() => {
     if (!room) return;
-    if (!room.current_turn_player_id && players.length > 0 && !room.locked) {
+    if (!room.current_turn_player_id && players.length > 0 && !room.locked && !isPaused) {
       const first = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at))[0];
       if (first && me?.id === first.id) {
         supabase.from("rooms").update({ current_turn_player_id: first.id }).eq("code", code);
       }
     }
-  }, [room, players, me, code]);
+  }, [room, players, me, code, isPaused]);
 
   if (!me) {
     return (

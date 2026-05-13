@@ -134,10 +134,12 @@ function GymBoard({ code }: { code: string }) {
       const cellEl = inner.querySelector(`[data-space="${focusSpace}"]`) as HTMLElement | null;
       if (!cellEl) return;
       const cx = cellEl.offsetLeft + cellEl.offsetWidth / 2;
-      const cy = cellEl.offsetTop + cellEl.offsetHeight / 2;
+      // Tokens sit above the cell (negative top offset), so bias the focal
+      // point upward so the avatar — not the cell number — is centered.
+      const cy = cellEl.offsetTop + cellEl.offsetHeight * 0.2;
       const Wc = wrap.clientWidth;
       const Hc = wrap.clientHeight;
-      const scale = 3;
+      const scale = 2.2;
       const tx = Wc / (2 * scale) - cx;
       const ty = Hc / (2 * scale) - cy;
       setBoardTransform(`scale(${scale}) translate(${tx}px, ${ty}px)`);

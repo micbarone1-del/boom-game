@@ -270,6 +270,7 @@ function GymBoard({ code }: { code: string }) {
     if (!room || players.length === 0 || restarting) return;
     setRestarting(true);
     setStartError(null);
+    sfx.play("gameStart");
     const first = orderedPlayers[0];
     const resetSpaces = Object.fromEntries(players.map((p) => [p.id, 0]));
     prevRef.current = resetSpaces;

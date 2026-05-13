@@ -37,7 +37,7 @@ function Index() {
             lineHeight: 1,
           }}
         >
-          BOOM! — The Workout Game
+          BOOM!
         </h1>
         <p className="mt-2 text-xl md:text-2xl font-black" style={{ color: "var(--boom-ink)" }}>
           THE WORKOUT GAME

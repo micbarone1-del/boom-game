@@ -502,17 +502,17 @@ function GymBoard({ code }: { code: string }) {
   return (
     <div className="min-h-screen p-6 flex flex-col gap-4 relative">
       {!inPlayMode && (
-        <>
-          <button
-            onClick={() => setShowCustomize(true)}
-            className="absolute top-2 right-2 z-40 ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
-            title="Customize exercises and reps"
-          >
-            <Settings size={16} /> CUSTOMIZE
-          </button>
-          <SfxMuteButton className="absolute top-2 right-32 z-40" />
-        </>
+        <button
+          onClick={() => setShowCustomize(true)}
+          className="absolute top-2 right-2 z-40 ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
+          title="Customize exercises and reps"
+        >
+          <Settings size={16} /> CUSTOMIZE
+        </button>
       )}
+      {/* Sound stays reachable in play mode so the host can unlock the
+          AudioContext at any time (browsers require an in-page gesture). */}
+      <SfxMuteButton className={`absolute top-2 z-40 ${inPlayMode ? "right-2" : "right-32"}`} />
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
           <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
@@ -622,7 +622,9 @@ function GymBoard({ code }: { code: string }) {
         style={{
           transform: boardTransform,
           transformOrigin: "top left",
-          transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+          // Match HOP_MS so the camera glides cell-to-cell in lockstep with
+          // each hop. Linear easing avoids overshoot between hops.
+          transition: `transform ${HOP_MS}ms linear`,
         }}
       >
         <img
@@ -760,11 +762,16 @@ function GymBoard({ code }: { code: string }) {
       </div>
       )}
 
-      {/* Keep the Spotify iframe mounted so audio keeps playing across
-          lobby ↔ play mode toggles. In play mode we just push it off-screen. */}
+      {/* Keep the Spotify iframe mounted at the SAME React position at all
+          times so audio keeps playing across lobby ↔ play mode toggles. We
+          only flip the wrapper's CSS — never the JSX position — so the
+          iframe DOM node is never unmounted (which would stop playback). */}
       <div
-        className={inPlayMode ? "fixed -left-[9999px] top-0 w-px h-px overflow-hidden pointer-events-none opacity-0" : ""}
-        aria-hidden={inPlayMode}
+        className={
+          inPlayMode
+            ? "fixed bottom-3 left-3 z-40 w-[320px] max-w-[88vw] ink-border rounded-2xl bg-white p-1 shadow-lg"
+            : ""
+        }
       >
         <SpotifyEmbed code={code} />
       </div>

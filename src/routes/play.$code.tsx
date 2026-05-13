@@ -27,7 +27,8 @@ import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Dice5, Trophy, Camera } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
-import { sfx } from "@/lib/sfx";
+// SFX intentionally not imported on the player UI — sound only plays on the
+// gym screen so the iPad is the single audio source.
 
 export const Route = createFileRoute("/play/$code")({
   component: PlayPage,
@@ -77,12 +78,6 @@ function PlayPage() {
       const showT = setTimeout(() => {
         const cell = getCell(targetSpace);
         setMyLanded({ type: cell.type, key: Date.now() });
-        const cellSfx: Record<string, Parameters<typeof sfx.play>[0] | undefined> = {
-          easy: "easy", medium: "medium", hard: "hard",
-          rest: "rest", boost: "blast", setback: "setback",
-        };
-        const which = cellSfx[cell.type];
-        if (which) sfx.play(which);
       }, stableMs);
       const clearT = setTimeout(() => setMyLanded(null), stableMs + LANDING_SPLASH_MS);
       setMyPrevSpace(meNow.current_space);
@@ -97,12 +92,6 @@ function PlayPage() {
     const finished = players.filter((p) => p.finished_at);
     const newOnes = finished.filter((p) => !seenFinishers.has(p.id));
     if (newOnes.length > 0) {
-      for (const p of newOnes) {
-        if (!winSoundRef.current.has(p.id)) {
-          winSoundRef.current.add(p.id);
-          sfx.play("win");
-        }
-      }
       setSeenFinishers((prev) => {
         const n = new Set(prev);
         newOnes.forEach((p) => n.add(p.id));
@@ -134,13 +123,7 @@ function PlayPage() {
     }
     const remaining = trap.started_at - Date.now();
     // Beep only inside the final 3-2-1 window so we don't beep early.
-    if (remaining > 0 && remaining <= 3500) {
-      const n = Math.max(1, Math.ceil(remaining / 1000));
-      if (!countdownTicksRef.current.has(n)) {
-        countdownTicksRef.current.add(n);
-        sfx.play("countdown");
-      }
-    }
+      // No sound on the player UI — the iPad/gym screen owns audio.
   });
 
   // Auto-clear final ranking when host restarts (everyone back to space 0, no finishers)
@@ -193,8 +176,6 @@ function PlayPage() {
 
   const onRoll = async () => {
     if (!room || !isMyTurn || room.locked) return;
-    void sfx.unlock();
-    sfx.play("gymSelect");
     setRolling(true);
     const dice = rollDice();
     await new Promise((r) => setTimeout(r, 600));

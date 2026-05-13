@@ -674,7 +674,8 @@ function GymBoard({ code }: { code: string }) {
                       <span className="text-sm md:text-base font-black leading-none" style={{ color: "var(--boom-ink)" }}>
                         {space}
                       </span>
-                      {(cell.type === "easy" || cell.type === "medium") && <Dumbbell size={32} />}
+                      {cell.type === "easy" && <MiniDumbbell size={32} />}
+                      {cell.type === "medium" && <Dumbbell size={32} />}
                       {cell.type === "hard" && <Flame size={32} className="text-white" />}
                       {cell.type === "rest" && <Coffee size={32} />}
                       {cell.type === "boost" && <Zap size={32} />}

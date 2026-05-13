@@ -185,8 +185,12 @@ function out(c: AudioContext): AudioNode {
 }
 
 async function ensureReady(): Promise<boolean> {
+  fallbackPlay(false);
   const c = ac();
-  if (!c) return false;
+  if (!c) {
+    state.fallbackUnlocked = true;
+    return true;
+  }
   try {
     const t0 = c.currentTime + 0.005;
     const osc = c.createOscillator();
@@ -200,10 +204,11 @@ async function ensureReady(): Promise<boolean> {
     osc.stop(t0 + 0.025);
     if (c.state === "suspended") await c.resume();
     state.unlocked = c.state === "running";
-    return state.unlocked;
+    if (state.unlocked) state.fallbackUnlocked = true;
+    return state.unlocked || state.fallbackUnlocked;
   } catch {
     state.unlocked = false;
-    return false;
+    return state.fallbackUnlocked;
   }
 }
 
@@ -365,6 +370,7 @@ export const sfx = {
       }
       const inUserGesture = !!navigator.userActivation?.isActive;
       if (inUserGesture) {
+        fallbackPlay(true);
         effects[name]();
         void unlockAudio();
         return;

@@ -496,7 +496,7 @@ function GymBoard({ code }: { code: string }) {
   };
 
   return (
-    <div className="min-h-screen p-6 flex flex-col gap-4 relative">
+    <div className={`min-h-screen flex flex-col gap-4 relative ${inPlayMode ? "p-2" : "p-6"}`}>
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <button
@@ -507,6 +507,19 @@ function GymBoard({ code }: { code: string }) {
           <Settings size={16} /> CUSTOMIZE
         </button>
       )}
+      {inPlayMode ? (
+        <div className="absolute top-2 right-2 z-40 flex items-center gap-2">
+          {!paused && (
+            <button
+              onClick={async () => { await sfx.unlock(); setPaused(true); }}
+              className="btn-boom flex items-center gap-2"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              <Pause size={20} fill="currentColor" /> PAUSE
+            </button>
+          )}
+        </div>
+      ) : (
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
           <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
@@ -529,15 +542,6 @@ function GymBoard({ code }: { code: string }) {
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >
               {starting ? "IGNITING…" : "START GAME"}
-            </button>
-          )}
-          {gameHasStarted && !paused && (
-            <button
-              onClick={async () => { await sfx.unlock(); setPaused(true); }}
-              className="btn-boom flex items-center gap-2"
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}
-            >
-              <Pause size={20} fill="currentColor" /> PAUSE
             </button>
           )}
           {gameHasStarted && paused && (
@@ -589,6 +593,7 @@ function GymBoard({ code }: { code: string }) {
           )}
         </div>
       </header>
+      )}
       {qrZoom && (
         <div
           onClick={() => setQrZoom(false)}

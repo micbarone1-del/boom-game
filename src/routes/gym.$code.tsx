@@ -41,6 +41,30 @@ export const Route = createFileRoute("/gym/$code")({
   component: GymView,
 });
 
+/** Simple dumbbell with a single weight on each side (2 weights total). */
+function MiniDumbbell({ size = 32 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* bar */}
+      <line x1="6" y1="12" x2="18" y2="12" />
+      {/* left weight */}
+      <rect x="2.5" y="7.5" width="4" height="9" rx="1" fill="currentColor" />
+      {/* right weight */}
+      <rect x="17.5" y="7.5" width="4" height="9" rx="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 function GymView() {
   const { code: codeParam } = Route.useParams();
   const navigate = useNavigate();

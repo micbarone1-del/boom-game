@@ -277,7 +277,7 @@ export const sfx = {
     return muted;
   },
   isUnlocked() {
-    const c = ac();
+    const c = _g.__boomSfx.ctx as AudioContext | null;
     return !!c && c.state === "running" && !!_g.__boomSfx.unlocked;
   },
   setMuted(v: boolean) {

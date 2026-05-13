@@ -394,6 +394,7 @@ function GymBoard({ code }: { code: string }) {
     setStartError(null);
     setPaused(false);
     setExploding(true);
+    await sfx.unlock();
     sfx.play("blast");
     setTimeout(() => setExploding(false), 1800);
     const { error } = await supabase

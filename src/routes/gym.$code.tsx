@@ -846,33 +846,27 @@ function GymBoard({ code }: { code: string }) {
             >
               {restarting ? "RESETTING…" : "RESTART GAME"}
             </button>
-            {trap.awaiting_verification ? (
-              <div className="mt-6">
-                <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
-                  TEAM VERIFICATION REQUIRED!
-                </p>
-                <div className="flex gap-4 justify-center flex-wrap">
-                  <button
-                    onClick={defuse}
-                    className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
-                    style={{ background: "var(--boom-green)", color: "white" }}
-                  >
-                    DEFUSED
-                  </button>
-                  <button
-                    onClick={blowUp}
-                    className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
-                    style={{ background: "var(--boom-red)", color: "white" }}
-                  >
-                    BLOW IT UP
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-4 text-lg font-bold flex items-center justify-center gap-2">
-                <Flame className="anim-fuse" /> Get sweating!
+            <div className="mt-6">
+              <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
+                TEAM VERIFICATION
               </p>
-            )}
+              <div className="flex gap-4 justify-center flex-wrap">
+                <button
+                  onClick={defuse}
+                  className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
+                  style={{ background: "var(--boom-green)", color: "white" }}
+                >
+                  DEFUSED
+                </button>
+                <button
+                  onClick={blowUp}
+                  className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
+                  style={{ background: "var(--boom-red)", color: "white" }}
+                >
+                  BLOW IT UP
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

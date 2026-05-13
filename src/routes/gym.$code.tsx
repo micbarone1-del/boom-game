@@ -769,16 +769,11 @@ function GymBoard({ code }: { code: string }) {
       </div>
       )}
 
-      {/* Keep the Spotify iframe mounted at the SAME React position at all
-          times so audio keeps playing across lobby ↔ play mode toggles. We
-          only flip the wrapper's CSS — never the JSX position — so the
-          iframe DOM node is never unmounted (which would stop playback). */}
+      {/* Spotify lives only in lobby mode. Keep the iframe mounted (offscreen)
+          while playing so audio keeps playing without restarting. */}
       <div
-        className={
-          inPlayMode
-            ? "fixed bottom-3 left-3 z-40 w-[320px] max-w-[88vw] ink-border rounded-2xl bg-white p-1 shadow-lg"
-            : ""
-        }
+        className={inPlayMode ? "fixed -left-[9999px] top-0 w-px h-px overflow-hidden pointer-events-none opacity-0" : ""}
+        aria-hidden={inPlayMode}
       >
         <SpotifyEmbed code={code} />
       </div>

@@ -143,6 +143,27 @@ function GymBoard({ code }: { code: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players]);
 
+  // Reset / arm the gym-side countdown start when a trap appears or clears.
+  useEffect(() => {
+    if (!trap) {
+      setGymCountdownStart(null);
+      return;
+    }
+    const triggerHopping = trap.triggered_by ? hoppingIds.has(trap.triggered_by) : false;
+    if (!triggerHopping && gymCountdownStart === null) {
+      // Hop animation finished — start a fresh 3s countdown locally.
+      setGymCountdownStart(Date.now() + 3000);
+    }
+  }, [trap, hoppingIds, gymCountdownStart]);
+
+  // Tick while the trap modal is open so border-flash can switch off when the
+  // countdown completes.
+  useEffect(() => {
+    if (!trap) return;
+    const i = setInterval(() => setTick((t) => t + 1), 150);
+    return () => clearInterval(i);
+  }, [trap]);
+
   const restartGame = async () => {
     if (!room || players.length === 0 || restarting) return;
     setRestarting(true);

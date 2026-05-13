@@ -408,7 +408,7 @@ function PlayPage() {
         <button
           onClick={onRoll}
           disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at}
-          className="ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked ? "anim-roll-pulse" : ""}`}
           style={{ background: isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
         >
           <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
@@ -518,6 +518,13 @@ function PlayPage() {
 
       {showCamera && <BoomCamera onClose={() => setShowCamera(false)} />}
       {myLanded && <CellMascot key={myLanded.key} type={myLanded.type} />}
+      {myTurnFlash && (
+        <div
+          key={myTurnFlash}
+          className="fixed inset-0 z-[80] pointer-events-none anim-screen-flash"
+          style={{ background: "var(--boom-yellow)" }}
+        />
+      )}
       {/* countdown rendered inline inside the timer box */}
     </main>
   );

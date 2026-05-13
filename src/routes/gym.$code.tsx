@@ -139,6 +139,10 @@ function GymBoard({ code }: { code: string }) {
   const boardWrapRef = useRef<HTMLDivElement>(null);
   const boardInnerRef = useRef<HTMLDivElement>(null);
   const [boardTransform, setBoardTransform] = useState("scale(1) translate(0px, 0px)");
+  // Track whether the camera was already zoomed-in on the previous tick so we
+  // can use a longer, eased transition for the initial zoom-in / final
+  // zoom-out and a tight linear pan between hops.
+  const [cameraPhase, setCameraPhase] = useState<"idle" | "settle" | "pan">("idle");
   // Follow ONLY the hopping token. As soon as the hop animation ends (or the
   // trap modal takes over) we glide back to the full map view.
   const focusPlayerId = hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null;
@@ -153,6 +157,7 @@ function GymBoard({ code }: { code: string }) {
       }
       if (!zoomActive) {
         setBoardTransform("translate(0px, 0px) scale(1)");
+        setCameraPhase("idle");
         return;
       }
       const cellEl = inner.querySelector(`[data-space="${focusSpace}"]`) as HTMLElement | null;
@@ -175,6 +180,7 @@ function GymBoard({ code }: { code: string }) {
       const tx = Wc / 2 - cx * scale;
       const ty = Hc / 2 - cy * scale;
       setBoardTransform(`translate(${tx}px, ${ty}px) scale(${scale})`);
+      setCameraPhase((prev) => (prev === "idle" ? "settle" : "pan"));
     };
     recalc();
     window.addEventListener("resize", recalc);

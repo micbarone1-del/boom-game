@@ -28,7 +28,9 @@ type EffectName =
 let ctx: AudioContext | null = null;
 let muted = false;
 let unlocked = false;
-const MUTE_KEY = "boom.sfx.muted";
+// Bumped key (v2) so any previously-stuck "muted" state from earlier
+// sessions is reset to unmuted on next load.
+const MUTE_KEY = "boom.sfx.muted.v2";
 
 if (typeof window !== "undefined") {
   try {

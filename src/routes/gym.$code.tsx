@@ -13,29 +13,6 @@ import { Pause, Play } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
-import { Volume2, VolumeX } from "lucide-react";
-
-function SfxMuteButton({ className = "" }: { className?: string }) {
-  const [muted, setMuted] = useState<boolean>(() => sfx.isMuted());
-  return (
-    <button
-      onPointerDown={() => void sfx.unlock()}
-      onClick={async () => {
-        if (muted) {
-          sfx.setMuted(false);
-          setMuted(false);
-        }
-        await sfx.unlock();
-        sfx.play("gymSelect");
-      }}
-      className={`ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1 ${className}`}
-      title={muted ? "Enable sound effects" : "Test sound effects"}
-    >
-      {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-      {muted ? "MUTED" : "SFX"}
-    </button>
-  );
-}
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,

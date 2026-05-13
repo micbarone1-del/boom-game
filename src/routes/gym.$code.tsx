@@ -9,7 +9,7 @@ import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
@@ -27,12 +27,11 @@ export const Route = createFileRoute("/gym/$code")({
   }),
 });
 
-/** Simple dumbbell with a single weight on each side (2 weights total). */
-function MiniDumbbell({ size = 32 }: { size?: number }) {
+/** Dumbbell with a single empty (outlined) weight on each side — matches the
+ *  Lucide Dumbbell stroke style used on the orange (medium) cells. */
+function MiniDumbbell({ className }: { className?: string }) {
   return (
     <svg
-      width={size}
-      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -40,14 +39,33 @@ function MiniDumbbell({ size = 32 }: { size?: number }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      className={className}
     >
       {/* bar */}
-      <line x1="6" y1="12" x2="18" y2="12" />
-      {/* left weight */}
-      <rect x="2.5" y="7.5" width="4" height="9" rx="1" fill="currentColor" />
-      {/* right weight */}
-      <rect x="17.5" y="7.5" width="4" height="9" rx="1" fill="currentColor" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      {/* left weight (empty) */}
+      <rect x="3" y="7.5" width="5" height="9" rx="1.2" />
+      {/* right weight (empty) */}
+      <rect x="16" y="7.5" width="5" height="9" rx="1.2" />
     </svg>
+  );
+}
+
+function SfxButton({ className = "" }: { className?: string }) {
+  const [muted, setMuted] = useState(() => sfx.isMuted());
+  return (
+    <button
+      onClick={async () => {
+        const next = sfx.toggleMuted();
+        setMuted(next);
+        if (!next) await sfx.unlock();
+      }}
+      className={`btn-boom flex items-center gap-2 py-2 px-4 text-base ${className}`}
+      style={{ fontFamily: "'Luckiest Guy', cursive", background: muted ? "#7c3aed" : "var(--boom-green)" }}
+      title={muted ? "Sound effects are off — tap to enable" : "Sound effects on — tap to mute"}
+    >
+      {muted ? <VolumeX size={18} /> : <Volume2 size={18} />} SFX {muted ? "OFF" : "ON"}
+    </button>
   );
 }
 

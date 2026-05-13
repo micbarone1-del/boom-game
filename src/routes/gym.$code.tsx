@@ -522,7 +522,7 @@ function GymBoard({ code }: { code: string }) {
 
   // Defuse / Blow Up handlers (judge buttons)
   const defuse = async () => {
-    if (!room || !trap) return;
+    if (!room || !trap || isPaused) return;
     sfx.play("defuse");
     const triggerPlayer = players.find((p) => p.id === trap.triggered_by);
     if (!triggerPlayer) return;
@@ -563,7 +563,7 @@ function GymBoard({ code }: { code: string }) {
   };
 
   const blowUp = async () => {
-    if (!trap) return;
+    if (!trap || isPaused) return;
     sfx.play("blowUp");
     // Reset awaiting_verification — player must redo
     await supabase
@@ -605,7 +605,7 @@ function GymBoard({ code }: { code: string }) {
           </div>
           <div className="flex items-center gap-2">
             <SfxButton />
-            {!paused && (
+            {!isPaused && (
               <button
                 onClick={() => { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
                 className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
@@ -641,7 +641,7 @@ function GymBoard({ code }: { code: string }) {
               {starting ? "IGNITING…" : "START GAME"}
             </button>
           )}
-          {gameHasStarted && paused && (
+          {gameHasStarted && isPaused && (
             <>
               <button
                 onClick={() => { void sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}

@@ -231,15 +231,10 @@ export const sfx = {
     try {
       const c = ac();
       if (c && c.state !== "running") {
-        // Try to resume; if blocked, log once so debugging is obvious.
-        void c.resume().catch(() => {});
-        if (c.state === "suspended" && !unlocked) {
-          // No user gesture has unlocked audio yet. Schedule anyway —
-          // safeStart() pads start time so the sound plays once unlocked.
-          if (!(window as any).__sfxWarned) {
-            (window as any).__sfxWarned = true;
-            console.warn("[sfx] AudioContext suspended — click anywhere to enable sound.");
-          }
+        void ensureReady();
+        if (typeof window !== "undefined" && !(window as any).__sfxWarned) {
+          (window as any).__sfxWarned = true;
+          console.warn("[sfx] Tap the SFX button or any game button once to enable sound.");
         }
       }
       effects[name]();
@@ -252,11 +247,16 @@ export const sfx = {
   },
   setMuted(v: boolean) {
     muted = v;
+    if (!muted) void ensureReady();
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(MUTE_KEY, v ? "1" : "0");
       } catch {}
     }
+  },
+  unlock() {
+    if (muted) muted = false;
+    return ensureReady();
   },
   toggleMuted() {
     this.setMuted(!muted);

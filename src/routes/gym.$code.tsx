@@ -946,7 +946,7 @@ function GymBoard({ code }: { code: string }) {
               );
             })()}
             <img
-              src={mascotForCell(getCell(players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0).type)}
+              src={mascotForCell(getCell((trap.space ?? players.find((p) => p.id === trap.triggered_by)?.current_space) ?? 0).type)}
               alt=""
               width={1024}
               height={1024}
@@ -970,7 +970,7 @@ function GymBoard({ code }: { code: string }) {
               Do {trap.reps} {trap.exercise}!
             </p>
             {(() => {
-              const trapCellType = getCell(players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0).type;
+              const trapCellType = getCell((trap.space ?? players.find((p) => p.id === trap.triggered_by)?.current_space) ?? 0).type;
               const cellColor =
                 trapCellType === "easy" ? "var(--boom-yellow)" :
                 trapCellType === "medium" ? "var(--boom-orange)" :

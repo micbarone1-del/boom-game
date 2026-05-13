@@ -220,15 +220,21 @@ function PlayPage() {
     const finalCell = getEffectiveCell(final, overrides);
     console.log("[roll]", { from: me.current_space, dice, target, cellType: cell.type, delta: cell.delta, final, finalType: finalCell.type });
 
-    // Single-stage DB write: move the player straight to their final space.
-    // Writing twice (target then final) caused the trap to occasionally render
-    // before realtime delivered the second update, so the player UI showed
-    // the boost/setback cell number instead of the destination.
-    // The gym hop animation still visually passes through every cell.
-    await supabase.from("players").update({ current_space: final }).eq("id", me.id);
-    const totalDistance = Math.max(1, Math.abs(final - me.current_space));
-    const hopMs = totalDistance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
-    await new Promise((r) => setTimeout(r, hopMs));
+    // Stage 1: hop the token to the dice-landing cell so the player visibly
+    // arrives on the BLAST/SETBACK cell (and the gym plays its splash).
+    await supabase.from("players").update({ current_space: target }).eq("id", me.id);
+    const stage1Distance = Math.max(1, Math.abs(target - me.current_space));
+    const stage1Ms = stage1Distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
+    await new Promise((r) => setTimeout(r, stage1Ms));
+
+    // Stage 2: if a boost/setback/finish moved the destination, hop again so
+    // the token visibly accelerates forward (or back) to the final space.
+    if (final !== target) {
+      await supabase.from("players").update({ current_space: final }).eq("id", me.id);
+      const stage2Distance = Math.max(1, Math.abs(final - target));
+      const stage2Ms = stage2Distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
+      await new Promise((r) => setTimeout(r, stage2Ms));
+    }
 
     // Exercise destination -> lock with trap (after hop animation finishes).
     if (finalCell.type === "easy" || finalCell.type === "medium" || finalCell.type === "hard") {
@@ -245,6 +251,7 @@ function PlayPage() {
             exercise,
             reps,
             triggered_by: me.id,
+            space: final,
             // Trap is created only after movement + landing splash have ended.
             // Then every screen gets a short reveal before the shared 3-2-1.
             started_at: Date.now() + TRAP_REVEAL_MS + COUNTDOWN_LEAD_MS,
@@ -319,7 +326,8 @@ function PlayPage() {
       </div>
 
       {trap ? (() => {
-        const trapCellType = getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type;
+        const trapSpace = trap.space ?? players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0;
+        const trapCellType = getCell(trapSpace).type;
         const cellColor =
           trapCellType === "easy" ? "var(--boom-yellow)" :
           trapCellType === "medium" ? "var(--boom-orange)" :
@@ -335,7 +343,7 @@ function PlayPage() {
             style={{ color: "var(--boom-ink)" }}
           >
           <img
-            src={mascotForCell(getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type)}
+            src={mascotForCell(getCell(trapSpace).type)}
             alt=""
             width={1024}
             height={1024}

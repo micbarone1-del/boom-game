@@ -33,7 +33,7 @@ function Index() {
           THE WORKOUT GAME
         </p>
         <p className="mt-1 text-sm md:text-base" style={{ color: "var(--boom-ink)" }}>
-          Roll. Sweat. Defuse. Repeat.
+          The explosive workout party game
         </p>
       </div>
 

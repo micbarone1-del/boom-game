@@ -39,9 +39,6 @@ function PlayPage() {
   const [showCamera, setShowCamera] = useState(false);
   const [myPrevSpace, setMyPrevSpace] = useState<number | null>(null);
   const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
-  // Local countdown anchor — only set once the landing mascot animation
-  // has finished, so the countdown isn't covered by the overlay.
-  const [playCountdownStart, setPlayCountdownStart] = useState<number | null>(null);
   // Tick to drive border-flash off when countdown ends.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -128,9 +125,9 @@ function PlayPage() {
       lastTrapKeyRef.current = key;
       countdownTicksRef.current = new Set();
     }
-    if (playCountdownStart === null) return;
-    const remaining = playCountdownStart - Date.now();
-    if (remaining > 0) {
+    const remaining = trap.started_at - Date.now();
+    // Beep only inside the final 3-2-1 window so we don't beep early.
+    if (remaining > 0 && remaining <= 3500) {
       const n = Math.max(1, Math.ceil(remaining / 1000));
       if (!countdownTicksRef.current.has(n)) {
         countdownTicksRef.current.add(n);
@@ -138,19 +135,6 @@ function PlayPage() {
       }
     }
   });
-
-  // Arm/clear the local countdown anchor based on trap + landing animation.
-  useEffect(() => {
-    const trap = room?.trap as Trap | null;
-    if (!trap) {
-      setPlayCountdownStart(null);
-      return;
-    }
-    if (myLanded) return; // wait for landing splash to finish
-    if (playCountdownStart === null) {
-      setPlayCountdownStart(Date.now() + 3000);
-    }
-  }, [room, myLanded, playCountdownStart]);
 
   // Auto-clear final ranking when host restarts (everyone back to space 0, no finishers)
   useEffect(() => {
@@ -236,8 +220,12 @@ function PlayPage() {
             exercise,
             reps,
             triggered_by: me.id,
-            // Start 3s in the future so all clients show a 3-2-1 countdown first.
-            started_at: Date.now() + 3000,
+            // Pad the anchor with enough lead time for every client to finish
+            // the cell-landing mascot animation (~3.2s) AND a 3-2-1 countdown
+            // (3s) before the timer starts. The CountdownIntro only renders
+            // numbers in the final 3.5s, so this is the single shared anchor
+            // that keeps gym + player screens perfectly synchronised.
+            started_at: Date.now() + 6500,
             awaiting_verification: false,
           } satisfies Trap,
         })
@@ -356,9 +344,10 @@ function PlayPage() {
           <p className="text-3xl font-black">{trap.reps} {trap.exercise}</p>
           <div className="flex justify-center py-2">
             {(() => {
-              const ready = playCountdownStart !== null;
-              const anchor = playCountdownStart ?? (trap.started_at + 1e12);
-              const inCountdown = Date.now() < anchor;
+              const anchor = trap.started_at;
+              const remaining = anchor - Date.now();
+              const inCountdown = remaining > 0 && remaining <= 3500;
+              const ready = remaining <= 3500; // show countdown UI only at the end
               return (
                 <div
                   className={`ink-border rounded-2xl px-8 py-5 bg-white ${ready && inCountdown ? "anim-border-flash" : ""}`}

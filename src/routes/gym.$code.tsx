@@ -78,10 +78,6 @@ function GymBoard({ code }: { code: string }) {
   // Per-player rendered space (animated hop-by-hop toward the real current_space).
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
-  // Local countdown start — only set once the triggered player's hop animation
-  // has finished on this screen. Ensures the 3-2-1 countdown waits for the
-  // movement to land before flashing.
-  const [gymCountdownStart, setGymCountdownStart] = useState<number | null>(null);
   // Tick to re-render the modal so we can toggle the flashing border off
   // exactly when the countdown ends.
   const [, setTick] = useState(0);
@@ -184,12 +180,12 @@ function GymBoard({ code }: { code: string }) {
 
   // Countdown beeps — one per second of the 3-2-1.
   useEffect(() => {
-    if (!trap || gymCountdownStart === null) {
+    if (!trap) {
       countdownTicksRef.current = new Set();
       return;
     }
-    const remaining = gymCountdownStart - Date.now();
-    if (remaining <= 0) return;
+    const remaining = trap.started_at - Date.now();
+    if (remaining <= 0 || remaining > 3500) return;
     const n = Math.max(1, Math.ceil(remaining / 1000));
     if (!countdownTicksRef.current.has(n)) {
       countdownTicksRef.current.add(n);
@@ -237,20 +233,6 @@ function GymBoard({ code }: { code: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players]);
 
-  // Reset / arm the gym-side countdown start when a trap appears or clears.
-  useEffect(() => {
-    if (!trap) {
-      setGymCountdownStart(null);
-      return;
-    }
-    const triggerHopping = trap.triggered_by ? hoppingIds.has(trap.triggered_by) : false;
-    // Wait for BOTH the hop to finish AND the landing mascot animation to clear,
-    // so the countdown is never covered by an overlay.
-    const landedActive = !!landed && landed.id === trap.triggered_by;
-    if (!triggerHopping && !landedActive && gymCountdownStart === null) {
-      setGymCountdownStart(Date.now() + 3000);
-    }
-  }, [trap, hoppingIds, landed, gymCountdownStart]);
 
   // Tick while the trap modal is open so border-flash can switch off when the
   // countdown completes.
@@ -395,7 +377,7 @@ function GymBoard({ code }: { code: string }) {
       <SfxMuteButton className="absolute top-2 right-32 z-40" />
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
-          <Bomb size={40} />
+          <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
           <div>
             <div
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
@@ -727,9 +709,10 @@ function GymBoard({ code }: { code: string }) {
                 trapCellType === "boost" ? "var(--boom-green)" :
                 trapCellType === "setback" ? "#7c3aed" :
                 "var(--boom-yellow)";
-              const effectiveStart = gymCountdownStart ?? (trap.started_at + 1e12);
-              const inCountdown = Date.now() < effectiveStart;
-              const ready = gymCountdownStart !== null;
+              const effectiveStart = trap.started_at;
+              const remaining = effectiveStart - Date.now();
+              const inCountdown = remaining > 0 && remaining <= 3500;
+              const ready = remaining <= 3500;
               return (
                 <div className="mt-4 flex justify-center">
                   <div

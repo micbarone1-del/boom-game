@@ -801,6 +801,35 @@ function GymBoard({ code }: { code: string }) {
         </div>
       )}
 
+      {/* Turn announcement overlay */}
+      {turnAnnounce && !trap && (
+        <div
+          key={turnAnnounce.key}
+          className="fixed inset-0 z-[45] flex flex-col items-center justify-center bg-black/70 pointer-events-none"
+        >
+          <div className="anim-mascot-pop">
+            <PlayerToken
+              avatar={turnAnnounce.avatar}
+              username={turnAnnounce.username}
+              size={220}
+              active
+              showName={false}
+              showInitial
+            />
+          </div>
+          <div
+            className="mt-8 text-7xl md:text-8xl font-black comic-shadow anim-shake text-center px-6"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: "var(--boom-yellow)",
+              textShadow: "5px 5px 0 #000, -2px -2px 0 #000",
+            }}
+          >
+            {turnAnnounce.username.toUpperCase()} ROLLS!
+          </div>
+        </div>
+      )}
+
       {/* Winner KA-BOOM overlay */}
       {winnerOverlay && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none overflow-hidden">

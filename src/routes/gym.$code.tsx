@@ -1022,20 +1022,22 @@ function GymBoard({ code }: { code: string }) {
             >
               <Pause size={16} fill="currentColor" /> PAUSE
             </button>
-            <div className="mt-6">
-              <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
-                TEAM VERIFICATION
-              </h2>
-              <div className="flex gap-4 justify-center flex-wrap">
-                <button
-                  onClick={defuse}
-                  className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
-                  style={{ background: "var(--boom-green)", color: "white" }}
-                >
-                  DEFUSED
-                </button>
+            {Date.now() >= trap.started_at && (
+              <div className="mt-6">
+                <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
+                  TEAM VERIFICATION
+                </h2>
+                <div className="flex gap-4 justify-center flex-wrap">
+                  <button
+                    onClick={defuse}
+                    className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
+                    style={{ background: "var(--boom-green)", color: "white" }}
+                  >
+                    DEFUSED
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

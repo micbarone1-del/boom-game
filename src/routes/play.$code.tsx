@@ -48,6 +48,7 @@ function PlayPage() {
   const { room, players } = useRoom(code);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [rolling, setRolling] = useState(false);
+  const [lastRoll, setLastRoll] = useState<number | null>(null);
   const [winnerOverlay, setWinnerOverlay] = useState<string | null>(null);
   const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
   const [showFinalRanking, setShowFinalRanking] = useState(false);
@@ -186,7 +187,11 @@ function PlayPage() {
   const onRoll = async () => {
     if (!room || !isMyTurn || room.locked) return;
     setRolling(true);
+    setLastRoll(null);
     const dice = rollDice();
+    // Show the rolled number immediately so the player can see what they got
+    // — DB only learns about it after the hop animation finishes.
+    setLastRoll(dice);
     await new Promise((r) => setTimeout(r, 600));
     const target = Math.min(BOARD_SIZE, me.current_space + dice);
     const overrides = (room.board_overrides ?? {}) as BoardOverrides;

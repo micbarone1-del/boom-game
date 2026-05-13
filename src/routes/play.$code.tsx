@@ -39,9 +39,6 @@ function PlayPage() {
   const [showCamera, setShowCamera] = useState(false);
   const [myPrevSpace, setMyPrevSpace] = useState<number | null>(null);
   const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
-  // Local countdown anchor — only set once the landing mascot animation
-  // has finished, so the countdown isn't covered by the overlay.
-  const [playCountdownStart, setPlayCountdownStart] = useState<number | null>(null);
   // Tick to drive border-flash off when countdown ends.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -128,9 +125,9 @@ function PlayPage() {
       lastTrapKeyRef.current = key;
       countdownTicksRef.current = new Set();
     }
-    if (playCountdownStart === null) return;
-    const remaining = playCountdownStart - Date.now();
-    if (remaining > 0) {
+    const remaining = trap.started_at - Date.now();
+    // Beep only inside the final 3-2-1 window so we don't beep early.
+    if (remaining > 0 && remaining <= 3500) {
       const n = Math.max(1, Math.ceil(remaining / 1000));
       if (!countdownTicksRef.current.has(n)) {
         countdownTicksRef.current.add(n);
@@ -138,19 +135,6 @@ function PlayPage() {
       }
     }
   });
-
-  // Arm/clear the local countdown anchor based on trap + landing animation.
-  useEffect(() => {
-    const trap = room?.trap as Trap | null;
-    if (!trap) {
-      setPlayCountdownStart(null);
-      return;
-    }
-    if (myLanded) return; // wait for landing splash to finish
-    if (playCountdownStart === null) {
-      setPlayCountdownStart(Date.now() + 3000);
-    }
-  }, [room, myLanded, playCountdownStart]);
 
   // Auto-clear final ranking when host restarts (everyone back to space 0, no finishers)
   useEffect(() => {

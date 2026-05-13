@@ -717,6 +717,16 @@ function GymBoard({ code }: { code: string }) {
 
       {/* Board */}
       {inPlayMode && (
+      <img
+        src={bombMascot}
+        alt="Boom mascot"
+        width={1024}
+        height={1024}
+        loading="lazy"
+        className="fixed top-0 right-0 -translate-y-10 translate-x-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-30"
+      />
+      )}
+      {inPlayMode && (
       <div ref={boardWrapRef} className="ink-border rounded-3xl bg-white flex-1 relative overflow-hidden">
       <div
         ref={boardInnerRef}

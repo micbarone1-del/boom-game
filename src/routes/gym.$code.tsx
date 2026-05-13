@@ -719,7 +719,7 @@ function GymBoard({ code }: { code: string }) {
                       key={space}
                       data-space={space}
                       onClick={() => sfx.play("gymSelect")}
-                      className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
+                      className="@container aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
                       style={{ background: bg, gridColumn: col, gridRow: 1 }}
                       title={describeCell(cell)}
                     >
@@ -739,17 +739,20 @@ function GymBoard({ code }: { code: string }) {
                           FINISH
                         </span>
                       )}
-                      <span className="text-sm md:text-base font-black leading-none" style={{ color: "var(--boom-ink)" }}>
+                      <span
+                        className="font-black leading-none"
+                        style={{ color: "var(--boom-ink)", fontSize: "clamp(0.7rem, 22cqw, 1.75rem)" }}
+                      >
                         {space}
                       </span>
-                      {cell.type === "easy" && <MiniDumbbell size={32} />}
-                      {cell.type === "medium" && <Dumbbell size={32} />}
-                      {cell.type === "hard" && <Flame size={32} className="text-white" />}
-                      {cell.type === "rest" && <Coffee size={32} />}
-                      {cell.type === "boost" && <Zap size={32} />}
-                      {cell.type === "setback" && <ArrowLeft size={32} className="text-white" />}
-                      {cell.type === "start" && <Flag size={32} />}
-                      {cell.type === "finish" && <Trophy size={32} />}
+                      {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%]" />}
+                      {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%]" />}
+                      {cell.type === "hard" && <Flame className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "rest" && <Coffee className="w-[60%] h-[60%]" />}
+                      {cell.type === "boost" && <Zap className="w-[60%] h-[60%]" />}
+                      {cell.type === "setback" && <ArrowLeft className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "start" && <Flag className="w-[60%] h-[60%]" />}
+                      {cell.type === "finish" && <Trophy className="w-[60%] h-[60%]" />}
                       {here.length > 0 && (
                         <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-30 flex -space-x-2 pointer-events-none">
                           {here.slice(0, 4).map((p, i) => {

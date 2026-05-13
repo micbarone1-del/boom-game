@@ -115,7 +115,6 @@ function GymBoard({ code }: { code: string }) {
   // When a player's current_space changes, animate them through each cell.
   useEffect(() => {
     if (players.length === 0) return;
-    const HOP_MS = 220;
     for (const p of players) {
       const prev = prevRef.current[p.id];
       prevRef.current[p.id] = p.current_space;
@@ -156,7 +155,7 @@ function GymBoard({ code }: { code: string }) {
           };
           const which = cellSfx[cell.type];
           if (which) sfx.play(which);
-          hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), 3200));
+          hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), LANDING_SPLASH_MS));
         }
       }, distance * HOP_MS));
     }

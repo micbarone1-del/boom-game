@@ -38,6 +38,12 @@ function PlayPage() {
   const [showCamera, setShowCamera] = useState(false);
   const [myPrevSpace, setMyPrevSpace] = useState<number | null>(null);
   const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
+  // Tick to drive border-flash off when countdown ends.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setTick((t) => t + 1), 150);
+    return () => clearInterval(i);
+  }, []);
 
   useEffect(() => {
     const s = loadPlayerSession();

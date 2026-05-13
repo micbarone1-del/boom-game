@@ -241,11 +241,13 @@ function GymBoard({ code }: { code: string }) {
       return;
     }
     const triggerHopping = trap.triggered_by ? hoppingIds.has(trap.triggered_by) : false;
-    if (!triggerHopping && gymCountdownStart === null) {
-      // Hop animation finished — start a fresh 3s countdown locally.
+    // Wait for BOTH the hop to finish AND the landing mascot animation to clear,
+    // so the countdown is never covered by an overlay.
+    const landedActive = !!landed && landed.id === trap.triggered_by;
+    if (!triggerHopping && !landedActive && gymCountdownStart === null) {
       setGymCountdownStart(Date.now() + 3000);
     }
-  }, [trap, hoppingIds, gymCountdownStart]);
+  }, [trap, hoppingIds, landed, gymCountdownStart]);
 
   // Tick while the trap modal is open so border-flash can switch off when the
   // countdown completes.

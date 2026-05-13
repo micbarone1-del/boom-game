@@ -126,6 +126,8 @@ function GymBoard({ code }: { code: string }) {
   const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
   const [turnAnnounce, setTurnAnnounce] = useState<{ username: string; avatar: string | null; key: number } | null>(null);
   const prevTurnKeyRef = useRef<string | null>(null);
+  const turnAnnounceRef = useRef<{ key: number } | null>(null);
+  useEffect(() => { turnAnnounceRef.current = turnAnnounce ? { key: turnAnnounce.key } : null; }, [turnAnnounce]);
   // Per-player rendered space (animated hop-by-hop toward the real current_space).
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());

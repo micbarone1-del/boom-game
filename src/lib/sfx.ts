@@ -27,12 +27,38 @@ type EffectName =
 
 let ctx: AudioContext | null = null;
 let muted = false;
+let unlocked = false;
 const MUTE_KEY = "boom.sfx.muted";
 
 if (typeof window !== "undefined") {
   try {
     muted = localStorage.getItem(MUTE_KEY) === "1";
   } catch {}
+  // Unlock the AudioContext on the first user gesture. Browsers (and
+  // sandboxed preview iframes) block audio until a gesture occurs, and
+  // ctx.resume() must be called synchronously inside that gesture.
+  const unlock = () => {
+    try {
+      const c = ac();
+      if (!c) return;
+      if (c.state === "suspended") void c.resume();
+      // Play a near-silent buffer to fully unlock on iOS/Safari.
+      const buf = c.createBuffer(1, 1, 22050);
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      src.connect(c.destination);
+      src.start(0);
+      unlocked = true;
+    } catch {}
+    if (unlocked) {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    }
+  };
+  window.addEventListener("pointerdown", unlock, { passive: true });
+  window.addEventListener("keydown", unlock);
+  window.addEventListener("touchstart", unlock, { passive: true });
 }
 
 function ac(): AudioContext | null {

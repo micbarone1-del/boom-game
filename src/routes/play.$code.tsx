@@ -393,17 +393,9 @@ function PlayPage() {
               );
             })()}
           </div>
-          {triggeredByMe && (
-            trap.awaiting_verification ? (
-              <p className="font-bold text-lg">Waiting for the room to judge your form…</p>
-            ) : (
-              <button onClick={onIDidIt} className="ink-border rounded-2xl px-6 py-6 text-4xl font-black w-full max-w-md"
-                style={{ background: "var(--boom-green)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}>
-                I DID IT!
-              </button>
-            )
-          )}
-          {!triggeredByMe && trap.awaiting_verification && (
+          {triggeredByMe ? (
+            <p className="font-bold text-lg">Crush those reps — your team will judge you on the GYM SCREEN.</p>
+          ) : (
             <p className="font-bold text-lg">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
           )}
           </div>

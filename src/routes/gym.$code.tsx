@@ -661,7 +661,7 @@ function GymBoard({ code }: { code: string }) {
           {gameHasStarted && isPaused && (
             <>
               <button
-                onClick={() => { void sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}
+                onClick={resumeGame}
                 className="btn-boom flex items-center gap-2"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
@@ -1194,7 +1194,7 @@ function GymBoard({ code }: { code: string }) {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <button
-              onClick={() => { void sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}
+              onClick={resumeGame}
               className="btn-boom flex items-center gap-2"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >

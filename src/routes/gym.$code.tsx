@@ -141,13 +141,29 @@ function GymBoard({ code }: { code: string }) {
   const countdownTicksRef = useRef<Set<number>>(new Set());
   const winnerSoundRef = useRef<Set<string>>(new Set());
   const prevStartedRef = useRef<boolean>(false);
+  const pauseStartedAtRef = useRef<number | null>(null);
   const orderedPlayers = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
   const hasGameProgress = players.some(
     (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
   );
   const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
+  const isPaused = !!room?.paused || paused;
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
-  const inPlayMode = gameHasStarted && !paused;
+  const inPlayMode = gameHasStarted && !isPaused;
+
+  useEffect(() => {
+    if (isPaused && pauseStartedAtRef.current === null) pauseStartedAtRef.current = Date.now();
+  }, [isPaused]);
+
+  useEffect(() => {
+    if (!isPaused) return;
+    hopTimeoutsRef.current.forEach(clearTimeout);
+    hopTimeoutsRef.current = [];
+    setHoppingIds(new Set());
+    setLanded(null);
+    setTurnAnnounce(null);
+    setExploding(false);
+  }, [isPaused]);
 
   // Camera (board zoom/pan): scale 1 idle; scale 3 centered on the active
   // token while a roll is animating or a trap is on the board. Pans live as
@@ -239,6 +255,10 @@ function GymBoard({ code }: { code: string }) {
     for (const p of players) {
       const prev = prevRef.current[p.id];
       prevRef.current[p.id] = p.current_space;
+      if (isPaused) {
+        setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
+        continue;
+      }
       if (prev === undefined || prev === p.current_space) {
         if (prev === undefined) setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
         continue;
@@ -286,10 +306,11 @@ function GymBoard({ code }: { code: string }) {
         }
       }, announceRemaining + distance * HOP_MS));
     }
-  }, [players]);
+  }, [players, isPaused]);
 
   // Player joined sound — fires when a new player id appears.
   useEffect(() => {
+    if (isPaused) return;
     if (players.length === 0) {
       seenPlayerIdsRef.current = new Set();
       return;
@@ -305,20 +326,22 @@ function GymBoard({ code }: { code: string }) {
         sfx.play("playerJoin");
       }
     }
-  }, [players]);
+  }, [players, isPaused]);
 
   // Game start sound — fires when the room transitions into play.
   useEffect(() => {
+    if (isPaused) return;
     const started = !!room && (room.status === "playing" || !!room.current_turn_player_id);
     if (started && !prevStartedRef.current) sfx.play("gameStart");
     prevStartedRef.current = started;
-  }, [room]);
+  }, [room, isPaused]);
 
   // Turn announcement — flash a "[NAME] ROLLS!" overlay when the active turn
   // changes. We key on (turn player id + last_dice) so that a RESTART (which
   // sets last_dice back to null while keeping the same first player) ALSO
   // re-fires the announcement, not just turn rotations.
   useEffect(() => {
+    if (isPaused) return;
     const tid = room?.current_turn_player_id ?? null;
     if (!tid) { prevTurnKeyRef.current = null; return; }
     const key = `${tid}|${room?.last_dice ?? "null"}`;
@@ -334,10 +357,11 @@ function GymBoard({ code }: { code: string }) {
     setTurnAnnounce({ username: player.username, avatar: player.avatar_url, key: Date.now() });
     const t = setTimeout(() => setTurnAnnounce(null), 2500);
     return () => clearTimeout(t);
-  }, [room?.current_turn_player_id, room?.last_dice, players, trap]);
+  }, [room?.current_turn_player_id, room?.last_dice, players, trap, isPaused]);
 
   // Countdown beeps — one per second of the 3-2-1.
   useEffect(() => {
+    if (isPaused) return;
     if (!trap) {
       countdownTicksRef.current = new Set();
       return;
@@ -399,6 +423,18 @@ function GymBoard({ code }: { code: string }) {
     const i = setInterval(() => setTick((t) => t + 1), 150);
     return () => clearInterval(i);
   }, [trap]);
+
+  const resumeGame = async () => {
+    void sfx.unlock();
+    setPaused(false);
+    const pausedFor = pauseStartedAtRef.current ? Date.now() - pauseStartedAtRef.current : 0;
+    pauseStartedAtRef.current = null;
+    const pausedTrap = room?.trap as Trap | null;
+    await supabase.from("rooms").update({
+      paused: false,
+      ...(pausedTrap ? { trap: { ...pausedTrap, started_at: pausedTrap.started_at + pausedFor } } : {}),
+    }).eq("code", code);
+  };
 
   const restartGame = async () => {
     if (!room || players.length === 0 || restarting) return;
@@ -503,7 +539,7 @@ function GymBoard({ code }: { code: string }) {
 
   // Defuse / Blow Up handlers (judge buttons)
   const defuse = async () => {
-    if (!room || !trap) return;
+    if (!room || !trap || isPaused) return;
     sfx.play("defuse");
     const triggerPlayer = players.find((p) => p.id === trap.triggered_by);
     if (!triggerPlayer) return;
@@ -544,7 +580,7 @@ function GymBoard({ code }: { code: string }) {
   };
 
   const blowUp = async () => {
-    if (!trap) return;
+    if (!trap || isPaused) return;
     sfx.play("blowUp");
     // Reset awaiting_verification — player must redo
     await supabase
@@ -586,7 +622,7 @@ function GymBoard({ code }: { code: string }) {
           </div>
           <div className="flex items-center gap-2">
             <SfxButton />
-            {!paused && (
+            {!isPaused && (
               <button
                 onClick={() => { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
                 className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
@@ -622,10 +658,10 @@ function GymBoard({ code }: { code: string }) {
               {starting ? "IGNITING…" : "START GAME"}
             </button>
           )}
-          {gameHasStarted && paused && (
+          {gameHasStarted && isPaused && (
             <>
               <button
-                onClick={() => { void sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}
+                onClick={resumeGame}
                 className="btn-boom flex items-center gap-2"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
@@ -760,7 +796,7 @@ function GymBoard({ code }: { code: string }) {
                     <div
                       key={space}
                       data-space={space}
-                      onClick={() => sfx.play("gymSelect")}
+                      onClick={() => { if (!isPaused) sfx.play("gymSelect"); }}
                       className="@container aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
                       style={{ background: bg, gridColumn: col, gridRow: 1 }}
                       title={describeCell(cell)}
@@ -1024,13 +1060,14 @@ function GymBoard({ code }: { code: string }) {
               );
             })()}
             <button
-              onClick={() => { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
+              onClick={() => { if (!isPaused) { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); } }}
+              disabled={isPaused}
               className="mt-4 ink-border-sm rounded-xl px-4 py-2 font-black text-sm flex items-center gap-2 mx-auto"
               style={{ background: "var(--boom-ink)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}
             >
               <Pause size={16} fill="currentColor" /> PAUSE
             </button>
-            {Date.now() >= trap.started_at && (
+            {!isPaused && Date.now() >= trap.started_at && (
               <div className="mt-6">
                 <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
                   TEAM VERIFICATION
@@ -1051,7 +1088,7 @@ function GymBoard({ code }: { code: string }) {
       )}
 
       {/* Turn announcement overlay */}
-      {turnAnnounce && !trap && (
+      {turnAnnounce && !trap && !isPaused && (
         <div
           key={turnAnnounce.key}
           className="fixed inset-0 z-[45] flex flex-col items-center justify-center bg-black/70 pointer-events-none"
@@ -1145,6 +1182,34 @@ function GymBoard({ code }: { code: string }) {
           overrides={(room.board_overrides ?? {}) as BoardOverrides}
           onClose={() => setShowCustomize(false)}
         />
+      )}
+      {isPaused && gameHasStarted && (
+        <div className="fixed inset-0 z-[120] bg-black/90 flex flex-col items-center justify-center gap-6 p-6 text-center">
+          <Pause size={96} className="text-white" fill="currentColor" />
+          <div
+            className="text-6xl md:text-8xl font-black comic-shadow text-white"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            GAME PAUSED
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <button
+              onClick={resumeGame}
+              className="btn-boom flex items-center gap-2"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              <Play size={20} fill="currentColor" /> PLAY
+            </button>
+            <button
+              onClick={restartGame}
+              disabled={restarting}
+              className="btn-boom disabled:opacity-50"
+              style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
+            >
+              {restarting ? "BOOMING…" : "RESTART"}
+            </button>
+          </div>
+        </div>
       )}
       {landed && (
         <CellMascot key={landed.key} type={landed.type} username={landed.username} />

@@ -63,6 +63,15 @@ function PlayPage() {
   const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
   const [myTurnFlash, setMyTurnFlash] = useState<number | null>(null);
   const prevMyTurnRef = useRef<boolean>(false);
+  const isPaused = !!room?.paused;
+  const pausedRef = useRef(false);
+  useEffect(() => {
+    pausedRef.current = isPaused;
+    if (!isPaused) return;
+    setRolling(false);
+    setMyLanded(null);
+    setMyTurnFlash(null);
+  }, [isPaused]);
   // Tick to drive border-flash off when countdown ends.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -82,6 +91,7 @@ function PlayPage() {
 
   // Mascot splash when MY token lands on a new cell
   useEffect(() => {
+    if (isPaused) return;
     const meNow = players.find((p) => p.id === playerId);
     if (!meNow) return;
     if (myPrevSpace !== null && myPrevSpace !== meNow.current_space && meNow.current_space > 0) {
@@ -101,10 +111,11 @@ function PlayPage() {
     }
     setMyPrevSpace(meNow.current_space);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [players, playerId]);
+  }, [players, playerId, isPaused]);
 
   // Detect newly-finished players and trigger explosion overlay
   useEffect(() => {
+    if (isPaused) return;
     const finished = players.filter((p) => p.finished_at);
     const newOnes = finished.filter((p) => !seenFinishers.has(p.id));
     if (newOnes.length > 0) {
@@ -122,7 +133,7 @@ function PlayPage() {
       return () => clearTimeout(t);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [players]);
+  }, [players, isPaused]);
 
   // Countdown beeps + clear when trap appears/disappears
   useEffect(() => {
@@ -157,6 +168,7 @@ function PlayPage() {
 
   // Full-screen flash when it becomes my turn (and we're not in a trap).
   useEffect(() => {
+    if (isPaused) return;
     const isTurn = !!me && room?.current_turn_player_id === me.id;
     if (isTurn && !prevMyTurnRef.current && !trap) {
       setMyTurnFlash(Date.now());
@@ -165,18 +177,18 @@ function PlayPage() {
       return () => clearTimeout(t);
     }
     prevMyTurnRef.current = isTurn;
-  }, [room?.current_turn_player_id, me, trap]);
+  }, [room?.current_turn_player_id, me, trap, isPaused]);
 
   // Auto-assign first turn if none set
   useEffect(() => {
     if (!room) return;
-    if (!room.current_turn_player_id && players.length > 0 && !room.locked) {
+    if (!room.current_turn_player_id && players.length > 0 && !room.locked && !isPaused) {
       const first = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at))[0];
       if (first && me?.id === first.id) {
         supabase.from("rooms").update({ current_turn_player_id: first.id }).eq("code", code);
       }
     }
-  }, [room, players, me, code]);
+  }, [room, players, me, code, isPaused]);
 
   if (!me) {
     return (
@@ -189,13 +201,20 @@ function PlayPage() {
 
   const isMyTurn = room?.current_turn_player_id === me.id;
   const triggeredByMe = trap?.triggered_by === me.id;
+  const roomPausedNow = async () => {
+    if (pausedRef.current) return true;
+    const { data } = await supabase.from("rooms").select("paused").eq("code", code).maybeSingle();
+    return !!(data as { paused?: boolean } | null)?.paused;
+  };
 
   const onRoll = async () => {
-    if (!room || !isMyTurn || room.locked || (room as any).paused) return;
+    if (!room || !isMyTurn || room.locked || isPaused) return;
+    if (await roomPausedNow()) return;
     setRolling(true);
     setLastRoll(null);
     const dice = rollDice();
     await new Promise((r) => setTimeout(r, 600));
+    if (await roomPausedNow()) { setRolling(false); return; }
     // Reveal the rolled number AFTER the dice-shake animation finishes.
     setLastRoll(dice);
     const target = Math.min(BOARD_SIZE, me.current_space + dice);
@@ -222,10 +241,12 @@ function PlayPage() {
 
     // Stage 1: hop the token to the dice-landing cell so the player visibly
     // arrives on the BLAST/SETBACK cell (and the gym plays its splash).
+    if (await roomPausedNow()) { setRolling(false); return; }
     await supabase.from("players").update({ current_space: target }).eq("id", me.id);
     const stage1Distance = Math.max(1, Math.abs(target - me.current_space));
     const stage1Ms = stage1Distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
     await new Promise((r) => setTimeout(r, stage1Ms));
+    if (await roomPausedNow()) { setRolling(false); return; }
 
     // Stage 2: if a boost/setback/finish moved the destination, hop again so
     // the token visibly accelerates forward (or back) to the final space.
@@ -234,6 +255,7 @@ function PlayPage() {
       const stage2Distance = Math.max(1, Math.abs(final - target));
       const stage2Ms = stage2Distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
       await new Promise((r) => setTimeout(r, stage2Ms));
+      if (await roomPausedNow()) { setRolling(false); return; }
     }
 
     // Exercise destination -> lock with trap (after hop animation finishes).
@@ -407,9 +429,9 @@ function PlayPage() {
       })() : me.finished_at ? null : (
         <button
           onClick={onRoll}
-          disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at || !!(room as any)?.paused}
-          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked && !(room as any)?.paused ? "anim-roll-pulse" : ""}`}
-          style={{ background: (room as any)?.paused ? "var(--muted)" : isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
+          disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at || isPaused}
+          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked && !isPaused ? "anim-roll-pulse" : ""}`}
+          style={{ background: isPaused ? "var(--muted)" : isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
         >
           {lastRoll != null ? (
             <span
@@ -422,7 +444,7 @@ function PlayPage() {
             <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
           )}
           <span className="text-xl">
-            {(room as any)?.paused ? "GAME PAUSED" : lastRoll != null ? `YOU ROLLED ${lastRoll}` : rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
+            {isPaused ? "GAME PAUSED" : lastRoll != null ? `YOU ROLLED ${lastRoll}` : rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
           </span>
         </button>
       )}
@@ -536,7 +558,7 @@ function PlayPage() {
         />
       )}
       {/* countdown rendered inline inside the timer box */}
-      {(room as any)?.paused && (
+      {isPaused && (
         <div className="fixed inset-0 z-[100] bg-black/85 flex flex-col items-center justify-center gap-6 p-6 text-center">
           <Pause size={96} className="text-white" fill="currentColor" />
           <div

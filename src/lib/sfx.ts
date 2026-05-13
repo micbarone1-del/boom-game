@@ -279,8 +279,14 @@ export const sfx = {
     try {
       const c = ac();
       if (!c) return;
-      void unlockAudio();
-      effects[name]();
+      if (c.state === "running") {
+        state.unlocked = true;
+        effects[name]();
+        return;
+      }
+      void unlockAudio().then((ready) => {
+        if (!muted && ready) effects[name]();
+      });
     } catch {
       // Audio context might be blocked before first user interaction — ignore.
     }

@@ -1,4 +1,8 @@
 export const BOARD_SIZE = 60;
+export const HOP_MS = 220;
+export const LANDING_SPLASH_MS = 3200;
+export const SEQUENCE_BUFFER_MS = 350;
+export const COUNTDOWN_LEAD_MS = 3500;
 
 export const EXERCISES_EASY = ["Jumping Jacks", "High Knees", "Sit-ups", "Crunches"];
 export const EXERCISES_MEDIUM = ["Squats", "Lunges", "Push-ups", "Mountain Climbers"];

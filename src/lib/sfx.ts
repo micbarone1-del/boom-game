@@ -120,10 +120,10 @@ async function ensureReady(): Promise<boolean> {
     osc.connect(g).connect(c.destination);
     osc.start(t0);
     osc.stop(t0 + 0.025);
-    _g.__boomSfx.unlocked = c.state === "running";
-    return _g.__boomSfx.unlocked;
+    state.unlocked = c.state === "running";
+    return state.unlocked;
   } catch {
-    _g.__boomSfx.unlocked = false;
+    state.unlocked = false;
     return false;
   }
 }
@@ -132,7 +132,7 @@ async function ensureReady(): Promise<boolean> {
  *  push everything ~60ms into the future so the gain ramp doesn't get
  *  clipped by the resume transition (the #1 cause of "I hear nothing"). */
 function safeStart(c: AudioContext, requestedDelay = 0): number {
-  const pad = 0.005;
+  const pad = c.state === "running" ? 0.005 : 0.08;
   return c.currentTime + pad + requestedDelay;
 }
 

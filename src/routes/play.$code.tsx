@@ -9,6 +9,11 @@ import {
   getCell,
   describeCell,
   BOARD_SIZE,
+  HOP_MS,
+  LANDING_SPLASH_MS,
+  SEQUENCE_BUFFER_MS,
+  TRAP_REVEAL_MS,
+  COUNTDOWN_LEAD_MS,
   finishPlayer,
   type Trap,
   getEffectiveCell,
@@ -211,7 +216,7 @@ function PlayPage() {
     if (final !== target) {
       const firstDistance = Math.max(1, Math.abs(target - me.current_space));
       await supabase.from("players").update({ current_space: target }).eq("id", me.id);
-      await new Promise((r) => setTimeout(r, firstDistance * 220 + 500));
+      await new Promise((r) => setTimeout(r, firstDistance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS));
     }
 
     // Exercise destination -> lock with trap (after hop animation finishes).
@@ -223,7 +228,7 @@ function PlayPage() {
       const hopFrom = final !== target ? target : me.current_space;
       await supabase.from("players").update({ current_space: final }).eq("id", me.id);
       const distance = Math.max(1, Math.abs(final - hopFrom));
-      const hopMs = distance * 220 + 600;
+      const hopMs = distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
       await new Promise((r) => setTimeout(r, hopMs));
       await supabase
         .from("rooms")
@@ -234,12 +239,9 @@ function PlayPage() {
             exercise,
             reps,
             triggered_by: me.id,
-            // Pad the anchor with enough lead time for every client to finish
-            // the cell-landing mascot animation (~3.2s) AND a 3-2-1 countdown
-            // (3s) before the timer starts. The CountdownIntro only renders
-            // numbers in the final 3.5s, so this is the single shared anchor
-            // that keeps gym + player screens perfectly synchronised.
-            started_at: Date.now() + 6500,
+            // Trap is created only after movement + landing splash have ended.
+            // Then every screen gets a short reveal before the shared 3-2-1.
+            started_at: Date.now() + TRAP_REVEAL_MS + COUNTDOWN_LEAD_MS,
             awaiting_verification: false,
           } satisfies Trap,
         })

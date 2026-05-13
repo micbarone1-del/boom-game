@@ -82,6 +82,20 @@ function ac(): AudioContext | null {
 function unlockAudio(): Promise<boolean> {
   const c = ac();
   if (!c) return Promise.resolve(false);
+  // iOS/Safari often needs a source node to be created + started directly in
+  // the click/touch call stack; resume() alone can leave WebAudio silent.
+  try {
+    const t0 = c.currentTime + 0.005;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(440, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.setValueAtTime(0.0001, t0 + 0.02);
+    osc.connect(g).connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.025);
+  } catch {}
   const mark = () => {
     state.unlocked = c.state === "running";
     return state.unlocked;
@@ -108,8 +122,6 @@ async function ensureReady(): Promise<boolean> {
   const c = ac();
   if (!c) return false;
   try {
-    if (c.state === "suspended") await c.resume();
-    // A near-silent beep is more reliable than a silent buffer in iframes and iOS.
     const t0 = c.currentTime + 0.005;
     const osc = c.createOscillator();
     const g = c.createGain();
@@ -120,6 +132,7 @@ async function ensureReady(): Promise<boolean> {
     osc.connect(g).connect(c.destination);
     osc.start(t0);
     osc.stop(t0 + 0.025);
+    if (c.state === "suspended") await c.resume();
     state.unlocked = c.state === "running";
     return state.unlocked;
   } catch {
@@ -282,6 +295,12 @@ export const sfx = {
       if (c.state === "running") {
         state.unlocked = true;
         effects[name]();
+        return;
+      }
+      const inUserGesture = !!navigator.userActivation?.isActive;
+      if (inUserGesture) {
+        effects[name]();
+        void unlockAudio();
         return;
       }
       void unlockAudio().then((ready) => {

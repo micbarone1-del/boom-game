@@ -399,9 +399,9 @@ function PlayPage() {
       })() : me.finished_at ? null : (
         <button
           onClick={onRoll}
-          disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at}
-          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked ? "anim-roll-pulse" : ""}`}
-          style={{ background: isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
+          disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at || !!(room as any)?.paused}
+          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked && !(room as any)?.paused ? "anim-roll-pulse" : ""}`}
+          style={{ background: (room as any)?.paused ? "var(--muted)" : isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
         >
           {lastRoll != null ? (
             <span
@@ -414,7 +414,7 @@ function PlayPage() {
             <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
           )}
           <span className="text-xl">
-            {lastRoll != null ? `YOU ROLLED ${lastRoll}` : rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
+            {(room as any)?.paused ? "GAME PAUSED" : lastRoll != null ? `YOU ROLLED ${lastRoll}` : rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
           </span>
         </button>
       )}

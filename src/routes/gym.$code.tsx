@@ -346,6 +346,10 @@ function GymBoard({ code }: { code: string }) {
     if (!room || players.length === 0 || restarting) return;
     setRestarting(true);
     setStartError(null);
+    await sfx.unlock();
+    // Restart must always exit pause and re-enter full play mode, even if the
+    // host hit RESTART from the paused screen.
+    setPaused(false);
     sfx.play("gameStart");
     const first = orderedPlayers[0];
     const resetSpaces = Object.fromEntries(players.map((p) => [p.id, 0]));

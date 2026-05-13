@@ -48,6 +48,13 @@ function PlayPage() {
   const { room, players } = useRoom(code);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [rolling, setRolling] = useState(false);
+  const [lastRoll, setLastRoll] = useState<number | null>(null);
+  // Reset the locally-shown dice number once it's no longer this player's turn
+  // (e.g. turn passed, trap closed, restart) so it doesn't linger on screen.
+  useEffect(() => {
+    if (rolling) return;
+    setLastRoll(null);
+  }, [room?.current_turn_player_id, rolling]);
   const [winnerOverlay, setWinnerOverlay] = useState<string | null>(null);
   const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
   const [showFinalRanking, setShowFinalRanking] = useState(false);
@@ -186,7 +193,11 @@ function PlayPage() {
   const onRoll = async () => {
     if (!room || !isMyTurn || room.locked) return;
     setRolling(true);
+    setLastRoll(null);
     const dice = rollDice();
+    // Show the rolled number immediately so the player can see what they got
+    // — DB only learns about it after the hop animation finishes.
+    setLastRoll(dice);
     await new Promise((r) => setTimeout(r, 600));
     const target = Math.min(BOARD_SIZE, me.current_space + dice);
     const overrides = (room.board_overrides ?? {}) as BoardOverrides;
@@ -392,9 +403,19 @@ function PlayPage() {
           className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked ? "anim-roll-pulse" : ""}`}
           style={{ background: isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
         >
-          <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
-          {rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
-          {room?.last_dice && <span className="text-base font-bold">Last roll: {room.last_dice}</span>}
+          {lastRoll != null ? (
+            <span
+              className="comic-shadow leading-none"
+              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "5rem", color: "var(--boom-red)" }}
+            >
+              {lastRoll}
+            </span>
+          ) : (
+            <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
+          )}
+          <span className="text-xl">
+            {rolling ? "ROLLING…" : lastRoll != null ? `YOU ROLLED ${lastRoll}` : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
+          </span>
         </button>
       )}
 

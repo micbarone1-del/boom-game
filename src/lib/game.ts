@@ -271,6 +271,8 @@ export type Trap = {
   triggered_by: string; // player id
   started_at: number;   // ms epoch
   awaiting_verification?: boolean;
+  /** The final board space the trap is anchored on (post-boost/setback). */
+  space?: number;
 };
 
 const PLAYER_KEY = "boom.player";

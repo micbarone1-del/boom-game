@@ -8,6 +8,16 @@ import { Bomb, LogIn, LogOut, UserCircle2 } from "lucide-react";
 export const Route = createFileRoute("/join")({
   component: JoinPage,
   validateSearch: (s: Record<string, unknown>) => ({ code: (s.code as string) || "" }),
+  head: () => ({
+    meta: [
+      { title: "Join the Game — BOOM!" },
+      { name: "description", content: "Join a BOOM! workout game from your phone. Enter your room code, set your fitness level, and get ready to roll." },
+      { property: "og:title", content: "Join the Game — BOOM!" },
+      { property: "og:description", content: "Join a BOOM! workout game from your phone. Enter your room code and play with friends." },
+      { property: "og:url", content: "https://boom-game.lovable.app/join" },
+    ],
+    links: [{ rel: "canonical", href: "https://boom-game.lovable.app/join" }],
+  }),
 });
 
 function JoinPage() {
@@ -307,7 +317,7 @@ function JoinPage() {
           {(preview || savedAvatar) && (
             <div className="mt-2 flex items-center gap-3">
               <div className="w-24 h-24 rounded-full overflow-hidden ink-border-sm">
-                <img src={preview ?? savedAvatar ?? ""} alt="preview" className="w-full h-full object-cover" />
+                <img src={preview ?? savedAvatar ?? ""} alt={`${username || "Player"} selfie preview`} className="w-full h-full object-cover" />
               </div>
               <button type="button" onClick={clearProfileFields}
                 className="text-xs font-black underline" style={{color:"var(--boom-red)"}}>

@@ -49,6 +49,12 @@ function PlayPage() {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [rolling, setRolling] = useState(false);
   const [lastRoll, setLastRoll] = useState<number | null>(null);
+  // Reset the locally-shown dice number once it's no longer this player's turn
+  // (e.g. turn passed, trap closed, restart) so it doesn't linger on screen.
+  useEffect(() => {
+    if (rolling) return;
+    setLastRoll(null);
+  }, [room?.current_turn_player_id, rolling]);
   const [winnerOverlay, setWinnerOverlay] = useState<string | null>(null);
   const [seenFinishers, setSeenFinishers] = useState<Set<string>>(new Set());
   const [showFinalRanking, setShowFinalRanking] = useState(false);

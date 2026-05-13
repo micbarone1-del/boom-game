@@ -423,9 +423,9 @@ function PlayPage() {
       })() : me.finished_at ? null : (
         <button
           onClick={onRoll}
-          disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at || !!(room as any)?.paused}
-          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked && !(room as any)?.paused ? "anim-roll-pulse" : ""}`}
-          style={{ background: (room as any)?.paused ? "var(--muted)" : isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
+          disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at || isPaused}
+          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked && !isPaused ? "anim-roll-pulse" : ""}`}
+          style={{ background: isPaused ? "var(--muted)" : isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
         >
           {lastRoll != null ? (
             <span
@@ -438,7 +438,7 @@ function PlayPage() {
             <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
           )}
           <span className="text-xl">
-            {(room as any)?.paused ? "GAME PAUSED" : lastRoll != null ? `YOU ROLLED ${lastRoll}` : rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
+            {isPaused ? "GAME PAUSED" : lastRoll != null ? `YOU ROLLED ${lastRoll}` : rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
           </span>
         </button>
       )}
@@ -552,7 +552,7 @@ function PlayPage() {
         />
       )}
       {/* countdown rendered inline inside the timer box */}
-      {(room as any)?.paused && (
+      {isPaused && (
         <div className="fixed inset-0 z-[100] bg-black/85 flex flex-col items-center justify-center gap-6 p-6 text-center">
           <Pause size={96} className="text-white" fill="currentColor" />
           <div

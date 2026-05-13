@@ -459,6 +459,7 @@ function GymBoard({ code }: { code: string }) {
           trap: null,
           last_dice: null,
           current_turn_player_id: first?.id ?? null,
+          paused: false,
         })
         .eq("code", code);
 
@@ -494,6 +495,7 @@ function GymBoard({ code }: { code: string }) {
         trap: null,
         last_dice: null,
         current_turn_player_id: first.id,
+        paused: false,
       })
       .eq("code", code);
     if (error) setStartError("Couldn’t start the game. Smash it again!");
@@ -594,7 +596,7 @@ function GymBoard({ code }: { code: string }) {
             <SfxButton />
             {!paused && (
               <button
-                onClick={async () => { await sfx.unlock(); setPaused(true); }}
+                onClick={async () => { await sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
                 className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
@@ -631,7 +633,7 @@ function GymBoard({ code }: { code: string }) {
           {gameHasStarted && paused && (
             <>
               <button
-                onClick={async () => { await sfx.unlock(); setPaused(false); }}
+                onClick={async () => { await sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}
                 className="btn-boom flex items-center gap-2"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
@@ -723,7 +725,7 @@ function GymBoard({ code }: { code: string }) {
         width={1024}
         height={1024}
         loading="lazy"
-        className="fixed top-0 right-0 -translate-y-10 translate-x-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-30"
+        className="fixed bottom-0 right-0 translate-y-10 translate-x-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-30"
       />
       )}
       {inPlayMode && (

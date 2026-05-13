@@ -110,6 +110,7 @@ export type Database = {
           host_id: string
           last_dice: number | null
           locked: boolean
+          paused: boolean
           status: string
           trap: Json | null
         }
@@ -122,6 +123,7 @@ export type Database = {
           host_id?: string
           last_dice?: number | null
           locked?: boolean
+          paused?: boolean
           status?: string
           trap?: Json | null
         }
@@ -134,6 +136,7 @@ export type Database = {
           host_id?: string
           last_dice?: number | null
           locked?: boolean
+          paused?: boolean
           status?: string
           trap?: Json | null
         }

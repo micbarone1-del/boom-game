@@ -625,25 +625,36 @@ function GymBoard({ code }: { code: string }) {
                 trapCellType === "boost" ? "var(--boom-green)" :
                 trapCellType === "setback" ? "#7c3aed" :
                 "var(--boom-yellow)";
+              const effectiveStart = gymCountdownStart ?? (trap.started_at + 1e12);
+              const inCountdown = Date.now() < effectiveStart;
+              const ready = gymCountdownStart !== null;
               return (
                 <div className="mt-4 flex justify-center">
                   <div
-                    className="ink-border anim-border-flash rounded-2xl px-6 py-3"
+                    className={`ink-border rounded-2xl px-6 py-3 ${inCountdown ? "anim-border-flash" : ""}`}
                     style={{
                       background: cellColor,
                       color: trapCellType === "hard" ? "white" : "var(--boom-ink)",
-                      borderWidth: 4,
+                      borderWidth: 6,
                       transform: "rotate(-3deg)",
-                      minWidth: "12rem",
+                      minWidth: "14rem",
                     }}
                   >
-                    <CountdownIntro startAt={trap.started_at} inline />
-                    <FuseTimer
-                      startedAt={trap.started_at}
-                      big
-                      color={trapCellType === "hard" ? "white" : "var(--boom-ink)"}
-                      hideBeforeStart
-                    />
+                    {!ready ? (
+                      <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+                        GET READY…
+                      </div>
+                    ) : (
+                      <>
+                        <CountdownIntro startAt={effectiveStart} inline />
+                        <FuseTimer
+                          startedAt={effectiveStart}
+                          big
+                          color={trapCellType === "hard" ? "white" : "var(--boom-ink)"}
+                          hideBeforeStart
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               );

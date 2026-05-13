@@ -141,6 +141,7 @@ function GymBoard({ code }: { code: string }) {
   const countdownTicksRef = useRef<Set<number>>(new Set());
   const winnerSoundRef = useRef<Set<string>>(new Set());
   const prevStartedRef = useRef<boolean>(false);
+  const pauseStartedAtRef = useRef<number | null>(null);
   const orderedPlayers = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
   const hasGameProgress = players.some(
     (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
@@ -149,6 +150,10 @@ function GymBoard({ code }: { code: string }) {
   const isPaused = !!room?.paused || paused;
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !isPaused;
+
+  useEffect(() => {
+    if (isPaused && pauseStartedAtRef.current === null) pauseStartedAtRef.current = Date.now();
+  }, [isPaused]);
 
   useEffect(() => {
     if (!isPaused) return;

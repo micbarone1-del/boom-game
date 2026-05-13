@@ -362,7 +362,10 @@ export const sfx = {
     if (muted) return;
     try {
       const c = ac();
-      if (!c) return;
+      if (!c) {
+        fallbackPlay(true);
+        return;
+      }
       if (c.state === "running") {
         state.unlocked = true;
         effects[name]();
@@ -375,6 +378,7 @@ export const sfx = {
         void unlockAudio();
         return;
       }
+      if (state.fallbackUnlocked) fallbackPlay(true);
       void unlockAudio().then((ready) => {
         if (!muted && ready) effects[name]();
       });
@@ -387,7 +391,7 @@ export const sfx = {
   },
   isUnlocked() {
     const c = state.ctx;
-    return !!c && c.state === "running" && !!state.unlocked;
+    return (!!c && c.state === "running" && !!state.unlocked) || state.fallbackUnlocked;
   },
   setMuted(v: boolean) {
     muted = v;

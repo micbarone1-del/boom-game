@@ -537,6 +537,7 @@ function GymBoard({ code }: { code: string }) {
       )}
 
       {/* Board */}
+      {inPlayMode && (
       <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative">
         <img
           src={bombMascot}
@@ -629,7 +630,7 @@ function GymBoard({ code }: { code: string }) {
                                 <PlayerToken
                                   avatar={p.avatar_url}
                                   username={p.username}
-                                  size={34}
+                                  size={64}
                                   active={room?.current_turn_player_id === p.id}
                                   showName={false}
                                   showInitial
@@ -668,10 +669,12 @@ function GymBoard({ code }: { code: string }) {
           ))}
         </div>
       </div>
+      )}
 
-      <SpotifyEmbed code={code} />
+      {!inPlayMode && <SpotifyEmbed code={code} />}
 
       {/* Live leaderboard — visible to everyone in the room */}
+      {!inPlayMode && (
       <div className="ink-border rounded-2xl bg-white p-3">
         <div className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</div>
         <div className="grid gap-1">
@@ -698,8 +701,10 @@ function GymBoard({ code }: { code: string }) {
             ))}
         </div>
       </div>
+      )}
 
       {/* Players strip */}
+      {!inPlayMode && (
       <div className="ink-border rounded-2xl p-3 pt-5 bg-white flex gap-6 overflow-x-auto">
         {players.length === 0 && (
           <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
@@ -736,6 +741,7 @@ function GymBoard({ code }: { code: string }) {
           );
         })}
       </div>
+      )}
 
       {/* BOOM modal */}
       {trap && (

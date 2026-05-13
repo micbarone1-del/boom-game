@@ -39,6 +39,8 @@ function PlayPage() {
   const [showCamera, setShowCamera] = useState(false);
   const [myPrevSpace, setMyPrevSpace] = useState<number | null>(null);
   const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
+  const [myTurnFlash, setMyTurnFlash] = useState<number | null>(null);
+  const prevMyTurnRef = useRef<boolean>(false);
   // Tick to drive border-flash off when countdown ends.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -148,6 +150,18 @@ function PlayPage() {
 
   const me = players.find((p) => p.id === playerId);
   const trap = room?.trap as Trap | null;
+
+  // Full-screen flash when it becomes my turn (and we're not in a trap).
+  useEffect(() => {
+    const isTurn = !!me && room?.current_turn_player_id === me.id;
+    if (isTurn && !prevMyTurnRef.current && !trap) {
+      setMyTurnFlash(Date.now());
+      const t = setTimeout(() => setMyTurnFlash(null), 1100);
+      prevMyTurnRef.current = true;
+      return () => clearTimeout(t);
+    }
+    prevMyTurnRef.current = isTurn;
+  }, [room?.current_turn_player_id, me, trap]);
 
   // Auto-assign first turn if none set
   useEffect(() => {
@@ -394,7 +408,7 @@ function PlayPage() {
         <button
           onClick={onRoll}
           disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at}
-          className="ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked ? "anim-roll-pulse" : ""}`}
           style={{ background: isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
         >
           <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
@@ -504,6 +518,13 @@ function PlayPage() {
 
       {showCamera && <BoomCamera onClose={() => setShowCamera(false)} />}
       {myLanded && <CellMascot key={myLanded.key} type={myLanded.type} />}
+      {myTurnFlash && (
+        <div
+          key={myTurnFlash}
+          className="fixed inset-0 z-[80] pointer-events-none anim-screen-flash"
+          style={{ background: "var(--boom-yellow)" }}
+        />
+      )}
       {/* countdown rendered inline inside the timer box */}
     </main>
   );

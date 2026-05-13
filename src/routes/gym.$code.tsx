@@ -10,6 +10,8 @@ import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { sfx } from "@/lib/sfx";
+import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -70,6 +72,11 @@ function GymBoard({ code }: { code: string }) {
   const [, setTick] = useState(0);
   const prevRef = useRef<Record<string, number>>({});
   const hopTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const seenPlayerIdsRef = useRef<Set<string>>(new Set());
+  const lastTrapIdRef = useRef<string | null>(null);
+  const countdownTicksRef = useRef<Set<number>>(new Set());
+  const winnerSoundRef = useRef<Set<string>>(new Set());
+  const prevStartedRef = useRef<boolean>(false);
   const orderedPlayers = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
   const hasGameProgress = players.some(
     (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
@@ -110,6 +117,7 @@ function GymBoard({ code }: { code: string }) {
         const at = from + i * step;
         hopTimeoutsRef.current.push(setTimeout(() => {
           setHopSpaces((s) => ({ ...s, [p.id]: at }));
+          sfx.play("hop");
         }, i * HOP_MS));
       }
       hopTimeoutsRef.current.push(setTimeout(() => {
@@ -117,9 +125,77 @@ function GymBoard({ code }: { code: string }) {
         if (to > 0) {
           const cell = getCell(to);
           setLanded({ id: p.id, type: cell.type, username: p.username, key: Date.now() });
+          // Play the cell-type animation sound when the token lands.
+          const cellSfx: Record<string, Parameters<typeof sfx.play>[0] | undefined> = {
+            easy: "easy", medium: "medium", hard: "hard",
+            rest: "rest", boost: "blast", setback: "setback",
+          };
+          const which = cellSfx[cell.type];
+          if (which) sfx.play(which);
           hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), 3200));
         }
       }, distance * HOP_MS));
+    }
+  }, [players]);
+
+  // Player joined sound — fires when a new player id appears.
+  useEffect(() => {
+    if (players.length === 0) {
+      seenPlayerIdsRef.current = new Set();
+      return;
+    }
+    // Skip the very first batch (initial load) to avoid a burst on refresh.
+    if (seenPlayerIdsRef.current.size === 0) {
+      seenPlayerIdsRef.current = new Set(players.map((p) => p.id));
+      return;
+    }
+    for (const p of players) {
+      if (!seenPlayerIdsRef.current.has(p.id)) {
+        seenPlayerIdsRef.current.add(p.id);
+        sfx.play("playerJoin");
+      }
+    }
+  }, [players]);
+
+  // Game start sound — fires when the room transitions into play.
+  useEffect(() => {
+    const started = !!room && (room.status === "playing" || !!room.current_turn_player_id);
+    if (started && !prevStartedRef.current) sfx.play("gameStart");
+    prevStartedRef.current = started;
+  }, [room]);
+
+  // Countdown beeps — one per second of the 3-2-1.
+  useEffect(() => {
+    if (!trap || gymCountdownStart === null) {
+      countdownTicksRef.current = new Set();
+      return;
+    }
+    const remaining = gymCountdownStart - Date.now();
+    if (remaining <= 0) return;
+    const n = Math.max(1, Math.ceil(remaining / 1000));
+    if (!countdownTicksRef.current.has(n)) {
+      countdownTicksRef.current.add(n);
+      sfx.play("countdown");
+    }
+  });
+
+  // Trap appearance: distinguish defuse vs blow up button presses.
+  useEffect(() => {
+    if (!trap) {
+      lastTrapIdRef.current = null;
+      return;
+    }
+    const id = `${trap.triggered_by}:${trap.started_at}`;
+    lastTrapIdRef.current = id;
+  }, [trap]);
+
+  // Win sound — when a player finishes.
+  useEffect(() => {
+    for (const p of players) {
+      if (p.finished_at && !winnerSoundRef.current.has(p.id)) {
+        winnerSoundRef.current.add(p.id);
+        sfx.play("win");
+      }
     }
   }, [players]);
 
@@ -236,6 +312,7 @@ function GymBoard({ code }: { code: string }) {
   // Defuse / Blow Up handlers (judge buttons)
   const defuse = async () => {
     if (!room || !trap) return;
+    sfx.play("defuse");
     const triggerPlayer = players.find((p) => p.id === trap.triggered_by);
     if (!triggerPlayer) return;
     // Player already moved to their target on roll. Defuse just clears the trap.
@@ -276,6 +353,7 @@ function GymBoard({ code }: { code: string }) {
 
   const blowUp = async () => {
     if (!trap) return;
+    sfx.play("blowUp");
     // Reset awaiting_verification — player must redo
     await supabase
       .from("rooms")

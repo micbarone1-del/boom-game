@@ -64,17 +64,25 @@ function PlayPage() {
     const meNow = players.find((p) => p.id === playerId);
     if (!meNow) return;
     if (myPrevSpace !== null && myPrevSpace !== meNow.current_space && meNow.current_space > 0) {
-      const cell = getCell(meNow.current_space);
-      setMyLanded({ type: cell.type, key: Date.now() });
-      const cellSfx: Record<string, Parameters<typeof sfx.play>[0] | undefined> = {
-        easy: "easy", medium: "medium", hard: "hard",
-        rest: "rest", boost: "blast", setback: "setback",
-      };
-      const which = cellSfx[cell.type];
-      if (which) sfx.play(which);
-      const t = setTimeout(() => setMyLanded(null), 3200);
+      // Clear any prior mascot — a new movement just started.
+      setMyLanded(null);
+      // Wait until current_space has been stable for ~700ms before showing
+      // the mascot, so two-stage moves (intermediate → final) don't overlap.
+      const stableMs = 700;
+      const targetSpace = meNow.current_space;
+      const showT = setTimeout(() => {
+        const cell = getCell(targetSpace);
+        setMyLanded({ type: cell.type, key: Date.now() });
+        const cellSfx: Record<string, Parameters<typeof sfx.play>[0] | undefined> = {
+          easy: "easy", medium: "medium", hard: "hard",
+          rest: "rest", boost: "blast", setback: "setback",
+        };
+        const which = cellSfx[cell.type];
+        if (which) sfx.play(which);
+      }, stableMs);
+      const clearT = setTimeout(() => setMyLanded(null), stableMs + 3200);
       setMyPrevSpace(meNow.current_space);
-      return () => clearTimeout(t);
+      return () => { clearTimeout(showT); clearTimeout(clearT); };
     }
     setMyPrevSpace(meNow.current_space);
     // eslint-disable-next-line react-hooks/exhaustive-deps

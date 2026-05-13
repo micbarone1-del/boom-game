@@ -127,6 +127,9 @@ function GymBoard({ code }: { code: string }) {
       const to = p.current_space;
       const step = to > from ? 1 : -1;
       const distance = Math.abs(to - from);
+      // A new hop sequence is starting for this player — clear any landed
+      // mascot still showing from the previous hop so animations don't overlap.
+      setLanded((cur) => (cur && cur.id === p.id ? null : cur));
       setHoppingIds((s) => { const n = new Set(s); n.add(p.id); return n; });
       for (let i = 1; i <= distance; i++) {
         const at = from + i * step;

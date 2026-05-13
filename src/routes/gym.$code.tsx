@@ -438,16 +438,16 @@ function GymBoard({ code }: { code: string }) {
                           FINISH
                         </span>
                       )}
-                      <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
+                      <span className="text-sm md:text-base font-black leading-none" style={{ color: "var(--boom-ink)" }}>
                         {space}
                       </span>
-                      {(cell.type === "easy" || cell.type === "medium") && <Dumbbell size={22} />}
-                      {cell.type === "hard" && <Flame size={22} className="text-white" />}
-                      {cell.type === "rest" && <Coffee size={22} />}
-                      {cell.type === "boost" && <Zap size={22} />}
-                      {cell.type === "setback" && <ArrowLeft size={22} className="text-white" />}
-                      {cell.type === "start" && <Flag size={22} />}
-                      {cell.type === "finish" && <Trophy size={22} />}
+                      {(cell.type === "easy" || cell.type === "medium") && <Dumbbell size={32} />}
+                      {cell.type === "hard" && <Flame size={32} className="text-white" />}
+                      {cell.type === "rest" && <Coffee size={32} />}
+                      {cell.type === "boost" && <Zap size={32} />}
+                      {cell.type === "setback" && <ArrowLeft size={32} className="text-white" />}
+                      {cell.type === "start" && <Flag size={32} />}
+                      {cell.type === "finish" && <Trophy size={32} />}
                       {here.length > 0 && (
                         <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-30 flex -space-x-2 pointer-events-none">
                           {here.slice(0, 4).map((p, i) => {

@@ -204,14 +204,21 @@ function PlayPage() {
 
     // Apply any movement effect first; the destination cell decides what happens next.
     let final = target;
-    if (cell.type === "boost" && cell.delta) {
-      final = Math.min(BOARD_SIZE, target + cell.delta);
-    } else if (cell.type === "setback" && cell.delta) {
-      final = Math.max(1, target + cell.delta); // delta is negative
+    if (cell.type === "boost") {
+      final = Math.min(BOARD_SIZE, target + (cell.delta ?? 0));
+    } else if (cell.type === "setback") {
+      final = Math.max(1, target + (cell.delta ?? 0)); // delta is negative
     } else if (cell.type === "finish") {
       final = BOARD_SIZE;
     }
+    // The "start" cell is not a real landing spot — if a roll or setback would
+    // park you on it, nudge forward one space so play doesn't stall.
+    let finalCellPeek = getEffectiveCell(final, overrides);
+    if (finalCellPeek.type === "start") {
+      final = Math.min(BOARD_SIZE, final + 1);
+    }
     const finalCell = getEffectiveCell(final, overrides);
+    console.log("[roll]", { from: me.current_space, dice, target, cellType: cell.type, delta: cell.delta, final, finalType: finalCell.type });
 
     // Single-stage DB write: move the player straight to their final space.
     // Writing twice (target then final) caused the trap to occasionally render

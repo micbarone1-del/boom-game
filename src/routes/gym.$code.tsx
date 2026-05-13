@@ -59,7 +59,10 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
       onClick={async () => {
         const next = sfx.toggleMuted();
         setMuted(next);
-        if (!next) await sfx.unlock();
+        if (!next) {
+          await sfx.unlock();
+          sfx.play("gymSelect");
+        }
       }}
       className={
         isWhite
@@ -272,7 +275,7 @@ function GymBoard({ code }: { code: string }) {
             rest: "rest", boost: "blast", setback: "setback",
           };
           const which = cellSfx[cell.type];
-          if (which) sfx.play(which);
+          if (which) void sfx.unlock().then(() => sfx.play(which));
           hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), LANDING_SPLASH_MS));
         }
       }, distance * HOP_MS));
@@ -301,7 +304,7 @@ function GymBoard({ code }: { code: string }) {
   // Game start sound — fires when the room transitions into play.
   useEffect(() => {
     const started = !!room && (room.status === "playing" || !!room.current_turn_player_id);
-    if (started && !prevStartedRef.current) sfx.play("gameStart");
+    if (started && !prevStartedRef.current) void sfx.unlock().then(() => sfx.play("gameStart"));
     prevStartedRef.current = started;
   }, [room]);
 

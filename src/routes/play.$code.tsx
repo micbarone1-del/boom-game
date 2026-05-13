@@ -357,8 +357,10 @@ function PlayPage() {
                   style={{
                     color: "var(--boom-ink)",
                     transform: "rotate(-3deg)",
-                    borderWidth: 8,
-                    boxShadow: "8px 8px 0 0 rgba(0,0,0,0.85)",
+                    borderWidth: 10,
+                    borderStyle: "solid",
+                    borderColor: "var(--boom-ink)",
+                    boxShadow: "10px 10px 0 0 rgba(0,0,0,0.95)",
                     minWidth: "14rem",
                   }}
                 >

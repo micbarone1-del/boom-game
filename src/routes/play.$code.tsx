@@ -316,12 +316,6 @@ function PlayPage() {
         </div>
         <div className="text-xs mt-1">Fitness Lvl {me.fitness_level} · Difficulty x{room?.difficulty_multiplier ?? 5}</div>
         <div className="mt-1 text-sm font-black">{describeCell(getCell(me.current_space))}</div>
-        {(() => {
-          const next = getCell(Math.min(BOARD_SIZE, me.current_space + 1));
-          return (
-            <div className="text-xs opacity-70 mt-1">Next cell: {describeCell(next)}</div>
-          );
-        })()}
       </div>
 
       {trap ? (() => {

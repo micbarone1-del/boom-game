@@ -231,11 +231,14 @@ export const sfx = {
     try {
       const c = ac();
       if (c && c.state !== "running") {
-        void ensureReady();
+        void ensureReady().then((ok) => {
+          if (ok) effects[name]();
+        });
         if (typeof window !== "undefined" && !(window as any).__sfxWarned) {
           (window as any).__sfxWarned = true;
           console.warn("[sfx] Tap the SFX button or any game button once to enable sound.");
         }
+        return;
       }
       effects[name]();
     } catch {

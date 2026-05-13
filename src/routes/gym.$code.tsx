@@ -622,7 +622,9 @@ function GymBoard({ code }: { code: string }) {
         style={{
           transform: boardTransform,
           transformOrigin: "top left",
-          transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+          // Match HOP_MS so the camera glides cell-to-cell in lockstep with
+          // each hop. Linear easing avoids overshoot between hops.
+          transition: `transform ${HOP_MS}ms linear`,
         }}
       >
         <img

@@ -27,7 +27,6 @@ type EffectName =
 
 let ctx: AudioContext | null = null;
 let muted = false;
-let unlocked = false;
 // Bumped key (v2) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
 const MUTE_KEY = "boom.sfx.muted.v2";
@@ -36,25 +35,9 @@ if (typeof window !== "undefined") {
   try {
     muted = localStorage.getItem(MUTE_KEY) === "1";
   } catch {}
-  // Unlock the AudioContext on EVERY user gesture (cheap; self-guards).
-  // Browsers (and sandboxed preview iframes) block audio until a gesture
-  // occurs, and ctx.resume() must be called synchronously inside that
-  // gesture. We re-run on every gesture so an unlock that gets blocked
-  // because of an early call (before the context existed) still recovers.
-  const unlock = () => {
-    try {
-      const c = ac();
-      if (!c) return;
-      if (c.state === "suspended") void c.resume().then(() => { unlocked = true; }).catch(() => {});
-      // Play a near-silent buffer to fully unlock on iOS/Safari.
-      const buf = c.createBuffer(1, 1, 22050);
-      const src = c.createBufferSource();
-      src.buffer = buf;
-      src.connect(c.destination);
-      src.start(0);
-      if (c.state === "running") unlocked = true;
-    } catch {}
-  };
+  // Prime audio only from real user gestures; browsers block AudioContext
+  // creation/resume from timers, realtime callbacks, and effects.
+  const unlock = () => { void ensureReady(); };
   const opts: AddEventListenerOptions = { capture: true, passive: true };
   window.addEventListener("pointerdown", unlock, opts);
   window.addEventListener("touchstart", unlock, opts);
@@ -72,15 +55,36 @@ function ac(): AudioContext | null {
     if (!Ctor) return null;
     ctx = new Ctor();
   }
-  if (ctx.state === "suspended") void ctx.resume().then(() => { unlocked = true; }).catch(() => {});
   return ctx;
+}
+
+async function ensureReady(): Promise<boolean> {
+  const c = ac();
+  if (!c) return false;
+  try {
+    if (c.state === "suspended") await c.resume();
+    // A near-silent beep is more reliable than a silent buffer in iframes and iOS.
+    const t0 = c.currentTime + 0.005;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(440, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.setValueAtTime(0.0001, t0 + 0.02);
+    osc.connect(g).connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.025);
+    return c.state === "running";
+  } catch {
+    return false;
+  }
 }
 
 /** Pick a safe scheduling start time. If the context is still warming up,
  *  push everything ~60ms into the future so the gain ramp doesn't get
  *  clipped by the resume transition (the #1 cause of "I hear nothing"). */
 function safeStart(c: AudioContext, requestedDelay = 0): number {
-  const pad = c.state === "running" ? 0.005 : 0.06;
+  const pad = 0.005;
   return c.currentTime + pad + requestedDelay;
 }
 

@@ -61,6 +61,13 @@ function GymBoard({ code }: { code: string }) {
   // Per-player rendered space (animated hop-by-hop toward the real current_space).
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
+  // Local countdown start — only set once the triggered player's hop animation
+  // has finished on this screen. Ensures the 3-2-1 countdown waits for the
+  // movement to land before flashing.
+  const [gymCountdownStart, setGymCountdownStart] = useState<number | null>(null);
+  // Tick to re-render the modal so we can toggle the flashing border off
+  // exactly when the countdown ends.
+  const [, setTick] = useState(0);
   const prevRef = useRef<Record<string, number>>({});
   const hopTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const orderedPlayers = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
@@ -135,6 +142,27 @@ function GymBoard({ code }: { code: string }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players]);
+
+  // Reset / arm the gym-side countdown start when a trap appears or clears.
+  useEffect(() => {
+    if (!trap) {
+      setGymCountdownStart(null);
+      return;
+    }
+    const triggerHopping = trap.triggered_by ? hoppingIds.has(trap.triggered_by) : false;
+    if (!triggerHopping && gymCountdownStart === null) {
+      // Hop animation finished — start a fresh 3s countdown locally.
+      setGymCountdownStart(Date.now() + 3000);
+    }
+  }, [trap, hoppingIds, gymCountdownStart]);
+
+  // Tick while the trap modal is open so border-flash can switch off when the
+  // countdown completes.
+  useEffect(() => {
+    if (!trap) return;
+    const i = setInterval(() => setTick((t) => t + 1), 150);
+    return () => clearInterval(i);
+  }, [trap]);
 
   const restartGame = async () => {
     if (!room || players.length === 0 || restarting) return;
@@ -410,16 +438,16 @@ function GymBoard({ code }: { code: string }) {
                           FINISH
                         </span>
                       )}
-                      <span className="text-[10px] font-black" style={{ color: "var(--boom-ink)" }}>
+                      <span className="text-sm md:text-base font-black leading-none" style={{ color: "var(--boom-ink)" }}>
                         {space}
                       </span>
-                      {(cell.type === "easy" || cell.type === "medium") && <Dumbbell size={22} />}
-                      {cell.type === "hard" && <Flame size={22} className="text-white" />}
-                      {cell.type === "rest" && <Coffee size={22} />}
-                      {cell.type === "boost" && <Zap size={22} />}
-                      {cell.type === "setback" && <ArrowLeft size={22} className="text-white" />}
-                      {cell.type === "start" && <Flag size={22} />}
-                      {cell.type === "finish" && <Trophy size={22} />}
+                      {(cell.type === "easy" || cell.type === "medium") && <Dumbbell size={32} />}
+                      {cell.type === "hard" && <Flame size={32} className="text-white" />}
+                      {cell.type === "rest" && <Coffee size={32} />}
+                      {cell.type === "boost" && <Zap size={32} />}
+                      {cell.type === "setback" && <ArrowLeft size={32} className="text-white" />}
+                      {cell.type === "start" && <Flag size={32} />}
+                      {cell.type === "finish" && <Trophy size={32} />}
                       {here.length > 0 && (
                         <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-30 flex -space-x-2 pointer-events-none">
                           {here.slice(0, 4).map((p, i) => {
@@ -597,25 +625,36 @@ function GymBoard({ code }: { code: string }) {
                 trapCellType === "boost" ? "var(--boom-green)" :
                 trapCellType === "setback" ? "#7c3aed" :
                 "var(--boom-yellow)";
+              const effectiveStart = gymCountdownStart ?? (trap.started_at + 1e12);
+              const inCountdown = Date.now() < effectiveStart;
+              const ready = gymCountdownStart !== null;
               return (
                 <div className="mt-4 flex justify-center">
                   <div
-                    className="ink-border anim-border-flash rounded-2xl px-6 py-3"
+                    className={`ink-border rounded-2xl px-6 py-3 ${inCountdown ? "anim-border-flash" : ""}`}
                     style={{
                       background: cellColor,
                       color: trapCellType === "hard" ? "white" : "var(--boom-ink)",
-                      borderWidth: 4,
+                      borderWidth: 6,
                       transform: "rotate(-3deg)",
-                      minWidth: "12rem",
+                      minWidth: "14rem",
                     }}
                   >
-                    <CountdownIntro startAt={trap.started_at} inline />
-                    <FuseTimer
-                      startedAt={trap.started_at}
-                      big
-                      color={trapCellType === "hard" ? "white" : "var(--boom-ink)"}
-                      hideBeforeStart
-                    />
+                    {!ready ? (
+                      <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+                        GET READY…
+                      </div>
+                    ) : (
+                      <>
+                        <CountdownIntro startAt={effectiveStart} inline />
+                        <FuseTimer
+                          startedAt={effectiveStart}
+                          big
+                          color={trapCellType === "hard" ? "white" : "var(--boom-ink)"}
+                          hideBeforeStart
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               );

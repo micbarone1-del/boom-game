@@ -594,7 +594,7 @@ function GymBoard({ code }: { code: string }) {
             <SfxButton />
             {!paused && (
               <button
-                onClick={async () => { await sfx.unlock(); setPaused(true); }}
+                onClick={async () => { await sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
                 className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
@@ -631,7 +631,7 @@ function GymBoard({ code }: { code: string }) {
           {gameHasStarted && paused && (
             <>
               <button
-                onClick={async () => { await sfx.unlock(); setPaused(false); }}
+                onClick={async () => { await sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}
                 className="btn-boom flex items-center gap-2"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >

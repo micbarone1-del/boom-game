@@ -115,34 +115,42 @@ function GymBoard({ code }: { code: string }) {
   const boardWrapRef = useRef<HTMLDivElement>(null);
   const boardInnerRef = useRef<HTMLDivElement>(null);
   const [boardTransform, setBoardTransform] = useState("scale(1) translate(0px, 0px)");
-  const focusPlayerId = trap?.triggered_by ?? (hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null);
-  const focusSpace = focusPlayerId
-    ? trap
-      ? players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0
-      : hopSpaces[focusPlayerId] ?? 0
-    : 0;
-  const zoomActive = !!focusPlayerId && focusSpace > 0;
+  // Follow ONLY the hopping token. As soon as the hop animation ends (or the
+  // trap modal takes over) we glide back to the full map view.
+  const focusPlayerId = hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null;
+  const focusSpace = focusPlayerId ? hopSpaces[focusPlayerId] ?? 0 : 0;
+  const zoomActive = !!focusPlayerId && focusSpace > 0 && !trap;
   useEffect(() => {
     const recalc = () => {
       const inner = boardInnerRef.current;
       const wrap = boardWrapRef.current;
-      if (!inner || !wrap) return;
+      if (!inner || !wrap) {
+        return;
+      }
       if (!zoomActive) {
-        setBoardTransform("scale(1) translate(0px, 0px)");
+        setBoardTransform("translate(0px, 0px) scale(1)");
         return;
       }
       const cellEl = inner.querySelector(`[data-space="${focusSpace}"]`) as HTMLElement | null;
       if (!cellEl) return;
-      const cx = cellEl.offsetLeft + cellEl.offsetWidth / 2;
-      // Tokens sit above the cell (negative top offset), so bias the focal
-      // point upward so the avatar — not the cell number — is centered.
-      const cy = cellEl.offsetTop + cellEl.offsetHeight * 0.2;
+      // Accumulate offsetLeft/Top up to the inner board so the focal point is
+      // robust regardless of intermediate positioned ancestors.
+      let cx = cellEl.offsetWidth / 2;
+      // Tokens sit above the cell — bias upward so the avatar lands at the
+      // visual center of the screen.
+      let cy = cellEl.offsetHeight * 0.15;
+      let node: HTMLElement | null = cellEl;
+      while (node && node !== inner) {
+        cx += node.offsetLeft;
+        cy += node.offsetTop;
+        node = node.offsetParent as HTMLElement | null;
+      }
+      const scale = 2;
       const Wc = wrap.clientWidth;
       const Hc = wrap.clientHeight;
-      const scale = 2.2;
-      const tx = Wc / (2 * scale) - cx;
-      const ty = Hc / (2 * scale) - cy;
-      setBoardTransform(`scale(${scale}) translate(${tx}px, ${ty}px)`);
+      const tx = Wc / 2 - cx * scale;
+      const ty = Hc / 2 - cy * scale;
+      setBoardTransform(`translate(${tx}px, ${ty}px) scale(${scale})`);
     };
     recalc();
     window.addEventListener("resize", recalc);
@@ -386,6 +394,7 @@ function GymBoard({ code }: { code: string }) {
     setStartError(null);
     setPaused(false);
     setExploding(true);
+    await sfx.unlock();
     sfx.play("blast");
     setTimeout(() => setExploding(false), 1800);
     const { error } = await supabase
@@ -468,14 +477,18 @@ function GymBoard({ code }: { code: string }) {
 
   return (
     <div className="min-h-screen p-6 flex flex-col gap-4 relative">
-      <button
-        onClick={() => setShowCustomize(true)}
-        className="absolute top-2 right-2 z-40 ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
-        title="Customize exercises and reps"
-      >
-        <Settings size={16} /> CUSTOMIZE
-      </button>
-      <SfxMuteButton className="absolute top-2 right-32 z-40" />
+      {!inPlayMode && (
+        <>
+          <button
+            onClick={() => setShowCustomize(true)}
+            className="absolute top-2 right-2 z-40 ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
+            title="Customize exercises and reps"
+          >
+            <Settings size={16} /> CUSTOMIZE
+          </button>
+          <SfxMuteButton className="absolute top-2 right-32 z-40" />
+        </>
+      )}
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
           <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
@@ -502,7 +515,7 @@ function GymBoard({ code }: { code: string }) {
           )}
           {gameHasStarted && !paused && (
             <button
-              onClick={() => setPaused(true)}
+              onClick={async () => { await sfx.unlock(); setPaused(true); }}
               className="btn-boom flex items-center gap-2"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >
@@ -512,7 +525,7 @@ function GymBoard({ code }: { code: string }) {
           {gameHasStarted && paused && (
             <>
               <button
-                onClick={() => setPaused(false)}
+                onClick={async () => { await sfx.unlock(); setPaused(false); }}
                 className="btn-boom flex items-center gap-2"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
@@ -585,7 +598,7 @@ function GymBoard({ code }: { code: string }) {
         style={{
           transform: boardTransform,
           transformOrigin: "top left",
-          transition: "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+          transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         <img
@@ -722,7 +735,14 @@ function GymBoard({ code }: { code: string }) {
       </div>
       )}
 
-      {!inPlayMode && <SpotifyEmbed code={code} />}
+      {/* Keep the Spotify iframe mounted so audio keeps playing across
+          lobby ↔ play mode toggles. In play mode we just push it off-screen. */}
+      <div
+        className={inPlayMode ? "fixed -left-[9999px] top-0 w-px h-px overflow-hidden pointer-events-none opacity-0" : ""}
+        aria-hidden={inPlayMode}
+      >
+        <SpotifyEmbed code={code} />
+      </div>
 
       {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (

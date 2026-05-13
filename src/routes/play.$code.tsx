@@ -270,14 +270,6 @@ function PlayPage() {
     setRolling(false);
   };
 
-  const onIDidIt = async () => {
-    if (!trap || !triggeredByMe) return;
-    void sfx.unlock();
-    sfx.play("didIt");
-    await supabase.from("rooms").update({
-      trap: { ...trap, awaiting_verification: true },
-    }).eq("code", code);
-  };
 
   return (
     <main className="min-h-screen p-4 flex flex-col gap-4 max-w-md mx-auto">
@@ -393,17 +385,9 @@ function PlayPage() {
               );
             })()}
           </div>
-          {triggeredByMe && (
-            trap.awaiting_verification ? (
-              <p className="font-bold text-lg">Waiting for the room to judge your form…</p>
-            ) : (
-              <button onClick={onIDidIt} className="ink-border rounded-2xl px-6 py-6 text-4xl font-black w-full max-w-md"
-                style={{ background: "var(--boom-green)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}>
-                I DID IT!
-              </button>
-            )
-          )}
-          {!triggeredByMe && trap.awaiting_verification && (
+          {triggeredByMe ? (
+            <p className="font-bold text-lg">Crush those reps — your team will judge you on the GYM SCREEN.</p>
+          ) : (
             <p className="font-bold text-lg">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
           )}
           </div>

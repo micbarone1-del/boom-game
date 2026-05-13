@@ -109,6 +109,44 @@ function GymBoard({ code }: { code: string }) {
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !paused;
 
+  // Camera (board zoom/pan): scale 1 idle; scale 3 centered on the active
+  // token while a roll is animating or a trap is on the board. Pans live as
+  // the token hops cell to cell.
+  const boardWrapRef = useRef<HTMLDivElement>(null);
+  const boardInnerRef = useRef<HTMLDivElement>(null);
+  const [boardTransform, setBoardTransform] = useState("scale(1) translate(0px, 0px)");
+  const focusPlayerId = trap?.triggered_by ?? (hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null);
+  const focusSpace = focusPlayerId
+    ? trap
+      ? players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0
+      : hopSpaces[focusPlayerId] ?? 0
+    : 0;
+  const zoomActive = !!focusPlayerId && focusSpace > 0;
+  useEffect(() => {
+    const recalc = () => {
+      const inner = boardInnerRef.current;
+      const wrap = boardWrapRef.current;
+      if (!inner || !wrap) return;
+      if (!zoomActive) {
+        setBoardTransform("scale(1) translate(0px, 0px)");
+        return;
+      }
+      const cellEl = inner.querySelector(`[data-space="${focusSpace}"]`) as HTMLElement | null;
+      if (!cellEl) return;
+      const cx = cellEl.offsetLeft + cellEl.offsetWidth / 2;
+      const cy = cellEl.offsetTop + cellEl.offsetHeight / 2;
+      const Wc = wrap.clientWidth;
+      const Hc = wrap.clientHeight;
+      const scale = 3;
+      const tx = Wc / (2 * scale) - cx;
+      const ty = Hc / (2 * scale) - cy;
+      setBoardTransform(`scale(${scale}) translate(${tx}px, ${ty}px)`);
+    };
+    recalc();
+    window.addEventListener("resize", recalc);
+    return () => window.removeEventListener("resize", recalc);
+  }, [focusSpace, zoomActive, inPlayMode]);
+
   // Clear any pending hop timeouts only when the component unmounts.
   useEffect(() => {
     return () => {
@@ -538,7 +576,16 @@ function GymBoard({ code }: { code: string }) {
 
       {/* Board */}
       {inPlayMode && (
-      <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative">
+      <div ref={boardWrapRef} className="ink-border rounded-3xl bg-white flex-1 relative overflow-hidden">
+      <div
+        ref={boardInnerRef}
+        className="relative p-4 w-full h-full"
+        style={{
+          transform: boardTransform,
+          transformOrigin: "top left",
+          transition: "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
+      >
         <img
           src={bombMascot}
           alt="Boom mascot"
@@ -587,6 +634,7 @@ function GymBoard({ code }: { code: string }) {
                   return (
                     <div
                       key={space}
+                      data-space={space}
                       onClick={() => sfx.play("gymSelect")}
                       className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
                       style={{ background: bg, gridColumn: col, gridRow: 1 }}
@@ -668,6 +716,7 @@ function GymBoard({ code }: { code: string }) {
             </span>
           ))}
         </div>
+      </div>
       </div>
       )}
 
@@ -846,33 +895,27 @@ function GymBoard({ code }: { code: string }) {
             >
               {restarting ? "RESETTING…" : "RESTART GAME"}
             </button>
-            {trap.awaiting_verification ? (
-              <div className="mt-6">
-                <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
-                  TEAM VERIFICATION REQUIRED!
-                </p>
-                <div className="flex gap-4 justify-center flex-wrap">
-                  <button
-                    onClick={defuse}
-                    className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
-                    style={{ background: "var(--boom-green)", color: "white" }}
-                  >
-                    DEFUSED
-                  </button>
-                  <button
-                    onClick={blowUp}
-                    className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
-                    style={{ background: "var(--boom-red)", color: "white" }}
-                  >
-                    BLOW IT UP
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-4 text-lg font-bold flex items-center justify-center gap-2">
-                <Flame className="anim-fuse" /> Get sweating!
+            <div className="mt-6">
+              <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
+                TEAM VERIFICATION
               </p>
-            )}
+              <div className="flex gap-4 justify-center flex-wrap">
+                <button
+                  onClick={defuse}
+                  className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
+                  style={{ background: "var(--boom-green)", color: "white" }}
+                >
+                  DEFUSED
+                </button>
+                <button
+                  onClick={blowUp}
+                  className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
+                  style={{ background: "var(--boom-red)", color: "white" }}
+                >
+                  BLOW IT UP
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

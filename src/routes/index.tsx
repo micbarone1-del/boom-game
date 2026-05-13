@@ -39,10 +39,7 @@ function Index() {
         >
           BOOM!
         </h1>
-        <p className="mt-2 text-xl md:text-2xl font-black" style={{ color: "var(--boom-ink)" }}>
-          THE WORKOUT GAME
-        </p>
-        <p className="mt-1 text-sm md:text-base" style={{ color: "var(--boom-ink)" }}>
+        <p className="mt-2 text-sm md:text-base" style={{ color: "var(--boom-ink)" }}>
           The explosive workout party game
         </p>
       </div>

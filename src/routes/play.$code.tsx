@@ -343,7 +343,7 @@ function PlayPage() {
             style={{ color: "var(--boom-ink)" }}
           >
           <img
-            src={mascotForCell(getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type)}
+            src={mascotForCell(getCell(trapSpace).type)}
             alt=""
             width={1024}
             height={1024}

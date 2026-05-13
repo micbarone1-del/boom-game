@@ -34,31 +34,29 @@ if (typeof window !== "undefined") {
   try {
     muted = localStorage.getItem(MUTE_KEY) === "1";
   } catch {}
-  // Unlock the AudioContext on the first user gesture. Browsers (and
-  // sandboxed preview iframes) block audio until a gesture occurs, and
-  // ctx.resume() must be called synchronously inside that gesture.
+  // Unlock the AudioContext on EVERY user gesture (cheap; self-guards).
+  // Browsers (and sandboxed preview iframes) block audio until a gesture
+  // occurs, and ctx.resume() must be called synchronously inside that
+  // gesture. We re-run on every gesture so an unlock that gets blocked
+  // because of an early call (before the context existed) still recovers.
   const unlock = () => {
     try {
       const c = ac();
       if (!c) return;
-      if (c.state === "suspended") void c.resume();
+      if (c.state === "suspended") void c.resume().then(() => { unlocked = true; }).catch(() => {});
       // Play a near-silent buffer to fully unlock on iOS/Safari.
       const buf = c.createBuffer(1, 1, 22050);
       const src = c.createBufferSource();
       src.buffer = buf;
       src.connect(c.destination);
       src.start(0);
-      // Consider unlocked once the context is actually running.
       if (c.state === "running") unlocked = true;
-      else c.resume().then(() => { unlocked = true; }).catch(() => {});
     } catch {}
   };
-  // Attach in capture phase so we receive the gesture even if a child
-  // stops propagation. Listeners stay attached — they're cheap and
-  // self-guard on `unlocked`.
   const opts: AddEventListenerOptions = { capture: true, passive: true };
   window.addEventListener("pointerdown", unlock, opts);
   window.addEventListener("touchstart", unlock, opts);
+  window.addEventListener("mousedown", unlock, opts);
   window.addEventListener("click", unlock, { capture: true });
   window.addEventListener("keydown", unlock, { capture: true });
 }
@@ -72,8 +70,16 @@ function ac(): AudioContext | null {
     if (!Ctor) return null;
     ctx = new Ctor();
   }
-  if (ctx.state === "suspended") void ctx.resume();
+  if (ctx.state === "suspended") void ctx.resume().then(() => { unlocked = true; }).catch(() => {});
   return ctx;
+}
+
+/** Pick a safe scheduling start time. If the context is still warming up,
+ *  push everything ~60ms into the future so the gain ramp doesn't get
+ *  clipped by the resume transition (the #1 cause of "I hear nothing"). */
+function safeStart(c: AudioContext, requestedDelay = 0): number {
+  const pad = c.state === "running" ? 0.005 : 0.06;
+  return c.currentTime + pad + requestedDelay;
 }
 
 /** Single oscillator beep with optional pitch sweep. */
@@ -87,7 +93,7 @@ function beep(opts: {
 }) {
   const c = ac();
   if (!c) return;
-  const t0 = c.currentTime + (opts.delay ?? 0);
+  const t0 = safeStart(c, opts.delay ?? 0);
   const osc = c.createOscillator();
   const g = c.createGain();
   osc.type = opts.type ?? "square";
@@ -106,7 +112,7 @@ function beep(opts: {
 function noise(opts: { dur: number; gain?: number; delay?: number; lowpass?: number }) {
   const c = ac();
   if (!c) return;
-  const t0 = c.currentTime + (opts.delay ?? 0);
+  const t0 = safeStart(c, opts.delay ?? 0);
   const len = Math.floor(c.sampleRate * opts.dur);
   const buf = c.createBuffer(1, len, c.sampleRate);
   const data = buf.getChannelData(0);
@@ -217,6 +223,19 @@ export const sfx = {
   play(name: EffectName) {
     if (muted) return;
     try {
+      const c = ac();
+      if (c && c.state !== "running") {
+        // Try to resume; if blocked, log once so debugging is obvious.
+        void c.resume().catch(() => {});
+        if (c.state === "suspended" && !unlocked) {
+          // No user gesture has unlocked audio yet. Schedule anyway —
+          // safeStart() pads start time so the sound plays once unlocked.
+          if (!(window as any).__sfxWarned) {
+            (window as any).__sfxWarned = true;
+            console.warn("[sfx] AudioContext suspended — click anywhere to enable sound.");
+          }
+        }
+      }
       effects[name]();
     } catch {
       // Audio context might be blocked before first user interaction — ignore.

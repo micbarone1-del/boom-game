@@ -84,7 +84,7 @@ function PlayPage() {
         const which = cellSfx[cell.type];
         if (which) sfx.play(which);
       }, stableMs);
-      const clearT = setTimeout(() => setMyLanded(null), stableMs + 3200);
+      const clearT = setTimeout(() => setMyLanded(null), stableMs + LANDING_SPLASH_MS);
       setMyPrevSpace(meNow.current_space);
       return () => { clearTimeout(showT); clearTimeout(clearT); };
     }

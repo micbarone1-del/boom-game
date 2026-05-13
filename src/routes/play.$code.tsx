@@ -236,8 +236,12 @@ function PlayPage() {
             exercise,
             reps,
             triggered_by: me.id,
-            // Start 3s in the future so all clients show a 3-2-1 countdown first.
-            started_at: Date.now() + 3000,
+            // Pad the anchor with enough lead time for every client to finish
+            // the cell-landing mascot animation (~3.2s) AND a 3-2-1 countdown
+            // (3s) before the timer starts. The CountdownIntro only renders
+            // numbers in the final 3.5s, so this is the single shared anchor
+            // that keeps gym + player screens perfectly synchronised.
+            started_at: Date.now() + 6500,
             awaiting_verification: false,
           } satisfies Trap,
         })

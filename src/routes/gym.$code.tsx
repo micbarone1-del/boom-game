@@ -256,13 +256,19 @@ function GymBoard({ code }: { code: string }) {
       // A new hop sequence is starting for this player — clear any landed
       // mascot still showing from the previous hop so animations don't overlap.
       setLanded((cur) => (cur && cur.id === p.id ? null : cur));
-      setHoppingIds((s) => { const n = new Set(s); n.add(p.id); return n; });
+      // Wait for any in-flight "[name] ROLLS!" announcement to finish before
+      // the token starts hopping so the two animations don't overlap.
+      const ann = turnAnnounceRef.current;
+      const announceRemaining = ann ? Math.max(0, 2500 - (Date.now() - ann.key)) : 0;
+      hopTimeoutsRef.current.push(setTimeout(() => {
+        setHoppingIds((s) => { const n = new Set(s); n.add(p.id); return n; });
+      }, announceRemaining));
       for (let i = 1; i <= distance; i++) {
         const at = from + i * step;
         hopTimeoutsRef.current.push(setTimeout(() => {
           setHopSpaces((s) => ({ ...s, [p.id]: at }));
           sfx.play("hop");
-        }, i * HOP_MS));
+        }, announceRemaining + i * HOP_MS));
       }
       hopTimeoutsRef.current.push(setTimeout(() => {
         setHoppingIds((s) => { const n = new Set(s); n.delete(p.id); return n; });
@@ -278,7 +284,7 @@ function GymBoard({ code }: { code: string }) {
           if (which) sfx.play(which);
           hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), LANDING_SPLASH_MS));
         }
-      }, distance * HOP_MS));
+      }, announceRemaining + distance * HOP_MS));
     }
   }, [players]);
 

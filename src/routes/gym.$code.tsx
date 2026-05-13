@@ -398,7 +398,7 @@ function GymBoard({ code }: { code: string }) {
     if (!room || players.length === 0 || restarting) return;
     setRestarting(true);
     setStartError(null);
-    await sfx.unlock();
+    void sfx.unlock();
     // Restart must always exit pause and re-enter full play mode, even if the
     // host hit RESTART from the paused screen.
     setPaused(false);
@@ -467,7 +467,7 @@ function GymBoard({ code }: { code: string }) {
     setStartError(null);
     setPaused(false);
     setExploding(true);
-    await sfx.unlock();
+    void sfx.unlock();
     sfx.play("blast");
     setTimeout(() => setExploding(false), 1800);
     const { error } = await supabase
@@ -579,7 +579,7 @@ function GymBoard({ code }: { code: string }) {
             <SfxButton />
             {!paused && (
               <button
-                onClick={async () => { await sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
+                onClick={() => { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
                 className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
@@ -616,7 +616,7 @@ function GymBoard({ code }: { code: string }) {
           {gameHasStarted && paused && (
             <>
               <button
-                onClick={async () => { await sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}
+                onClick={() => { void sfx.unlock(); setPaused(false); void supabase.from("rooms").update({ paused: false }).eq("code", code); }}
                 className="btn-boom flex items-center gap-2"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
@@ -662,24 +662,6 @@ function GymBoard({ code }: { code: string }) {
           )}
         </div>
       </header>
-      )}
-      {needsSoundTap && !sfx.isMuted() && (
-        <button
-          onClick={async () => {
-            const ok = await sfx.unlock();
-            sfx.play("gymSelect");
-            setNeedsSoundTap(!ok);
-          }}
-          className="fixed inset-0 z-[90] bg-black/80 flex items-center justify-center p-6 cursor-pointer"
-          aria-label="Tap to enable sound effects"
-        >
-          <span
-            className="btn-boom text-3xl px-8 py-5"
-            style={{ fontFamily: "'Luckiest Guy', cursive" }}
-          >
-            TAP FOR SFX
-          </span>
-        </button>
       )}
       {qrZoom && (
         <div

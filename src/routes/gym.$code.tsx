@@ -9,6 +9,7 @@ import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
@@ -82,6 +83,8 @@ function GymBoard({ code }: { code: string }) {
   const [restarting, setRestarting] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [qrZoom, setQrZoom] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [exploding, setExploding] = useState(false);
   const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
   const [turnAnnounce, setTurnAnnounce] = useState<{ username: string; avatar: string | null; key: number } | null>(null);
   const prevTurnKeyRef = useRef<string | null>(null);
@@ -103,6 +106,8 @@ function GymBoard({ code }: { code: string }) {
     (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
   );
   const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
+  // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
+  const inPlayMode = gameHasStarted && !paused;
 
   // Clear any pending hop timeouts only when the component unmounts.
   useEffect(() => {
@@ -339,6 +344,10 @@ function GymBoard({ code }: { code: string }) {
     if (!first) return;
     setStarting(true);
     setStartError(null);
+    setPaused(false);
+    setExploding(true);
+    sfx.play("blast");
+    setTimeout(() => setExploding(false), 1800);
     const { error } = await supabase
       .from("rooms")
       .update({
@@ -441,20 +450,45 @@ function GymBoard({ code }: { code: string }) {
           </div>
         </div>
         <div className="ml-auto flex items-center gap-3 flex-wrap justify-end pt-10">
-          <button
-            onClick={gameHasStarted ? restartGame : startGame}
-            disabled={players.length === 0 || starting || restarting}
-            className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ fontFamily: "'Luckiest Guy', cursive" }}
-          >
-            {gameHasStarted
-              ? restarting
-                ? "BOOMING…"
-                : "RESTART"
-              : starting
-                ? "IGNITING…"
-                : "START GAME"}
-          </button>
+          {!gameHasStarted && (
+            <button
+              onClick={startGame}
+              disabled={players.length === 0 || starting}
+              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              {starting ? "IGNITING…" : "START GAME"}
+            </button>
+          )}
+          {gameHasStarted && !paused && (
+            <button
+              onClick={() => setPaused(true)}
+              className="btn-boom flex items-center gap-2"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              <Pause size={20} fill="currentColor" /> PAUSE
+            </button>
+          )}
+          {gameHasStarted && paused && (
+            <>
+              <button
+                onClick={() => setPaused(false)}
+                className="btn-boom flex items-center gap-2"
+                style={{ fontFamily: "'Luckiest Guy', cursive" }}
+              >
+                <Play size={20} fill="currentColor" /> PLAY
+              </button>
+              <button
+                onClick={restartGame}
+                disabled={restarting}
+                className="btn-boom disabled:opacity-50"
+                style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
+              >
+                {restarting ? "BOOMING…" : "RESTART"}
+              </button>
+            </>
+          )}
+          {!inPlayMode && (
           <div className="ink-border-sm rounded-xl p-1.5 bg-white flex items-center gap-2">
             <div className="flex flex-col">
               <div className="text-[9px] font-bold leading-none">JOIN</div>
@@ -480,6 +514,7 @@ function GymBoard({ code }: { code: string }) {
               <QRCodeSVG value={joinUrl} size={56} level="M" />
             </button>
           </div>
+          )}
         </div>
       </header>
       {qrZoom && (
@@ -502,6 +537,7 @@ function GymBoard({ code }: { code: string }) {
       )}
 
       {/* Board */}
+      {inPlayMode && (
       <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative">
         <img
           src={bombMascot}
@@ -594,7 +630,7 @@ function GymBoard({ code }: { code: string }) {
                                 <PlayerToken
                                   avatar={p.avatar_url}
                                   username={p.username}
-                                  size={34}
+                                  size={64}
                                   active={room?.current_turn_player_id === p.id}
                                   showName={false}
                                   showInitial
@@ -633,10 +669,12 @@ function GymBoard({ code }: { code: string }) {
           ))}
         </div>
       </div>
+      )}
 
-      <SpotifyEmbed code={code} />
+      {!inPlayMode && <SpotifyEmbed code={code} />}
 
       {/* Live leaderboard — visible to everyone in the room */}
+      {!inPlayMode && (
       <div className="ink-border rounded-2xl bg-white p-3">
         <div className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</div>
         <div className="grid gap-1">
@@ -663,8 +701,10 @@ function GymBoard({ code }: { code: string }) {
             ))}
         </div>
       </div>
+      )}
 
       {/* Players strip */}
+      {!inPlayMode && (
       <div className="ink-border rounded-2xl p-3 pt-5 bg-white flex gap-6 overflow-x-auto">
         {players.length === 0 && (
           <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
@@ -701,6 +741,7 @@ function GymBoard({ code }: { code: string }) {
           );
         })}
       </div>
+      )}
 
       {/* BOOM modal */}
       {trap && (
@@ -934,6 +975,31 @@ function GymBoard({ code }: { code: string }) {
       )}
       {landed && (
         <CellMascot key={landed.key} type={landed.type} username={landed.username} />
+      )}
+      {/* Start-of-game explosion overlay */}
+      {exploding && (
+        <div className="fixed inset-0 z-[65] flex items-center justify-center pointer-events-none overflow-hidden bg-black/40">
+          <img
+            src={bombMascot}
+            alt=""
+            width={1024}
+            height={1024}
+            className="absolute anim-mascot-explode"
+            style={{ width: "90vmin", height: "90vmin" }}
+          />
+          <div
+            className="relative comic-shadow anim-shake"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              fontSize: "clamp(6rem, 22vw, 16rem)",
+              color: "var(--boom-yellow)",
+              textShadow: "6px 6px 0 #000, -3px -3px 0 #000",
+              lineHeight: 1,
+            }}
+          >
+            BOOM!
+          </div>
+        </div>
       )}
       {/* countdown rendered inline inside the timer box */}
     </div>

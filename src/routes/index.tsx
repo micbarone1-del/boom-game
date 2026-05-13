@@ -5,6 +5,16 @@ import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "BOOM! — The Workout Game" },
+      { name: "description", content: "BOOM! is a chaotic real-time multiplayer party-fitness game. Roll dice, dodge traps, and blast through workouts with friends." },
+      { property: "og:title", content: "BOOM! — The Workout Game" },
+      { property: "og:description", content: "Real-time multiplayer party-fitness game. Roll dice, dodge traps, and blast through workouts with friends." },
+      { property: "og:url", content: "https://boom-game.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://boom-game.lovable.app/" }],
+  }),
 });
 
 function Index() {
@@ -27,7 +37,7 @@ function Index() {
             lineHeight: 1,
           }}
         >
-          BOOM!
+          BOOM! — The Workout Game
         </h1>
         <p className="mt-2 text-xl md:text-2xl font-black" style={{ color: "var(--boom-ink)" }}>
           THE WORKOUT GAME

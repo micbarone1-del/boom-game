@@ -13,29 +13,6 @@ import { Pause, Play } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
-import { Volume2, VolumeX } from "lucide-react";
-
-function SfxMuteButton({ className = "" }: { className?: string }) {
-  const [muted, setMuted] = useState<boolean>(() => sfx.isMuted());
-  return (
-    <button
-      onPointerDown={() => void sfx.unlock()}
-      onClick={async () => {
-        if (muted) {
-          sfx.setMuted(false);
-          setMuted(false);
-        }
-        await sfx.unlock();
-        sfx.play("gymSelect");
-      }}
-      className={`ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1 ${className}`}
-      title={muted ? "Enable sound effects" : "Test sound effects"}
-    >
-      {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-      {muted ? "MUTED" : "SFX"}
-    </button>
-  );
-}
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -139,6 +116,10 @@ function GymBoard({ code }: { code: string }) {
   const boardWrapRef = useRef<HTMLDivElement>(null);
   const boardInnerRef = useRef<HTMLDivElement>(null);
   const [boardTransform, setBoardTransform] = useState("scale(1) translate(0px, 0px)");
+  // Track whether the camera was already zoomed-in on the previous tick so we
+  // can use a longer, eased transition for the initial zoom-in / final
+  // zoom-out and a tight linear pan between hops.
+  const [cameraPhase, setCameraPhase] = useState<"idle" | "settle" | "pan">("idle");
   // Follow ONLY the hopping token. As soon as the hop animation ends (or the
   // trap modal takes over) we glide back to the full map view.
   const focusPlayerId = hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null;
@@ -153,6 +134,7 @@ function GymBoard({ code }: { code: string }) {
       }
       if (!zoomActive) {
         setBoardTransform("translate(0px, 0px) scale(1)");
+        setCameraPhase("idle");
         return;
       }
       const cellEl = inner.querySelector(`[data-space="${focusSpace}"]`) as HTMLElement | null;
@@ -175,6 +157,7 @@ function GymBoard({ code }: { code: string }) {
       const tx = Wc / 2 - cx * scale;
       const ty = Hc / 2 - cy * scale;
       setBoardTransform(`translate(${tx}px, ${ty}px) scale(${scale})`);
+      setCameraPhase((prev) => (prev === "idle" ? "settle" : "pan"));
     };
     recalc();
     window.addEventListener("resize", recalc);
@@ -510,9 +493,6 @@ function GymBoard({ code }: { code: string }) {
           <Settings size={16} /> CUSTOMIZE
         </button>
       )}
-      {/* Sound stays reachable in play mode so the host can unlock the
-          AudioContext at any time (browsers require an in-page gesture). */}
-      <SfxMuteButton className={`absolute top-2 z-40 ${inPlayMode ? "right-2" : "right-32"}`} />
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
           <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
@@ -622,9 +602,13 @@ function GymBoard({ code }: { code: string }) {
         style={{
           transform: boardTransform,
           transformOrigin: "top left",
-          // Match HOP_MS so the camera glides cell-to-cell in lockstep with
-          // each hop. Linear easing avoids overshoot between hops.
-          transition: `transform ${HOP_MS}ms linear`,
+          // Smooth, eased zoom-in / zoom-out; tight linear pan between hops
+          // so the camera tracks the token without drifting.
+          transition:
+            cameraPhase === "pan"
+              ? `transform ${HOP_MS}ms linear`
+              : `transform 650ms cubic-bezier(0.22, 1, 0.36, 1)`,
+          willChange: "transform",
         }}
       >
         <img
@@ -762,16 +746,11 @@ function GymBoard({ code }: { code: string }) {
       </div>
       )}
 
-      {/* Keep the Spotify iframe mounted at the SAME React position at all
-          times so audio keeps playing across lobby ↔ play mode toggles. We
-          only flip the wrapper's CSS — never the JSX position — so the
-          iframe DOM node is never unmounted (which would stop playback). */}
+      {/* Spotify lives only in lobby mode. Keep the iframe mounted (offscreen)
+          while playing so audio keeps playing without restarting. */}
       <div
-        className={
-          inPlayMode
-            ? "fixed bottom-3 left-3 z-40 w-[320px] max-w-[88vw] ink-border rounded-2xl bg-white p-1 shadow-lg"
-            : ""
-        }
+        className={inPlayMode ? "fixed -left-[9999px] top-0 w-px h-px overflow-hidden pointer-events-none opacity-0" : ""}
+        aria-hidden={inPlayMode}
       >
         <SpotifyEmbed code={code} />
       </div>

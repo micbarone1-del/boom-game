@@ -734,7 +734,14 @@ function GymBoard({ code }: { code: string }) {
       </div>
       )}
 
-      {!inPlayMode && <SpotifyEmbed code={code} />}
+      {/* Keep the Spotify iframe mounted so audio keeps playing across
+          lobby ↔ play mode toggles. In play mode we just push it off-screen. */}
+      <div
+        className={inPlayMode ? "fixed -left-[9999px] top-0 w-px h-px overflow-hidden pointer-events-none opacity-0" : ""}
+        aria-hidden={inPlayMode}
+      >
+        <SpotifyEmbed code={code} />
+      </div>
 
       {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (

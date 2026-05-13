@@ -508,17 +508,26 @@ function GymBoard({ code }: { code: string }) {
         </button>
       )}
       {inPlayMode ? (
-        <div className="absolute top-2 right-2 z-40 flex items-center gap-2">
+        <header className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <img src={bombMascot} alt="" width={1024} height={1024} className="w-8 h-8" />
+            <div
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+              className="text-2xl text-[var(--boom-red)] comic-shadow leading-none"
+            >
+              BOOM!
+            </div>
+          </div>
           {!paused && (
             <button
               onClick={async () => { await sfx.unlock(); setPaused(true); }}
-              className="btn-boom flex items-center gap-2"
+              className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >
-              <Pause size={20} fill="currentColor" /> PAUSE
+              <Pause size={18} fill="currentColor" /> PAUSE
             </button>
           )}
-        </div>
+        </header>
       ) : (
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">

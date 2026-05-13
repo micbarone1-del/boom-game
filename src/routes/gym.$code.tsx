@@ -9,7 +9,7 @@ import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
@@ -27,12 +27,11 @@ export const Route = createFileRoute("/gym/$code")({
   }),
 });
 
-/** Simple dumbbell with a single weight on each side (2 weights total). */
-function MiniDumbbell({ size = 32 }: { size?: number }) {
+/** Dumbbell with a single empty (outlined) weight on each side — matches the
+ *  Lucide Dumbbell stroke style used on the orange (medium) cells. */
+function MiniDumbbell({ className }: { className?: string }) {
   return (
     <svg
-      width={size}
-      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -40,14 +39,33 @@ function MiniDumbbell({ size = 32 }: { size?: number }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      className={className}
     >
       {/* bar */}
-      <line x1="6" y1="12" x2="18" y2="12" />
-      {/* left weight */}
-      <rect x="2.5" y="7.5" width="4" height="9" rx="1" fill="currentColor" />
-      {/* right weight */}
-      <rect x="17.5" y="7.5" width="4" height="9" rx="1" fill="currentColor" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+      {/* left weight (empty) */}
+      <rect x="3" y="7.5" width="5" height="9" rx="1.2" />
+      {/* right weight (empty) */}
+      <rect x="16" y="7.5" width="5" height="9" rx="1.2" />
     </svg>
+  );
+}
+
+function SfxButton({ className = "" }: { className?: string }) {
+  const [muted, setMuted] = useState(() => sfx.isMuted());
+  return (
+    <button
+      onClick={async () => {
+        const next = sfx.toggleMuted();
+        setMuted(next);
+        if (!next) await sfx.unlock();
+      }}
+      className={`btn-boom flex items-center gap-2 py-2 px-4 text-base ${className}`}
+      style={{ fontFamily: "'Luckiest Guy', cursive", background: muted ? "#7c3aed" : "var(--boom-green)" }}
+      title={muted ? "Sound effects are off — tap to enable" : "Sound effects on — tap to mute"}
+    >
+      {muted ? <VolumeX size={18} /> : <Volume2 size={18} />} SFX {muted ? "OFF" : "ON"}
+    </button>
   );
 }
 
@@ -129,11 +147,18 @@ function GymBoard({ code }: { code: string }) {
   // can use a longer, eased transition for the initial zoom-in / final
   // zoom-out and a tight linear pan between hops.
   const [cameraPhase, setCameraPhase] = useState<"idle" | "settle" | "pan">("idle");
-  // Follow ONLY the hopping token. As soon as the hop animation ends (or the
-  // trap modal takes over) we glide back to the full map view.
-  const focusPlayerId = hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null;
-  const focusSpace = focusPlayerId ? hopSpaces[focusPlayerId] ?? 0 : 0;
-  const zoomActive = !!focusPlayerId && focusSpace > 0 && !trap;
+  // Always keep the camera centered on the active player. Zoom in tighter
+  // while the token is hopping; ease back to a wider follow when idle.
+  const hoppingId = hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null;
+  const turnId = room?.current_turn_player_id ?? null;
+  const focusPlayerId = hoppingId ?? turnId;
+  const focusPlayer = focusPlayerId ? players.find((p) => p.id === focusPlayerId) : null;
+  const rawFocusSpace = focusPlayerId
+    ? hopSpaces[focusPlayerId] ?? focusPlayer?.current_space ?? 0
+    : 0;
+  const focusSpace = rawFocusSpace > 0 ? rawFocusSpace : 1;
+  const zoomActive = !!focusPlayerId && !trap;
+  const isHoppingFocus = !!hoppingId;
   useEffect(() => {
     const recalc = () => {
       const inner = boardInnerRef.current;
@@ -160,7 +185,7 @@ function GymBoard({ code }: { code: string }) {
         cy += node.offsetTop;
         node = node.offsetParent as HTMLElement | null;
       }
-      const scale = 2;
+      const scale = isHoppingFocus ? 2 : 1.5;
       const Wc = wrap.clientWidth;
       const Hc = wrap.clientHeight;
       const tx = Wc / 2 - cx * scale;
@@ -171,7 +196,7 @@ function GymBoard({ code }: { code: string }) {
     recalc();
     window.addEventListener("resize", recalc);
     return () => window.removeEventListener("resize", recalc);
-  }, [focusSpace, zoomActive, inPlayMode]);
+  }, [focusSpace, zoomActive, isHoppingFocus, inPlayMode]);
 
   // Clear any pending hop timeouts only when the component unmounts.
   useEffect(() => {
@@ -496,7 +521,7 @@ function GymBoard({ code }: { code: string }) {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col gap-4 relative ${inPlayMode ? "p-2" : "p-6"}`}>
+    <div className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}>
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <button
@@ -518,15 +543,18 @@ function GymBoard({ code }: { code: string }) {
               BOOM!
             </div>
           </div>
-          {!paused && (
-            <button
-              onClick={async () => { await sfx.unlock(); setPaused(true); }}
-              className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}
-            >
-              <Pause size={18} fill="currentColor" /> PAUSE
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <SfxButton />
+            {!paused && (
+              <button
+                onClick={async () => { await sfx.unlock(); setPaused(true); }}
+                className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
+                style={{ fontFamily: "'Luckiest Guy', cursive" }}
+              >
+                <Pause size={18} fill="currentColor" /> PAUSE
+              </button>
+            )}
+          </div>
         </header>
       ) : (
       <header className="flex items-center justify-between flex-wrap gap-4">
@@ -570,6 +598,7 @@ function GymBoard({ code }: { code: string }) {
               >
                 {restarting ? "BOOMING…" : "RESTART"}
               </button>
+              <SfxButton />
             </>
           )}
           {!inPlayMode && (
@@ -690,7 +719,7 @@ function GymBoard({ code }: { code: string }) {
                       key={space}
                       data-space={space}
                       onClick={() => sfx.play("gymSelect")}
-                      className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
+                      className="@container aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
                       style={{ background: bg, gridColumn: col, gridRow: 1 }}
                       title={describeCell(cell)}
                     >
@@ -710,17 +739,20 @@ function GymBoard({ code }: { code: string }) {
                           FINISH
                         </span>
                       )}
-                      <span className="text-sm md:text-base font-black leading-none" style={{ color: "var(--boom-ink)" }}>
+                      <span
+                        className="font-black leading-none"
+                        style={{ color: "var(--boom-ink)", fontSize: "clamp(0.7rem, 22cqw, 1.75rem)" }}
+                      >
                         {space}
                       </span>
-                      {cell.type === "easy" && <MiniDumbbell size={32} />}
-                      {cell.type === "medium" && <Dumbbell size={32} />}
-                      {cell.type === "hard" && <Flame size={32} className="text-white" />}
-                      {cell.type === "rest" && <Coffee size={32} />}
-                      {cell.type === "boost" && <Zap size={32} />}
-                      {cell.type === "setback" && <ArrowLeft size={32} className="text-white" />}
-                      {cell.type === "start" && <Flag size={32} />}
-                      {cell.type === "finish" && <Trophy size={32} />}
+                      {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%]" />}
+                      {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%]" />}
+                      {cell.type === "hard" && <Flame className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "rest" && <Coffee className="w-[60%] h-[60%]" />}
+                      {cell.type === "boost" && <Zap className="w-[60%] h-[60%]" />}
+                      {cell.type === "setback" && <ArrowLeft className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "start" && <Flag className="w-[60%] h-[60%]" />}
+                      {cell.type === "finish" && <Trophy className="w-[60%] h-[60%]" />}
                       {here.length > 0 && (
                         <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-30 flex -space-x-2 pointer-events-none">
                           {here.slice(0, 4).map((p, i) => {

@@ -43,9 +43,9 @@ const state = (_g.__boomSfx ||= {
 // Master volume — bumped so SFX cut through background music (e.g. Spotify).
 const MASTER_VOLUME = 2.6;
 let muted = false;
-// Bumped key (v3) so any previously-stuck "muted" state from earlier
+// Bumped key (v4) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
-const MUTE_KEY = "boom.sfx.muted.v3";
+const MUTE_KEY = "boom.sfx.muted.v4";
 
 if (typeof window !== "undefined") {
   try {

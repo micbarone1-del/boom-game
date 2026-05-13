@@ -263,6 +263,7 @@ function PlayPage() {
 
   return (
     <main className="min-h-screen p-4 flex flex-col gap-4 max-w-md mx-auto">
+      <h1 className="sr-only">BOOM! Player Controller — Room {code}</h1>
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img src={bombMascot} alt="" width={1024} height={1024} loading="lazy" className="w-12 h-12 anim-fuse" />
@@ -275,6 +276,7 @@ function PlayPage() {
           <button
             onClick={() => setShowCamera(true)}
             title="Take a photo or video with the BOOM! logo"
+            aria-label="Open camera to take a BOOM! photo or video"
             className="ink-border-sm rounded-full bg-white w-11 h-11 flex items-center justify-center"
           >
             <Camera size={20} />

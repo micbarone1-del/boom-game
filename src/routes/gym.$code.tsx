@@ -16,6 +16,15 @@ import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
+  head: ({ params }) => ({
+    meta: [
+      { title: `Game Lobby ${params.code} — BOOM!` },
+      { name: "description", content: "BOOM! gym screen — the big-screen master view. Players join from their phones, the board updates in real time." },
+      { property: "og:title", content: `BOOM! Game Lobby — Room ${params.code}` },
+      { property: "og:description", content: "Big-screen master view for a BOOM! workout game session." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
 
 /** Simple dumbbell with a single weight on each side (2 weights total). */
@@ -484,6 +493,7 @@ function GymBoard({ code }: { code: string }) {
 
   return (
     <div className="min-h-screen p-6 flex flex-col gap-4 relative">
+      <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <button
           onClick={() => setShowCustomize(true)}
@@ -567,6 +577,7 @@ function GymBoard({ code }: { code: string }) {
               onClick={() => setQrZoom(true)}
               className="bg-white"
               title="Tap to enlarge QR"
+              aria-label="Enlarge QR code to join this room"
             >
               <QRCodeSVG value={joinUrl} size={56} level="M" />
             </button>
@@ -758,7 +769,7 @@ function GymBoard({ code }: { code: string }) {
       {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (
       <div className="ink-border rounded-2xl bg-white p-3">
-        <div className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</div>
+        <h2 className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</h2>
         <div className="grid gap-1">
           {[...players]
             .sort((a, b) => {
@@ -929,9 +940,9 @@ function GymBoard({ code }: { code: string }) {
               {restarting ? "RESETTING…" : "RESTART GAME"}
             </button>
             <div className="mt-6">
-              <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
+              <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
                 TEAM VERIFICATION
-              </p>
+              </h2>
               <div className="flex gap-4 justify-center flex-wrap">
                 <button
                   onClick={defuse}

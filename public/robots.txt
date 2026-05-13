@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /gym/
+Disallow: /play/
+
+Sitemap: https://boom-game.lovable.app/sitemap.xml

@@ -32,6 +32,15 @@ import { BoomCamera } from "@/components/BoomCamera";
 
 export const Route = createFileRoute("/play/$code")({
   component: PlayPage,
+  head: ({ params }) => ({
+    meta: [
+      { title: `Play Room ${params.code} — BOOM!` },
+      { name: "description", content: "Your phone controller for a BOOM! workout game. Roll the dice, log reps, and judge your teammates' form." },
+      { property: "og:title", content: `BOOM! Player Controller — Room ${params.code}` },
+      { property: "og:description", content: "Phone controller for a BOOM! workout game session." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
 
 function PlayPage() {
@@ -254,6 +263,7 @@ function PlayPage() {
 
   return (
     <main className="min-h-screen p-4 flex flex-col gap-4 max-w-md mx-auto">
+      <h1 className="sr-only">BOOM! Player Controller — Room {code}</h1>
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img src={bombMascot} alt="" width={1024} height={1024} loading="lazy" className="w-12 h-12 anim-fuse" />
@@ -266,6 +276,7 @@ function PlayPage() {
           <button
             onClick={() => setShowCamera(true)}
             title="Take a photo or video with the BOOM! logo"
+            aria-label="Open camera to take a BOOM! photo or video"
             className="ink-border-sm rounded-full bg-white w-11 h-11 flex items-center justify-center"
           >
             <Camera size={20} />
@@ -388,7 +399,7 @@ function PlayPage() {
       )}
 
       <div className="ink-border rounded-2xl bg-white p-3">
-        <div className="text-base font-black mb-2 flex items-center gap-2"><Trophy size={18}/> LIVE LEADERBOARD</div>
+        <h2 className="text-base font-black mb-2 flex items-center gap-2"><Trophy size={18}/> LIVE LEADERBOARD</h2>
         <div className="flex flex-col gap-1">
           {[...players]
             .sort((a, b) => {

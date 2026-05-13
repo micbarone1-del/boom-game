@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlayCodeRouteImport } from './routes/play.$code'
 import { Route as GymCodeRouteImport } from './routes/gym.$code'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
@@ -38,12 +44,14 @@ const GymCodeRoute = GymCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gym/$code': typeof GymCodeRoute
   '/play/$code': typeof PlayCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gym/$code': typeof GymCodeRoute
   '/play/$code': typeof PlayCodeRoute
 }
@@ -51,26 +59,35 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/join': typeof JoinRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gym/$code': typeof GymCodeRoute
   '/play/$code': typeof PlayCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/join' | '/gym/$code' | '/play/$code'
+  fullPaths: '/' | '/join' | '/sitemap.xml' | '/gym/$code' | '/play/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/join' | '/gym/$code' | '/play/$code'
-  id: '__root__' | '/' | '/join' | '/gym/$code' | '/play/$code'
+  to: '/' | '/join' | '/sitemap.xml' | '/gym/$code' | '/play/$code'
+  id: '__root__' | '/' | '/join' | '/sitemap.xml' | '/gym/$code' | '/play/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   JoinRoute: typeof JoinRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   GymCodeRoute: typeof GymCodeRoute
   PlayCodeRoute: typeof PlayCodeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/join': {
       id: '/join'
       path: '/join'
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   JoinRoute: JoinRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   GymCodeRoute: GymCodeRoute,
   PlayCodeRoute: PlayCodeRoute,
 }

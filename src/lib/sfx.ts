@@ -47,7 +47,7 @@ if (typeof window !== "undefined") {
   } catch {}
   // Prime audio only from real user gestures; browsers block AudioContext
   // creation/resume from timers, realtime callbacks, and effects.
-  const unlock = () => { void ensureReady(); };
+  const unlock = () => { void sfx.unlock(); };
   const opts: AddEventListenerOptions = { capture: true, passive: true };
   window.addEventListener("pointerdown", unlock, opts);
   window.addEventListener("touchstart", unlock, opts);
@@ -258,17 +258,16 @@ export const sfx = {
     if (muted) return;
     try {
       const c = ac();
-      if (c && (c.state !== "running" || !_g.__boomSfx.unlocked)) {
-        void ensureReady().then((ok) => {
-          if (ok) effects[name]();
+      if (!c) return;
+      effects[name]();
+      if (c.state !== "running" || !_g.__boomSfx.unlocked) {
+        void c.resume().then(() => {
+          _g.__boomSfx.unlocked = c.state === "running";
+        }).catch(() => {
+          _g.__boomSfx.unlocked = false;
         });
-        if (typeof window !== "undefined" && !(window as any).__sfxWarned) {
-          (window as any).__sfxWarned = true;
-          console.warn("[sfx] Tap the SFX button or any game button once to enable sound.");
-        }
         return;
       }
-      effects[name]();
     } catch {
       // Audio context might be blocked before first user interaction — ignore.
     }
@@ -282,7 +281,6 @@ export const sfx = {
   },
   setMuted(v: boolean) {
     muted = v;
-    if (!muted) void ensureReady();
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem(MUTE_KEY, v ? "1" : "0");
@@ -291,7 +289,30 @@ export const sfx = {
   },
   unlock() {
     if (muted) muted = false;
-    return ensureReady();
+    const c = ac();
+    if (!c) return Promise.resolve(false);
+    try {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      const t0 = c.currentTime + 0.005;
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.setValueAtTime(0.0001, t0 + 0.02);
+      osc.connect(g).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.025);
+      return c.resume().then(() => {
+        _g.__boomSfx.unlocked = c.state === "running";
+        return _g.__boomSfx.unlocked;
+      }).catch(() => {
+        _g.__boomSfx.unlocked = false;
+        return false;
+      });
+    } catch {
+      _g.__boomSfx.unlocked = false;
+      return Promise.resolve(false);
+    }
   },
   toggleMuted() {
     this.setMuted(!muted);

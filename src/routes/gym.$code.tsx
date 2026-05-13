@@ -579,6 +579,8 @@ function GymBoard({ code }: { code: string }) {
         </div>
       </div>
 
+      <SpotifyEmbed code={code} />
+
       {/* Live leaderboard — visible to everyone in the room */}
       <div className="ink-border rounded-2xl bg-white p-3">
         <div className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</div>

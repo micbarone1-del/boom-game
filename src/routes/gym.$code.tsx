@@ -51,8 +51,9 @@ function MiniDumbbell({ className }: { className?: string }) {
   );
 }
 
-function SfxButton({ className = "" }: { className?: string }) {
+function SfxButton({ className = "", variant = "green" }: { className?: string; variant?: "green" | "white" }) {
   const [muted, setMuted] = useState(() => sfx.isMuted());
+  const isWhite = variant === "white";
   return (
     <button
       onClick={async () => {
@@ -60,11 +61,19 @@ function SfxButton({ className = "" }: { className?: string }) {
         setMuted(next);
         if (!next) await sfx.unlock();
       }}
-      className={`btn-boom flex items-center gap-2 py-2 px-4 text-base ${className}`}
-      style={{ fontFamily: "'Luckiest Guy', cursive", background: muted ? "#7c3aed" : "var(--boom-green)" }}
+      className={
+        isWhite
+          ? `ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1 ${className}`
+          : `btn-boom flex items-center gap-2 py-2 px-4 text-base ${className}`
+      }
+      style={
+        isWhite
+          ? undefined
+          : { fontFamily: "'Luckiest Guy', cursive", background: muted ? "#7c3aed" : "var(--boom-green)" }
+      }
       title={muted ? "Sound effects are off — tap to enable" : "Sound effects on — tap to mute"}
     >
-      {muted ? <VolumeX size={18} /> : <Volume2 size={18} />} SFX {muted ? "OFF" : "ON"}
+      {muted ? <VolumeX size={isWhite ? 16 : 18} /> : <Volume2 size={isWhite ? 16 : 18} />} SFX {muted ? "OFF" : "ON"}
     </button>
   );
 }
@@ -524,13 +533,16 @@ function GymBoard({ code }: { code: string }) {
     <div className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}>
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
-        <button
-          onClick={() => setShowCustomize(true)}
-          className="absolute top-2 right-2 z-40 ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
-          title="Customize exercises and reps"
-        >
-          <Settings size={16} /> CUSTOMIZE
-        </button>
+        <div className="absolute top-2 right-2 z-40 flex items-center gap-2">
+          <SfxButton variant="white" />
+          <button
+            onClick={() => setShowCustomize(true)}
+            className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
+            title="Customize exercises and reps"
+          >
+            <Settings size={16} /> CUSTOMIZE
+          </button>
+        </div>
       )}
       {inPlayMode ? (
         <header className="flex items-center justify-between gap-3">
@@ -600,7 +612,6 @@ function GymBoard({ code }: { code: string }) {
               </button>
             </>
           )}
-          {!inPlayMode && <SfxButton />}
           {!inPlayMode && (
           <div className="ink-border-sm rounded-xl p-1.5 bg-white flex items-center gap-2">
             <div className="flex flex-col">

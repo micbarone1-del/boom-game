@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
 import {
@@ -22,6 +22,7 @@ import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Dice5, Trophy, Camera } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
+import { sfx } from "@/lib/sfx";
 
 export const Route = createFileRoute("/play/$code")({
   component: PlayPage,
@@ -45,6 +46,11 @@ function PlayPage() {
     return () => clearInterval(i);
   }, []);
 
+  // Refs for one-shot sound triggers
+  const countdownTicksRef = useRef<Set<number>>(new Set());
+  const lastTrapKeyRef = useRef<string | null>(null);
+  const winSoundRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const s = loadPlayerSession();
     if (s && s.roomCode === code) setPlayerId(s.playerId);
@@ -57,6 +63,12 @@ function PlayPage() {
     if (myPrevSpace !== null && myPrevSpace !== meNow.current_space && meNow.current_space > 0) {
       const cell = getCell(meNow.current_space);
       setMyLanded({ type: cell.type, key: Date.now() });
+      const cellSfx: Record<string, Parameters<typeof sfx.play>[0] | undefined> = {
+        easy: "easy", medium: "medium", hard: "hard",
+        rest: "rest", boost: "blast", setback: "setback",
+      };
+      const which = cellSfx[cell.type];
+      if (which) sfx.play(which);
       const t = setTimeout(() => setMyLanded(null), 3200);
       setMyPrevSpace(meNow.current_space);
       return () => clearTimeout(t);
@@ -70,6 +82,12 @@ function PlayPage() {
     const finished = players.filter((p) => p.finished_at);
     const newOnes = finished.filter((p) => !seenFinishers.has(p.id));
     if (newOnes.length > 0) {
+      for (const p of newOnes) {
+        if (!winSoundRef.current.has(p.id)) {
+          winSoundRef.current.add(p.id);
+          sfx.play("win");
+        }
+      }
       setSeenFinishers((prev) => {
         const n = new Set(prev);
         newOnes.forEach((p) => n.add(p.id));
@@ -85,6 +103,29 @@ function PlayPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players]);
+
+  // Countdown beeps + clear when trap appears/disappears
+  useEffect(() => {
+    const trap = room?.trap as Trap | null;
+    if (!trap) {
+      countdownTicksRef.current = new Set();
+      lastTrapKeyRef.current = null;
+      return;
+    }
+    const key = `${trap.triggered_by}:${trap.started_at}`;
+    if (lastTrapKeyRef.current !== key) {
+      lastTrapKeyRef.current = key;
+      countdownTicksRef.current = new Set();
+    }
+    const remaining = trap.started_at - Date.now();
+    if (remaining > 0) {
+      const n = Math.max(1, Math.ceil(remaining / 1000));
+      if (!countdownTicksRef.current.has(n)) {
+        countdownTicksRef.current.add(n);
+        sfx.play("countdown");
+      }
+    }
+  });
 
   // Auto-clear final ranking when host restarts (everyone back to space 0, no finishers)
   useEffect(() => {
@@ -204,6 +245,7 @@ function PlayPage() {
 
   const onIDidIt = async () => {
     if (!trap || !triggeredByMe) return;
+    sfx.play("didIt");
     await supabase.from("rooms").update({
       trap: { ...trap, awaiting_verification: true },
     }).eq("code", code);

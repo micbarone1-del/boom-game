@@ -23,6 +23,11 @@ export function CountdownIntro({
   }, []);
   const remaining = startAt - now;
   if (remaining <= 0) return null;
+  // Only show the 3-2-1 numbers in the final 3.5s before start, regardless of
+  // how far in the future the anchor is. This lets the host pad the anchor
+  // with extra lead time (for hop + landing animations) without showing big
+  // numbers like "5" or "6" first.
+  if (remaining > 3500) return null;
   const n = Math.max(1, Math.ceil(remaining / 1000));
   if (inline) {
     return (

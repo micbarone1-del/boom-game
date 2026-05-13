@@ -26,6 +26,9 @@ type EffectName =
   | "win";
 
 let ctx: AudioContext | null = null;
+let masterGain: GainNode | null = null;
+// Master volume — bumped so SFX cut through background music (e.g. Spotify).
+const MASTER_VOLUME = 2.6;
 let muted = false;
 // Bumped key (v2) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
@@ -56,6 +59,15 @@ function ac(): AudioContext | null {
     ctx = new Ctor();
   }
   return ctx;
+}
+
+function out(c: AudioContext): AudioNode {
+  if (!masterGain || masterGain.context !== c) {
+    masterGain = c.createGain();
+    masterGain.gain.value = MASTER_VOLUME;
+    masterGain.connect(c.destination);
+  }
+  return masterGain;
 }
 
 async function ensureReady(): Promise<boolean> {
@@ -109,7 +121,7 @@ function beep(opts: {
   g.gain.setValueAtTime(0.0001, t0);
   g.gain.exponentialRampToValueAtTime(peak, t0 + 0.005);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + opts.dur);
-  osc.connect(g).connect(c.destination);
+  osc.connect(g).connect(out(c));
   osc.start(t0);
   osc.stop(t0 + opts.dur + 0.02);
 }
@@ -133,9 +145,9 @@ function noise(opts: { dur: number; gain?: number; delay?: number; lowpass?: num
     const f = c.createBiquadFilter();
     f.type = "lowpass";
     f.frequency.value = opts.lowpass;
-    src.connect(f).connect(g).connect(c.destination);
+    src.connect(f).connect(g).connect(out(c));
   } else {
-    src.connect(g).connect(c.destination);
+    src.connect(g).connect(out(c));
   }
   src.start(t0);
   src.stop(t0 + opts.dur + 0.02);

@@ -576,7 +576,16 @@ function GymBoard({ code }: { code: string }) {
 
       {/* Board */}
       {inPlayMode && (
-      <div className="ink-border rounded-3xl p-4 bg-white flex-1 relative">
+      <div ref={boardWrapRef} className="ink-border rounded-3xl bg-white flex-1 relative overflow-hidden">
+      <div
+        ref={boardInnerRef}
+        className="relative p-4 w-full h-full"
+        style={{
+          transform: boardTransform,
+          transformOrigin: "top left",
+          transition: "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
+      >
         <img
           src={bombMascot}
           alt="Boom mascot"
@@ -625,6 +634,7 @@ function GymBoard({ code }: { code: string }) {
                   return (
                     <div
                       key={space}
+                      data-space={space}
                       onClick={() => sfx.play("gymSelect")}
                       className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
                       style={{ background: bg, gridColumn: col, gridRow: 1 }}
@@ -706,6 +716,7 @@ function GymBoard({ code }: { code: string }) {
             </span>
           ))}
         </div>
+      </div>
       </div>
       )}
 

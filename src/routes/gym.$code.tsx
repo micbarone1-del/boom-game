@@ -625,9 +625,13 @@ function GymBoard({ code }: { code: string }) {
         style={{
           transform: boardTransform,
           transformOrigin: "top left",
-          // Match HOP_MS so the camera glides cell-to-cell in lockstep with
-          // each hop. Linear easing avoids overshoot between hops.
-          transition: `transform ${HOP_MS}ms linear`,
+          // Smooth, eased zoom-in / zoom-out; tight linear pan between hops
+          // so the camera tracks the token without drifting.
+          transition:
+            cameraPhase === "pan"
+              ? `transform ${HOP_MS}ms linear`
+              : `transform 650ms cubic-bezier(0.22, 1, 0.36, 1)`,
+          willChange: "transform",
         }}
       >
         <img

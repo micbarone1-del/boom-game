@@ -281,13 +281,28 @@ function GymBoard({ code }: { code: string }) {
     setSeenFinishers(new Set());
     setShowFinalRanking(false);
     try {
-      const [{ error: playersError }, { error: logsError }, { error: roomError }] = await Promise.all([
+      const { error: resetRoomError } = await supabase
+        .from("rooms")
+        .update({
+          status: "restarting",
+          locked: true,
+          trap: null,
+          last_dice: null,
+          current_turn_player_id: null,
+        })
+        .eq("code", code);
+
+      const [{ error: playersError }, { error: logsError }] = await Promise.all([
         supabase
         .from("players")
         .update({ current_space: 0, finished_at: null, finish_rank: null, score: 0, status: "active" })
         .eq("room_code", code),
         supabase.from("workout_logs").delete().eq("room_code", code),
-        supabase
+      ]);
+
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const { error: roomError } = await supabase
         .from("rooms")
         .update({
           status: "playing",
@@ -296,9 +311,14 @@ function GymBoard({ code }: { code: string }) {
           last_dice: null,
           current_turn_player_id: first?.id ?? null,
         })
-        .eq("code", code),
-      ]);
-      if (playersError || logsError || roomError) {
+        .eq("code", code);
+
+      if (first) {
+        setTurnAnnounce({ username: first.username, avatar: first.avatar_url, key: Date.now() });
+        setTimeout(() => setTurnAnnounce(null), 2500);
+      }
+
+      if (resetRoomError || playersError || logsError || roomError) {
         setStartError("Couldn’t restart the game. Smash it again!");
       }
     } finally {

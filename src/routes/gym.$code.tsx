@@ -577,6 +577,7 @@ function GymBoard({ code }: { code: string }) {
               onClick={() => setQrZoom(true)}
               className="bg-white"
               title="Tap to enlarge QR"
+              aria-label="Enlarge QR code to join this room"
             >
               <QRCodeSVG value={joinUrl} size={56} level="M" />
             </button>
@@ -768,7 +769,7 @@ function GymBoard({ code }: { code: string }) {
       {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (
       <div className="ink-border rounded-2xl bg-white p-3">
-        <div className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</div>
+        <h2 className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</h2>
         <div className="grid gap-1">
           {[...players]
             .sort((a, b) => {
@@ -939,9 +940,9 @@ function GymBoard({ code }: { code: string }) {
               {restarting ? "RESETTING…" : "RESTART GAME"}
             </button>
             <div className="mt-6">
-              <p className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
+              <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
                 TEAM VERIFICATION
-              </p>
+              </h2>
               <div className="flex gap-4 justify-center flex-wrap">
                 <button
                   onClick={defuse}

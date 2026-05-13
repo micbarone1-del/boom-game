@@ -56,12 +56,15 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
   const isWhite = variant === "white";
   return (
     <button
-      onClick={async () => {
-        const next = sfx.toggleMuted();
-        setMuted(next);
-        if (!next) {
+      onClick={() => {
+        if (muted || !sfx.isUnlocked()) {
+          sfx.setMuted(false);
+          setMuted(false);
           void sfx.unlock();
           sfx.play("gymSelect");
+        } else {
+          sfx.setMuted(true);
+          setMuted(true);
         }
       }}
       className={
@@ -550,7 +553,10 @@ function GymBoard({ code }: { code: string }) {
   };
 
   return (
-    <div className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}>
+    <div
+      onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
+      className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}
+    >
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <div className="absolute top-2 right-2 z-40 flex items-center gap-2">

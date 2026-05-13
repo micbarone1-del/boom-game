@@ -191,7 +191,7 @@ function PlayPage() {
   const triggeredByMe = trap?.triggered_by === me.id;
 
   const onRoll = async () => {
-    if (!room || !isMyTurn || room.locked) return;
+    if (!room || !isMyTurn || room.locked || (room as any).paused) return;
     setRolling(true);
     setLastRoll(null);
     const dice = rollDice();

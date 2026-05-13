@@ -279,15 +279,8 @@ export const sfx = {
     try {
       const c = ac();
       if (!c) return;
+      void unlockAudio();
       effects[name]();
-      if (c.state !== "running" || !_g.__boomSfx.unlocked) {
-        void c.resume().then(() => {
-          _g.__boomSfx.unlocked = c.state === "running";
-        }).catch(() => {
-          _g.__boomSfx.unlocked = false;
-        });
-        return;
-      }
     } catch {
       // Audio context might be blocked before first user interaction — ignore.
     }
@@ -296,8 +289,8 @@ export const sfx = {
     return muted;
   },
   isUnlocked() {
-    const c = _g.__boomSfx.ctx as AudioContext | null;
-    return !!c && c.state === "running" && !!_g.__boomSfx.unlocked;
+    const c = state.ctx;
+    return !!c && c.state === "running" && !!state.unlocked;
   },
   setMuted(v: boolean) {
     muted = v;
@@ -309,30 +302,7 @@ export const sfx = {
   },
   unlock() {
     if (muted) muted = false;
-    const c = ac();
-    if (!c) return Promise.resolve(false);
-    try {
-      const osc = c.createOscillator();
-      const g = c.createGain();
-      const t0 = c.currentTime + 0.005;
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(440, t0);
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.setValueAtTime(0.0001, t0 + 0.02);
-      osc.connect(g).connect(c.destination);
-      osc.start(t0);
-      osc.stop(t0 + 0.025);
-      return c.resume().then(() => {
-        _g.__boomSfx.unlocked = c.state === "running";
-        return _g.__boomSfx.unlocked;
-      }).catch(() => {
-        _g.__boomSfx.unlocked = false;
-        return false;
-      });
-    } catch {
-      _g.__boomSfx.unlocked = false;
-      return Promise.resolve(false);
-    }
+    return ensureReady();
   },
   toggleMuted() {
     this.setMuted(!muted);

@@ -515,7 +515,7 @@ function GymBoard({ code }: { code: string }) {
           )}
           {gameHasStarted && !paused && (
             <button
-              onClick={() => setPaused(true)}
+              onClick={async () => { await sfx.unlock(); setPaused(true); }}
               className="btn-boom flex items-center gap-2"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >
@@ -525,7 +525,7 @@ function GymBoard({ code }: { code: string }) {
           {gameHasStarted && paused && (
             <>
               <button
-                onClick={() => setPaused(false)}
+                onClick={async () => { await sfx.unlock(); setPaused(false); }}
                 className="btn-boom flex items-center gap-2"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >

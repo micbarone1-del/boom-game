@@ -270,14 +270,6 @@ function PlayPage() {
     setRolling(false);
   };
 
-  const onIDidIt = async () => {
-    if (!trap || !triggeredByMe) return;
-    void sfx.unlock();
-    sfx.play("didIt");
-    await supabase.from("rooms").update({
-      trap: { ...trap, awaiting_verification: true },
-    }).eq("code", code);
-  };
 
   return (
     <main className="min-h-screen p-4 flex flex-col gap-4 max-w-md mx-auto">

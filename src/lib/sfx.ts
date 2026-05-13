@@ -139,14 +139,9 @@ function ac(): AudioContext | null {
   return state.ctx;
 }
 
-function unlockAudio(useFallbackProbe = true): Promise<boolean> {
+function unlockAudio(): Promise<boolean> {
   const c = ac();
-  if (!c) {
-    if (useFallbackProbe) fallbackPlay(false);
-    state.fallbackUnlocked = true;
-    return Promise.resolve(true);
-  }
-  if (useFallbackProbe) fallbackPlay(false);
+  if (!c) return Promise.resolve(state.fallbackUnlocked);
   // iOS/Safari often needs a source node to be created + started directly in
   // the click/touch call stack; resume() alone can leave WebAudio silent.
   try {
@@ -185,12 +180,8 @@ function out(c: AudioContext): AudioNode {
 }
 
 async function ensureReady(): Promise<boolean> {
-  fallbackPlay(false);
   const c = ac();
-  if (!c) {
-    state.fallbackUnlocked = true;
-    return true;
-  }
+  if (!c) return state.fallbackUnlocked;
   try {
     const t0 = c.currentTime + 0.005;
     const osc = c.createOscillator();
@@ -364,6 +355,7 @@ export const sfx = {
       const c = ac();
       if (!c) {
         fallbackPlay(true);
+        state.fallbackUnlocked = true;
         return;
       }
       if (c.state === "running") {
@@ -374,7 +366,8 @@ export const sfx = {
       const inUserGesture = !!navigator.userActivation?.isActive;
       if (inUserGesture) {
         fallbackPlay(true);
-        void unlockAudio(false);
+        state.fallbackUnlocked = true;
+        void unlockAudio();
         effects[name]();
         return;
       }

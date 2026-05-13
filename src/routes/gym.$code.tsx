@@ -61,6 +61,13 @@ function GymBoard({ code }: { code: string }) {
   // Per-player rendered space (animated hop-by-hop toward the real current_space).
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
+  // Local countdown start — only set once the triggered player's hop animation
+  // has finished on this screen. Ensures the 3-2-1 countdown waits for the
+  // movement to land before flashing.
+  const [gymCountdownStart, setGymCountdownStart] = useState<number | null>(null);
+  // Tick to re-render the modal so we can toggle the flashing border off
+  // exactly when the countdown ends.
+  const [, setTick] = useState(0);
   const prevRef = useRef<Record<string, number>>({});
   const hopTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const orderedPlayers = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));

@@ -18,6 +18,9 @@ function parseSpotifyUrl(input: string): string | null {
   return `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`;
 }
 
+const DEFAULT_SPOTIFY_URL =
+  "https://open.spotify.com/playlist/42TqVnzaMlUzg2fhDTHJEq?si=OAp8Cu7cQkGbh7wgiFP-eQ&pi=62fFMn7uShGrN";
+
 export function SpotifyEmbed({ code }: { code: string }) {
   const storageKey = `boom.spotify.${code}`;
   const [open, setOpen] = useState(false);
@@ -29,10 +32,9 @@ export function SpotifyEmbed({ code }: { code: string }) {
     if (typeof window === "undefined") return;
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        setUrl(saved);
-        setEmbedUrl(parseSpotifyUrl(saved));
-      }
+      const initial = saved ?? DEFAULT_SPOTIFY_URL;
+      setUrl(initial);
+      setEmbedUrl(parseSpotifyUrl(initial));
     } catch {}
   }, [storageKey]);
 
@@ -51,8 +53,8 @@ export function SpotifyEmbed({ code }: { code: string }) {
   };
 
   const clear = () => {
-    setUrl("");
-    setEmbedUrl(null);
+    setUrl(DEFAULT_SPOTIFY_URL);
+    setEmbedUrl(parseSpotifyUrl(DEFAULT_SPOTIFY_URL));
     setError(null);
     try {
       localStorage.removeItem(storageKey);

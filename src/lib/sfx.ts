@@ -258,7 +258,7 @@ export const sfx = {
     if (muted) return;
     try {
       const c = ac();
-      if (c && c.state !== "running") {
+      if (c && (c.state !== "running" || !_g.__boomSfx.unlocked)) {
         void ensureReady().then((ok) => {
           if (ok) effects[name]();
         });

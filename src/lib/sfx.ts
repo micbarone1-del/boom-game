@@ -29,6 +29,7 @@ type BoomSfxGlobal = {
   ctx: AudioContext | null;
   masterGain: GainNode | null;
   unlocked: boolean;
+  fallbackUnlocked: boolean;
 };
 
 // Persist across HMR module reloads — otherwise we'd create a new
@@ -39,6 +40,7 @@ const state = (_g.__boomSfx ||= {
   ctx: null as AudioContext | null,
   masterGain: null as GainNode | null,
   unlocked: false,
+  fallbackUnlocked: false,
 }) as BoomSfxGlobal;
 // Master volume — bumped so SFX cut through background music (e.g. Spotify).
 const MASTER_VOLUME = 2.6;
@@ -139,7 +141,12 @@ function ac(): AudioContext | null {
 
 function unlockAudio(): Promise<boolean> {
   const c = ac();
-  if (!c) return Promise.resolve(false);
+  if (!c) {
+    fallbackPlay(false);
+    state.fallbackUnlocked = true;
+    return Promise.resolve(true);
+  }
+  fallbackPlay(false);
   // iOS/Safari often needs a source node to be created + started directly in
   // the click/touch call stack; resume() alone can leave WebAudio silent.
   try {
@@ -156,7 +163,8 @@ function unlockAudio(): Promise<boolean> {
   } catch {}
   const mark = () => {
     state.unlocked = c.state === "running";
-    return state.unlocked;
+    if (state.unlocked) state.fallbackUnlocked = true;
+    return state.unlocked || state.fallbackUnlocked;
   };
   if (c.state === "running") return Promise.resolve(mark());
   return c.resume().then(mark).catch(() => {

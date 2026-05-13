@@ -148,6 +148,23 @@ function GymBoard({ code }: { code: string }) {
   const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !paused;
+  const [needsSoundTap, setNeedsSoundTap] = useState(() => !sfx.isMuted() && !sfx.isUnlocked());
+
+  useEffect(() => {
+    if (sfx.isMuted() || sfx.isUnlocked()) {
+      setNeedsSoundTap(false);
+      return;
+    }
+    const check = () => setNeedsSoundTap(!sfx.isMuted() && !sfx.isUnlocked());
+    window.addEventListener("pointerdown", check, true);
+    window.addEventListener("click", check, true);
+    window.addEventListener("keydown", check, true);
+    return () => {
+      window.removeEventListener("pointerdown", check, true);
+      window.removeEventListener("click", check, true);
+      window.removeEventListener("keydown", check, true);
+    };
+  }, []);
 
   // Camera (board zoom/pan): scale 1 idle; scale 3 centered on the active
   // token while a roll is animating or a trap is on the board. Pans live as
@@ -660,6 +677,24 @@ function GymBoard({ code }: { code: string }) {
           )}
         </div>
       </header>
+      )}
+      {needsSoundTap && !sfx.isMuted() && (
+        <button
+          onClick={async () => {
+            const ok = await sfx.unlock();
+            sfx.play("gymSelect");
+            setNeedsSoundTap(!ok);
+          }}
+          className="fixed inset-0 z-[90] bg-black/80 flex items-center justify-center p-6 cursor-pointer"
+          aria-label="Tap to enable sound effects"
+        >
+          <span
+            className="btn-boom text-3xl px-8 py-5"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            TAP FOR SFX
+          </span>
+        </button>
       )}
       {qrZoom && (
         <div

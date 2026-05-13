@@ -496,7 +496,8 @@ function GymBoard({ code }: { code: string }) {
                   return (
                     <div
                       key={space}
-                      className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center"
+                      onClick={() => sfx.play("gymSelect")}
+                      className="aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
                       style={{ background: bg, gridColumn: col, gridRow: 1 }}
                       title={describeCell(cell)}
                     >

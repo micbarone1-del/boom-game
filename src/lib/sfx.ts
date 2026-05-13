@@ -364,6 +364,7 @@ export const sfx = {
       }
       if (c.state === "running") {
         state.unlocked = true;
+        if (state.fallbackUnlocked) fallbackPlay(true);
         effects[name]();
         return;
       }

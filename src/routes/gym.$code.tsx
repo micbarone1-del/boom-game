@@ -598,9 +598,9 @@ function GymBoard({ code }: { code: string }) {
               >
                 {restarting ? "BOOMING…" : "RESTART"}
               </button>
-              <SfxButton />
             </>
           )}
+          {!inPlayMode && <SfxButton />}
           {!inPlayMode && (
           <div className="ink-border-sm rounded-xl p-1.5 bg-white flex items-center gap-2">
             <div className="flex flex-col">

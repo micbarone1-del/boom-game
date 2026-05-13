@@ -713,9 +713,10 @@ function GymBoard({ code }: { code: string }) {
                 trapCellType === "boost" ? "var(--boom-green)" :
                 trapCellType === "setback" ? "#7c3aed" :
                 "var(--boom-yellow)";
-              const effectiveStart = gymCountdownStart ?? (trap.started_at + 1e12);
-              const inCountdown = Date.now() < effectiveStart;
-              const ready = gymCountdownStart !== null;
+              const effectiveStart = trap.started_at;
+              const remaining = effectiveStart - Date.now();
+              const inCountdown = remaining > 0 && remaining <= 3500;
+              const ready = remaining <= 3500;
               return (
                 <div className="mt-4 flex justify-center">
                   <div

@@ -333,19 +333,22 @@ function PlayPage() {
           trapCellType === "easy" ? "var(--boom-yellow)" :
           trapCellType === "medium" ? "var(--boom-orange)" :
           trapCellType === "hard" ? "var(--boom-red)" :
+          trapCellType === "rest" ? "var(--boom-blue)" :
+          trapCellType === "boost" ? "var(--boom-green)" :
+          trapCellType === "setback" ? "#7c3aed" :
           "var(--boom-yellow)";
-        const fg = trapCellType === "hard" ? "white" : "var(--boom-ink)";
         return (
-        <div
-          className="fixed inset-0 z-[60] p-6 pt-10 text-center anim-boom flex flex-col items-center justify-center gap-4 overflow-y-auto"
-          style={{ background: cellColor, color: fg }}
-        >
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+          <div
+            className="ink-border rounded-3xl bg-white p-6 w-full max-w-md text-center anim-boom flex flex-col items-center gap-4"
+            style={{ color: "var(--boom-ink)" }}
+          >
           <img
             src={mascotForCell(getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type)}
             alt=""
             width={1024}
             height={1024}
-            className="w-40 h-40 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
+            className="w-32 h-32 -mt-16 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
           />
           <div className="anim-mascot-bounce inline-block">
             <div
@@ -360,7 +363,7 @@ function PlayPage() {
               ? "YOU ARE ABOUT TO EXPLODE!"
               : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
           </p>
-          <p className="text-3xl font-black">{trap.reps} {trap.exercise}</p>
+          <p className="text-3xl font-black" style={{ color: "var(--boom-red)" }}>{trap.reps} {trap.exercise}</p>
           <div className="flex justify-center py-2">
             {(() => {
               const anchor = trap.started_at;
@@ -369,14 +372,14 @@ function PlayPage() {
               const ready = remaining <= 3500; // show countdown UI only at the end
               return (
                 <div
-                  className={`ink-border rounded-2xl px-8 py-5 bg-white ${ready && inCountdown ? "anim-border-flash" : ""}`}
+                  className={`ink-border rounded-2xl px-8 py-5 ${ready && inCountdown ? "anim-border-flash" : ""}`}
                   style={{
+                    background: "white",
                     color: "var(--boom-ink)",
                     transform: "rotate(-3deg)",
-                    borderWidth: 10,
+                    borderWidth: 8,
                     borderStyle: "solid",
-                    borderColor: "var(--boom-ink)",
-                    boxShadow: "10px 10px 0 0 rgba(0,0,0,0.95)",
+                    borderColor: cellColor,
                     minWidth: "14rem",
                   }}
                 >
@@ -407,6 +410,7 @@ function PlayPage() {
           {!triggeredByMe && trap.awaiting_verification && (
             <p className="font-bold text-lg">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
           )}
+          </div>
         </div>
         );
       })() : me.finished_at ? null : (

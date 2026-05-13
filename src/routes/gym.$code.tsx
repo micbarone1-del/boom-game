@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, BOARD, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, BOARD, HOP_MS, LANDING_SPLASH_MS, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
@@ -18,9 +18,17 @@ function SfxMuteButton({ className = "" }: { className?: string }) {
   const [muted, setMuted] = useState<boolean>(() => sfx.isMuted());
   return (
     <button
-      onClick={() => setMuted(sfx.toggleMuted())}
+      onPointerDown={() => void sfx.unlock()}
+      onClick={async () => {
+        if (muted) {
+          sfx.setMuted(false);
+          setMuted(false);
+        }
+        await sfx.unlock();
+        sfx.play("gymSelect");
+      }}
       className={`ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1 ${className}`}
-      title={muted ? "Unmute sound effects" : "Mute sound effects"}
+      title={muted ? "Enable sound effects" : "Test sound effects"}
     >
       {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
       {muted ? "MUTED" : "SFX"}
@@ -107,7 +115,6 @@ function GymBoard({ code }: { code: string }) {
   // When a player's current_space changes, animate them through each cell.
   useEffect(() => {
     if (players.length === 0) return;
-    const HOP_MS = 220;
     for (const p of players) {
       const prev = prevRef.current[p.id];
       prevRef.current[p.id] = p.current_space;
@@ -148,7 +155,7 @@ function GymBoard({ code }: { code: string }) {
           };
           const which = cellSfx[cell.type];
           if (which) sfx.play(which);
-          hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), 3200));
+          hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), LANDING_SPLASH_MS));
         }
       }, distance * HOP_MS));
     }

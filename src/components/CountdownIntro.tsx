@@ -28,7 +28,7 @@ export function CountdownIntro({
   // with extra lead time (for hop + landing animations) without showing big
   // numbers like "5" or "6" first.
   if (remaining > 3500) return null;
-  const n = Math.max(1, Math.ceil(remaining / 1000));
+  const n = Math.min(3, Math.max(1, Math.ceil(remaining / 1000)));
   if (inline) {
     return (
       <span

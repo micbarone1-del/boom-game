@@ -56,11 +56,13 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
   const isWhite = variant === "white";
   return (
     <button
-      onClick={() => {
+      onClick={async () => {
         sfx.setMuted(false);
         setMuted(false);
-        void sfx.unlock();
-        sfx.play("gymSelect");
+        // Await unlock inside the user-gesture so iOS/Safari actually
+        // resumes the AudioContext before we schedule the test beep.
+        await sfx.unlock();
+        sfx.play("didIt");
       }}
       className={
         isWhite

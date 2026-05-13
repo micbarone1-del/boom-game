@@ -69,9 +69,28 @@ export function useRoom(code: string | undefined) {
         })
       .subscribe();
 
+    // When the tab returns from background/standby, the realtime websocket
+    // may have dropped silently. Refetch the latest state and poll briefly
+    // so the UI catches up (e.g. trap defused while we were away).
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchAll();
+    };
+    const onOnline = () => fetchAll();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    window.addEventListener("online", onOnline);
+
+    // Lightweight safety-net poll every 5s to recover from missed realtime
+    // events (e.g. when the device was asleep).
+    const poll = setInterval(fetchAll, 5000);
+
     return () => {
       mounted = false;
       supabase.removeChannel(channel);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      window.removeEventListener("online", onOnline);
+      clearInterval(poll);
     };
   }, [code]);
 

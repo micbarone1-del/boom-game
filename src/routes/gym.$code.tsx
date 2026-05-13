@@ -424,6 +424,18 @@ function GymBoard({ code }: { code: string }) {
     return () => clearInterval(i);
   }, [trap]);
 
+  const resumeGame = async () => {
+    void sfx.unlock();
+    setPaused(false);
+    const pausedFor = pauseStartedAtRef.current ? Date.now() - pauseStartedAtRef.current : 0;
+    pauseStartedAtRef.current = null;
+    const pausedTrap = room?.trap as Trap | null;
+    await supabase.from("rooms").update({
+      paused: false,
+      ...(pausedTrap ? { trap: { ...pausedTrap, started_at: pausedTrap.started_at + pausedFor } } : {}),
+    }).eq("code", code);
+  };
+
   const restartGame = async () => {
     if (!room || players.length === 0 || restarting) return;
     setRestarting(true);

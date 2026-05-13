@@ -725,7 +725,7 @@ function GymBoard({ code }: { code: string }) {
         width={1024}
         height={1024}
         loading="lazy"
-        className="fixed top-0 right-0 -translate-y-10 translate-x-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-30"
+        className="fixed bottom-0 right-0 translate-y-10 translate-x-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-30"
       />
       )}
       {inPlayMode && (

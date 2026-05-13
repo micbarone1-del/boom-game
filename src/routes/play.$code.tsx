@@ -251,6 +251,7 @@ function PlayPage() {
             exercise,
             reps,
             triggered_by: me.id,
+            space: final,
             // Trap is created only after movement + landing splash have ended.
             // Then every screen gets a short reveal before the shared 3-2-1.
             started_at: Date.now() + TRAP_REVEAL_MS + COUNTDOWN_LEAD_MS,

@@ -194,11 +194,26 @@ function GymBoard({ code }: { code: string }) {
         cy += node.offsetTop;
         node = node.offsetParent as HTMLElement | null;
       }
-      const scale = isHoppingFocus ? 2 : 1.5;
       const Wc = wrap.clientWidth;
       const Hc = wrap.clientHeight;
-      const tx = Wc / 2 - cx * scale;
-      const ty = Hc / 2 - cy * scale;
+      const innerW = inner.scrollWidth || inner.offsetWidth;
+      const innerH = inner.scrollHeight || inner.offsetHeight;
+      // Hopping: zoom in tight on the moving token. Idle: zoom OUT as far as
+      // possible while still fitting the whole board in view, centered on the
+      // active player (clamped to board edges so we don't show empty space).
+      const fitScale = Math.min(Wc / innerW, Hc / innerH);
+      const scale = isHoppingFocus ? 2 : fitScale;
+      let tx = Wc / 2 - cx * scale;
+      let ty = Hc / 2 - cy * scale;
+      // Clamp so the scaled board never leaves a gap inside the viewport.
+      const scaledW = innerW * scale;
+      const scaledH = innerH * scale;
+      const minTx = Math.min(0, Wc - scaledW);
+      const maxTx = Math.max(0, Wc - scaledW);
+      const minTy = Math.min(0, Hc - scaledH);
+      const maxTy = Math.max(0, Hc - scaledH);
+      tx = Math.min(maxTx, Math.max(minTx, tx));
+      ty = Math.min(maxTy, Math.max(minTy, ty));
       setBoardTransform(`translate(${tx}px, ${ty}px) scale(${scale})`);
       setCameraPhase((prev) => (prev === "idle" ? "settle" : "pan"));
     };

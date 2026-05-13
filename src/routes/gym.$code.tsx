@@ -372,6 +372,7 @@ function GymBoard({ code }: { code: string }) {
       >
         <Settings size={16} /> CUSTOMIZE
       </button>
+      <SfxMuteButton className="absolute top-2 right-32 z-40" />
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
           <Bomb size={40} />

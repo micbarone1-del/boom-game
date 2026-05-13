@@ -56,13 +56,11 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
   const isWhite = variant === "white";
   return (
     <button
-      onClick={async () => {
-        const next = sfx.toggleMuted();
-        setMuted(next);
-        if (!next) {
-          void sfx.unlock();
-          sfx.play("gymSelect");
-        }
+      onClick={() => {
+        sfx.setMuted(false);
+        setMuted(false);
+        void sfx.unlock();
+        sfx.play("gymSelect");
       }}
       className={
         isWhite
@@ -72,11 +70,11 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
       style={
         isWhite
           ? undefined
-          : { fontFamily: "'Luckiest Guy', cursive", background: muted ? "#7c3aed" : "var(--boom-green)" }
+          : { fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-green)" }
       }
-      title={muted ? "Sound effects are off — tap to enable" : "Sound effects on — tap to mute"}
+      title="Tap to re-arm and test sound effects"
     >
-      {muted ? <VolumeX size={isWhite ? 16 : 18} /> : <Volume2 size={isWhite ? 16 : 18} />} SFX {muted ? "OFF" : "ON"}
+      {muted ? <VolumeX size={isWhite ? 16 : 18} /> : <Volume2 size={isWhite ? 16 : 18} />} SFX ON
     </button>
   );
 }
@@ -550,7 +548,10 @@ function GymBoard({ code }: { code: string }) {
   };
 
   return (
-    <div className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}>
+    <div
+      onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
+      className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}
+    >
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <div className="absolute top-2 right-2 z-40 flex items-center gap-2">

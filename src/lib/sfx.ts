@@ -25,21 +25,27 @@ type EffectName =
   | "blowUp"
   | "win";
 
+type BoomSfxGlobal = {
+  ctx: AudioContext | null;
+  masterGain: GainNode | null;
+  unlocked: boolean;
+};
+
 // Persist across HMR module reloads — otherwise we'd create a new
 // (suspended) AudioContext on every code edit and lose the user-gesture
 // unlock, which silences all SFX until the next click.
 const _g = (typeof globalThis !== "undefined" ? globalThis : window) as any;
-_g.__boomSfx ||= {
+const state = (_g.__boomSfx ||= {
   ctx: null as AudioContext | null,
   masterGain: null as GainNode | null,
   unlocked: false,
-};
+}) as BoomSfxGlobal;
 // Master volume — bumped so SFX cut through background music (e.g. Spotify).
 const MASTER_VOLUME = 2.6;
 let muted = false;
-// Bumped key (v3) so any previously-stuck "muted" state from earlier
+// Bumped key (v4) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
-const MUTE_KEY = "boom.sfx.muted.v3";
+const MUTE_KEY = "boom.sfx.muted.v4";
 
 if (typeof window !== "undefined") {
   try {
@@ -47,7 +53,7 @@ if (typeof window !== "undefined") {
   } catch {}
   // Prime audio only from real user gestures; browsers block AudioContext
   // creation/resume from timers, realtime callbacks, and effects.
-  const unlock = () => { void sfx.unlock(); };
+  const unlock = () => { unlockAudio(); };
   const opts: AddEventListenerOptions = { capture: true, passive: true };
   window.addEventListener("pointerdown", unlock, opts);
   window.addEventListener("touchstart", unlock, opts);
@@ -58,28 +64,42 @@ if (typeof window !== "undefined") {
 
 function ac(): AudioContext | null {
   if (typeof window === "undefined") return null;
-  if (_g.__boomSfx.ctx?.state === "closed") {
-    _g.__boomSfx.ctx = null;
-    _g.__boomSfx.masterGain = null;
-    _g.__boomSfx.unlocked = false;
+  if (state.ctx?.state === "closed") {
+    state.ctx = null;
+    state.masterGain = null;
+    state.unlocked = false;
   }
-  if (!_g.__boomSfx.ctx) {
+  if (!state.ctx) {
     const Ctor = (window.AudioContext || (window as any).webkitAudioContext) as
       | typeof AudioContext
       | undefined;
     if (!Ctor) return null;
-    _g.__boomSfx.ctx = new Ctor();
+    state.ctx = new Ctor();
   }
-  return _g.__boomSfx.ctx;
+  return state.ctx;
+}
+
+function unlockAudio(): Promise<boolean> {
+  const c = ac();
+  if (!c) return Promise.resolve(false);
+  const mark = () => {
+    state.unlocked = c.state === "running";
+    return state.unlocked;
+  };
+  if (c.state === "running") return Promise.resolve(mark());
+  return c.resume().then(mark).catch(() => {
+    state.unlocked = false;
+    return false;
+  });
 }
 
 function out(c: AudioContext): AudioNode {
-  let mg: GainNode | null = _g.__boomSfx.masterGain;
+  let mg: GainNode | null = state.masterGain;
   if (!mg || mg.context !== c) {
     mg = c.createGain();
     mg.gain.value = MASTER_VOLUME;
     mg.connect(c.destination);
-    _g.__boomSfx.masterGain = mg;
+    state.masterGain = mg;
   }
   return mg;
 }
@@ -100,10 +120,10 @@ async function ensureReady(): Promise<boolean> {
     osc.connect(g).connect(c.destination);
     osc.start(t0);
     osc.stop(t0 + 0.025);
-    _g.__boomSfx.unlocked = c.state === "running";
-    return _g.__boomSfx.unlocked;
+    state.unlocked = c.state === "running";
+    return state.unlocked;
   } catch {
-    _g.__boomSfx.unlocked = false;
+    state.unlocked = false;
     return false;
   }
 }
@@ -112,7 +132,7 @@ async function ensureReady(): Promise<boolean> {
  *  push everything ~60ms into the future so the gain ramp doesn't get
  *  clipped by the resume transition (the #1 cause of "I hear nothing"). */
 function safeStart(c: AudioContext, requestedDelay = 0): number {
-  const pad = 0.005;
+  const pad = c.state === "running" ? 0.005 : 0.08;
   return c.currentTime + pad + requestedDelay;
 }
 
@@ -259,15 +279,8 @@ export const sfx = {
     try {
       const c = ac();
       if (!c) return;
+      void unlockAudio();
       effects[name]();
-      if (c.state !== "running" || !_g.__boomSfx.unlocked) {
-        void c.resume().then(() => {
-          _g.__boomSfx.unlocked = c.state === "running";
-        }).catch(() => {
-          _g.__boomSfx.unlocked = false;
-        });
-        return;
-      }
     } catch {
       // Audio context might be blocked before first user interaction — ignore.
     }
@@ -276,8 +289,8 @@ export const sfx = {
     return muted;
   },
   isUnlocked() {
-    const c = _g.__boomSfx.ctx as AudioContext | null;
-    return !!c && c.state === "running" && !!_g.__boomSfx.unlocked;
+    const c = state.ctx;
+    return !!c && c.state === "running" && !!state.unlocked;
   },
   setMuted(v: boolean) {
     muted = v;
@@ -289,30 +302,7 @@ export const sfx = {
   },
   unlock() {
     if (muted) muted = false;
-    const c = ac();
-    if (!c) return Promise.resolve(false);
-    try {
-      const osc = c.createOscillator();
-      const g = c.createGain();
-      const t0 = c.currentTime + 0.005;
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(440, t0);
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.setValueAtTime(0.0001, t0 + 0.02);
-      osc.connect(g).connect(c.destination);
-      osc.start(t0);
-      osc.stop(t0 + 0.025);
-      return c.resume().then(() => {
-        _g.__boomSfx.unlocked = c.state === "running";
-        return _g.__boomSfx.unlocked;
-      }).catch(() => {
-        _g.__boomSfx.unlocked = false;
-        return false;
-      });
-    } catch {
-      _g.__boomSfx.unlocked = false;
-      return Promise.resolve(false);
-    }
+    return ensureReady();
   },
   toggleMuted() {
     this.setMuted(!muted);

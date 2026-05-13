@@ -72,16 +72,16 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
         if (muted) {
           sfx.setMuted(false);
           setMuted(false);
+          sfx.play("didIt");
           const ok = await sfx.unlock();
           setUnlocked(ok);
-          if (ok) sfx.play("didIt");
           return;
         }
         if (!unlocked) {
           // Audio not yet unlocked by browser — this gesture unlocks it.
+          sfx.play("didIt");
           const ok = await sfx.unlock();
           setUnlocked(ok);
-          if (ok) sfx.play("didIt");
           return;
         }
         // Already on -> mute.

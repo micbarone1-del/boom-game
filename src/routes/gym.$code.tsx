@@ -60,7 +60,7 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
         const next = sfx.toggleMuted();
         setMuted(next);
         if (!next) {
-          await sfx.unlock();
+          void sfx.unlock();
           sfx.play("gymSelect");
         }
       }}

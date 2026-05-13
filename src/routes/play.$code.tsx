@@ -39,6 +39,8 @@ function PlayPage() {
   const [showCamera, setShowCamera] = useState(false);
   const [myPrevSpace, setMyPrevSpace] = useState<number | null>(null);
   const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
+  const [myTurnFlash, setMyTurnFlash] = useState<number | null>(null);
+  const prevMyTurnRef = useRef<boolean>(false);
   // Tick to drive border-flash off when countdown ends.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -148,6 +150,18 @@ function PlayPage() {
 
   const me = players.find((p) => p.id === playerId);
   const trap = room?.trap as Trap | null;
+
+  // Full-screen flash when it becomes my turn (and we're not in a trap).
+  useEffect(() => {
+    const isTurn = !!me && room?.current_turn_player_id === me.id;
+    if (isTurn && !prevMyTurnRef.current && !trap) {
+      setMyTurnFlash(Date.now());
+      const t = setTimeout(() => setMyTurnFlash(null), 1100);
+      prevMyTurnRef.current = true;
+      return () => clearTimeout(t);
+    }
+    prevMyTurnRef.current = isTurn;
+  }, [room?.current_turn_player_id, me, trap]);
 
   // Auto-assign first turn if none set
   useEffect(() => {

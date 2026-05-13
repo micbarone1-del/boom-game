@@ -976,6 +976,31 @@ function GymBoard({ code }: { code: string }) {
       {landed && (
         <CellMascot key={landed.key} type={landed.type} username={landed.username} />
       )}
+      {/* Start-of-game explosion overlay */}
+      {exploding && (
+        <div className="fixed inset-0 z-[65] flex items-center justify-center pointer-events-none overflow-hidden bg-black/40">
+          <img
+            src={bombMascot}
+            alt=""
+            width={1024}
+            height={1024}
+            className="absolute anim-mascot-explode"
+            style={{ width: "90vmin", height: "90vmin" }}
+          />
+          <div
+            className="relative comic-shadow anim-shake"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              fontSize: "clamp(6rem, 22vw, 16rem)",
+              color: "var(--boom-yellow)",
+              textShadow: "6px 6px 0 #000, -3px -3px 0 #000",
+              lineHeight: 1,
+            }}
+          >
+            BOOM!
+          </div>
+        </div>
+      )}
       {/* countdown rendered inline inside the timer box */}
     </div>
   );

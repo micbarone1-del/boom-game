@@ -83,6 +83,8 @@ function GymBoard({ code }: { code: string }) {
   const [restarting, setRestarting] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [qrZoom, setQrZoom] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [exploding, setExploding] = useState(false);
   const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
   const [turnAnnounce, setTurnAnnounce] = useState<{ username: string; avatar: string | null; key: number } | null>(null);
   const prevTurnKeyRef = useRef<string | null>(null);
@@ -104,6 +106,8 @@ function GymBoard({ code }: { code: string }) {
     (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
   );
   const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
+  // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
+  const inPlayMode = gameHasStarted && !paused;
 
   // Clear any pending hop timeouts only when the component unmounts.
   useEffect(() => {
@@ -340,6 +344,10 @@ function GymBoard({ code }: { code: string }) {
     if (!first) return;
     setStarting(true);
     setStartError(null);
+    setPaused(false);
+    setExploding(true);
+    sfx.play("blast");
+    setTimeout(() => setExploding(false), 1800);
     const { error } = await supabase
       .from("rooms")
       .update({

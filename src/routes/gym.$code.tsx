@@ -521,7 +521,7 @@ function GymBoard({ code }: { code: string }) {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col gap-4 relative ${inPlayMode ? "p-2" : "p-6"}`}>
+    <div className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}>
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <button
@@ -543,15 +543,18 @@ function GymBoard({ code }: { code: string }) {
               BOOM!
             </div>
           </div>
-          {!paused && (
-            <button
-              onClick={async () => { await sfx.unlock(); setPaused(true); }}
-              className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}
-            >
-              <Pause size={18} fill="currentColor" /> PAUSE
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <SfxButton />
+            {!paused && (
+              <button
+                onClick={async () => { await sfx.unlock(); setPaused(true); }}
+                className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
+                style={{ fontFamily: "'Luckiest Guy', cursive" }}
+              >
+                <Pause size={18} fill="currentColor" /> PAUSE
+              </button>
+            )}
+          </div>
         </header>
       ) : (
       <header className="flex items-center justify-between flex-wrap gap-4">
@@ -595,6 +598,7 @@ function GymBoard({ code }: { code: string }) {
               >
                 {restarting ? "BOOMING…" : "RESTART"}
               </button>
+              <SfxButton />
             </>
           )}
           {!inPlayMode && (

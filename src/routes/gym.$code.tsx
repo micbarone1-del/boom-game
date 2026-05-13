@@ -9,6 +9,7 @@ import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";

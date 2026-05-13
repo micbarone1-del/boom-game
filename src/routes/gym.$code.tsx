@@ -16,6 +16,15 @@ import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
+  head: ({ params }) => ({
+    meta: [
+      { title: `Game Lobby ${params.code} — BOOM!` },
+      { name: "description", content: "BOOM! gym screen — the big-screen master view. Players join from their phones, the board updates in real time." },
+      { property: "og:title", content: `BOOM! Game Lobby — Room ${params.code}` },
+      { property: "og:description", content: "Big-screen master view for a BOOM! workout game session." },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
 
 /** Simple dumbbell with a single weight on each side (2 weights total). */
@@ -484,6 +493,7 @@ function GymBoard({ code }: { code: string }) {
 
   return (
     <div className="min-h-screen p-6 flex flex-col gap-4 relative">
+      <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <button
           onClick={() => setShowCustomize(true)}

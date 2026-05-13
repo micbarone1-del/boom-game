@@ -146,9 +146,19 @@ function GymBoard({ code }: { code: string }) {
     (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
   );
   const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
-  // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
-  const inPlayMode = gameHasStarted && !paused;
   const isPaused = !!room?.paused || paused;
+  // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
+  const inPlayMode = gameHasStarted && !isPaused;
+
+  useEffect(() => {
+    if (!isPaused) return;
+    hopTimeoutsRef.current.forEach(clearTimeout);
+    hopTimeoutsRef.current = [];
+    setHoppingIds(new Set());
+    setLanded(null);
+    setTurnAnnounce(null);
+    setExploding(false);
+  }, [isPaused]);
 
   // Camera (board zoom/pan): scale 1 idle; scale 3 centered on the active
   // token while a roll is animating or a trap is on the board. Pans live as
@@ -326,6 +336,7 @@ function GymBoard({ code }: { code: string }) {
   // sets last_dice back to null while keeping the same first player) ALSO
   // re-fires the announcement, not just turn rotations.
   useEffect(() => {
+    if (isPaused) return;
     const tid = room?.current_turn_player_id ?? null;
     if (!tid) { prevTurnKeyRef.current = null; return; }
     const key = `${tid}|${room?.last_dice ?? "null"}`;
@@ -341,10 +352,11 @@ function GymBoard({ code }: { code: string }) {
     setTurnAnnounce({ username: player.username, avatar: player.avatar_url, key: Date.now() });
     const t = setTimeout(() => setTurnAnnounce(null), 2500);
     return () => clearTimeout(t);
-  }, [room?.current_turn_player_id, room?.last_dice, players, trap]);
+  }, [room?.current_turn_player_id, room?.last_dice, players, trap, isPaused]);
 
   // Countdown beeps — one per second of the 3-2-1.
   useEffect(() => {
+    if (isPaused) return;
     if (!trap) {
       countdownTicksRef.current = new Set();
       return;

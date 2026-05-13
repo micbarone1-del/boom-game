@@ -201,14 +201,20 @@ function PlayPage() {
 
   const isMyTurn = room?.current_turn_player_id === me.id;
   const triggeredByMe = trap?.triggered_by === me.id;
+  const roomPausedNow = async () => {
+    if (pausedRef.current) return true;
+    const { data } = await supabase.from("rooms").select("paused").eq("code", code).maybeSingle();
+    return !!(data as { paused?: boolean } | null)?.paused;
+  };
 
   const onRoll = async () => {
     if (!room || !isMyTurn || room.locked || isPaused) return;
+    if (await roomPausedNow()) return;
     setRolling(true);
     setLastRoll(null);
     const dice = rollDice();
     await new Promise((r) => setTimeout(r, 600));
-    if (pausedRef.current) { setRolling(false); return; }
+    if (await roomPausedNow()) { setRolling(false); return; }
     // Reveal the rolled number AFTER the dice-shake animation finishes.
     setLastRoll(dice);
     const target = Math.min(BOARD_SIZE, me.current_space + dice);
@@ -235,12 +241,12 @@ function PlayPage() {
 
     // Stage 1: hop the token to the dice-landing cell so the player visibly
     // arrives on the BLAST/SETBACK cell (and the gym plays its splash).
-    if (pausedRef.current) { setRolling(false); return; }
+    if (await roomPausedNow()) { setRolling(false); return; }
     await supabase.from("players").update({ current_space: target }).eq("id", me.id);
     const stage1Distance = Math.max(1, Math.abs(target - me.current_space));
     const stage1Ms = stage1Distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
     await new Promise((r) => setTimeout(r, stage1Ms));
-    if (pausedRef.current) { setRolling(false); return; }
+    if (await roomPausedNow()) { setRolling(false); return; }
 
     // Stage 2: if a boost/setback/finish moved the destination, hop again so
     // the token visibly accelerates forward (or back) to the final space.
@@ -249,7 +255,7 @@ function PlayPage() {
       const stage2Distance = Math.max(1, Math.abs(final - target));
       const stage2Ms = stage2Distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
       await new Promise((r) => setTimeout(r, stage2Ms));
-      if (pausedRef.current) { setRolling(false); return; }
+      if (await roomPausedNow()) { setRolling(false); return; }
     }
 
     // Exercise destination -> lock with trap (after hop animation finishes).

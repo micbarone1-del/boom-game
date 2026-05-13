@@ -25,8 +25,11 @@ type EffectName =
   | "blowUp"
   | "win";
 
-let ctx: AudioContext | null = null;
-let masterGain: GainNode | null = null;
+// Persist across HMR module reloads — otherwise we'd create a new
+// (suspended) AudioContext on every code edit and lose the user-gesture
+// unlock, which silences all SFX until the next click.
+const _g = (typeof globalThis !== "undefined" ? globalThis : window) as any;
+_g.__boomSfx ||= { ctx: null as AudioContext | null, masterGain: null as GainNode | null };
 // Master volume — bumped so SFX cut through background music (e.g. Spotify).
 const MASTER_VOLUME = 2.6;
 let muted = false;
@@ -51,23 +54,25 @@ if (typeof window !== "undefined") {
 
 function ac(): AudioContext | null {
   if (typeof window === "undefined") return null;
-  if (!ctx) {
+  if (!_g.__boomSfx.ctx) {
     const Ctor = (window.AudioContext || (window as any).webkitAudioContext) as
       | typeof AudioContext
       | undefined;
     if (!Ctor) return null;
-    ctx = new Ctor();
+    _g.__boomSfx.ctx = new Ctor();
   }
-  return ctx;
+  return _g.__boomSfx.ctx;
 }
 
 function out(c: AudioContext): AudioNode {
-  if (!masterGain || masterGain.context !== c) {
-    masterGain = c.createGain();
-    masterGain.gain.value = MASTER_VOLUME;
-    masterGain.connect(c.destination);
+  let mg: GainNode | null = _g.__boomSfx.masterGain;
+  if (!mg || mg.context !== c) {
+    mg = c.createGain();
+    mg.gain.value = MASTER_VOLUME;
+    mg.connect(c.destination);
+    _g.__boomSfx.masterGain = mg;
   }
-  return masterGain;
+  return mg;
 }
 
 async function ensureReady(): Promise<boolean> {

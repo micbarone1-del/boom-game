@@ -29,6 +29,7 @@ type BoomSfxGlobal = {
   ctx: AudioContext | null;
   masterGain: GainNode | null;
   unlocked: boolean;
+  fallbackUnlocked: boolean;
 };
 
 // Persist across HMR module reloads — otherwise we'd create a new
@@ -39,13 +40,72 @@ const state = (_g.__boomSfx ||= {
   ctx: null as AudioContext | null,
   masterGain: null as GainNode | null,
   unlocked: false,
+  fallbackUnlocked: false,
 }) as BoomSfxGlobal;
 // Master volume — bumped so SFX cut through background music (e.g. Spotify).
 const MASTER_VOLUME = 2.6;
 let muted = false;
+let fallbackBeep: HTMLAudioElement | null = null;
 // Bumped key (v4) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
 const MUTE_KEY = "boom.sfx.muted.v4";
+
+function fallbackAudio(): HTMLAudioElement | null {
+  if (typeof window === "undefined" || typeof Audio === "undefined" || typeof btoa === "undefined") return null;
+  if (fallbackBeep) return fallbackBeep;
+  const sampleRate = 8000;
+  const sampleCount = Math.floor(sampleRate * 0.12);
+  const bytes = new Uint8Array(44 + sampleCount * 2);
+  const view = new DataView(bytes.buffer);
+  const write = (offset: number, text: string) => {
+    for (let i = 0; i < text.length; i++) bytes[offset + i] = text.charCodeAt(i);
+  };
+  write(0, "RIFF");
+  view.setUint32(4, 36 + sampleCount * 2, true);
+  write(8, "WAVEfmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  write(36, "data");
+  view.setUint32(40, sampleCount * 2, true);
+  for (let i = 0; i < sampleCount; i++) {
+    const fade = Math.min(1, i / 80, (sampleCount - i) / 160);
+    const sample = Math.sin((i / sampleRate) * Math.PI * 2 * 880) * 0.7 * fade;
+    view.setInt16(44 + i * 2, sample * 32767, true);
+  }
+  let binary = "";
+  bytes.forEach((b) => { binary += String.fromCharCode(b); });
+  fallbackBeep = new Audio(`data:audio/wav;base64,${btoa(binary)}`);
+  fallbackBeep.preload = "auto";
+  fallbackBeep.volume = 0.9;
+  return fallbackBeep;
+}
+
+function fallbackPlay(audible: boolean) {
+  if (muted) return;
+  const a = fallbackAudio();
+  if (!a) return;
+  try {
+    a.pause();
+    a.currentTime = 0;
+    a.volume = audible ? 0.9 : 0;
+    void a.play().then(() => {
+      if (!audible) {
+        a.pause();
+        a.currentTime = 0;
+        a.volume = 0.9;
+      }
+    }).catch(() => {
+      a.volume = 0.9;
+    });
+  } catch {
+    a.volume = 0.9;
+  }
+}
 
 if (typeof window !== "undefined") {
   try {
@@ -80,11 +140,28 @@ function ac(): AudioContext | null {
 }
 
 function unlockAudio(): Promise<boolean> {
+  fallbackPlay(false);
+  state.fallbackUnlocked = true;
   const c = ac();
-  if (!c) return Promise.resolve(false);
+  if (!c) return Promise.resolve(true);
+  // iOS/Safari often needs a source node to be created + started directly in
+  // the click/touch call stack; resume() alone can leave WebAudio silent.
+  try {
+    const t0 = c.currentTime + 0.005;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(440, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.setValueAtTime(0.0001, t0 + 0.02);
+    osc.connect(g).connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.025);
+  } catch {}
   const mark = () => {
     state.unlocked = c.state === "running";
-    return state.unlocked;
+    if (state.unlocked) state.fallbackUnlocked = true;
+    return state.unlocked || state.fallbackUnlocked;
   };
   if (c.state === "running") return Promise.resolve(mark());
   return c.resume().then(mark).catch(() => {
@@ -105,11 +182,11 @@ function out(c: AudioContext): AudioNode {
 }
 
 async function ensureReady(): Promise<boolean> {
+  fallbackPlay(false);
+  state.fallbackUnlocked = true;
   const c = ac();
-  if (!c) return false;
+  if (!c) return true;
   try {
-    if (c.state === "suspended") await c.resume();
-    // A near-silent beep is more reliable than a silent buffer in iframes and iOS.
     const t0 = c.currentTime + 0.005;
     const osc = c.createOscillator();
     const g = c.createGain();
@@ -120,11 +197,13 @@ async function ensureReady(): Promise<boolean> {
     osc.connect(g).connect(c.destination);
     osc.start(t0);
     osc.stop(t0 + 0.025);
+    if (c.state === "suspended") await c.resume();
     state.unlocked = c.state === "running";
-    return state.unlocked;
+    if (state.unlocked) state.fallbackUnlocked = true;
+    return state.unlocked || state.fallbackUnlocked;
   } catch {
     state.unlocked = false;
-    return false;
+    return state.fallbackUnlocked;
   }
 }
 
@@ -278,12 +357,26 @@ export const sfx = {
     if (muted) return;
     try {
       const c = ac();
-      if (!c) return;
+      if (!c) {
+        fallbackPlay(true);
+        state.fallbackUnlocked = true;
+        return;
+      }
       if (c.state === "running") {
         state.unlocked = true;
+        if (state.fallbackUnlocked) fallbackPlay(true);
         effects[name]();
         return;
       }
+      const inUserGesture = !!navigator.userActivation?.isActive;
+      if (inUserGesture) {
+        fallbackPlay(true);
+        state.fallbackUnlocked = true;
+        void unlockAudio();
+        effects[name]();
+        return;
+      }
+      if (state.fallbackUnlocked) fallbackPlay(true);
       void unlockAudio().then((ready) => {
         if (!muted && ready) effects[name]();
       });
@@ -296,7 +389,7 @@ export const sfx = {
   },
   isUnlocked() {
     const c = state.ctx;
-    return !!c && c.state === "running" && !!state.unlocked;
+    return (!!c && c.state === "running" && !!state.unlocked) || state.fallbackUnlocked;
   },
   setMuted(v: boolean) {
     muted = v;

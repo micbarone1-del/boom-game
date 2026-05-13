@@ -326,7 +326,8 @@ function PlayPage() {
       </div>
 
       {trap ? (() => {
-        const trapCellType = getCell(players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0).type;
+        const trapSpace = trap.space ?? players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0;
+        const trapCellType = getCell(trapSpace).type;
         const cellColor =
           trapCellType === "easy" ? "var(--boom-yellow)" :
           trapCellType === "medium" ? "var(--boom-orange)" :

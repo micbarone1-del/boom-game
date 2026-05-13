@@ -344,9 +344,10 @@ function PlayPage() {
           <p className="text-3xl font-black">{trap.reps} {trap.exercise}</p>
           <div className="flex justify-center py-2">
             {(() => {
-              const ready = playCountdownStart !== null;
-              const anchor = playCountdownStart ?? (trap.started_at + 1e12);
-              const inCountdown = Date.now() < anchor;
+              const anchor = trap.started_at;
+              const remaining = anchor - Date.now();
+              const inCountdown = remaining > 0 && remaining <= 3500;
+              const ready = remaining <= 3500; // show countdown UI only at the end
               return (
                 <div
                   className={`ink-border rounded-2xl px-8 py-5 bg-white ${ready && inCountdown ? "anim-border-flash" : ""}`}

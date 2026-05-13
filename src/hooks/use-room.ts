@@ -10,6 +10,7 @@ export type Room = {
   trap: any;
   last_dice: number | null;
   status: string;
+  paused?: boolean;
   board_overrides: Record<string, { exercise?: string; reps?: number }> | null;
 };
 

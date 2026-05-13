@@ -29,13 +29,17 @@ type EffectName =
 // (suspended) AudioContext on every code edit and lose the user-gesture
 // unlock, which silences all SFX until the next click.
 const _g = (typeof globalThis !== "undefined" ? globalThis : window) as any;
-_g.__boomSfx ||= { ctx: null as AudioContext | null, masterGain: null as GainNode | null };
+_g.__boomSfx ||= {
+  ctx: null as AudioContext | null,
+  masterGain: null as GainNode | null,
+  unlocked: false,
+};
 // Master volume — bumped so SFX cut through background music (e.g. Spotify).
 const MASTER_VOLUME = 2.6;
 let muted = false;
-// Bumped key (v2) so any previously-stuck "muted" state from earlier
+// Bumped key (v3) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
-const MUTE_KEY = "boom.sfx.muted.v2";
+const MUTE_KEY = "boom.sfx.muted.v3";
 
 if (typeof window !== "undefined") {
   try {
@@ -54,6 +58,11 @@ if (typeof window !== "undefined") {
 
 function ac(): AudioContext | null {
   if (typeof window === "undefined") return null;
+  if (_g.__boomSfx.ctx?.state === "closed") {
+    _g.__boomSfx.ctx = null;
+    _g.__boomSfx.masterGain = null;
+    _g.__boomSfx.unlocked = false;
+  }
   if (!_g.__boomSfx.ctx) {
     const Ctor = (window.AudioContext || (window as any).webkitAudioContext) as
       | typeof AudioContext
@@ -91,8 +100,10 @@ async function ensureReady(): Promise<boolean> {
     osc.connect(g).connect(c.destination);
     osc.start(t0);
     osc.stop(t0 + 0.025);
-    return c.state === "running";
+    _g.__boomSfx.unlocked = c.state === "running";
+    return _g.__boomSfx.unlocked;
   } catch {
+    _g.__boomSfx.unlocked = false;
     return false;
   }
 }
@@ -247,7 +258,7 @@ export const sfx = {
     if (muted) return;
     try {
       const c = ac();
-      if (c && c.state !== "running") {
+      if (c && (c.state !== "running" || !_g.__boomSfx.unlocked)) {
         void ensureReady().then((ok) => {
           if (ok) effects[name]();
         });
@@ -264,6 +275,10 @@ export const sfx = {
   },
   isMuted() {
     return muted;
+  },
+  isUnlocked() {
+    const c = _g.__boomSfx.ctx as AudioContext | null;
+    return !!c && c.state === "running" && !!_g.__boomSfx.unlocked;
   },
   setMuted(v: boolean) {
     muted = v;

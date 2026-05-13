@@ -59,7 +59,10 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
       onClick={async () => {
         const next = sfx.toggleMuted();
         setMuted(next);
-        if (!next) await sfx.unlock();
+        if (!next) {
+          await sfx.unlock();
+          sfx.play("gymSelect");
+        }
       }}
       className={
         isWhite
@@ -145,6 +148,23 @@ function GymBoard({ code }: { code: string }) {
   const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !paused;
+  const [needsSoundTap, setNeedsSoundTap] = useState(() => !sfx.isMuted() && !sfx.isUnlocked());
+
+  useEffect(() => {
+    if (sfx.isMuted() || sfx.isUnlocked()) {
+      setNeedsSoundTap(false);
+      return;
+    }
+    const check = () => setNeedsSoundTap(!sfx.isMuted() && !sfx.isUnlocked());
+    window.addEventListener("pointerdown", check, true);
+    window.addEventListener("click", check, true);
+    window.addEventListener("keydown", check, true);
+    return () => {
+      window.removeEventListener("pointerdown", check, true);
+      window.removeEventListener("click", check, true);
+      window.removeEventListener("keydown", check, true);
+    };
+  }, []);
 
   // Camera (board zoom/pan): scale 1 idle; scale 3 centered on the active
   // token while a roll is animating or a trap is on the board. Pans live as
@@ -258,7 +278,7 @@ function GymBoard({ code }: { code: string }) {
         const at = from + i * step;
         hopTimeoutsRef.current.push(setTimeout(() => {
           setHopSpaces((s) => ({ ...s, [p.id]: at }));
-          sfx.play("hop");
+          void sfx.unlock().then(() => sfx.play("hop"));
         }, i * HOP_MS));
       }
       hopTimeoutsRef.current.push(setTimeout(() => {
@@ -272,7 +292,7 @@ function GymBoard({ code }: { code: string }) {
             rest: "rest", boost: "blast", setback: "setback",
           };
           const which = cellSfx[cell.type];
-          if (which) sfx.play(which);
+          if (which) void sfx.unlock().then(() => sfx.play(which));
           hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), LANDING_SPLASH_MS));
         }
       }, distance * HOP_MS));
@@ -293,7 +313,7 @@ function GymBoard({ code }: { code: string }) {
     for (const p of players) {
       if (!seenPlayerIdsRef.current.has(p.id)) {
         seenPlayerIdsRef.current.add(p.id);
-        sfx.play("playerJoin");
+        void sfx.unlock().then(() => sfx.play("playerJoin"));
       }
     }
   }, [players]);
@@ -301,7 +321,7 @@ function GymBoard({ code }: { code: string }) {
   // Game start sound — fires when the room transitions into play.
   useEffect(() => {
     const started = !!room && (room.status === "playing" || !!room.current_turn_player_id);
-    if (started && !prevStartedRef.current) sfx.play("gameStart");
+    if (started && !prevStartedRef.current) void sfx.unlock().then(() => sfx.play("gameStart"));
     prevStartedRef.current = started;
   }, [room]);
 
@@ -338,7 +358,7 @@ function GymBoard({ code }: { code: string }) {
     const n = Math.max(1, Math.ceil(remaining / 1000));
     if (!countdownTicksRef.current.has(n)) {
       countdownTicksRef.current.add(n);
-      sfx.play("countdown");
+      void sfx.unlock().then(() => sfx.play("countdown"));
     }
   });
 
@@ -357,7 +377,7 @@ function GymBoard({ code }: { code: string }) {
     for (const p of players) {
       if (p.finished_at && !winnerSoundRef.current.has(p.id)) {
         winnerSoundRef.current.add(p.id);
-        sfx.play("win");
+        void sfx.unlock().then(() => sfx.play("win"));
       }
     }
   }, [players]);
@@ -657,6 +677,24 @@ function GymBoard({ code }: { code: string }) {
           )}
         </div>
       </header>
+      )}
+      {needsSoundTap && !sfx.isMuted() && (
+        <button
+          onClick={async () => {
+            const ok = await sfx.unlock();
+            sfx.play("gymSelect");
+            setNeedsSoundTap(!ok);
+          }}
+          className="fixed inset-0 z-[90] bg-black/80 flex items-center justify-center p-6 cursor-pointer"
+          aria-label="Tap to enable sound effects"
+        >
+          <span
+            className="btn-boom text-3xl px-8 py-5"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            TAP FOR SFX
+          </span>
+        </button>
       )}
       {qrZoom && (
         <div

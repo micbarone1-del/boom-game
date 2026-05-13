@@ -147,11 +147,18 @@ function GymBoard({ code }: { code: string }) {
   // can use a longer, eased transition for the initial zoom-in / final
   // zoom-out and a tight linear pan between hops.
   const [cameraPhase, setCameraPhase] = useState<"idle" | "settle" | "pan">("idle");
-  // Follow ONLY the hopping token. As soon as the hop animation ends (or the
-  // trap modal takes over) we glide back to the full map view.
-  const focusPlayerId = hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null;
-  const focusSpace = focusPlayerId ? hopSpaces[focusPlayerId] ?? 0 : 0;
-  const zoomActive = !!focusPlayerId && focusSpace > 0 && !trap;
+  // Always keep the camera centered on the active player. Zoom in tighter
+  // while the token is hopping; ease back to a wider follow when idle.
+  const hoppingId = hoppingIds.size > 0 ? Array.from(hoppingIds)[0] : null;
+  const turnId = room?.current_turn_player_id ?? null;
+  const focusPlayerId = hoppingId ?? turnId;
+  const focusPlayer = focusPlayerId ? players.find((p) => p.id === focusPlayerId) : null;
+  const rawFocusSpace = focusPlayerId
+    ? hopSpaces[focusPlayerId] ?? focusPlayer?.current_space ?? 0
+    : 0;
+  const focusSpace = rawFocusSpace > 0 ? rawFocusSpace : 1;
+  const zoomActive = !!focusPlayerId && !trap;
+  const isHoppingFocus = !!hoppingId;
   useEffect(() => {
     const recalc = () => {
       const inner = boardInnerRef.current;
@@ -178,7 +185,7 @@ function GymBoard({ code }: { code: string }) {
         cy += node.offsetTop;
         node = node.offsetParent as HTMLElement | null;
       }
-      const scale = 2;
+      const scale = isHoppingFocus ? 2 : 1.5;
       const Wc = wrap.clientWidth;
       const Hc = wrap.clientHeight;
       const tx = Wc / 2 - cx * scale;
@@ -189,7 +196,7 @@ function GymBoard({ code }: { code: string }) {
     recalc();
     window.addEventListener("resize", recalc);
     return () => window.removeEventListener("resize", recalc);
-  }, [focusSpace, zoomActive, inPlayMode]);
+  }, [focusSpace, zoomActive, isHoppingFocus, inPlayMode]);
 
   // Clear any pending hop timeouts only when the component unmounts.
   useEffect(() => {

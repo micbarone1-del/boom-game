@@ -967,7 +967,7 @@ function GymBoard({ code }: { code: string }) {
       )}
 
       {/* BOOM modal */}
-      {trap && (
+      {trap && !isPaused && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom relative">
             {(() => {
@@ -1186,31 +1186,11 @@ function GymBoard({ code }: { code: string }) {
         />
       )}
       {isPaused && gameHasStarted && (
-        <div className="fixed inset-0 z-[120] bg-black/90 flex flex-col items-center justify-center gap-6 p-6 text-center">
-          <Pause size={96} className="text-white" fill="currentColor" />
-          <div
-            className="text-6xl md:text-8xl font-black comic-shadow text-white"
-            style={{ fontFamily: "'Luckiest Guy', cursive" }}
-          >
-            GAME PAUSED
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <button
-              onClick={resumeGame}
-              className="btn-boom flex items-center gap-2"
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}
-            >
-              <Play size={20} fill="currentColor" /> PLAY
-            </button>
-            <button
-              onClick={restartGame}
-              disabled={restarting}
-              className="btn-boom disabled:opacity-50"
-              style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
-            >
-              {restarting ? "BOOMING…" : "RESTART"}
-            </button>
-          </div>
+        <div
+          className="fixed top-2 left-1/2 -translate-x-1/2 z-[120] ink-border rounded-2xl bg-[var(--boom-red)] text-white px-4 py-2 flex items-center gap-2 pointer-events-none comic-shadow"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <Pause size={20} fill="currentColor" /> GAME PAUSED
         </div>
       )}
       {landed && (

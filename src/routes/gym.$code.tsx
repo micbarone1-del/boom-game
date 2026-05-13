@@ -53,30 +53,55 @@ function MiniDumbbell({ className }: { className?: string }) {
 
 function SfxButton({ className = "", variant = "green" }: { className?: string; variant?: "green" | "white" }) {
   const [muted, setMuted] = useState(() => sfx.isMuted());
+  const [unlocked, setUnlocked] = useState(() => sfx.isUnlocked());
+  const [pulse, setPulse] = useState(0);
   const isWhite = variant === "white";
+  const on = !muted && unlocked;
+  const label = muted ? "SFX OFF" : unlocked ? "SFX ON" : "TAP TO ENABLE SFX";
+  const bg = muted
+    ? "#888"
+    : unlocked
+      ? "var(--boom-green)"
+      : "var(--boom-orange)";
   return (
     <button
       onClick={async () => {
-        sfx.setMuted(false);
-        setMuted(false);
-        // Await unlock inside the user-gesture so iOS/Safari actually
-        // resumes the AudioContext before we schedule the test beep.
-        await sfx.unlock();
-        sfx.play("didIt");
+        setPulse((p) => p + 1);
+        // First click while muted -> turn ON + unlock + test beep.
+        // Click while ON -> turn OFF (mute).
+        if (muted) {
+          sfx.setMuted(false);
+          setMuted(false);
+          const ok = await sfx.unlock();
+          setUnlocked(ok);
+          if (ok) sfx.play("didIt");
+          return;
+        }
+        if (!unlocked) {
+          // Audio not yet unlocked by browser — this gesture unlocks it.
+          const ok = await sfx.unlock();
+          setUnlocked(ok);
+          if (ok) sfx.play("didIt");
+          return;
+        }
+        // Already on -> mute.
+        sfx.setMuted(true);
+        setMuted(true);
       }}
       className={
         isWhite
-          ? `ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1 ${className}`
-          : `btn-boom flex items-center gap-2 py-2 px-4 text-base ${className}`
+          ? `ink-border-sm rounded-xl px-3 py-2 font-black text-sm flex items-center gap-1 transition-transform active:scale-95 ${className}`
+          : `btn-boom flex items-center gap-2 py-2 px-4 text-base transition-transform active:scale-95 ${className}`
       }
       style={
         isWhite
-          ? undefined
-          : { fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-green)" }
+          ? { background: bg, color: muted ? "white" : "var(--boom-ink)" }
+          : { fontFamily: "'Luckiest Guy', cursive", background: bg }
       }
-      title="Tap to re-arm and test sound effects"
+      title={muted ? "Tap to enable sound effects" : unlocked ? "Tap to mute sound effects" : "Tap once to enable audio in this browser"}
+      key={pulse}
     >
-      {muted ? <VolumeX size={isWhite ? 16 : 18} /> : <Volume2 size={isWhite ? 16 : 18} />} SFX ON
+      {on ? <Volume2 size={isWhite ? 16 : 18} /> : <VolumeX size={isWhite ? 16 : 18} />} {label}
     </button>
   );
 }

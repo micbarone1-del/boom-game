@@ -24,7 +24,7 @@ import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
-import { Bomb, Dice5, Trophy, Camera } from "lucide-react";
+import { Bomb, Dice5, Trophy, Camera, Pause } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
 // SFX intentionally not imported on the player UI — sound only plays on the
@@ -528,6 +528,20 @@ function PlayPage() {
         />
       )}
       {/* countdown rendered inline inside the timer box */}
+      {(room as any)?.paused && (
+        <div className="fixed inset-0 z-[100] bg-black/85 flex flex-col items-center justify-center gap-6 p-6 text-center">
+          <Pause size={96} className="text-white" fill="currentColor" />
+          <div
+            className="text-6xl font-black comic-shadow text-white"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            GAME PAUSED
+          </div>
+          <p className="text-white text-lg font-bold opacity-80">
+            Waiting for the host to resume…
+          </p>
+        </div>
+      )}
     </main>
   );
 }

@@ -373,9 +373,9 @@ export const sfx = {
       }
       const inUserGesture = !!navigator.userActivation?.isActive;
       if (inUserGesture) {
+        void unlockAudio();
         fallbackPlay(true);
         effects[name]();
-        void unlockAudio();
         return;
       }
       if (state.fallbackUnlocked) fallbackPlay(true);

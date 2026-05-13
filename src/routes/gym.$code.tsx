@@ -148,6 +148,7 @@ function GymBoard({ code }: { code: string }) {
   const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !paused;
+  const isPaused = !!room?.paused || paused;
 
   // Camera (board zoom/pan): scale 1 idle; scale 3 centered on the active
   // token while a roll is animating or a trap is on the board. Pans live as
@@ -239,6 +240,10 @@ function GymBoard({ code }: { code: string }) {
     for (const p of players) {
       const prev = prevRef.current[p.id];
       prevRef.current[p.id] = p.current_space;
+      if (isPaused) {
+        setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
+        continue;
+      }
       if (prev === undefined || prev === p.current_space) {
         if (prev === undefined) setHopSpaces((s) => ({ ...s, [p.id]: p.current_space }));
         continue;
@@ -286,10 +291,11 @@ function GymBoard({ code }: { code: string }) {
         }
       }, announceRemaining + distance * HOP_MS));
     }
-  }, [players]);
+  }, [players, isPaused]);
 
   // Player joined sound — fires when a new player id appears.
   useEffect(() => {
+    if (isPaused) return;
     if (players.length === 0) {
       seenPlayerIdsRef.current = new Set();
       return;
@@ -305,14 +311,15 @@ function GymBoard({ code }: { code: string }) {
         sfx.play("playerJoin");
       }
     }
-  }, [players]);
+  }, [players, isPaused]);
 
   // Game start sound — fires when the room transitions into play.
   useEffect(() => {
+    if (isPaused) return;
     const started = !!room && (room.status === "playing" || !!room.current_turn_player_id);
     if (started && !prevStartedRef.current) sfx.play("gameStart");
     prevStartedRef.current = started;
-  }, [room]);
+  }, [room, isPaused]);
 
   // Turn announcement — flash a "[NAME] ROLLS!" overlay when the active turn
   // changes. We key on (turn player id + last_dice) so that a RESTART (which

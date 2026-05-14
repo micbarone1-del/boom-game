@@ -14,6 +14,40 @@ export const Route = createFileRoute("/")({
       { property: "og:url", content: "https://boom-game.lovable.app/" },
     ],
     links: [{ rel: "canonical", href: "https://boom-game.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "BOOM! — The Workout Game",
+          url: "https://boom-game.lovable.app/",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "BOOM!",
+          url: "https://boom-game.lovable.app/",
+          logo: "https://boom-game.lovable.app/favicon.ico",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "VideoGame",
+          name: "BOOM! — The Workout Game",
+          url: "https://boom-game.lovable.app/",
+          description: "A chaotic real-time multiplayer party-fitness game. Roll dice, dodge traps, and blast through workouts with friends.",
+          genre: ["Party", "Fitness", "Multiplayer"],
+          applicationCategory: "GameApplication",
+          operatingSystem: "Web",
+        }),
+      },
+    ],
   }),
 });
 
@@ -26,6 +60,8 @@ function Index() {
           alt="BOOM mascot — excited cartoon bomb with a lit fuse"
           width={1024}
           height={1024}
+          fetchPriority="high"
+          decoding="async"
           className="mx-auto w-40 md:w-56 anim-fuse"
         />
         <h1

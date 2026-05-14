@@ -224,7 +224,7 @@ function JoinPage() {
           </>
         ) : (
           <>
-            <span className="text-xs font-bold opacity-80">Sign in to save your profile across games.</span>
+          <span className="text-xs font-bold text-foreground">Sign in to save your profile across games.</span>
             <button onClick={() => setShowAuth((v) => !v)} className="text-xs font-black flex items-center gap-1 underline">
               <LogIn size={14}/> {showAuth ? "Cancel" : "Sign in"}
             </button>
@@ -253,7 +253,7 @@ function JoinPage() {
               </svg>
               Continue with Apple
             </button>
-            <div className="text-center text-[10px] font-bold opacity-60">— or use email —</div>
+            <div className="text-center text-[10px] font-bold text-foreground/80">— or use email —</div>
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={() => setAuthMode("signin")}
@@ -303,7 +303,7 @@ function JoinPage() {
             onChange={(e) => setFitness(Number(e.target.value))}
             className="w-full"
           />
-          <div className="flex justify-between text-xs font-bold opacity-70">
+          <div className="flex justify-between text-xs font-bold text-foreground/80">
             <span>Couch potato</span><span>Beast mode</span>
           </div>
         </label>

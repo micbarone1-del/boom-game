@@ -2,7 +2,6 @@ import bombDefault from "@/assets/bomb-mascot.png";
 import bombEasy from "@/assets/bomb-easy.png";
 import bombMedium from "@/assets/bomb-medium.png";
 import bombHard from "@/assets/bomb-hard.png";
-import bombRest from "@/assets/bomb-rest.png";
 import bombBoost from "@/assets/bomb-boost.png";
 import bombSetback from "@/assets/bomb-setback.png";
 import type { CellType } from "@/lib/game";
@@ -11,9 +10,11 @@ const FLAVOR: Record<CellType, { label: string; color: string; img: string; sad?
   easy:    { label: "EASY PEASY!",    color: "var(--boom-yellow)", img: bombEasy },
   medium:  { label: "GETTIN' SWEATY!", color: "var(--boom-orange)", img: bombMedium },
   hard:    { label: "BEAST MODE!",    color: "var(--boom-red)",    img: bombHard },
-  rest:    { label: "COFFEE BREAK!",  color: "var(--boom-blue)",   img: bombRest },
   boost:   { label: "ULTRA BLAST!",   color: "var(--boom-green)",  img: bombBoost },
   setback: { label: "OH NOOO!",       color: "#7c3aed",            img: bombSetback, sad: true },
+  surprise:{ label: "SURPRISE!",      color: "#ec4899",            img: bombDefault },
+  crazy:   { label: "GO CRAZY!",      color: "#f97316",            img: bombHard },
+  group:   { label: "ALL TOGETHER!",  color: "var(--boom-blue)",   img: bombDefault },
   start:   { label: "LET'S GO!",      color: "var(--boom-green)",  img: bombDefault },
   finish:  { label: "WINNER!",        color: "var(--boom-yellow)", img: bombDefault },
 };

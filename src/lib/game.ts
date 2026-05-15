@@ -138,6 +138,7 @@ export const BOARD: Cell[] = RAW_BOARD.map(([type, n], i) => {
   if (type === "hard")
     return { space, type, tier: 3, exercise: EXERCISES_HARD[i % EXERCISES_HARD.length] };
   if (type === "boost" || type === "setback") return { space, type, delta: n };
+  if (type === "surprise" || type === "crazy" || type === "group") return { space, type };
   return { space, type };
 });
 

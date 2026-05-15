@@ -254,6 +254,8 @@ function GymBoard({ code }: { code: string }) {
   const isPaused = !!room?.paused || paused;
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !isPaused;
+  const boardOverrides = (room?.board_overrides ?? {}) as BoardOverrides;
+  const trainingSelection = getTrainingSelection(boardOverrides);
 
   useEffect(() => {
     if (isPaused && pauseStartedAtRef.current === null) pauseStartedAtRef.current = Date.now();

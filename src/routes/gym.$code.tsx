@@ -1417,12 +1417,6 @@ function CustomizeBoardModal({
 
   const resetAll = () => setDraft({});
 
-  const applyPresetClick = () => {
-    const p = PRESETS.find((x) => x.id === presetId);
-    if (!p) return;
-    setDraft(applyPreset(p));
-  };
-
   // Auto-apply + auto-save when a preset is picked: every exercise on the
   // board updates instantly to match the chosen discipline.
   const onPresetChange = async (id: string) => {

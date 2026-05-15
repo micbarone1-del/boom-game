@@ -390,7 +390,10 @@ export async function finishPlayer(playerId: string, roomCode: string) {
     .select("target_reps")
     .eq("room_code", roomCode)
     .eq("player_id", playerId);
-  const totalReps = (logs ?? []).reduce((s, l: any) => s + (l.target_reps ?? 0), 0);
+  const totalReps = (logs ?? []).reduce(
+    (s, l: { target_reps: number | null }) => s + (l.target_reps ?? 0),
+    0,
+  );
 
   const { data: alreadyFinished } = await supabase
     .from("players")

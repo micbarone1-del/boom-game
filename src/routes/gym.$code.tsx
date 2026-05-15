@@ -865,8 +865,8 @@ function GymBoard({ code }: { code: string }) {
         {/* Snake board: 10-cell horizontal rows joined by single-cell vertical connectors */}
         <div className="flex flex-col gap-1.5 pt-6">
           {(() => {
-            const COLS = 10;
-            const LAP = 11; // 10 horizontal + 1 connector
+            const COLS = 15;
+            const LAP = 16; // 15 horizontal + 1 connector
             const rows: { space: number; col: number }[][] = [];
             for (let lap = 0; lap * LAP + 1 <= BOARD_SIZE; lap++) {
               const lapStart = lap * LAP + 1;

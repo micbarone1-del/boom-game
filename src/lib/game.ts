@@ -148,7 +148,7 @@ export function getCell(space: number): Cell {
 
 export type BoardOverrides = Record<
   string,
-  { exercise?: string; reps?: number; min_reps?: number; max_reps?: number }
+  { exercise?: string; reps?: number; min_reps?: number; max_reps?: number; unit?: "reps" | "seconds" }
 >;
 
 /** Returns the cell with any host overrides applied (custom exercise name). */
@@ -160,6 +160,42 @@ export function getEffectiveCell(space: number, overrides?: BoardOverrides | nul
     return { ...base, exercise: o.exercise ?? base.exercise };
   }
   return base;
+}
+
+/** Returns the unit (reps or seconds) for an exercise cell, defaulting to reps. */
+export function getCellUnit(
+  space: number,
+  overrides?: BoardOverrides | null,
+): "reps" | "seconds" {
+  return overrides?.[String(space)]?.unit ?? "reps";
+}
+
+/** Pick a random exercise from the configured pool for a SURPRISE cell. */
+export function pickSurpriseExercise(overrides?: BoardOverrides | null): {
+  exercise: string;
+  tier: 1 | 2 | 3;
+} {
+  const pool: Array<{ name: string; tier: 1 | 2 | 3 }> = [];
+  for (const c of BOARD) {
+    if (c.type === "easy" || c.type === "medium" || c.type === "hard") {
+      const eff = getEffectiveCell(c.space, overrides);
+      pool.push({ name: eff.exercise ?? "Workout", tier: c.tier ?? 1 });
+    }
+  }
+  const pick = pool[Math.floor(Math.random() * pool.length)] ?? { name: "Squats", tier: 2 as 1 | 2 | 3 };
+  return { exercise: pick.name, tier: pick.tier };
+}
+
+/** Pick a random unusual exercise for a CRAZY cell. */
+export function pickCrazyExercise(): { exercise: string; tier: 3 } {
+  const name = EXERCISES_CRAZY[Math.floor(Math.random() * EXERCISES_CRAZY.length)];
+  return { exercise: name, tier: 3 };
+}
+
+/** Pick a lighter group exercise for a GROUP cell. */
+export function pickGroupExercise(): { exercise: string; tier: 1 } {
+  const name = EXERCISES_GROUP[Math.floor(Math.random() * EXERCISES_GROUP.length)];
+  return { exercise: name, tier: 1 };
 }
 
 /**

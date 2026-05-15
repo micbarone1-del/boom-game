@@ -1080,9 +1080,11 @@ function GymBoard({ code }: { code: string }) {
                 trapCellType === "easy" ? "var(--boom-yellow)" :
                 trapCellType === "medium" ? "var(--boom-orange)" :
                 trapCellType === "hard" ? "var(--boom-red)" :
-                trapCellType === "rest" ? "var(--boom-blue)" :
                 trapCellType === "boost" ? "var(--boom-green)" :
                 trapCellType === "setback" ? "#7c3aed" :
+                trapCellType === "surprise" ? "#ec4899" :
+                trapCellType === "crazy" ? "#f97316" :
+                trapCellType === "group" ? "var(--boom-blue)" :
                 "var(--boom-yellow)";
               const effectiveStart = trap.started_at;
               const remaining = effectiveStart - Date.now();

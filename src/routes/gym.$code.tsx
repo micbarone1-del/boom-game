@@ -1431,6 +1431,9 @@ function CustomizeBoardModal({
             {saving ? "SAVING…" : "AUTO-SAVED"}
           </span>
         </div>
+        <div className="mb-3">
+          <SpotifyEmbed code={code} />
+        </div>
         <div className="flex-1 overflow-y-auto pr-1">
           <div className="grid gap-2">
             {exerciseCells.map((c) => {

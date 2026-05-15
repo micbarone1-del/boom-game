@@ -523,7 +523,7 @@ function PlayPage() {
           {triggeredByMe ? (
             <p className="font-bold text-lg">Crush those reps — your team will judge you on the GYM SCREEN.</p>
           ) : (
-            <p className="font-bold text-lg">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
+            <p className="font-bold text-lg">The Judge is verifying — sit tight!</p>
           )}
           </div>
         </div>

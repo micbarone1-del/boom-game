@@ -702,7 +702,7 @@ function GymBoard({ code }: { code: string }) {
         >
           <div
             onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
-            className={`flex flex-col gap-4 relative w-full h-full ${inPlayMode ? "overflow-hidden p-2" : "overflow-y-auto p-6"}`}
+            className={`flex flex-col gap-3 relative w-full h-full overflow-hidden ${inPlayMode ? "p-2" : "p-3"}`}
           >
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (

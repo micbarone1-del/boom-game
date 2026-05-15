@@ -8,6 +8,53 @@ export const COUNTDOWN_LEAD_MS = 3000;
 export const TRAP_TIMEOUT_MS = 30_000;
 /** Maximum number of independent "slots" (solo player or team) on the board. */
 export const MAX_TEAMS = 3;
+export const TEAM_IDS = ["green", "red", "blue"] as const;
+export type TeamId = (typeof TEAM_IDS)[number];
+
+export const TEAM_COLORS: Record<TeamId, string> = {
+  green: "#22c55e",
+  red: "#ef4444",
+  blue: "#3b82f6",
+};
+
+export function teamName(teamId?: string | null): string {
+  if (!teamId) return "Solo";
+  return `Team ${teamId.slice(0, 1).toUpperCase()}${teamId.slice(1)}`;
+}
+
+export function teamColor(teamId?: string | null): string {
+  return TEAM_COLORS[(teamId as TeamId) ?? "green"] ?? "#ec4899";
+}
+
+type TeamAssignablePlayer = {
+  id: string;
+  fitness_level: number;
+  joined_at: string;
+  team_id?: string | null;
+  is_team_lead?: boolean | null;
+  current_space?: number | null;
+};
+
+export function assignTeamForJoin(existingPlayers: TeamAssignablePlayer[], fitnessLevel: number) {
+  const ordered = [...existingPlayers].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+  const teamFor = (p: TeamAssignablePlayer, idx: number) => p.team_id ?? TEAM_IDS[Math.min(idx, TEAM_IDS.length - 1)];
+  const used = new Set(ordered.map(teamFor));
+
+  if (used.size < MAX_TEAMS) {
+    const team_id = TEAM_IDS.find((id) => !used.has(id)) ?? TEAM_IDS[used.size];
+    return { team_id, is_team_lead: true, current_space: 0 };
+  }
+
+  const teams = TEAM_IDS.map((id) => {
+    const members = ordered.filter((p, idx) => teamFor(p, idx) === id);
+    const avgFitness = members.reduce((sum, p) => sum + (p.fitness_level || 5), 0) / Math.max(1, members.length);
+    const lead = members.find((p) => p.is_team_lead) ?? members[0];
+    return { id, members, avgFitness, lead };
+  });
+  teams.sort((a, b) => Math.abs(a.avgFitness - fitnessLevel) - Math.abs(b.avgFitness - fitnessLevel) || a.members.length - b.members.length);
+  const chosen = teams[0] ?? { id: TEAM_IDS[0], lead: ordered[0] };
+  return { team_id: chosen.id, is_team_lead: false, current_space: chosen.lead?.current_space ?? 0 };
+}
 
 export const EXERCISES_EASY = ["Jumping Jacks", "High Knees", "Sit-ups", "Crunches"];
 export const EXERCISES_MEDIUM = ["Squats", "Lunges", "Push-ups", "Mountain Climbers"];

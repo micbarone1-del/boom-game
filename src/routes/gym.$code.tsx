@@ -15,6 +15,7 @@ import {
   recalcPlayerScore,
   teamColor,
   teamName,
+  getTrainingSelection,
   type Trap,
   type BoardOverrides,
 } from "@/lib/game";

@@ -4,11 +4,13 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
 import { generateRoomCode, BOARD_SIZE, BOARD, HOP_MS, LANDING_SPLASH_MS, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
+import { TRAP_TIMEOUT_MS } from "@/lib/game";
+import { PRESETS, applyPreset } from "@/lib/presets";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
-import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
+import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, ArrowLeft, HelpCircle, AlertTriangle, Users } from "lucide-react";
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
@@ -16,6 +18,7 @@ import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 import { TutorialCarousel } from "@/components/TutorialCarousel";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { OrientationLock } from "@/components/OrientationLock";
+import { ExplosionOverlay } from "@/components/ExplosionOverlay";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -454,6 +457,54 @@ function GymBoard({ code }: { code: string }) {
     return () => clearInterval(i);
   }, [trap]);
 
+  // Timed-out player whose name is shown in the explosion overlay (60s timeout).
+  const [timeoutBoom, setTimeoutBoom] = useState<string | null>(null);
+
+  // 60-second timeout: if a trap is still active 60s after the countdown
+  // ended, the bomb explodes — show overlay, send the active player back to
+  // start, clear the trap, and pass the turn to the next player.
+  const explosionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (explosionTimerRef.current) {
+      clearTimeout(explosionTimerRef.current);
+      explosionTimerRef.current = null;
+    }
+    if (!trap || !room || isPaused) return;
+    if (trap.kind === "group") return; // group cells don't explode
+    const deadline = trap.started_at + TRAP_TIMEOUT_MS;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return;
+    explosionTimerRef.current = setTimeout(async () => {
+      const triggered = players.find((p) => p.id === trap.triggered_by);
+      if (!triggered) return;
+      setTimeoutBoom(triggered.username);
+      sfx.play("setback");
+      // Send player back to start.
+      await supabase.from("players").update({ current_space: 1 }).eq("id", triggered.id);
+      // Pick next turn (skip finished + the just-exploded one once).
+      const order = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+      const idx = order.findIndex((p) => p.id === triggered.id);
+      let next = order[(idx + 1) % order.length];
+      for (let i = 1; i <= order.length; i++) {
+        const c = order[(idx + i) % order.length];
+        if (c.finished_at) continue;
+        next = c;
+        break;
+      }
+      await supabase
+        .from("rooms")
+        .update({ trap: null, locked: false, current_turn_player_id: next?.id ?? null })
+        .eq("code", code);
+      setTimeout(() => setTimeoutBoom(null), 1800);
+    }, remaining);
+    return () => {
+      if (explosionTimerRef.current) {
+        clearTimeout(explosionTimerRef.current);
+        explosionTimerRef.current = null;
+      }
+    };
+  }, [trap, room, players, isPaused, code]);
+
   const resumeGame = async () => {
     void sfx.unlock();
     setPaused(false);
@@ -829,8 +880,10 @@ function GymBoard({ code }: { code: string }) {
                     cell.type === "easy" ? "var(--boom-yellow)" :
                     cell.type === "medium" ? "var(--boom-orange)" :
                     cell.type === "hard" ? "var(--boom-red)" :
-                    cell.type === "rest" ? "var(--boom-blue)" :
                     cell.type === "boost" ? "var(--boom-green)" :
+                    cell.type === "surprise" ? "#ec4899" :
+                    cell.type === "crazy" ? "#f97316" :
+                    cell.type === "group" ? "var(--boom-blue)" :
                     "#7c3aed";
                   return (
                     <div
@@ -866,9 +919,11 @@ function GymBoard({ code }: { code: string }) {
                       {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%]" />}
                       {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%]" />}
                       {cell.type === "hard" && <Flame className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "rest" && <Coffee className="w-[60%] h-[60%]" />}
                       {cell.type === "boost" && <Zap className="w-[60%] h-[60%]" />}
                       {cell.type === "setback" && <ArrowLeft className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "surprise" && <HelpCircle className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "crazy" && <AlertTriangle className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "group" && <Users className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "start" && <Flag className="w-[60%] h-[60%]" />}
                       {cell.type === "finish" && <Trophy className="w-[60%] h-[60%]" />}
                       {here.length > 0 && (
@@ -1076,9 +1131,11 @@ function GymBoard({ code }: { code: string }) {
                 trapCellType === "easy" ? "var(--boom-yellow)" :
                 trapCellType === "medium" ? "var(--boom-orange)" :
                 trapCellType === "hard" ? "var(--boom-red)" :
-                trapCellType === "rest" ? "var(--boom-blue)" :
                 trapCellType === "boost" ? "var(--boom-green)" :
                 trapCellType === "setback" ? "#7c3aed" :
+                trapCellType === "surprise" ? "#ec4899" :
+                trapCellType === "crazy" ? "#f97316" :
+                trapCellType === "group" ? "var(--boom-blue)" :
                 "var(--boom-yellow)";
               const effectiveStart = trap.started_at;
               const remaining = effectiveStart - Date.now();
@@ -1251,6 +1308,7 @@ function GymBoard({ code }: { code: string }) {
       {landed && (
         <CellMascot key={landed.key} type={landed.type} username={landed.username} />
       )}
+      {timeoutBoom && <ExplosionOverlay username={timeoutBoom} />}
       {/* Start-of-game explosion overlay */}
       {exploding && (
         <div className="fixed inset-0 z-[65] flex items-center justify-center pointer-events-none overflow-hidden bg-black/40">
@@ -1295,13 +1353,14 @@ function CustomizeBoardModal({
 }) {
   const [draft, setDraft] = useState<BoardOverrides>(() => ({ ...overrides }));
   const [saving, setSaving] = useState(false);
+  const [presetId, setPresetId] = useState<string>("default");
   const exerciseCells = BOARD.filter(
     (c) => c.type === "easy" || c.type === "medium" || c.type === "hard",
   );
 
   const update = (
     space: number,
-    patch: { exercise?: string; reps?: number; min_reps?: number; max_reps?: number },
+    patch: { exercise?: string; reps?: number; min_reps?: number; max_reps?: number; unit?: "reps" | "seconds" },
   ) => {
     setDraft((prev) => {
       const cur = prev[String(space)] ?? {};
@@ -1318,18 +1377,20 @@ function CustomizeBoardModal({
       const reps = v.reps && v.reps > 0 ? Math.round(v.reps) : undefined;
       let min = v.min_reps && v.min_reps > 0 ? Math.round(v.min_reps) : undefined;
       let max = v.max_reps && v.max_reps > 0 ? Math.round(v.max_reps) : undefined;
+      const unit: "reps" | "seconds" | undefined = v.unit === "seconds" ? "seconds" : undefined;
       // If a fixed reps value is provided, drop the range — fixed wins.
       if (reps) { min = undefined; max = undefined; }
       // Normalise so min <= max when both are set.
       if (min !== undefined && max !== undefined && min > max) {
         const t = min; min = max; max = t;
       }
-      if (exercise || reps || min || max) {
+      if (exercise || reps || min || max || unit) {
         clean[k] = {
           ...(exercise ? { exercise } : {}),
           ...(reps ? { reps } : {}),
           ...(min ? { min_reps: min } : {}),
           ...(max ? { max_reps: max } : {}),
+          ...(unit ? { unit } : {}),
         };
       }
     }
@@ -1339,6 +1400,12 @@ function CustomizeBoardModal({
   };
 
   const resetAll = () => setDraft({});
+
+  const applyPresetClick = () => {
+    const p = PRESETS.find((x) => x.id === presetId);
+    if (!p) return;
+    setDraft(applyPreset(p));
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
@@ -1355,6 +1422,28 @@ function CustomizeBoardModal({
           range so a random number of reps is picked each time. Leave fields empty to keep the
           default (auto-scaled to each player's fitness level). FIXED beats MIN/MAX if both are set.
         </p>
+        <div className="flex flex-wrap items-center gap-2 mb-3 ink-border-sm rounded-xl p-2 bg-[var(--boom-cream)]">
+          <span className="text-xs font-black opacity-70">PRESET:</span>
+          <select
+            value={presetId}
+            onChange={(e) => setPresetId(e.target.value)}
+            className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
+          >
+            {PRESETS.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button
+            onClick={applyPresetClick}
+            className="ink-border-sm rounded-lg px-3 py-1 font-black text-sm"
+            style={{ background: "var(--boom-yellow)" }}
+          >
+            APPLY PRESET
+          </button>
+          <span className="text-[11px] font-bold opacity-70 flex-1 min-w-[180px]">
+            {PRESETS.find((p) => p.id === presetId)?.description}
+          </span>
+        </div>
         <div className="flex-1 overflow-y-auto pr-1">
           <div className="grid gap-2">
             {exerciseCells.map((c) => {
@@ -1362,6 +1451,7 @@ function CustomizeBoardModal({
               const tierBg =
                 c.type === "easy" ? "var(--boom-yellow)" :
                 c.type === "medium" ? "var(--boom-orange)" : "var(--boom-red)";
+              const unit: "reps" | "seconds" = (o.unit === "seconds" ? "seconds" : "reps");
               return (
                 <div key={c.space} className="ink-border-sm rounded-xl p-2 flex items-center gap-2 flex-wrap bg-white">
                   <span className="rounded-lg px-2 py-1 text-xs font-black ink-border-sm"
@@ -1377,6 +1467,17 @@ function CustomizeBoardModal({
                       onChange={(e) => update(c.space, { exercise: e.target.value })}
                       className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
                     />
+                  </label>
+                  <label className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black opacity-60">UNIT</span>
+                    <button
+                      type="button"
+                      onClick={() => update(c.space, { unit: unit === "reps" ? "seconds" : "reps" })}
+                      className="ink-border-sm rounded-lg px-2 py-1 text-xs font-black"
+                      style={{ background: unit === "seconds" ? "var(--boom-blue)" : "white", color: unit === "seconds" ? "white" : "black" }}
+                    >
+                      {unit === "seconds" ? "SEC" : "REPS"}
+                    </button>
                   </label>
                   <label className="w-20 flex flex-col gap-0.5">
                     <span className="text-[10px] font-black opacity-60">FIXED</span>

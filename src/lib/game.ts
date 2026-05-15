@@ -4,10 +4,36 @@ export const LANDING_SPLASH_MS = 3200;
 export const SEQUENCE_BUFFER_MS = 900;
 export const TRAP_REVEAL_MS = 1000;
 export const COUNTDOWN_LEAD_MS = 3000;
+/** Maximum seconds a player has to be defused before the bomb blows up. */
+export const TRAP_TIMEOUT_MS = 60_000;
+/** Maximum number of independent "slots" (solo player or team) on the board. */
+export const MAX_TEAMS = 3;
 
 export const EXERCISES_EASY = ["Jumping Jacks", "High Knees", "Sit-ups", "Crunches"];
 export const EXERCISES_MEDIUM = ["Squats", "Lunges", "Push-ups", "Mountain Climbers"];
 export const EXERCISES_HARD = ["Burpees", "Plank-Ups", "Jump Squats", "Pike Push-ups"];
+
+/** Unusual / silly combos used by CRAZY (?!) cells. */
+export const EXERCISES_CRAZY = [
+  "Spin & Burpee",
+  "Wheel & Pushup",
+  "Crab-Walk Pushups",
+  "Bear-Crawl Squats",
+  "Frog Jumps & Plank",
+  "Side-Roll Sit-ups",
+  "Donkey Kick Pushups",
+  "Inchworm Burpee",
+];
+
+/** Lighter exercises used by GROUP cells (everybody together). */
+export const EXERCISES_GROUP = [
+  "Jumping Jacks",
+  "High Knees",
+  "Air Squats",
+  "Wall Sit",
+  "Plank Hold",
+  "Marching In Place",
+];
 
 /** Hard caps so we never ask for crazy numbers like 56 burpees. */
 const REP_CAP: Record<1 | 2 | 3, number> = { 1: 20, 2: 14, 3: 10 };
@@ -17,9 +43,11 @@ export type CellType =
   | "easy"
   | "medium"
   | "hard"
-  | "rest"
   | "setback"
   | "boost"
+  | "surprise"
+  | "crazy"
+  | "group"
   | "finish";
 
 export type Cell = {
@@ -43,58 +71,58 @@ const RAW_BOARD: Array<[CellType, number?]> = [
   ["easy"],          // 2
   ["easy"],          // 3
   ["boost", 3],      // 4
-  ["medium"],        // 5
+  ["surprise"],      // 5
   ["hard"],          // 6
   ["easy"],          // 7
-  ["rest"],          // 8
+  ["surprise"],      // 8
   ["medium"],        // 9
   ["setback", -2],   // 10
   ["boost", 4],      // 11
-  ["easy"],          // 12
+  ["group"],         // 12
   ["hard"],          // 13
   ["medium"],        // 14
   ["easy"],          // 15
   ["setback", -3],   // 16
-  ["medium"],        // 17
+  ["crazy"],         // 17
   ["easy"],          // 18
   ["hard"],          // 19
-  ["rest"],          // 20
+  ["group"],         // 20
   ["medium"],        // 21
   ["boost", 10],     // 22  ← MEGA BLAST!
   ["easy"],          // 23
   ["medium"],        // 24
   ["hard"],          // 25
-  ["easy"],          // 26
+  ["surprise"],      // 26
   ["setback", -2],   // 27
-  ["medium"],        // 28
+  ["crazy"],         // 28
   ["easy"],          // 29
   ["boost", 3],      // 30
   ["hard"],          // 31
-  ["easy"],          // 32
+  ["surprise"],      // 32
   ["medium"],        // 33
   ["setback", -999], // 34  ← BACK TO START
-  ["easy"],          // 35
+  ["group"],         // 35
   ["medium"],        // 36
-  ["rest"],          // 37
+  ["crazy"],         // 37
   ["hard"],          // 38
   ["boost", 4],      // 39
-  ["easy"],          // 40
+  ["crazy"],         // 40
   ["medium"],        // 41
   ["setback", -3],   // 42
   ["hard"],          // 43
-  ["easy"],          // 44
+  ["surprise"],      // 44
   ["boost", 3],      // 45
   ["medium"],        // 46
-  ["easy"],          // 47
+  ["group"],         // 47
   ["hard"],          // 48
   ["setback", -2],   // 49
   ["medium"],        // 50
-  ["easy"],          // 51
+  ["crazy"],         // 51
   ["boost", 5],      // 52
   ["hard"],          // 53
   ["medium"],        // 54
   ["setback", -3],   // 55
-  ["easy"],          // 56
+  ["group"],         // 56
   ["medium"],        // 57
   ["hard"],          // 58
   ["boost", 2],      // 59
@@ -110,6 +138,7 @@ export const BOARD: Cell[] = RAW_BOARD.map(([type, n], i) => {
   if (type === "hard")
     return { space, type, tier: 3, exercise: EXERCISES_HARD[i % EXERCISES_HARD.length] };
   if (type === "boost" || type === "setback") return { space, type, delta: n };
+  if (type === "surprise" || type === "crazy" || type === "group") return { space, type };
   return { space, type };
 });
 
@@ -119,7 +148,7 @@ export function getCell(space: number): Cell {
 
 export type BoardOverrides = Record<
   string,
-  { exercise?: string; reps?: number; min_reps?: number; max_reps?: number }
+  { exercise?: string; reps?: number; min_reps?: number; max_reps?: number; unit?: "reps" | "seconds" }
 >;
 
 /** Returns the cell with any host overrides applied (custom exercise name). */
@@ -131,6 +160,42 @@ export function getEffectiveCell(space: number, overrides?: BoardOverrides | nul
     return { ...base, exercise: o.exercise ?? base.exercise };
   }
   return base;
+}
+
+/** Returns the unit (reps or seconds) for an exercise cell, defaulting to reps. */
+export function getCellUnit(
+  space: number,
+  overrides?: BoardOverrides | null,
+): "reps" | "seconds" {
+  return overrides?.[String(space)]?.unit ?? "reps";
+}
+
+/** Pick a random exercise from the configured pool for a SURPRISE cell. */
+export function pickSurpriseExercise(overrides?: BoardOverrides | null): {
+  exercise: string;
+  tier: 1 | 2 | 3;
+} {
+  const pool: Array<{ name: string; tier: 1 | 2 | 3 }> = [];
+  for (const c of BOARD) {
+    if (c.type === "easy" || c.type === "medium" || c.type === "hard") {
+      const eff = getEffectiveCell(c.space, overrides);
+      pool.push({ name: eff.exercise ?? "Workout", tier: c.tier ?? 1 });
+    }
+  }
+  const pick = pool[Math.floor(Math.random() * pool.length)] ?? { name: "Squats", tier: 2 as 1 | 2 | 3 };
+  return { exercise: pick.name, tier: pick.tier };
+}
+
+/** Pick a random unusual exercise for a CRAZY cell. */
+export function pickCrazyExercise(): { exercise: string; tier: 3 } {
+  const name = EXERCISES_CRAZY[Math.floor(Math.random() * EXERCISES_CRAZY.length)];
+  return { exercise: name, tier: 3 };
+}
+
+/** Pick a lighter group exercise for a GROUP cell. */
+export function pickGroupExercise(): { exercise: string; tier: 1 } {
+  const name = EXERCISES_GROUP[Math.floor(Math.random() * EXERCISES_GROUP.length)];
+  return { exercise: name, tier: 1 };
 }
 
 /**
@@ -179,8 +244,6 @@ export function describeCell(cell: Cell): string {
       return "🚀 Start line";
     case "finish":
       return "🏆 FINISH!";
-    case "rest":
-      return "☕ Rest — skip your turn";
     case "boost":
       return cell.delta && cell.delta >= 10
         ? `🚀 MEGA BLAST +${cell.delta}!`
@@ -195,6 +258,12 @@ export function describeCell(cell: Cell): string {
       return `Medium: ${cell.exercise}`;
     case "hard":
       return `HARD: ${cell.exercise}`;
+    case "surprise":
+      return `❓ Surprise exercise!`;
+    case "crazy":
+      return `🤪 Crazy exercise!`;
+    case "group":
+      return `👥 Everybody together!`;
   }
 }
 
@@ -203,9 +272,11 @@ export const CELL_LABEL: Record<CellType, string> = {
   easy: "EASY",
   medium: "MED",
   hard: "HARD",
-  rest: "REST",
   setback: "BACK",
   boost: "BLAST",
+  surprise: "?",
+  crazy: "!?",
+  group: "ALL",
   finish: "FINISH",
 };
 
@@ -292,6 +363,12 @@ export type Trap = {
   awaiting_verification?: boolean;
   /** The final board space the trap is anchored on (post-boost/setback). */
   space?: number;
+  /** Trap kind — defaults to a normal exercise trap. */
+  kind?: "exercise" | "surprise" | "crazy" | "group" | "vs";
+  /** "reps" (default) or "seconds" for time-based exercises. */
+  unit?: "reps" | "seconds";
+  /** For VS mode: the opponent player ids on the same space. */
+  vs_opponents?: string[];
 };
 
 const PLAYER_KEY = "boom.player";

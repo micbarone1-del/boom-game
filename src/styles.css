@@ -351,3 +351,25 @@
   }
   .anim-roll-pulse { animation: roll-pulse 0.9s ease-in-out infinite; }
 }
+
+@layer utilities {
+  @keyframes explosion-flash {
+    0%   { opacity: 0; }
+    10%  { opacity: 1; }
+    100% { opacity: 1; }
+  }
+  .anim-explosion-flash { animation: explosion-flash 0.2s ease-out both; }
+  @keyframes explosion-fade {
+    0%   { opacity: 0.95; }
+    70%  { opacity: 0.5; }
+    100% { opacity: 0; }
+  }
+  .anim-explosion-fade { animation: explosion-fade 1.6s ease-out forwards; }
+  @keyframes explosion-pop {
+    0%   { transform: scale(0.4); opacity: 0; }
+    20%  { transform: scale(1.3); opacity: 1; }
+    50%  { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.1); opacity: 0; }
+  }
+  .anim-explosion-pop { animation: explosion-pop 1.6s ease-out forwards; }
+}

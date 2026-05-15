@@ -22,10 +22,12 @@ export type Database = {
           finished_at: string | null
           fitness_level: number
           id: string
+          is_team_lead: boolean
           joined_at: string
           room_code: string
           score: number
           status: string
+          team_id: string | null
           user_id: string | null
           username: string
         }
@@ -36,10 +38,12 @@ export type Database = {
           finished_at?: string | null
           fitness_level?: number
           id?: string
+          is_team_lead?: boolean
           joined_at?: string
           room_code: string
           score?: number
           status?: string
+          team_id?: string | null
           user_id?: string | null
           username: string
         }
@@ -50,10 +54,12 @@ export type Database = {
           finished_at?: string | null
           fitness_level?: number
           id?: string
+          is_team_lead?: boolean
           joined_at?: string
           room_code?: string
           score?: number
           status?: string
+          team_id?: string | null
           user_id?: string | null
           username?: string
         }
@@ -151,6 +157,7 @@ export type Database = {
           room_code: string
           target_reps: number
           time_taken_ms: number | null
+          unit: string
           verified_by_judge: boolean | null
         }
         Insert: {
@@ -161,6 +168,7 @@ export type Database = {
           room_code: string
           target_reps: number
           time_taken_ms?: number | null
+          unit?: string
           verified_by_judge?: boolean | null
         }
         Update: {
@@ -171,6 +179,7 @@ export type Database = {
           room_code?: string
           target_reps?: number
           time_taken_ms?: number | null
+          unit?: string
           verified_by_judge?: boolean | null
         }
         Relationships: []

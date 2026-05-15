@@ -439,7 +439,7 @@ function PlayPage() {
 
   const trapJudgeName =
     trap?.kind === "group"
-      ? "anybody"
+      ? "anybody can judge"
       : judgeId
         ? (players.find((p) => p.id === judgeId)?.username ?? "the previous player")
         : "the gym screen";

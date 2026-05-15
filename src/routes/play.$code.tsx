@@ -20,6 +20,8 @@ import {
   getOverrideReps,
   type BoardOverrides,
   getJudgeId,
+  teamColor,
+  teamName,
 } from "@/lib/game";
 import { pickSurpriseExercise, pickCrazyExercise, pickGroupExercise, getCellUnit, recalcPlayerScore } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
@@ -300,6 +302,10 @@ function PlayPage() {
       if (await roomPausedNow()) { setRolling(false); return; }
     }
 
+    const vsOpponents = players
+      .filter((p) => p.id !== me.id && !p.finished_at && (p.current_space === final || (p.current_space === 0 && final === 1)))
+      .map((p) => p.id);
+
     // Exercise destination -> lock with trap (after hop animation finishes).
     if (finalCell.type === "easy" || finalCell.type === "medium" || finalCell.type === "hard") {
       const tier = finalCell.tier ?? 1;
@@ -321,7 +327,8 @@ function PlayPage() {
             // Then every screen gets a short reveal before the shared 3-2-1.
             started_at: Date.now() + TRAP_REVEAL_MS + COUNTDOWN_LEAD_MS,
             awaiting_verification: false,
-            kind: "exercise",
+            kind: vsOpponents.length > 0 && final > 1 && final < BOARD_SIZE ? "vs" : "exercise",
+            vs_opponents: vsOpponents.length > 0 && final > 1 && final < BOARD_SIZE ? vsOpponents : undefined,
             unit,
           } satisfies Trap,
         })
@@ -418,10 +425,27 @@ function PlayPage() {
           #{me.current_space}
         </div>
         <div className="text-xs mt-1">Fitness Lvl {me.fitness_level} · Difficulty x{room?.difficulty_multiplier ?? 5}</div>
+        {me.team_id && (
+          <div className="mt-2 inline-flex items-center gap-2 ink-border-sm rounded-full px-3 py-1 text-xs font-black bg-white">
+            <span className="w-3 h-3 rounded-full" style={{ background: teamColor(me.team_id) }} />
+            {teamName(me.team_id).toUpperCase()}
+          </div>
+        )}
         <div className="mt-1 text-sm font-black">{describeCell(getCell(me.current_space))}</div>
       </div>
 
-      {trap && iAmJudge ? (() => {
+      {isPaused && (
+        <div
+          className="fixed inset-0 z-[130] bg-black/80 text-white flex flex-col items-center justify-center gap-4 p-6 text-center"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <Pause size={72} fill="currentColor" className="anim-shake" />
+          <div className="text-5xl comic-shadow" style={{ color: "var(--boom-yellow)" }}>GAME PAUSED</div>
+          <div className="text-lg font-black opacity-90">Wait for the gym screen to resume</div>
+        </div>
+      )}
+
+      {!isPaused && trap && iAmJudge ? (() => {
         const anchor = trap.started_at;
         const remaining = anchor - Date.now();
         const ready = remaining <= 0;
@@ -483,7 +507,7 @@ function PlayPage() {
             )}
           </div>
         );
-      })() : trap ? (() => {
+      })() : !isPaused && trap ? (() => {
         const trapSpace = trap.space ?? players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0;
         const trapCellType = getCell(trapSpace).type;
         const cellColor =
@@ -518,7 +542,9 @@ function PlayPage() {
             </div>
           </div>
           <p className="text-xl font-black">
-            {trap.kind === "group"
+            {trap.kind === "vs"
+              ? "VS BATTLE ON THIS SPACE!"
+              : trap.kind === "group"
               ? "EVERYBODY IS DOING THIS!"
               : triggeredByMe
               ? "YOU ARE ABOUT TO EXPLODE!"
@@ -698,14 +724,6 @@ function PlayPage() {
         />
       )}
       {/* countdown rendered inline inside the timer box */}
-      {isPaused && (
-        <div
-          className="fixed top-2 left-1/2 -translate-x-1/2 z-[100] ink-border rounded-2xl bg-[var(--boom-red)] text-white px-4 py-2 flex items-center gap-2 pointer-events-none comic-shadow"
-          style={{ fontFamily: "'Luckiest Guy', cursive" }}
-        >
-          <Pause size={20} fill="currentColor" /> GAME PAUSED
-        </div>
-      )}
     </main>
   );
 }

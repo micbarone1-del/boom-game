@@ -1638,6 +1638,10 @@ function CustomizeBoardModal({
     // strip empty entries
     const clean: BoardOverrides = {};
     for (const [k, v] of Object.entries(draft)) {
+      if (k === "__preset" && v.preset_id) {
+        clean[k] = { preset_id: v.preset_id };
+        continue;
+      }
       const exercise = v.exercise?.trim();
       const reps = v.reps && v.reps > 0 ? Math.round(v.reps) : undefined;
       let min = v.min_reps && v.min_reps > 0 ? Math.round(v.min_reps) : undefined;

@@ -5,7 +5,7 @@ export const SEQUENCE_BUFFER_MS = 900;
 export const TRAP_REVEAL_MS = 1000;
 export const COUNTDOWN_LEAD_MS = 3000;
 /** Maximum seconds a player has to be defused before the bomb blows up. */
-export const TRAP_TIMEOUT_MS = 60_000;
+export const TRAP_TIMEOUT_MS = 30_000;
 /** Maximum number of independent "slots" (solo player or team) on the board. */
 export const MAX_TEAMS = 3;
 

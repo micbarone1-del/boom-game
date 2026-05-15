@@ -19,12 +19,13 @@ import {
   getEffectiveCell,
   getOverrideReps,
   type BoardOverrides,
+  getJudgeId,
 } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
-import { Bomb, Dice5, Trophy, Camera, Pause } from "lucide-react";
+import { Bomb, Dice5, Trophy, Camera, Pause, Gavel } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
 // SFX intentionally not imported on the player UI — sound only plays on the

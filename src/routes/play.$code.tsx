@@ -617,9 +617,9 @@ function PlayPage() {
                             ? "var(--boom-blue)"
                             : "var(--boom-yellow)";
           return (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-3 overflow-hidden">
               <div
-                className="ink-border rounded-3xl bg-white p-6 w-full max-w-md text-center anim-boom flex flex-col items-center gap-4"
+                className="ink-border rounded-3xl bg-white p-4 w-full max-w-md text-center anim-boom flex flex-col items-center gap-3 max-h-full"
                 style={{ color: "var(--boom-ink)" }}
               >
                 <img
@@ -629,6 +629,7 @@ function PlayPage() {
                   height={1024}
                   className="w-32 h-32 -mt-16 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
                 />
+                <WorkoutIllustration exercise={trap.exercise} color={cellColor} compact />
                 <div className="anim-mascot-bounce inline-block">
                   <div
                     className="text-6xl font-black comic-shadow"
@@ -677,12 +678,13 @@ function PlayPage() {
                           </div>
                         ) : (
                           <>
-                            <CountdownIntro startAt={anchor} inline />
+                            <CountdownIntro startAt={anchor} inline paused={isPaused} />
                             <FuseTimer
                               startedAt={anchor}
                               big
                               color="var(--boom-ink)"
                               hideBeforeStart
+                              paused={isPaused}
                             />
                           </>
                         )}
@@ -692,7 +694,7 @@ function PlayPage() {
                 </div>
                 {triggeredByMe ? (
                   <p className="font-bold text-lg">
-                    Crush those reps — your team will judge you on the GYM SCREEN.
+                    Crush those reps — {trapJudgeName} will judge you.
                   </p>
                 ) : (
                   <p className="font-bold text-lg">The Judge is verifying — sit tight!</p>

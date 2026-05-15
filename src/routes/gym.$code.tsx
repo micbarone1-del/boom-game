@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, BOARD, HOP_MS, LANDING_SPLASH_MS, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, BOARD, HOP_MS, LANDING_SPLASH_MS, getCell, describeCell, finishPlayer, recalcPlayerScore, type Trap, type BoardOverrides } from "@/lib/game";
 import { TRAP_TIMEOUT_MS } from "@/lib/game";
 import { PRESETS, applyPreset } from "@/lib/presets";
 import { PlayerToken } from "@/components/PlayerToken";
@@ -161,6 +161,21 @@ function GymBoard({ code }: { code: string }) {
   const prevTurnKeyRef = useRef<string | null>(null);
   const turnAnnounceRef = useRef<{ key: number } | null>(null);
   useEffect(() => { turnAnnounceRef.current = turnAnnounce ? { key: turnAnnounce.key } : null; }, [turnAnnounce]);
+  const turnAnnounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Hard safety: any time turnAnnounce is set, ensure it clears within 2.6s
+  // even if the effect that scheduled it never fires its cleanup (e.g. trap
+  // arrives mid-flight and unmounts the overlay logic).
+  useEffect(() => {
+    if (!turnAnnounce) return;
+    if (turnAnnounceTimerRef.current) clearTimeout(turnAnnounceTimerRef.current);
+    turnAnnounceTimerRef.current = setTimeout(() => setTurnAnnounce(null), 2600);
+    return () => {
+      if (turnAnnounceTimerRef.current) {
+        clearTimeout(turnAnnounceTimerRef.current);
+        turnAnnounceTimerRef.current = null;
+      }
+    };
+  }, [turnAnnounce]);
   // Per-player rendered space (animated hop-by-hop toward the real current_space).
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());

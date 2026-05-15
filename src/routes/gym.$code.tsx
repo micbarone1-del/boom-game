@@ -8,7 +8,7 @@ import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
-import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, Coffee, ArrowLeft } from "lucide-react";
+import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, ArrowLeft, HelpCircle, AlertTriangle, Users } from "lucide-react";
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
@@ -829,8 +829,10 @@ function GymBoard({ code }: { code: string }) {
                     cell.type === "easy" ? "var(--boom-yellow)" :
                     cell.type === "medium" ? "var(--boom-orange)" :
                     cell.type === "hard" ? "var(--boom-red)" :
-                    cell.type === "rest" ? "var(--boom-blue)" :
                     cell.type === "boost" ? "var(--boom-green)" :
+                    cell.type === "surprise" ? "#ec4899" :
+                    cell.type === "crazy" ? "#f97316" :
+                    cell.type === "group" ? "var(--boom-blue)" :
                     "#7c3aed";
                   return (
                     <div
@@ -866,9 +868,11 @@ function GymBoard({ code }: { code: string }) {
                       {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%]" />}
                       {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%]" />}
                       {cell.type === "hard" && <Flame className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "rest" && <Coffee className="w-[60%] h-[60%]" />}
                       {cell.type === "boost" && <Zap className="w-[60%] h-[60%]" />}
                       {cell.type === "setback" && <ArrowLeft className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "surprise" && <HelpCircle className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "crazy" && <AlertTriangle className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "group" && <Users className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "start" && <Flag className="w-[60%] h-[60%]" />}
                       {cell.type === "finish" && <Trophy className="w-[60%] h-[60%]" />}
                       {here.length > 0 && (

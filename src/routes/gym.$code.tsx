@@ -742,24 +742,22 @@ function GymBoard({ code }: { code: string }) {
         </header>
       ) : (
       <header className="flex items-center justify-between flex-wrap gap-4">
-        <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
+        <div className="flex items-center gap-3 pt-1">
           <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
           <div>
             <div
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
-              className="text-4xl text-[var(--boom-red)] comic-shadow"
+              className="text-3xl text-[var(--boom-red)] comic-shadow leading-none"
             >
               BOOM!
             </div>
-            <div className="text-sm font-bold">Gym Screen</div>
+            <div className="text-xs font-bold">Gym Screen</div>
           </div>
-        </div>
-        <div className="ml-auto flex items-center gap-3 flex-wrap justify-end pt-10">
           {!gameHasStarted && (
             <button
               onClick={startGame}
               disabled={players.length === 0 || starting}
-              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed py-2 px-4 text-base"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >
               {starting ? "IGNITING…" : "START GAME"}
@@ -769,7 +767,7 @@ function GymBoard({ code }: { code: string }) {
             <>
               <button
                 onClick={resumeGame}
-                className="btn-boom flex items-center gap-2"
+                className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
                 <Play size={20} fill="currentColor" /> PLAY
@@ -777,42 +775,43 @@ function GymBoard({ code }: { code: string }) {
               <button
                 onClick={restartGame}
                 disabled={restarting}
-                className="btn-boom disabled:opacity-50"
+                className="btn-boom disabled:opacity-50 py-2 px-4 text-base"
                 style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
               >
                 {restarting ? "BOOMING…" : "RESTART"}
               </button>
             </>
           )}
-          {!inPlayMode && (
-          <div className="ink-border-sm rounded-xl p-1.5 bg-white flex items-center gap-2">
-            <div className="flex flex-col">
-              <div className="text-[9px] font-bold leading-none">JOIN</div>
-              <div
-                className="text-base font-black tracking-wider leading-tight"
-                style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
-              >
-                {code}
-              </div>
-              <button
-                onClick={() => navigator.clipboard?.writeText(joinUrl)}
-                className="text-[8px] font-bold underline text-left"
-                title="Copy join link"
-              >
-                copy link
-              </button>
-            </div>
-            <button
-              onClick={() => setQrZoom(true)}
-              className="bg-white"
-              title="Tap to enlarge QR"
-              aria-label="Enlarge QR code to join this room"
-            >
-              <QRCodeSVG value={joinUrl} size={56} level="M" />
-            </button>
-          </div>
-          )}
         </div>
+        {/* Combined Invite + QR card — shown next to the action buttons in the lobby */}
+        {!inPlayMode && (
+        <div className="ink-border rounded-2xl bg-white p-2 flex items-center gap-3 ml-auto">
+          <div className="flex flex-col items-start gap-1 max-w-[180px]">
+            <div
+              className="text-base font-black leading-none"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+            >
+              INVITE YOUR CREW
+            </div>
+            <div className="text-[10px] font-bold opacity-70 break-all leading-tight">{joinUrl}</div>
+            <ShareLinkButton url={joinUrl} code={code} />
+            <div className="text-[9px] font-bold leading-none mt-1">
+              CODE:{" "}
+              <span style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+                {code}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => setQrZoom(true)}
+            className="bg-white"
+            title="Tap to enlarge QR"
+            aria-label="Enlarge QR code to join this room"
+          >
+            <QRCodeSVG value={joinUrl} size={84} level="M" />
+          </button>
+        </div>
+        )}
       </header>
       )}
       {qrZoom && (

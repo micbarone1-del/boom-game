@@ -1423,6 +1423,19 @@ function CustomizeBoardModal({
     setDraft(applyPreset(p));
   };
 
+  // Auto-apply + auto-save when a preset is picked: every exercise on the
+  // board updates instantly to match the chosen discipline.
+  const onPresetChange = async (id: string) => {
+    setPresetId(id);
+    const p = PRESETS.find((x) => x.id === id);
+    if (!p) return;
+    const next = applyPreset(p);
+    setDraft(next);
+    setSaving(true);
+    await supabase.from("rooms").update({ board_overrides: next }).eq("code", code);
+    setSaving(false);
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
       <div className="ink-border rounded-3xl bg-white p-5 max-w-3xl w-full max-h-[85vh] flex flex-col">
@@ -1442,22 +1455,18 @@ function CustomizeBoardModal({
           <span className="text-xs font-black opacity-70">PRESET:</span>
           <select
             value={presetId}
-            onChange={(e) => setPresetId(e.target.value)}
+            onChange={(e) => { void onPresetChange(e.target.value); }}
             className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
           >
             {PRESETS.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <button
-            onClick={applyPresetClick}
-            className="ink-border-sm rounded-lg px-3 py-1 font-black text-sm"
-            style={{ background: "var(--boom-yellow)" }}
-          >
-            APPLY PRESET
-          </button>
           <span className="text-[11px] font-bold opacity-70 flex-1 min-w-[180px]">
             {PRESETS.find((p) => p.id === presetId)?.description}
+          </span>
+          <span className="text-[11px] font-black" style={{ color: saving ? "var(--boom-red)" : "var(--boom-green)" }}>
+            {saving ? "SAVING…" : "AUTO-SAVED"}
           </span>
         </div>
         <div className="flex-1 overflow-y-auto pr-1">

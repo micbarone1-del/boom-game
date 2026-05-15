@@ -22,6 +22,7 @@ import {
   getJudgeId,
   teamColor,
   teamName,
+  resolveMovementLanding,
 } from "@/lib/game";
 import {
   pickSurpriseExercise,
@@ -37,6 +38,7 @@ import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Dice5, Trophy, Camera, Pause, Gavel } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
+import { WorkoutIllustration } from "@/components/WorkoutIllustration";
 // SFX intentionally not imported on the player UI — sound only plays on the
 // gym screen so the iPad is the single audio source.
 
@@ -289,9 +291,9 @@ function PlayPage() {
     // Apply any movement effect first; the destination cell decides what happens next.
     let final = target;
     if (cell.type === "boost") {
-      final = Math.min(BOARD_SIZE, target + (cell.delta ?? 0));
+      final = resolveMovementLanding(Math.min(BOARD_SIZE, target + (cell.delta ?? 0)), "boost");
     } else if (cell.type === "setback") {
-      final = Math.max(1, target + (cell.delta ?? 0)); // delta is negative
+      final = resolveMovementLanding(Math.max(1, target + (cell.delta ?? 0)), "setback"); // delta is negative
     } else if (cell.type === "finish") {
       final = BOARD_SIZE;
     }

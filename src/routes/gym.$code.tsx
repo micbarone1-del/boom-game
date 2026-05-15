@@ -744,23 +744,23 @@ function GymBoard({ code }: { code: string }) {
           </div>
         </header>
       ) : (
-      <header className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3 pt-1">
-          <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
+      <header className="grid grid-cols-[minmax(19rem,1fr)_minmax(28rem,0.95fr)] items-center gap-3 pr-44 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <img src={bombMascot} alt="" width={1024} height={1024} className="w-20 h-20 anim-fuse shrink-0" />
           <div>
             <div
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
-              className="text-3xl text-[var(--boom-red)] comic-shadow leading-none"
+              className="text-6xl text-[var(--boom-red)] comic-shadow leading-none"
             >
               BOOM!
             </div>
-            <div className="text-xs font-bold">Gym Screen</div>
+            <div className="text-sm font-bold">Gym Screen</div>
           </div>
           {!gameHasStarted && (
             <button
               onClick={startGame}
               disabled={players.length === 0 || starting}
-              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed py-2 px-4 text-base"
+              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed py-3 px-5 text-lg ml-2"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >
               {starting ? "IGNITING…" : "START GAME"}
@@ -770,7 +770,7 @@ function GymBoard({ code }: { code: string }) {
             <>
               <button
                 onClick={resumeGame}
-                className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
+                className="btn-boom flex items-center gap-2 py-3 px-5 text-lg ml-2"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
                 <Play size={20} fill="currentColor" /> PLAY
@@ -778,7 +778,7 @@ function GymBoard({ code }: { code: string }) {
               <button
                 onClick={restartGame}
                 disabled={restarting}
-                className="btn-boom disabled:opacity-50 py-2 px-4 text-base"
+                className="btn-boom disabled:opacity-50 py-3 px-5 text-lg"
                 style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
               >
                 {restarting ? "BOOMING…" : "RESTART"}
@@ -788,17 +788,17 @@ function GymBoard({ code }: { code: string }) {
         </div>
         {/* Combined Invite + QR card — shown next to the action buttons in the lobby */}
         {!inPlayMode && (
-        <div className="ink-border rounded-2xl bg-white p-2 flex items-center gap-3 ml-auto">
-          <div className="flex flex-col items-start gap-1 max-w-[180px]">
+        <div className="ink-border rounded-2xl bg-white p-2 flex items-center justify-between gap-3 min-w-0">
+          <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
             <div
-              className="text-base font-black leading-none"
+              className="text-2xl font-black leading-none"
               style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
             >
               INVITE YOUR CREW
             </div>
-            <div className="text-[10px] font-bold opacity-70 break-all leading-tight">{joinUrl}</div>
-            <ShareLinkButton url={joinUrl} code={code} />
-            <div className="text-[9px] font-bold leading-none mt-1">
+            <div className="text-[10px] font-bold opacity-70 truncate leading-tight max-w-full">{joinUrl}</div>
+            <ShareLinkButton url={joinUrl} code={code} compact />
+            <div className="text-xs font-bold leading-none mt-1">
               CODE:{" "}
               <span style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
                 {code}
@@ -811,7 +811,7 @@ function GymBoard({ code }: { code: string }) {
             title="Tap to enlarge QR"
             aria-label="Enlarge QR code to join this room"
           >
-            <QRCodeSVG value={joinUrl} size={84} level="M" />
+            <QRCodeSVG value={joinUrl} size={96} level="M" />
           </button>
         </div>
         )}

@@ -457,6 +457,9 @@ function GymBoard({ code }: { code: string }) {
     return () => clearInterval(i);
   }, [trap]);
 
+  // Timed-out player whose name is shown in the explosion overlay (60s timeout).
+  const [timeoutBoom, setTimeoutBoom] = useState<string | null>(null);
+
   // 60-second timeout: if a trap is still active 60s after the countdown
   // ended, the bomb explodes — show overlay, send the active player back to
   // start, clear the trap, and pass the turn to the next player.
@@ -474,7 +477,7 @@ function GymBoard({ code }: { code: string }) {
     explosionTimerRef.current = setTimeout(async () => {
       const triggered = players.find((p) => p.id === trap.triggered_by);
       if (!triggered) return;
-      setExploding(true);
+      setTimeoutBoom(triggered.username);
       sfx.play("setback");
       // Send player back to start.
       await supabase.from("players").update({ current_space: 1 }).eq("id", triggered.id);
@@ -492,7 +495,7 @@ function GymBoard({ code }: { code: string }) {
         .from("rooms")
         .update({ trap: null, locked: false, current_turn_player_id: next?.id ?? null })
         .eq("code", code);
-      setTimeout(() => setExploding(false), 1800);
+      setTimeout(() => setTimeoutBoom(null), 1800);
     }, remaining);
     return () => {
       if (explosionTimerRef.current) {

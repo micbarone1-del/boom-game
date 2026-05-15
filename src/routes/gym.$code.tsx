@@ -934,6 +934,23 @@ function GymBoard({ code }: { code: string }) {
         <SpotifyEmbed code={code} />
       </div>
 
+      {/* Tutorial + Share invite — visible in lobby AND while paused */}
+      {!inPlayMode && (
+        <div className="grid gap-3 md:grid-cols-[2fr_1fr]">
+          <TutorialCarousel />
+          <div className="ink-border rounded-3xl bg-white p-4 flex flex-col items-center justify-center gap-3 text-center">
+            <div
+              className="text-xl font-black"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+            >
+              INVITE YOUR CREW
+            </div>
+            <div className="text-xs font-bold opacity-70 break-all max-w-full">{joinUrl}</div>
+            <ShareLinkButton url={joinUrl} code={code} />
+          </div>
+        </div>
+      )}
+
       {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (
       <div className="ink-border rounded-2xl bg-white p-3">

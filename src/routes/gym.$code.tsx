@@ -18,6 +18,7 @@ import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 import { TutorialCarousel } from "@/components/TutorialCarousel";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { OrientationLock } from "@/components/OrientationLock";
+import { ExplosionOverlay } from "@/components/ExplosionOverlay";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,

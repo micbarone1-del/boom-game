@@ -506,9 +506,11 @@ function PlayPage() {
       </div>
 
       {isPaused && (
-        <div
+            <div
           className="fixed inset-0 z-[130] bg-black/80 text-white flex flex-col items-center justify-center gap-4 p-6 text-center"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
+              onPointerDownCapture={(e) => e.stopPropagation()}
+              onClickCapture={(e) => e.stopPropagation()}
         >
           <Pause size={72} fill="currentColor" className="anim-shake" />
           <div className="text-5xl comic-shadow" style={{ color: "var(--boom-yellow)" }}>

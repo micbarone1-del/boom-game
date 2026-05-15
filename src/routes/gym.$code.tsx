@@ -13,6 +13,9 @@ import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
+import { TutorialCarousel } from "@/components/TutorialCarousel";
+import { ShareLinkButton } from "@/components/ShareLinkButton";
+import { OrientationLock } from "@/components/OrientationLock";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,

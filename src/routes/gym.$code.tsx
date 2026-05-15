@@ -1308,6 +1308,7 @@ function GymBoard({ code }: { code: string }) {
       {landed && (
         <CellMascot key={landed.key} type={landed.type} username={landed.username} />
       )}
+      {timeoutBoom && <ExplosionOverlay username={timeoutBoom} />}
       {/* Start-of-game explosion overlay */}
       {exploding && (
         <div className="fixed inset-0 z-[65] flex items-center justify-center pointer-events-none overflow-hidden bg-black/40">

@@ -243,8 +243,8 @@ function JoinPage() {
       }
 
       navigate({ to: "/play/$code", params: { code } });
-    } catch (err: any) {
-      setError(err?.message || "Something blew up.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something blew up.");
       setSubmitting(false);
     }
   };

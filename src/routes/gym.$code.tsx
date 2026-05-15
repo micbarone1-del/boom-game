@@ -608,7 +608,7 @@ function GymBoard({ code }: { code: string }) {
     setExploding(true);
     void sfx.unlock();
     sfx.play("blast");
-    setTimeout(() => setExploding(false), 1800);
+    setTimeout(() => setExploding(false), 2600);
     const { error } = await supabase
       .from("rooms")
       .update({

@@ -699,7 +699,9 @@ function PlayPage() {
                 </div>
                 {triggeredByMe ? (
                   <p className="font-bold text-lg">
-                    Crush those reps — {trapJudgeName} will judge you.
+                    {trap.kind === "group"
+                      ? "Crush those reps — anybody can judge."
+                      : `Crush those reps — ${trapJudgeName} will judge you.`}
                   </p>
                 ) : (
                   <p className="font-bold text-lg">The Judge is verifying — sit tight!</p>

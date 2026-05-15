@@ -16,17 +16,18 @@ export function WorkoutIllustration({
   compact?: boolean;
 }) {
   const name = exercise.toLowerCase();
-  const Icon = name.includes("squat") || name.includes("lunge") || name.includes("jump")
-    ? Footprints
-    : name.includes("burpee") || name.includes("sprint") || name.includes("mountain")
-      ? Zap
-      : name.includes("plank") || name.includes("push") || name.includes("dip")
-        ? PersonStanding
-        : name.includes("kettle") || name.includes("thruster") || name.includes("deadlift")
-          ? Dumbbell
-          : name.includes("hold") || name.includes("sit")
-            ? HeartPulse
-            : Flame;
+  const Icon =
+    name.includes("squat") || name.includes("lunge") || name.includes("jump")
+      ? Footprints
+      : name.includes("burpee") || name.includes("sprint") || name.includes("mountain")
+        ? Zap
+        : name.includes("plank") || name.includes("push") || name.includes("dip")
+          ? PersonStanding
+          : name.includes("kettle") || name.includes("thruster") || name.includes("deadlift")
+            ? Dumbbell
+            : name.includes("hold") || name.includes("sit")
+              ? HeartPulse
+              : Flame;
   const seed = hashExercise(exercise);
   const bubbles = [0, 1, 2, 3, 4].map((i) => ({
     left: 14 + ((seed >> (i * 3)) % 70),
@@ -43,7 +44,13 @@ export function WorkoutIllustration({
         <span
           key={i}
           className="absolute rounded-full opacity-25"
-          style={{ left: `${b.left}%`, top: `${b.top}%`, width: b.size, height: b.size, background: color }}
+          style={{
+            left: `${b.left}%`,
+            top: `${b.top}%`,
+            width: b.size,
+            height: b.size,
+            background: color,
+          }}
         />
       ))}
       <div className="absolute inset-0 flex items-center justify-center anim-mascot-bounce">

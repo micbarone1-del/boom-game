@@ -74,7 +74,13 @@ export function PlayerToken({
           ) : (
             <div
               className="w-full h-full flex items-center justify-center"
-              style={{ background: color, color: "white", fontSize: Math.round(size * 0.5), fontWeight: 600, fontFamily: "system-ui, -apple-system, sans-serif" }}
+              style={{
+                background: color,
+                color: "white",
+                fontSize: Math.round(size * 0.5),
+                fontWeight: 600,
+                fontFamily: "system-ui, -apple-system, sans-serif",
+              }}
             >
               {initial}
             </div>
@@ -100,7 +106,10 @@ export function PlayerToken({
         )}
       </div>
       {showName && (
-        <span className="text-xs font-bold truncate max-w-[80px]" style={{ color: "var(--boom-ink)" }}>
+        <span
+          className="text-xs font-bold truncate max-w-[80px]"
+          style={{ color: "var(--boom-ink)" }}
+        >
           {username}
         </span>
       )}

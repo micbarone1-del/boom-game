@@ -817,7 +817,9 @@ function GymBoard({ code }: { code: string }) {
                 <div className="flex items-center gap-2">
                   <div className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm leading-none flex flex-col items-center">
                     <span className="text-[9px] opacity-70">TRAINING</span>
-                    <span style={{ color: "var(--boom-red)" }}>{trainingSelection.toUpperCase()}</span>
+                    <span style={{ color: "var(--boom-red)" }}>
+                      {trainingSelection.toUpperCase()}
+                    </span>
                   </div>
                   <SfxButton />
                   {!isPaused && (
@@ -880,7 +882,10 @@ function GymBoard({ code }: { code: string }) {
                       onClick={restartGame}
                       disabled={restarting}
                       className="btn-boom disabled:opacity-50 py-3 px-4 text-base"
-                      style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
+                      style={{
+                        fontFamily: "'Luckiest Guy', cursive",
+                        background: "var(--boom-red)",
+                      }}
                     >
                       {restarting ? "BOOMING…" : "RESTART"}
                     </button>
@@ -1164,7 +1169,9 @@ function GymBoard({ code }: { code: string }) {
                     <ShareLinkButton url={joinUrl} code={code} compact />
                     <div className="text-lg font-bold leading-none mt-1">
                       CODE:{" "}
-                      <span style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+                      <span
+                        style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+                      >
                         {code}
                       </span>
                     </div>
@@ -1179,48 +1186,46 @@ function GymBoard({ code }: { code: string }) {
                   </button>
                 </div>
                 <div className="ink-border rounded-2xl bg-white p-3 min-h-0 flex flex-col overflow-hidden">
-                    <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0">
-                      <Trophy size={20} /> LIVE LEADERBOARD
-                    </h2>
-                    <div className="grid gap-1 overflow-hidden pr-1">
-                      {[...players]
-                        .sort((a, b) => {
-                          if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
-                          if (a.finish_rank) return -1;
-                          if (b.finish_rank) return 1;
-                          return (
-                            (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space
-                          );
-                        })
-                        .map((p, i) => (
-                          <div
-                            key={p.id}
-                            className="flex items-center justify-between gap-3 px-2 py-1 rounded-lg"
-                            style={{ background: i === 0 ? "var(--boom-yellow)" : "transparent" }}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="text-xl font-black w-6"
-                                style={{ fontFamily: "'Luckiest Guy', cursive" }}
-                              >
-                                {i + 1}
-                              </span>
-                              <PlayerToken
-                                avatar={p.avatar_url}
-                                username={p.username}
-                                size={28}
-                                showName={false}
-                              />
-                              <span className="text-sm font-black">{p.username}</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs font-black">
-                              <span>Sp.{p.current_space}</span>
-                              <span style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
-                              {p.finished_at && <Trophy size={14} />}
-                            </div>
+                  <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0">
+                    <Trophy size={20} /> LIVE LEADERBOARD
+                  </h2>
+                  <div className="grid gap-1 overflow-hidden pr-1">
+                    {[...players]
+                      .sort((a, b) => {
+                        if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+                        if (a.finish_rank) return -1;
+                        if (b.finish_rank) return 1;
+                        return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
+                      })
+                      .map((p, i) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between gap-3 px-2 py-1 rounded-lg"
+                          style={{ background: i === 0 ? "var(--boom-yellow)" : "transparent" }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="text-xl font-black w-6"
+                              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                            >
+                              {i + 1}
+                            </span>
+                            <PlayerToken
+                              avatar={p.avatar_url}
+                              username={p.username}
+                              size={28}
+                              showName={false}
+                            />
+                            <span className="text-sm font-black">{p.username}</span>
                           </div>
-                        ))}
-                    </div>
+                          <div className="flex items-center gap-3 text-xs font-black">
+                            <span>Sp.{p.current_space}</span>
+                            <span style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
+                            {p.finished_at && <Trophy size={14} />}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </div>
                 <div className="ink-border rounded-2xl p-3 bg-white grid grid-cols-3 gap-2 content-start overflow-hidden min-h-0">
                   {players.length === 0 && (

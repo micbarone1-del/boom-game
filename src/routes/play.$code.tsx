@@ -267,7 +267,11 @@ function PlayPage() {
 
   const roomPausedNow = async () => {
     if (pausedRef.current) return true;
-    const { data } = await supabase.from("rooms").select("paused,locked").eq("code", code).maybeSingle();
+    const { data } = await supabase
+      .from("rooms")
+      .select("paused,locked")
+      .eq("code", code)
+      .maybeSingle();
     const live = data as { paused?: boolean; locked?: boolean } | null;
     return !!live?.paused || !!live?.locked;
   };
@@ -503,15 +507,17 @@ function PlayPage() {
             {teamName(me.team_id).toUpperCase()}
           </div>
         )}
-        <div className="mt-1 text-xs font-black truncate">{describeCell(getCell(me.current_space))}</div>
+        <div className="mt-1 text-xs font-black truncate">
+          {describeCell(getCell(me.current_space))}
+        </div>
       </div>
 
       {isPaused && (
-            <div
+        <div
           className="fixed inset-0 z-[130] bg-black/80 text-white flex flex-col items-center justify-center gap-4 p-6 text-center"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
-              onPointerDownCapture={(e) => e.stopPropagation()}
-              onClickCapture={(e) => e.stopPropagation()}
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          onClickCapture={(e) => e.stopPropagation()}
         >
           <Pause size={72} fill="currentColor" className="anim-shake" />
           <div className="text-5xl comic-shadow" style={{ color: "var(--boom-yellow)" }}>
@@ -572,7 +578,13 @@ function PlayPage() {
                 {!ready ? (
                   <>
                     <CountdownIntro startAt={anchor} inline paused={isPaused} />
-                    <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart paused={isPaused} />
+                    <FuseTimer
+                      startedAt={anchor}
+                      big
+                      color="var(--boom-ink)"
+                      hideBeforeStart
+                      paused={isPaused}
+                    />
                   </>
                 ) : (
                   <FuseTimer startedAt={anchor} big color="var(--boom-ink)" paused={isPaused} />

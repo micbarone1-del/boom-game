@@ -1121,7 +1121,9 @@ function GymBoard({ code }: { code: string }) {
               BOOM!
             </div>
             <p className="text-2xl font-black mt-2">
-              {trap.kind === "group"
+              {trap.kind === "vs"
+                ? "VS BATTLE ON THIS SPACE!"
+                : trap.kind === "group"
                 ? "EVERYBODY IS DOING THIS!"
                 : `${players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!`}
             </p>
@@ -1129,7 +1131,7 @@ function GymBoard({ code }: { code: string }) {
               Do {trap.reps} {trap.exercise}!
             </p>
             {(() => {
-              const trapCellType = getCell((trap.space ?? players.find((p) => p.id === trap.triggered_by)?.current_space) ?? 0).type;
+              const trapCellType = trap.kind === "vs" ? "hard" : getCell((trap.space ?? players.find((p) => p.id === trap.triggered_by)?.current_space) ?? 0).type;
               const cellColor =
                 trapCellType === "easy" ? "var(--boom-yellow)" :
                 trapCellType === "medium" ? "var(--boom-orange)" :

@@ -3,14 +3,40 @@ import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, BOARD, HOP_MS, LANDING_SPLASH_MS, getCell, describeCell, finishPlayer, recalcPlayerScore, teamColor, teamName, type Trap, type BoardOverrides } from "@/lib/game";
+import {
+  generateRoomCode,
+  BOARD_SIZE,
+  BOARD,
+  HOP_MS,
+  LANDING_SPLASH_MS,
+  getCell,
+  describeCell,
+  finishPlayer,
+  recalcPlayerScore,
+  teamColor,
+  teamName,
+  type Trap,
+  type BoardOverrides,
+} from "@/lib/game";
 import { TRAP_TIMEOUT_MS } from "@/lib/game";
 import { PRESETS, applyPreset } from "@/lib/presets";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
-import { Bomb, Flame, Trophy, Flag, Settings, Dumbbell, Zap, ArrowLeft, HelpCircle, AlertTriangle, Users } from "lucide-react";
+import {
+  Bomb,
+  Flame,
+  Trophy,
+  Flag,
+  Settings,
+  Dumbbell,
+  Zap,
+  ArrowLeft,
+  HelpCircle,
+  AlertTriangle,
+  Users,
+} from "lucide-react";
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
@@ -26,9 +52,16 @@ export const Route = createFileRoute("/gym/$code")({
   head: ({ params }) => ({
     meta: [
       { title: `Game Lobby ${params.code} — BOOM!` },
-      { name: "description", content: "BOOM! gym screen — the big-screen master view. Players join from their phones, the board updates in real time." },
+      {
+        name: "description",
+        content:
+          "BOOM! gym screen — the big-screen master view. Players join from their phones, the board updates in real time.",
+      },
       { property: "og:title", content: `BOOM! Game Lobby — Room ${params.code}` },
-      { property: "og:description", content: "Big-screen master view for a BOOM! workout game session." },
+      {
+        property: "og:description",
+        content: "Big-screen master view for a BOOM! workout game session.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -58,18 +91,20 @@ function MiniDumbbell({ className }: { className?: string }) {
   );
 }
 
-function SfxButton({ className = "", variant = "green" }: { className?: string; variant?: "green" | "white" }) {
+function SfxButton({
+  className = "",
+  variant = "green",
+}: {
+  className?: string;
+  variant?: "green" | "white";
+}) {
   const [muted, setMuted] = useState(() => sfx.isMuted());
   const [unlocked, setUnlocked] = useState(() => sfx.isUnlocked());
   const [pulse, setPulse] = useState(0);
   const isWhite = variant === "white";
   const on = !muted && unlocked;
   const label = muted ? "SFX OFF" : unlocked ? "SFX ON" : "TAP TO ENABLE SFX";
-  const bg = muted
-    ? "#888"
-    : unlocked
-      ? "var(--boom-green)"
-      : "var(--boom-orange)";
+  const bg = muted ? "#888" : unlocked ? "var(--boom-green)" : "var(--boom-orange)";
   return (
     <button
       onClick={async () => {
@@ -105,7 +140,13 @@ function SfxButton({ className = "", variant = "green" }: { className?: string; 
           ? { background: bg, color: muted ? "white" : "var(--boom-ink)" }
           : { fontFamily: "'Luckiest Guy', cursive", background: bg }
       }
-      title={muted ? "Tap to enable sound effects" : unlocked ? "Tap to mute sound effects" : "Tap once to enable audio in this browser"}
+      title={
+        muted
+          ? "Tap to enable sound effects"
+          : unlocked
+            ? "Tap to mute sound effects"
+            : "Tap once to enable audio in this browser"
+      }
       key={pulse}
     >
       {on ? <Volume2 size={isWhite ? 16 : 18} /> : <VolumeX size={isWhite ? 16 : 18} />} {label}
@@ -157,11 +198,22 @@ function GymBoard({ code }: { code: string }) {
   const [qrZoom, setQrZoom] = useState(false);
   const [paused, setPaused] = useState(false);
   const [exploding, setExploding] = useState(false);
-  const [landed, setLanded] = useState<{ id: string; type: import("@/lib/game").CellType; username: string; key: number } | null>(null);
-  const [turnAnnounce, setTurnAnnounce] = useState<{ username: string; avatar: string | null; key: number } | null>(null);
+  const [landed, setLanded] = useState<{
+    id: string;
+    type: import("@/lib/game").CellType;
+    username: string;
+    key: number;
+  } | null>(null);
+  const [turnAnnounce, setTurnAnnounce] = useState<{
+    username: string;
+    avatar: string | null;
+    key: number;
+  } | null>(null);
   const prevTurnKeyRef = useRef<string | null>(null);
   const turnAnnounceRef = useRef<{ key: number } | null>(null);
-  useEffect(() => { turnAnnounceRef.current = turnAnnounce ? { key: turnAnnounce.key } : null; }, [turnAnnounce]);
+  useEffect(() => {
+    turnAnnounceRef.current = turnAnnounce ? { key: turnAnnounce.key } : null;
+  }, [turnAnnounce]);
   const turnAnnounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Hard safety: any time turnAnnounce is set, ensure it clears within 2.6s
   // even if the effect that scheduled it never fires its cleanup (e.g. trap
@@ -195,7 +247,8 @@ function GymBoard({ code }: { code: string }) {
   const hasGameProgress = players.some(
     (p) => p.current_space > 0 || !!p.finished_at || !!p.finish_rank || (p.score ?? 0) > 0,
   );
-  const gameHasStarted = room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
+  const gameHasStarted =
+    room?.status === "playing" || !!room?.current_turn_player_id || hasGameProgress || !!trap;
   const isPaused = !!room?.paused || paused;
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !isPaused;
@@ -231,7 +284,7 @@ function GymBoard({ code }: { code: string }) {
   const focusPlayerId = hoppingId ?? turnId;
   const focusPlayer = focusPlayerId ? players.find((p) => p.id === focusPlayerId) : null;
   const rawFocusSpace = focusPlayerId
-    ? hopSpaces[focusPlayerId] ?? focusPlayer?.current_space ?? 0
+    ? (hopSpaces[focusPlayerId] ?? focusPlayer?.current_space ?? 0)
     : 0;
   const focusSpace = rawFocusSpace > 0 ? rawFocusSpace : 1;
   const zoomActive = !!focusPlayerId && !trap;
@@ -329,31 +382,55 @@ function GymBoard({ code }: { code: string }) {
       // the token starts hopping so the two animations don't overlap.
       const ann = turnAnnounceRef.current;
       const announceRemaining = ann ? Math.max(0, 2500 - (Date.now() - ann.key)) : 0;
-      hopTimeoutsRef.current.push(setTimeout(() => {
-        setHoppingIds((s) => { const n = new Set(s); n.add(p.id); return n; });
-      }, announceRemaining));
+      hopTimeoutsRef.current.push(
+        setTimeout(() => {
+          setHoppingIds((s) => {
+            const n = new Set(s);
+            n.add(p.id);
+            return n;
+          });
+        }, announceRemaining),
+      );
       for (let i = 1; i <= distance; i++) {
         const at = from + i * step;
-        hopTimeoutsRef.current.push(setTimeout(() => {
-          setHopSpaces((s) => ({ ...s, [p.id]: at }));
-          sfx.play("hop");
-        }, announceRemaining + i * HOP_MS));
+        hopTimeoutsRef.current.push(
+          setTimeout(
+            () => {
+              setHopSpaces((s) => ({ ...s, [p.id]: at }));
+              sfx.play("hop");
+            },
+            announceRemaining + i * HOP_MS,
+          ),
+        );
       }
-      hopTimeoutsRef.current.push(setTimeout(() => {
-        setHoppingIds((s) => { const n = new Set(s); n.delete(p.id); return n; });
-        if (to > 0) {
-          const cell = getCell(to);
-          setLanded({ id: p.id, type: cell.type, username: p.username, key: Date.now() });
-          // Play the cell-type animation sound when the token lands.
-          const cellSfx: Record<string, Parameters<typeof sfx.play>[0] | undefined> = {
-            easy: "easy", medium: "medium", hard: "hard",
-            rest: "rest", boost: "blast", setback: "setback",
-          };
-          const which = cellSfx[cell.type];
-          if (which) sfx.play(which);
-          hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), LANDING_SPLASH_MS));
-        }
-      }, announceRemaining + distance * HOP_MS));
+      hopTimeoutsRef.current.push(
+        setTimeout(
+          () => {
+            setHoppingIds((s) => {
+              const n = new Set(s);
+              n.delete(p.id);
+              return n;
+            });
+            if (to > 0) {
+              const cell = getCell(to);
+              setLanded({ id: p.id, type: cell.type, username: p.username, key: Date.now() });
+              // Play the cell-type animation sound when the token lands.
+              const cellSfx: Record<string, Parameters<typeof sfx.play>[0] | undefined> = {
+                easy: "easy",
+                medium: "medium",
+                hard: "hard",
+                rest: "rest",
+                boost: "blast",
+                setback: "setback",
+              };
+              const which = cellSfx[cell.type];
+              if (which) sfx.play(which);
+              hopTimeoutsRef.current.push(setTimeout(() => setLanded(null), LANDING_SPLASH_MS));
+            }
+          },
+          announceRemaining + distance * HOP_MS,
+        ),
+      );
     }
   }, [players, isPaused]);
 
@@ -392,7 +469,10 @@ function GymBoard({ code }: { code: string }) {
   useEffect(() => {
     if (isPaused) return;
     const tid = room?.current_turn_player_id ?? null;
-    if (!tid) { prevTurnKeyRef.current = null; return; }
+    if (!tid) {
+      prevTurnKeyRef.current = null;
+      return;
+    }
     const key = `${tid}|${room?.last_dice ?? "null"}`;
     if (prevTurnKeyRef.current === key) return;
     const isFirst = prevTurnKeyRef.current === null;
@@ -464,7 +544,6 @@ function GymBoard({ code }: { code: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players]);
 
-
   // Tick while the trap modal is open so border-flash can switch off when the
   // countdown completes.
   useEffect(() => {
@@ -527,10 +606,15 @@ function GymBoard({ code }: { code: string }) {
     const pausedFor = pauseStartedAtRef.current ? Date.now() - pauseStartedAtRef.current : 0;
     pauseStartedAtRef.current = null;
     const pausedTrap = room?.trap as Trap | null;
-    await supabase.from("rooms").update({
-      paused: false,
-      ...(pausedTrap ? { trap: { ...pausedTrap, started_at: pausedTrap.started_at + pausedFor } } : {}),
-    }).eq("code", code);
+    await supabase
+      .from("rooms")
+      .update({
+        paused: false,
+        ...(pausedTrap
+          ? { trap: { ...pausedTrap, started_at: pausedTrap.started_at + pausedFor } }
+          : {}),
+      })
+      .eq("code", code);
   };
 
   const restartGame = async () => {
@@ -567,9 +651,15 @@ function GymBoard({ code }: { code: string }) {
 
       const [{ error: playersError }, { error: logsError }] = await Promise.all([
         supabase
-        .from("players")
-        .update({ current_space: 0, finished_at: null, finish_rank: null, score: 0, status: "active" })
-        .eq("room_code", code),
+          .from("players")
+          .update({
+            current_space: 0,
+            finished_at: null,
+            finish_rank: null,
+            score: 0,
+            status: "active",
+          })
+          .eq("room_code", code),
         supabase.from("workout_logs").delete().eq("room_code", code),
       ]);
 
@@ -703,625 +793,809 @@ function GymBoard({ code }: { code: string }) {
           }}
         >
           <div
-            onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
+            onPointerDownCapture={() => {
+              if (!sfx.isMuted()) void sfx.unlock();
+            }}
             className={`flex flex-col gap-3 relative w-full h-full overflow-hidden ${inPlayMode ? "p-2" : "p-3"}`}
           >
-      <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
-      {!inPlayMode && (
-        <div className="absolute top-2 right-2 z-40 flex items-center gap-2">
-          <SfxButton variant="white" />
-          <button
-            onClick={() => setShowCustomize(true)}
-            className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
-            title="Customize exercises and reps"
-          >
-            <Settings size={16} /> CUSTOMIZE
-          </button>
-        </div>
-      )}
-      {inPlayMode ? (
-        <header className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <img src={bombMascot} alt="" width={1024} height={1024} className="w-8 h-8" />
-            <div
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}
-              className="text-2xl text-[var(--boom-red)] comic-shadow leading-none"
-            >
-              BOOM!
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <SfxButton />
-            {!isPaused && (
-              <button
-                onClick={() => { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); }}
-                className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
-                style={{ fontFamily: "'Luckiest Guy', cursive" }}
-              >
-                <Pause size={18} fill="currentColor" /> PAUSE
-              </button>
+            <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
+            {!inPlayMode && (
+              <div className="absolute top-2 right-2 z-40 flex items-center gap-2">
+                <SfxButton variant="white" />
+                <button
+                  onClick={() => setShowCustomize(true)}
+                  className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
+                  title="Customize exercises and reps"
+                >
+                  <Settings size={16} /> CUSTOMIZE
+                </button>
+              </div>
             )}
-          </div>
-        </header>
-      ) : (
-      <header className="grid grid-cols-[minmax(19rem,1fr)_minmax(28rem,0.95fr)] items-center gap-3 pr-44 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <img src={bombMascot} alt="" width={1024} height={1024} className="w-20 h-20 anim-fuse shrink-0" />
-          <div>
-            <div
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}
-              className="text-6xl text-[var(--boom-red)] comic-shadow leading-none"
-            >
-              BOOM!
-            </div>
-            <div className="text-sm font-bold">Gym Screen</div>
-          </div>
-          {!gameHasStarted && (
-            <button
-              onClick={startGame}
-              disabled={players.length === 0 || starting}
-              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed py-3 px-5 text-lg ml-2"
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}
-            >
-              {starting ? "IGNITING…" : "START GAME"}
-            </button>
-          )}
-          {gameHasStarted && isPaused && (
-            <>
-              <button
-                onClick={resumeGame}
-                className="btn-boom flex items-center gap-2 py-3 px-5 text-lg ml-2"
-                style={{ fontFamily: "'Luckiest Guy', cursive" }}
-              >
-                <Play size={20} fill="currentColor" /> PLAY
-              </button>
-              <button
-                onClick={restartGame}
-                disabled={restarting}
-                className="btn-boom disabled:opacity-50 py-3 px-5 text-lg"
-                style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
-              >
-                {restarting ? "BOOMING…" : "RESTART"}
-              </button>
-            </>
-          )}
-        </div>
-        {/* Combined Invite + QR card — shown next to the action buttons in the lobby */}
-        {!inPlayMode && (
-        <div className="ink-border rounded-2xl bg-white p-2 flex items-center justify-between gap-3 min-w-0">
-          <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
-            <div
-              className="text-2xl font-black leading-none"
-              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
-            >
-              INVITE YOUR CREW
-            </div>
-            <div className="text-[10px] font-bold opacity-70 truncate leading-tight max-w-full">{joinUrl}</div>
-            <ShareLinkButton url={joinUrl} code={code} compact />
-            <div className="text-xs font-bold leading-none mt-1">
-              CODE:{" "}
-              <span style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
-                {code}
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={() => setQrZoom(true)}
-            className="bg-white"
-            title="Tap to enlarge QR"
-            aria-label="Enlarge QR code to join this room"
-          >
-            <QRCodeSVG value={joinUrl} size={96} level="M" />
-          </button>
-        </div>
-        )}
-      </header>
-      )}
-      {qrZoom && (
-        <div
-          onClick={() => setQrZoom(false)}
-          className="fixed inset-0 z-[70] bg-black/90 flex flex-col items-center justify-center p-6 gap-4 cursor-pointer"
-        >
-          <div className="bg-white p-4 ink-border rounded-2xl">
-            <QRCodeSVG value={joinUrl} size={Math.min(520, window.innerWidth - 80)} level="H" />
-          </div>
-          <div className="text-white font-black text-2xl" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-            {code}
-          </div>
-          <div className="text-white text-xs break-all max-w-md text-center opacity-80">{joinUrl}</div>
-          <div className="text-white text-xs opacity-60">Tap anywhere to close</div>
-        </div>
-      )}
-      {startError && (
-        <div className="ink-border-sm rounded-xl bg-white p-2 text-sm font-black">{startError}</div>
-      )}
-
-      {/* Board */}
-      {inPlayMode && (
-      <img
-        src={bombMascot}
-        alt="Boom mascot"
-        width={1024}
-        height={1024}
-        loading="lazy"
-        className="fixed bottom-0 right-0 translate-y-10 translate-x-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-30"
-      />
-      )}
-      {inPlayMode && (
-      <div ref={boardWrapRef} className="ink-border rounded-3xl bg-white flex-1 relative overflow-hidden">
-      <div
-        ref={boardInnerRef}
-        className="relative p-4 w-full h-full"
-        style={{
-          transform: boardTransform,
-          transformOrigin: "top left",
-          // Smooth, eased zoom-in / zoom-out; tight linear pan between hops
-          // so the camera tracks the token without drifting.
-          transition:
-            cameraPhase === "pan"
-              ? `transform ${HOP_MS}ms linear`
-              : `transform 650ms cubic-bezier(0.22, 1, 0.36, 1)`,
-          willChange: "transform",
-        }}
-      >
-        {/* Snake board: 10-cell horizontal rows joined by single-cell vertical connectors */}
-        <div className="flex flex-col gap-1.5 pt-6">
-          {(() => {
-            const COLS = 15;
-            const LAP = 16; // 15 horizontal + 1 connector
-            const rows: { space: number; col: number }[][] = [];
-            for (let lap = 0; lap * LAP + 1 <= BOARD_SIZE; lap++) {
-              const lapStart = lap * LAP + 1;
-              const ltr = lap % 2 === 0;
-              const horizontal: { space: number; col: number }[] = [];
-              for (let i = 0; i < COLS; i++) {
-                const space = lapStart + i;
-                if (space > BOARD_SIZE) break;
-                horizontal.push({ space, col: ltr ? i + 1 : COLS - i });
-              }
-              if (horizontal.length > 0) rows.push(horizontal);
-              const conn = lapStart + COLS;
-              if (conn <= BOARD_SIZE) rows.push([{ space: conn, col: ltr ? COLS : 1 }]);
-            }
-            return rows.map((row, rowIdx) => (
-              <div key={rowIdx} className="grid gap-1.5 relative" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
-                {row.map(({ space, col }) => {
-                  const cell = getCell(space);
-                  const here = players.filter((p) => {
-                    const s = hopSpaces[p.id] ?? p.current_space;
-                    // Players that haven't rolled yet (space 0) park on the START cell.
-                    return (s === 0 ? 1 : s) === space;
-                  });
-                  const bg =
-                    cell.type === "start" ? "white" :
-                    cell.type === "finish" ? "white" :
-                    cell.type === "easy" ? "var(--boom-yellow)" :
-                    cell.type === "medium" ? "var(--boom-orange)" :
-                    cell.type === "hard" ? "var(--boom-red)" :
-                    cell.type === "boost" ? "var(--boom-green)" :
-                    cell.type === "surprise" ? "#ec4899" :
-                    cell.type === "crazy" ? "#22d3ee" :
-                    cell.type === "group" ? "var(--boom-blue)" :
-                    "#7c3aed";
-                  const isLight = cell.type === "start" || cell.type === "finish";
-                  const numColor = isLight ? "var(--boom-ink)" : "white";
-                  return (
-                    <div
-                      key={space}
-                      data-space={space}
-                      onClick={() => { if (!isPaused) sfx.play("gymSelect"); }}
-                      className="@container aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
-                      style={{ background: bg, gridColumn: col, gridRow: 1 }}
-                      title={describeCell(cell)}
+            {inPlayMode ? (
+              <header className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <img src={bombMascot} alt="" width={1024} height={1024} className="w-8 h-8" />
+                  <div
+                    style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                    className="text-2xl text-[var(--boom-red)] comic-shadow leading-none"
+                  >
+                    BOOM!
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <SfxButton />
+                  {!isPaused && (
+                    <button
+                      onClick={() => {
+                        void sfx.unlock();
+                        setPaused(true);
+                        void supabase.from("rooms").update({ paused: true }).eq("code", code);
+                      }}
+                      className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
+                      style={{ fontFamily: "'Luckiest Guy', cursive" }}
                     >
-                      {space === 1 && (
-                        <span
-                          className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-black tracking-widest whitespace-nowrap pointer-events-none"
-                          style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
-                        >
-                          START
-                        </span>
-                      )}
-                      {space === BOARD_SIZE && (
-                        <span
-                          className="absolute -top-6 left-1/2 -translate-x-1/2 text-sm md:text-base font-black tracking-widest whitespace-nowrap pointer-events-none"
-                          style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', system-ui", letterSpacing: "0.15em" }}
-                        >
-                          FINISH
-                        </span>
-                      )}
-                      <span
-                        className="font-black leading-none"
-                        style={{ color: numColor, fontSize: "clamp(0.7rem, 22cqw, 1.75rem)" }}
+                      <Pause size={18} fill="currentColor" /> PAUSE
+                    </button>
+                  )}
+                </div>
+              </header>
+            ) : (
+              <header className="grid grid-cols-[minmax(19rem,1fr)_minmax(28rem,0.95fr)] items-center gap-3 pr-44 shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img
+                    src={bombMascot}
+                    alt=""
+                    width={1024}
+                    height={1024}
+                    className="w-20 h-20 anim-fuse shrink-0"
+                  />
+                  <div>
+                    <div
+                      style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                      className="text-6xl text-[var(--boom-red)] comic-shadow leading-none"
+                    >
+                      BOOM!
+                    </div>
+                    <div className="text-sm font-bold">Gym Screen</div>
+                  </div>
+                  {!gameHasStarted && (
+                    <button
+                      onClick={startGame}
+                      disabled={players.length === 0 || starting}
+                      className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed py-3 px-5 text-lg ml-2"
+                      style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                    >
+                      {starting ? "IGNITING…" : "START GAME"}
+                    </button>
+                  )}
+                  {gameHasStarted && isPaused && (
+                    <>
+                      <button
+                        onClick={resumeGame}
+                        className="btn-boom flex items-center gap-2 py-3 px-5 text-lg ml-2"
+                        style={{ fontFamily: "'Luckiest Guy', cursive" }}
                       >
-                        {space}
-                      </span>
-                      {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "hard" && <Flame className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "boost" && <Zap className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "setback" && <ArrowLeft className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "surprise" && <HelpCircle className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "crazy" && <AlertTriangle className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "group" && <Users className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "start" && <Flag className="w-[60%] h-[60%]" />}
-                      {cell.type === "finish" && <Trophy className="w-[60%] h-[60%]" />}
-                      {here.length > 0 && (
-                        <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-30 flex -space-x-2 pointer-events-none">
-                          {here.slice(0, 4).map((p, i) => {
-                            const isHopping = hoppingIds.has(p.id);
+                        <Play size={20} fill="currentColor" /> PLAY
+                      </button>
+                      <button
+                        onClick={restartGame}
+                        disabled={restarting}
+                        className="btn-boom disabled:opacity-50 py-3 px-5 text-lg"
+                        style={{
+                          fontFamily: "'Luckiest Guy', cursive",
+                          background: "var(--boom-red)",
+                        }}
+                      >
+                        {restarting ? "BOOMING…" : "RESTART"}
+                      </button>
+                    </>
+                  )}
+                </div>
+                {/* Combined Invite + QR card — shown next to the action buttons in the lobby */}
+                {!inPlayMode && (
+                  <div className="ink-border rounded-2xl bg-white p-2 flex items-center justify-between gap-3 min-w-0">
+                    <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
+                      <div
+                        className="text-2xl font-black leading-none"
+                        style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+                      >
+                        INVITE YOUR CREW
+                      </div>
+                      <div className="text-[10px] font-bold opacity-70 truncate leading-tight max-w-full">
+                        {joinUrl}
+                      </div>
+                      <ShareLinkButton url={joinUrl} code={code} compact />
+                      <div className="text-xs font-bold leading-none mt-1">
+                        CODE:{" "}
+                        <span
+                          style={{
+                            fontFamily: "'Luckiest Guy', cursive",
+                            color: "var(--boom-red)",
+                          }}
+                        >
+                          {code}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setQrZoom(true)}
+                      className="bg-white"
+                      title="Tap to enlarge QR"
+                      aria-label="Enlarge QR code to join this room"
+                    >
+                      <QRCodeSVG value={joinUrl} size={96} level="M" />
+                    </button>
+                  </div>
+                )}
+              </header>
+            )}
+            {qrZoom && (
+              <div
+                onClick={() => setQrZoom(false)}
+                className="fixed inset-0 z-[70] bg-black/90 flex flex-col items-center justify-center p-6 gap-4 cursor-pointer"
+              >
+                <div className="bg-white p-4 ink-border rounded-2xl">
+                  <QRCodeSVG
+                    value={joinUrl}
+                    size={Math.min(520, window.innerWidth - 80)}
+                    level="H"
+                  />
+                </div>
+                <div
+                  className="text-white font-black text-2xl"
+                  style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                >
+                  {code}
+                </div>
+                <div className="text-white text-xs break-all max-w-md text-center opacity-80">
+                  {joinUrl}
+                </div>
+                <div className="text-white text-xs opacity-60">Tap anywhere to close</div>
+              </div>
+            )}
+            {startError && (
+              <div className="ink-border-sm rounded-xl bg-white p-2 text-sm font-black">
+                {startError}
+              </div>
+            )}
+
+            {/* Board */}
+            {inPlayMode && (
+              <img
+                src={bombMascot}
+                alt="Boom mascot"
+                width={1024}
+                height={1024}
+                loading="lazy"
+                className="fixed bottom-0 right-0 translate-y-10 translate-x-10 w-40 md:w-56 opacity-95 pointer-events-none anim-fuse z-30"
+              />
+            )}
+            {inPlayMode && (
+              <div
+                ref={boardWrapRef}
+                className="ink-border rounded-3xl bg-white flex-1 relative overflow-hidden"
+              >
+                <div
+                  ref={boardInnerRef}
+                  className="relative p-4 w-full h-full"
+                  style={{
+                    transform: boardTransform,
+                    transformOrigin: "top left",
+                    // Smooth, eased zoom-in / zoom-out; tight linear pan between hops
+                    // so the camera tracks the token without drifting.
+                    transition:
+                      cameraPhase === "pan"
+                        ? `transform ${HOP_MS}ms linear`
+                        : `transform 650ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                    willChange: "transform",
+                  }}
+                >
+                  {/* Snake board: 10-cell horizontal rows joined by single-cell vertical connectors */}
+                  <div className="flex flex-col gap-1.5 pt-6">
+                    {(() => {
+                      const COLS = 15;
+                      const LAP = 16; // 15 horizontal + 1 connector
+                      const rows: { space: number; col: number }[][] = [];
+                      for (let lap = 0; lap * LAP + 1 <= BOARD_SIZE; lap++) {
+                        const lapStart = lap * LAP + 1;
+                        const ltr = lap % 2 === 0;
+                        const horizontal: { space: number; col: number }[] = [];
+                        for (let i = 0; i < COLS; i++) {
+                          const space = lapStart + i;
+                          if (space > BOARD_SIZE) break;
+                          horizontal.push({ space, col: ltr ? i + 1 : COLS - i });
+                        }
+                        if (horizontal.length > 0) rows.push(horizontal);
+                        const conn = lapStart + COLS;
+                        if (conn <= BOARD_SIZE) rows.push([{ space: conn, col: ltr ? COLS : 1 }]);
+                      }
+                      return rows.map((row, rowIdx) => (
+                        <div
+                          key={rowIdx}
+                          className="grid gap-1.5 relative"
+                          style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
+                        >
+                          {row.map(({ space, col }) => {
+                            const cell = getCell(space);
+                            const here = players.filter((p) => {
+                              const s = hopSpaces[p.id] ?? p.current_space;
+                              // Players that haven't rolled yet (space 0) park on the START cell.
+                              return (s === 0 ? 1 : s) === space;
+                            });
+                            const bg =
+                              cell.type === "start"
+                                ? "white"
+                                : cell.type === "finish"
+                                  ? "white"
+                                  : cell.type === "easy"
+                                    ? "var(--boom-yellow)"
+                                    : cell.type === "medium"
+                                      ? "var(--boom-orange)"
+                                      : cell.type === "hard"
+                                        ? "var(--boom-red)"
+                                        : cell.type === "boost"
+                                          ? "var(--boom-green)"
+                                          : cell.type === "surprise"
+                                            ? "#ec4899"
+                                            : cell.type === "crazy"
+                                              ? "#22d3ee"
+                                              : cell.type === "group"
+                                                ? "var(--boom-blue)"
+                                                : "#7c3aed";
+                            const isLight = cell.type === "start" || cell.type === "finish";
+                            const numColor = isLight ? "var(--boom-ink)" : "white";
                             return (
                               <div
-                                key={`${p.id}-${hopSpaces[p.id] ?? p.current_space}`}
-                                style={{ zIndex: 30 + i }}
+                                key={space}
+                                data-space={space}
+                                onClick={() => {
+                                  if (!isPaused) sfx.play("gymSelect");
+                                }}
+                                className="@container aspect-square rounded-xl ink-border-sm flex flex-col items-center justify-center relative p-1 text-center cursor-pointer select-none"
+                                style={{ background: bg, gridColumn: col, gridRow: 1 }}
+                                title={describeCell(cell)}
                               >
-                                <PlayerToken
-                                  avatar={p.avatar_url}
-                                  username={p.username}
-                                  size={64}
-                                  active={room?.current_turn_player_id === p.id}
-                                  showName={false}
-                                  showInitial
-                                  ringColor={p.team_id ? teamColor(p.team_id) : undefined}
-                                  className={isHopping ? "anim-hop" : "anim-land"}
-                                />
+                                {space === 1 && (
+                                  <span
+                                    className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-black tracking-widest whitespace-nowrap pointer-events-none"
+                                    style={{
+                                      color: "var(--boom-ink)",
+                                      fontFamily: "'Luckiest Guy', system-ui",
+                                      letterSpacing: "0.15em",
+                                    }}
+                                  >
+                                    START
+                                  </span>
+                                )}
+                                {space === BOARD_SIZE && (
+                                  <span
+                                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-sm md:text-base font-black tracking-widest whitespace-nowrap pointer-events-none"
+                                    style={{
+                                      color: "var(--boom-ink)",
+                                      fontFamily: "'Luckiest Guy', system-ui",
+                                      letterSpacing: "0.15em",
+                                    }}
+                                  >
+                                    FINISH
+                                  </span>
+                                )}
+                                <span
+                                  className="font-black leading-none"
+                                  style={{
+                                    color: numColor,
+                                    fontSize: "clamp(0.7rem, 22cqw, 1.75rem)",
+                                  }}
+                                >
+                                  {space}
+                                </span>
+                                {cell.type === "easy" && (
+                                  <MiniDumbbell className="w-[60%] h-[60%] text-white" />
+                                )}
+                                {cell.type === "medium" && (
+                                  <Dumbbell className="w-[60%] h-[60%] text-white" />
+                                )}
+                                {cell.type === "hard" && (
+                                  <Flame className="w-[60%] h-[60%] text-white" />
+                                )}
+                                {cell.type === "boost" && (
+                                  <Zap className="w-[60%] h-[60%] text-white" />
+                                )}
+                                {cell.type === "setback" && (
+                                  <ArrowLeft className="w-[60%] h-[60%] text-white" />
+                                )}
+                                {cell.type === "surprise" && (
+                                  <HelpCircle className="w-[60%] h-[60%] text-white" />
+                                )}
+                                {cell.type === "crazy" && (
+                                  <AlertTriangle className="w-[60%] h-[60%] text-white" />
+                                )}
+                                {cell.type === "group" && (
+                                  <Users className="w-[60%] h-[60%] text-white" />
+                                )}
+                                {cell.type === "start" && <Flag className="w-[60%] h-[60%]" />}
+                                {cell.type === "finish" && <Trophy className="w-[60%] h-[60%]" />}
+                                {here.length > 0 && (
+                                  <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-30 flex -space-x-2 pointer-events-none">
+                                    {here.slice(0, 4).map((p, i) => {
+                                      const isHopping = hoppingIds.has(p.id);
+                                      return (
+                                        <div
+                                          key={`${p.id}-${hopSpaces[p.id] ?? p.current_space}`}
+                                          style={{ zIndex: 30 + i }}
+                                        >
+                                          <PlayerToken
+                                            avatar={p.avatar_url}
+                                            username={p.username}
+                                            size={64}
+                                            active={room?.current_turn_player_id === p.id}
+                                            showName={false}
+                                            showInitial
+                                            ringColor={p.team_id ? teamColor(p.team_id) : undefined}
+                                            className={isHopping ? "anim-hop" : "anim-land"}
+                                          />
+                                        </div>
+                                      );
+                                    })}
+                                    {here.length > 4 && (
+                                      <span className="text-[10px] font-black bg-white rounded-full px-1.5 py-0.5 ink-border-sm self-center">
+                                        +{here.length - 4}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
-                          {here.length > 4 && (
-                            <span className="text-[10px] font-black bg-white rounded-full px-1.5 py-0.5 ink-border-sm self-center">
-                              +{here.length - 4}
-                            </span>
-                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ));
-          })()}
-        </div>
-        {/* Legend */}
-        <div className="mt-3 flex flex-wrap gap-2 text-xs font-black relative z-10">
-          {[
-            { c: "var(--boom-yellow)", l: "Easy" },
-            { c: "var(--boom-orange)", l: "Medium" },
-            { c: "var(--boom-red)", l: "Hard" },
-            { c: "#ec4899", l: "Surprise" },
-            { c: "#22d3ee", l: "Crazy" },
-            { c: "var(--boom-blue)", l: "All Together" },
-            { c: "var(--boom-ink)", l: "VS Battle" },
-            { c: "var(--boom-green)", l: "Blast +" },
-            { c: "#7c3aed", l: "Setback −" },
-          ].map((x) => (
-            <span key={x.l} className="ink-border-sm rounded-full px-2 py-1 flex items-center gap-1" style={{ background: x.c, color: "white" }}>
-              {x.l}
-            </span>
-          ))}
-        </div>
-      </div>
-      </div>
-      )}
-
-      {/* Tutorial — shown in lobby AND while paused. Invite lives in the header. */}
-      {!inPlayMode && (
-      <div className="flex-1 min-h-0 grid grid-cols-12 gap-3 overflow-hidden">
-        <div className="col-span-5 flex flex-col gap-3 min-h-0">
-          <div className="flex-[1.1] min-h-0"><TutorialCarousel compact /></div>
-          <div className="ink-border rounded-2xl bg-white p-3 flex-1 min-h-0 flex flex-col">
-            <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0"><Trophy size={20} /> LIVE LEADERBOARD</h2>
-            <div className="grid gap-1 overflow-hidden pr-1">
-          {[...players]
-            .sort((a, b) => {
-              if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
-              if (a.finish_rank) return -1;
-              if (b.finish_rank) return 1;
-              return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
-            })
-            .map((p, i) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 px-2 py-1 rounded-lg" style={{ background: i === 0 ? "var(--boom-yellow)" : "transparent" }}>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-black w-6" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{i + 1}</span>
-                  <PlayerToken avatar={p.avatar_url} username={p.username} size={28} showName={false} />
-                  <span className="text-sm font-black">{p.username}</span>
-                </div>
-                <div className="flex items-center gap-3 text-xs font-black">
-                  <span>Sp.{p.current_space}</span>
-                  <span style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
-                  {p.finished_at && <Trophy size={14} />}
-                </div>
-              </div>
-            ))}
-            </div>
-          </div>
-        </div>
-        <div className="col-span-7 ink-border rounded-2xl p-3 bg-white grid grid-cols-3 gap-3 content-start overflow-hidden">
-        {players.length === 0 && (
-          <div className="col-span-3 text-2xl font-black p-4 text-center" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
-            Waiting for players to join… scan the QR!
-          </div>
-        )}
-        {[...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p) => {
-          const isTurn = room?.current_turn_player_id === p.id;
-          return (
-            <div
-              key={p.id}
-              className={`relative flex flex-col items-center justify-center gap-2 min-h-[8rem] rounded-2xl ${isTurn ? "anim-shake" : ""}`}
-              style={{ background: p.team_id ? `color-mix(in oklab, ${teamColor(p.team_id)} 22%, white)` : "white" }}
-            >
-              <button
-                onClick={async () => {
-                  if (!confirm(`Remove ${p.username} from the game?`)) return;
-                  await supabase.from("players").delete().eq("id", p.id);
-                  if (room?.current_turn_player_id === p.id) {
-                    await supabase.from("rooms").update({ current_turn_player_id: null }).eq("code", code);
-                  }
-                }}
-                title="Remove player"
-                className="absolute -top-2 -right-2 z-20 w-6 h-6 rounded-full bg-white ink-border-sm text-xs font-black leading-none flex items-center justify-center hover:bg-[var(--boom-red)] hover:text-white"
-              >×</button>
-              <div className="pt-2">
-                <PlayerToken avatar={p.avatar_url} username={p.username} size={76} active={isTurn} showName={false} showInitial ringColor={p.team_id ? teamColor(p.team_id) : undefined} />
-              </div>
-              <span className="text-sm font-black flex items-center gap-1 mt-1 truncate max-w-full px-2">
-                {p.username}
-              </span>
-              {p.team_id && <span className="text-[10px] font-black opacity-80">{teamName(p.team_id).toUpperCase()}</span>}
-              <span className="text-[11px] font-black flex items-center gap-1 opacity-80">
-                {p.finished_at && <Trophy size={12} />}
-                {p.finished_at ? `#${p.finish_rank}` : `Sp.${p.current_space}`} · {p.score ?? 0}pts
-              </span>
-            </div>
-          );
-        })}
-        </div>
-      </div>
-      )}
-
-      {/* BOOM modal */}
-      {trap && !isPaused && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
-          <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom relative">
-            {(() => {
-              const trapPlayer = players.find((p) => p.id === trap.triggered_by);
-              if (!trapPlayer) return null;
-              return (
-                <div className="absolute top-3 right-3 z-20 ink-border-sm rounded-2xl bg-white px-2 py-1 flex flex-col items-center gap-1">
-                  <PlayerToken
-                    avatar={trapPlayer.avatar_url}
-                    username={trapPlayer.username}
-                    size={56}
-                    active
-                    showName={false}
-                  />
-                  <span
-                    className="text-xs font-black truncate max-w-[88px]"
-                    style={{ color: "var(--boom-ink)" }}
-                  >
-                    {trapPlayer.username}
-                  </span>
-                </div>
-              );
-            })()}
-            <img
-              src={mascotForCell(getCell((trap.space ?? players.find((p) => p.id === trap.triggered_by)?.current_space) ?? 0).type)}
-              alt=""
-              width={1024}
-              height={1024}
-              className={`mx-auto w-40 h-40 -mt-24 ${trap.awaiting_verification ? "anim-mascot-pop" : "anim-shake"} drop-shadow-[0_0_30px_rgba(255,180,0,0.9)]`}
-            />
-            <div
-              className="comic-shadow mt-2"
-              style={{
-                fontFamily: "'Luckiest Guy', cursive",
-                fontSize: "clamp(5rem, 16vw, 10rem)",
-                color: "var(--boom-red)",
-                lineHeight: 1,
-              }}
-            >
-              BOOM!
-            </div>
-            <p className="text-2xl font-black mt-2">
-              {trap.kind === "vs"
-                ? "VS BATTLE ON THIS SPACE!"
-                : trap.kind === "group"
-                ? "EVERYBODY IS DOING THIS!"
-                : `${players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!`}
-            </p>
-            <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
-              Do {trap.reps} {trap.exercise}!
-            </p>
-            {(() => {
-              const trapCellType = trap.kind === "vs" ? "hard" : getCell((trap.space ?? players.find((p) => p.id === trap.triggered_by)?.current_space) ?? 0).type;
-              const cellColor =
-                trapCellType === "easy" ? "var(--boom-yellow)" :
-                trapCellType === "medium" ? "var(--boom-orange)" :
-                trapCellType === "hard" ? "var(--boom-red)" :
-                trapCellType === "boost" ? "var(--boom-green)" :
-                trapCellType === "setback" ? "#7c3aed" :
-                trapCellType === "surprise" ? "#ec4899" :
-                trapCellType === "crazy" ? "#22d3ee" :
-                trapCellType === "group" ? "var(--boom-blue)" :
-                "var(--boom-yellow)";
-              const effectiveStart = trap.started_at;
-              const remaining = effectiveStart - Date.now();
-              const inCountdown = remaining > 0 && remaining <= 3500;
-              const ready = remaining <= 3500;
-              return (
-                <div className="mt-4 flex justify-center">
-                  <div
-                    className={`ink-border rounded-2xl px-6 py-3 ${inCountdown ? "anim-border-flash" : ""}`}
-                    style={{
-                      background: "white",
-                      color: "var(--boom-ink)",
-                      borderWidth: 8,
-                      borderColor: cellColor,
-                      transform: "rotate(-3deg)",
-                      minWidth: "14rem",
-                    }}
-                  >
-                    {!ready ? (
-                      <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-                        GET READY…
-                      </div>
-                    ) : (
-                      <>
-                        <CountdownIntro startAt={effectiveStart} inline />
-                        <FuseTimer
-                          startedAt={effectiveStart}
-                          big
-                          color="var(--boom-ink)"
-                          hideBeforeStart
-                        />
-                      </>
-                    )}
+                      ));
+                    })()}
                   </div>
-                </div>
-              );
-            })()}
-            <button
-              onClick={() => { if (!isPaused) { void sfx.unlock(); setPaused(true); void supabase.from("rooms").update({ paused: true }).eq("code", code); } }}
-              disabled={isPaused}
-              className="mt-4 ink-border-sm rounded-xl px-4 py-2 font-black text-sm flex items-center gap-2 mx-auto"
-              style={{ background: "var(--boom-ink)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}
-            >
-              <Pause size={16} fill="currentColor" /> PAUSE
-            </button>
-            {!isPaused && Date.now() >= trap.started_at && players.length <= 1 && (
-              <div className="mt-6">
-                <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
-                  TEAM VERIFICATION
-                </h2>
-                <div className="flex gap-4 justify-center flex-wrap">
-                  <button
-                    onClick={defuse}
-                    className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
-                    style={{ background: "var(--boom-green)", color: "white" }}
-                  >
-                    DEFUSED
-                  </button>
+                  {/* Legend */}
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-black relative z-10">
+                    {[
+                      { c: "var(--boom-yellow)", l: "Easy" },
+                      { c: "var(--boom-orange)", l: "Medium" },
+                      { c: "var(--boom-red)", l: "Hard" },
+                      { c: "#ec4899", l: "Surprise" },
+                      { c: "#22d3ee", l: "Crazy" },
+                      { c: "var(--boom-blue)", l: "All Together" },
+                      { c: "var(--boom-ink)", l: "VS Battle" },
+                      { c: "var(--boom-green)", l: "Blast +" },
+                      { c: "#7c3aed", l: "Setback −" },
+                    ].map((x) => (
+                      <span
+                        key={x.l}
+                        className="ink-border-sm rounded-full px-2 py-1 flex items-center gap-1"
+                        style={{ background: x.c, color: "white" }}
+                      >
+                        {x.l}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* Turn announcement overlay */}
-      {turnAnnounce && !trap && !isPaused && (
-        <div
-          key={turnAnnounce.key}
-          className="fixed inset-0 z-[45] flex flex-col items-center justify-center bg-black/70 pointer-events-none"
-        >
-          <div className="anim-mascot-pop">
-            <PlayerToken
-              avatar={turnAnnounce.avatar}
-              username={turnAnnounce.username}
-              size={220}
-              active
-              showName={false}
-              showInitial
-            />
-          </div>
-          <div
-            className="mt-8 text-7xl md:text-8xl font-black comic-shadow anim-shake text-center px-6"
-            style={{
-              fontFamily: "'Luckiest Guy', cursive",
-              color: "var(--boom-yellow)",
-              textShadow: "5px 5px 0 #000, -2px -2px 0 #000",
-            }}
-          >
-            {turnAnnounce.username.toUpperCase()} ROLLS!
-          </div>
-        </div>
-      )}
-
-      {/* Winner KA-BOOM overlay */}
-      {winnerOverlay && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none overflow-hidden">
-          <img
-            src={bombMascot}
-            alt=""
-            width={1024}
-            height={1024}
-            className="absolute anim-mascot-explode"
-            style={{ width: "70vmin", height: "70vmin" }}
-          />
-        </div>
-      )}
-
-      {/* Final ranking modal — appears after the explosion */}
-      {showFinalRanking && (
-        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 p-6">
-          <div className="ink-border rounded-3xl bg-white p-6 max-w-lg w-full text-center anim-boom">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Trophy size={28} />
-              <div className="text-4xl font-black comic-shadow" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
-                FINAL RANKING
-              </div>
-              <Trophy size={28} />
-            </div>
-            <div className="flex flex-col gap-2 text-left mb-5">
-              {[...players]
-                .sort((a, b) => {
-                  if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
-                  if (a.finish_rank) return -1;
-                  if (b.finish_rank) return 1;
-                  return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
-                })
-                .map((p, i) => (
-                  <div key={p.id} className="flex items-center justify-between gap-3 p-2 rounded-xl ink-border-sm"
-                    style={{ background: i === 0 ? "var(--boom-yellow)" : "white" }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-black w-7 text-center" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-                        {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
-                      </span>
-                      <PlayerToken avatar={p.avatar_url} username={p.username} size={36} showName={false} />
-                      <span className="font-black">{p.username}</span>
-                    </div>
-                    <span className="font-black" style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
+            {/* Tutorial — shown in lobby AND while paused. Invite lives in the header. */}
+            {!inPlayMode && (
+              <div className="flex-1 min-h-0 grid grid-cols-12 gap-3 overflow-hidden">
+                <div className="col-span-5 flex flex-col gap-3 min-h-0">
+                  <div className="flex-[1.1] min-h-0">
+                    <TutorialCarousel compact />
                   </div>
-                ))}
-            </div>
-            <div className="flex gap-3 justify-center">
-              <button onClick={() => setShowFinalRanking(false)} className="ink-border-sm rounded-xl px-4 py-2 font-black text-sm">
-                CLOSE
-              </button>
-              <button onClick={restartGame} disabled={restarting} className="btn-boom disabled:opacity-50"
-                style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-                {restarting ? "RESETTING…" : "RESTART GAME"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  <div className="ink-border rounded-2xl bg-white p-3 flex-1 min-h-0 flex flex-col">
+                    <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0">
+                      <Trophy size={20} /> LIVE LEADERBOARD
+                    </h2>
+                    <div className="grid gap-1 overflow-hidden pr-1">
+                      {[...players]
+                        .sort((a, b) => {
+                          if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+                          if (a.finish_rank) return -1;
+                          if (b.finish_rank) return 1;
+                          return (
+                            (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space
+                          );
+                        })
+                        .map((p, i) => (
+                          <div
+                            key={p.id}
+                            className="flex items-center justify-between gap-3 px-2 py-1 rounded-lg"
+                            style={{ background: i === 0 ? "var(--boom-yellow)" : "transparent" }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="text-xl font-black w-6"
+                                style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                              >
+                                {i + 1}
+                              </span>
+                              <PlayerToken
+                                avatar={p.avatar_url}
+                                username={p.username}
+                                size={28}
+                                showName={false}
+                              />
+                              <span className="text-sm font-black">{p.username}</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs font-black">
+                              <span>Sp.{p.current_space}</span>
+                              <span style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
+                              {p.finished_at && <Trophy size={14} />}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="col-span-7 ink-border rounded-2xl p-3 bg-white grid grid-cols-3 gap-3 content-start overflow-hidden">
+                  {players.length === 0 && (
+                    <div
+                      className="col-span-3 text-2xl font-black p-4 text-center"
+                      style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+                    >
+                      Waiting for players to join… scan the QR!
+                    </div>
+                  )}
+                  {[...players]
+                    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+                    .map((p) => {
+                      const isTurn = room?.current_turn_player_id === p.id;
+                      return (
+                        <div
+                          key={p.id}
+                          className={`relative flex flex-col items-center justify-center gap-2 min-h-[8rem] rounded-2xl ${isTurn ? "anim-shake" : ""}`}
+                          style={{
+                            background: p.team_id
+                              ? `color-mix(in oklab, ${teamColor(p.team_id)} 22%, white)`
+                              : "white",
+                          }}
+                        >
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Remove ${p.username} from the game?`)) return;
+                              await supabase.from("players").delete().eq("id", p.id);
+                              if (room?.current_turn_player_id === p.id) {
+                                await supabase
+                                  .from("rooms")
+                                  .update({ current_turn_player_id: null })
+                                  .eq("code", code);
+                              }
+                            }}
+                            title="Remove player"
+                            className="absolute -top-2 -right-2 z-20 w-6 h-6 rounded-full bg-white ink-border-sm text-xs font-black leading-none flex items-center justify-center hover:bg-[var(--boom-red)] hover:text-white"
+                          >
+                            ×
+                          </button>
+                          <div className="pt-2">
+                            <PlayerToken
+                              avatar={p.avatar_url}
+                              username={p.username}
+                              size={76}
+                              active={isTurn}
+                              showName={false}
+                              showInitial
+                              ringColor={p.team_id ? teamColor(p.team_id) : undefined}
+                            />
+                          </div>
+                          <span className="text-sm font-black flex items-center gap-1 mt-1 truncate max-w-full px-2">
+                            {p.username}
+                          </span>
+                          {p.team_id && (
+                            <span className="text-[10px] font-black opacity-80">
+                              {teamName(p.team_id).toUpperCase()}
+                            </span>
+                          )}
+                          <span className="text-[11px] font-black flex items-center gap-1 opacity-80">
+                            {p.finished_at && <Trophy size={12} />}
+                            {p.finished_at ? `#${p.finish_rank}` : `Sp.${p.current_space}`} ·{" "}
+                            {p.score ?? 0}pts
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
 
-      {showCustomize && room && (
-        <CustomizeBoardModal
-          code={code}
-          overrides={(room.board_overrides ?? {}) as BoardOverrides}
-          onClose={() => setShowCustomize(false)}
-        />
-      )}
-      {isPaused && gameHasStarted && (
-        <div
-          className="fixed top-2 left-1/2 -translate-x-1/2 z-[120] ink-border rounded-2xl bg-[var(--boom-red)] text-white px-4 py-2 flex items-center gap-2 pointer-events-none comic-shadow"
-          style={{ fontFamily: "'Luckiest Guy', cursive" }}
-        >
-          <Pause size={20} fill="currentColor" /> GAME PAUSED
-        </div>
-      )}
-      {landed && (
-        <CellMascot key={landed.key} type={landed.type} username={landed.username} />
-      )}
-      {timeoutBoom && <ExplosionOverlay username={timeoutBoom} />}
-      {/* Start-of-game explosion overlay */}
-      {exploding && (
-        <GameStartReveal players={orderedPlayers} />
-      )}
-      {/* countdown rendered inline inside the timer box */}
-    </div>
+            {/* BOOM modal */}
+            {trap && !isPaused && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+                <div className="ink-border rounded-3xl bg-white p-8 max-w-2xl w-full text-center anim-boom relative">
+                  {(() => {
+                    const trapPlayer = players.find((p) => p.id === trap.triggered_by);
+                    if (!trapPlayer) return null;
+                    return (
+                      <div className="absolute top-3 right-3 z-20 ink-border-sm rounded-2xl bg-white px-2 py-1 flex flex-col items-center gap-1">
+                        <PlayerToken
+                          avatar={trapPlayer.avatar_url}
+                          username={trapPlayer.username}
+                          size={56}
+                          active
+                          showName={false}
+                        />
+                        <span
+                          className="text-xs font-black truncate max-w-[88px]"
+                          style={{ color: "var(--boom-ink)" }}
+                        >
+                          {trapPlayer.username}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  <img
+                    src={mascotForCell(
+                      getCell(
+                        trap.space ??
+                          players.find((p) => p.id === trap.triggered_by)?.current_space ??
+                          0,
+                      ).type,
+                    )}
+                    alt=""
+                    width={1024}
+                    height={1024}
+                    className={`mx-auto w-40 h-40 -mt-24 ${trap.awaiting_verification ? "anim-mascot-pop" : "anim-shake"} drop-shadow-[0_0_30px_rgba(255,180,0,0.9)]`}
+                  />
+                  <div
+                    className="comic-shadow mt-2"
+                    style={{
+                      fontFamily: "'Luckiest Guy', cursive",
+                      fontSize: "clamp(5rem, 16vw, 10rem)",
+                      color: "var(--boom-red)",
+                      lineHeight: 1,
+                    }}
+                  >
+                    BOOM!
+                  </div>
+                  <p className="text-2xl font-black mt-2">
+                    {trap.kind === "vs"
+                      ? "VS BATTLE ON THIS SPACE!"
+                      : trap.kind === "group"
+                        ? "EVERYBODY IS DOING THIS!"
+                        : `${players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!`}
+                  </p>
+                  <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
+                    Do {trap.reps} {trap.exercise}!
+                  </p>
+                  {(() => {
+                    const trapCellType =
+                      trap.kind === "vs"
+                        ? "hard"
+                        : getCell(
+                            trap.space ??
+                              players.find((p) => p.id === trap.triggered_by)?.current_space ??
+                              0,
+                          ).type;
+                    const cellColor =
+                      trapCellType === "easy"
+                        ? "var(--boom-yellow)"
+                        : trapCellType === "medium"
+                          ? "var(--boom-orange)"
+                          : trapCellType === "hard"
+                            ? "var(--boom-red)"
+                            : trapCellType === "boost"
+                              ? "var(--boom-green)"
+                              : trapCellType === "setback"
+                                ? "#7c3aed"
+                                : trapCellType === "surprise"
+                                  ? "#ec4899"
+                                  : trapCellType === "crazy"
+                                    ? "#22d3ee"
+                                    : trapCellType === "group"
+                                      ? "var(--boom-blue)"
+                                      : "var(--boom-yellow)";
+                    const effectiveStart = trap.started_at;
+                    const remaining = effectiveStart - Date.now();
+                    const inCountdown = remaining > 0 && remaining <= 3500;
+                    const ready = remaining <= 3500;
+                    return (
+                      <div className="mt-4 flex justify-center">
+                        <div
+                          className={`ink-border rounded-2xl px-6 py-3 ${inCountdown ? "anim-border-flash" : ""}`}
+                          style={{
+                            background: "white",
+                            color: "var(--boom-ink)",
+                            borderWidth: 8,
+                            borderColor: cellColor,
+                            transform: "rotate(-3deg)",
+                            minWidth: "14rem",
+                          }}
+                        >
+                          {!ready ? (
+                            <div
+                              className="text-2xl font-black"
+                              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                            >
+                              GET READY…
+                            </div>
+                          ) : (
+                            <>
+                              <CountdownIntro startAt={effectiveStart} inline />
+                              <FuseTimer
+                                startedAt={effectiveStart}
+                                big
+                                color="var(--boom-ink)"
+                                hideBeforeStart
+                              />
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  <button
+                    onClick={() => {
+                      if (!isPaused) {
+                        void sfx.unlock();
+                        setPaused(true);
+                        void supabase.from("rooms").update({ paused: true }).eq("code", code);
+                      }
+                    }}
+                    disabled={isPaused}
+                    className="mt-4 ink-border-sm rounded-xl px-4 py-2 font-black text-sm flex items-center gap-2 mx-auto"
+                    style={{
+                      background: "var(--boom-ink)",
+                      color: "white",
+                      fontFamily: "'Luckiest Guy', cursive",
+                    }}
+                  >
+                    <Pause size={16} fill="currentColor" /> PAUSE
+                  </button>
+                  {!isPaused && Date.now() >= trap.started_at && players.length <= 1 && (
+                    <div className="mt-6">
+                      <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
+                        TEAM VERIFICATION
+                      </h2>
+                      <div className="flex gap-4 justify-center flex-wrap">
+                        <button
+                          onClick={defuse}
+                          className="ink-border rounded-2xl px-8 py-6 text-3xl font-black comic-shadow"
+                          style={{ background: "var(--boom-green)", color: "white" }}
+                        >
+                          DEFUSED
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Turn announcement overlay */}
+            {turnAnnounce && !trap && !isPaused && (
+              <div
+                key={turnAnnounce.key}
+                className="fixed inset-0 z-[45] flex flex-col items-center justify-center bg-black/70 pointer-events-none"
+              >
+                <div className="anim-mascot-pop">
+                  <PlayerToken
+                    avatar={turnAnnounce.avatar}
+                    username={turnAnnounce.username}
+                    size={220}
+                    active
+                    showName={false}
+                    showInitial
+                  />
+                </div>
+                <div
+                  className="mt-8 text-7xl md:text-8xl font-black comic-shadow anim-shake text-center px-6"
+                  style={{
+                    fontFamily: "'Luckiest Guy', cursive",
+                    color: "var(--boom-yellow)",
+                    textShadow: "5px 5px 0 #000, -2px -2px 0 #000",
+                  }}
+                >
+                  {turnAnnounce.username.toUpperCase()} ROLLS!
+                </div>
+              </div>
+            )}
+
+            {/* Winner KA-BOOM overlay */}
+            {winnerOverlay && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none overflow-hidden">
+                <img
+                  src={bombMascot}
+                  alt=""
+                  width={1024}
+                  height={1024}
+                  className="absolute anim-mascot-explode"
+                  style={{ width: "70vmin", height: "70vmin" }}
+                />
+              </div>
+            )}
+
+            {/* Final ranking modal — appears after the explosion */}
+            {showFinalRanking && (
+              <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 p-6">
+                <div className="ink-border rounded-3xl bg-white p-6 max-w-lg w-full text-center anim-boom">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Trophy size={28} />
+                    <div
+                      className="text-4xl font-black comic-shadow"
+                      style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+                    >
+                      FINAL RANKING
+                    </div>
+                    <Trophy size={28} />
+                  </div>
+                  <div className="flex flex-col gap-2 text-left mb-5">
+                    {[...players]
+                      .sort((a, b) => {
+                        if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+                        if (a.finish_rank) return -1;
+                        if (b.finish_rank) return 1;
+                        return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
+                      })
+                      .map((p, i) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between gap-3 p-2 rounded-xl ink-border-sm"
+                          style={{ background: i === 0 ? "var(--boom-yellow)" : "white" }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="text-2xl font-black w-7 text-center"
+                              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                            >
+                              {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
+                            </span>
+                            <PlayerToken
+                              avatar={p.avatar_url}
+                              username={p.username}
+                              size={36}
+                              showName={false}
+                            />
+                            <span className="font-black">{p.username}</span>
+                          </div>
+                          <span className="font-black" style={{ color: "var(--boom-red)" }}>
+                            {p.score ?? 0} pts
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      onClick={() => setShowFinalRanking(false)}
+                      className="ink-border-sm rounded-xl px-4 py-2 font-black text-sm"
+                    >
+                      CLOSE
+                    </button>
+                    <button
+                      onClick={restartGame}
+                      disabled={restarting}
+                      className="btn-boom disabled:opacity-50"
+                      style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                    >
+                      {restarting ? "RESETTING…" : "RESTART GAME"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showCustomize && room && (
+              <CustomizeBoardModal
+                code={code}
+                overrides={(room.board_overrides ?? {}) as BoardOverrides}
+                onClose={() => setShowCustomize(false)}
+              />
+            )}
+            {isPaused && gameHasStarted && (
+              <div
+                className="fixed top-2 left-1/2 -translate-x-1/2 z-[120] ink-border rounded-2xl bg-[var(--boom-red)] text-white px-4 py-2 flex items-center gap-2 pointer-events-none comic-shadow"
+                style={{ fontFamily: "'Luckiest Guy', cursive" }}
+              >
+                <Pause size={20} fill="currentColor" /> GAME PAUSED
+              </div>
+            )}
+            {landed && (
+              <CellMascot key={landed.key} type={landed.type} username={landed.username} />
+            )}
+            {timeoutBoom && <ExplosionOverlay username={timeoutBoom} />}
+            {/* Start-of-game explosion overlay */}
+            {exploding && <GameStartReveal players={orderedPlayers} />}
+            {/* countdown rendered inline inside the timer box */}
+          </div>
         </div>
       </div>
     </>
@@ -1346,7 +1620,13 @@ function CustomizeBoardModal({
 
   const update = (
     space: number,
-    patch: { exercise?: string; reps?: number; min_reps?: number; max_reps?: number; unit?: "reps" | "seconds" },
+    patch: {
+      exercise?: string;
+      reps?: number;
+      min_reps?: number;
+      max_reps?: number;
+      unit?: "reps" | "seconds";
+    },
   ) => {
     setDraft((prev) => {
       const cur = prev[String(space)] ?? {};
@@ -1365,10 +1645,15 @@ function CustomizeBoardModal({
       let max = v.max_reps && v.max_reps > 0 ? Math.round(v.max_reps) : undefined;
       const unit: "reps" | "seconds" | undefined = v.unit === "seconds" ? "seconds" : undefined;
       // If a fixed reps value is provided, drop the range — fixed wins.
-      if (reps) { min = undefined; max = undefined; }
+      if (reps) {
+        min = undefined;
+        max = undefined;
+      }
       // Normalise so min <= max when both are set.
       if (min !== undefined && max !== undefined && min > max) {
-        const t = min; min = max; max = t;
+        const t = min;
+        min = max;
+        max = t;
       }
       if (exercise || reps || min || max || unit) {
         clean[k] = {
@@ -1404,32 +1689,43 @@ function CustomizeBoardModal({
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
       <div className="ink-border rounded-3xl bg-white p-5 max-w-3xl w-full max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between mb-3">
-          <div className="text-2xl font-black comic-shadow flex items-center gap-2"
-            style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+          <div
+            className="text-2xl font-black comic-shadow flex items-center gap-2"
+            style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+          >
             <Settings size={24} /> CUSTOMIZE BOARD
           </div>
-          <button onClick={onClose} className="ink-border-sm rounded-lg w-8 h-8 font-black">×</button>
+          <button onClick={onClose} className="ink-border-sm rounded-lg w-8 h-8 font-black">
+            ×
+          </button>
         </div>
         <p className="text-xs font-bold mb-3 opacity-70">
-          Tap any field to change the exercise name, lock a fixed rep count, or set a MIN/MAX
-          range so a random number of reps is picked each time. Leave fields empty to keep the
-          default (auto-scaled to each player's fitness level). FIXED beats MIN/MAX if both are set.
+          Tap any field to change the exercise name, lock a fixed rep count, or set a MIN/MAX range
+          so a random number of reps is picked each time. Leave fields empty to keep the default
+          (auto-scaled to each player's fitness level). FIXED beats MIN/MAX if both are set.
         </p>
         <div className="flex flex-wrap items-center gap-2 mb-3 ink-border-sm rounded-xl p-2 bg-[var(--boom-cream)]">
           <span className="text-xs font-black opacity-70">PRESET:</span>
           <select
             value={presetId}
-            onChange={(e) => { void onPresetChange(e.target.value); }}
+            onChange={(e) => {
+              void onPresetChange(e.target.value);
+            }}
             className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
           >
             {PRESETS.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
             ))}
           </select>
           <span className="text-[11px] font-bold opacity-70 flex-1 min-w-[180px]">
             {PRESETS.find((p) => p.id === presetId)?.description}
           </span>
-          <span className="text-[11px] font-black" style={{ color: saving ? "var(--boom-red)" : "var(--boom-green)" }}>
+          <span
+            className="text-[11px] font-black"
+            style={{ color: saving ? "var(--boom-red)" : "var(--boom-green)" }}
+          >
             {saving ? "SAVING…" : "AUTO-SAVED"}
           </span>
         </div>
@@ -1441,13 +1737,21 @@ function CustomizeBoardModal({
             {exerciseCells.map((c) => {
               const o = draft[String(c.space)] ?? {};
               const tierBg =
-                c.type === "easy" ? "var(--boom-yellow)" :
-                c.type === "medium" ? "var(--boom-orange)" : "var(--boom-red)";
-              const unit: "reps" | "seconds" = (o.unit === "seconds" ? "seconds" : "reps");
+                c.type === "easy"
+                  ? "var(--boom-yellow)"
+                  : c.type === "medium"
+                    ? "var(--boom-orange)"
+                    : "var(--boom-red)";
+              const unit: "reps" | "seconds" = o.unit === "seconds" ? "seconds" : "reps";
               return (
-                <div key={c.space} className="ink-border-sm rounded-xl p-2 flex items-center gap-2 flex-wrap bg-white">
-                  <span className="rounded-lg px-2 py-1 text-xs font-black ink-border-sm"
-                    style={{ background: tierBg, color: c.type === "hard" ? "white" : "black" }}>
+                <div
+                  key={c.space}
+                  className="ink-border-sm rounded-xl p-2 flex items-center gap-2 flex-wrap bg-white"
+                >
+                  <span
+                    className="rounded-lg px-2 py-1 text-xs font-black ink-border-sm"
+                    style={{ background: tierBg, color: c.type === "hard" ? "white" : "black" }}
+                  >
                     Sp.{c.space} · {c.type.toUpperCase()}
                   </span>
                   <label className="flex-1 min-w-[140px] flex flex-col gap-0.5">
@@ -1464,9 +1768,14 @@ function CustomizeBoardModal({
                     <span className="text-[10px] font-black opacity-60">UNIT</span>
                     <button
                       type="button"
-                      onClick={() => update(c.space, { unit: unit === "reps" ? "seconds" : "reps" })}
+                      onClick={() =>
+                        update(c.space, { unit: unit === "reps" ? "seconds" : "reps" })
+                      }
                       className="ink-border-sm rounded-lg px-2 py-1 text-xs font-black"
-                      style={{ background: unit === "seconds" ? "var(--boom-blue)" : "white", color: unit === "seconds" ? "white" : "black" }}
+                      style={{
+                        background: unit === "seconds" ? "var(--boom-blue)" : "white",
+                        color: unit === "seconds" ? "white" : "black",
+                      }}
                     >
                       {unit === "seconds" ? "SEC" : "REPS"}
                     </button>
@@ -1478,7 +1787,11 @@ function CustomizeBoardModal({
                       min={1}
                       placeholder="auto"
                       value={o.reps ?? ""}
-                      onChange={(e) => update(c.space, { reps: e.target.value ? Number(e.target.value) : undefined })}
+                      onChange={(e) =>
+                        update(c.space, {
+                          reps: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
                       className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
                     />
                   </label>
@@ -1489,7 +1802,11 @@ function CustomizeBoardModal({
                       min={1}
                       placeholder="—"
                       value={o.min_reps ?? ""}
-                      onChange={(e) => update(c.space, { min_reps: e.target.value ? Number(e.target.value) : undefined })}
+                      onChange={(e) =>
+                        update(c.space, {
+                          min_reps: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
                       className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
                     />
                   </label>
@@ -1500,7 +1817,11 @@ function CustomizeBoardModal({
                       min={1}
                       placeholder="—"
                       value={o.max_reps ?? ""}
-                      onChange={(e) => update(c.space, { max_reps: e.target.value ? Number(e.target.value) : undefined })}
+                      onChange={(e) =>
+                        update(c.space, {
+                          max_reps: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
                       className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
                     />
                   </label>
@@ -1510,15 +1831,25 @@ function CustomizeBoardModal({
           </div>
         </div>
         <div className="flex justify-between gap-2 mt-3">
-          <button onClick={resetAll} className="ink-border-sm rounded-xl px-3 py-2 font-black text-sm">
+          <button
+            onClick={resetAll}
+            className="ink-border-sm rounded-xl px-3 py-2 font-black text-sm"
+          >
             RESET ALL
           </button>
           <div className="flex gap-2">
-            <button onClick={onClose} className="ink-border-sm rounded-xl px-3 py-2 font-black text-sm">
+            <button
+              onClick={onClose}
+              className="ink-border-sm rounded-xl px-3 py-2 font-black text-sm"
+            >
               CANCEL
             </button>
-            <button onClick={save} disabled={saving} className="btn-boom disabled:opacity-50"
-              style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            <button
+              onClick={save}
+              disabled={saving}
+              className="btn-boom disabled:opacity-50"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            >
               {saving ? "SAVING…" : "SAVE"}
             </button>
           </div>

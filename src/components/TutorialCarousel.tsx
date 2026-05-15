@@ -2,10 +2,30 @@ import { useEffect, useState } from "react";
 import { Smartphone, Tv, Bomb, Gavel } from "lucide-react";
 
 const SLIDES = [
-  { Icon: Smartphone, text: "YOUR PHONE IS THE REMOTE", sub: "scan or click to join the lobby", color: "var(--boom-yellow)" },
-  { Icon: Tv, text: "WATCH THE BIG SCREEN", sub: "tap roll on your phone to race your token across the map", color: "var(--boom-green)" },
-  { Icon: Bomb, text: "TRAPS = PARTY WORKOUTS", sub: "land on a BOOM for fun fitness challenges", color: "var(--boom-red)" },
-  { Icon: Gavel, text: "DON'T CHEAT", sub: "the previous player judges your form using the phone", color: "var(--boom-blue)" },
+  {
+    Icon: Smartphone,
+    text: "YOUR PHONE IS THE REMOTE",
+    sub: "scan or click to join the lobby",
+    color: "var(--boom-yellow)",
+  },
+  {
+    Icon: Tv,
+    text: "WATCH THE BIG SCREEN",
+    sub: "tap roll on your phone to race your token across the map",
+    color: "var(--boom-green)",
+  },
+  {
+    Icon: Bomb,
+    text: "TRAPS = PARTY WORKOUTS",
+    sub: "land on a BOOM for fun fitness challenges",
+    color: "var(--boom-red)",
+  },
+  {
+    Icon: Gavel,
+    text: "DON'T CHEAT",
+    sub: "the previous player judges your form using the phone",
+    color: "var(--boom-blue)",
+  },
 ];
 
 export function TutorialCarousel({ compact = false }: { compact?: boolean }) {

@@ -16,21 +16,23 @@ type Player = {
  * (placeholder for the upcoming team-color system).
  */
 export function GameStartReveal({ players }: { players: Player[] }) {
-  const teams = players.reduce<Array<{ id: string; name: string; color: string; members: Player[] }>>((acc, p) => {
-    const id = p.team_id ?? p.id;
-    let team = acc.find((t) => t.id === id);
-    if (!team) {
-      team = {
-        id,
-        name: p.team_id ? teamName(p.team_id) : p.username,
-        color: p.team_id ? teamColor(p.team_id) : playerColor(p.username),
-        members: [],
-      };
-      acc.push(team);
-    }
-    team.members.push(p);
-    return acc;
-  }, []).slice(0, 3);
+  const teams = players
+    .reduce<Array<{ id: string; name: string; color: string; members: Player[] }>>((acc, p) => {
+      const id = p.team_id ?? p.id;
+      let team = acc.find((t) => t.id === id);
+      if (!team) {
+        team = {
+          id,
+          name: p.team_id ? teamName(p.team_id) : p.username,
+          color: p.team_id ? teamColor(p.team_id) : playerColor(p.username),
+          members: [],
+        };
+        acc.push(team);
+      }
+      team.members.push(p);
+      return acc;
+    }, [])
+    .slice(0, 3);
   return (
     <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center gap-8 pointer-events-none bg-black/85 anim-mascot-pop">
       <div
@@ -47,7 +49,10 @@ export function GameStartReveal({ players }: { players: Player[] }) {
       <div className="flex flex-wrap items-stretch justify-center gap-6 max-w-[94vw]">
         {teams.map((team) => {
           return (
-            <div key={team.id} className="ink-border rounded-3xl bg-white px-5 py-4 flex flex-col items-center gap-3 anim-mascot-pop min-w-[13rem]">
+            <div
+              key={team.id}
+              className="ink-border rounded-3xl bg-white px-5 py-4 flex flex-col items-center gap-3 anim-mascot-pop min-w-[13rem]"
+            >
               <div className="relative" style={{ width: 132, height: 132 }}>
                 <img
                   src={bombMascot}
@@ -66,7 +71,11 @@ export function GameStartReveal({ players }: { players: Player[] }) {
               </div>
               <div
                 className="text-3xl font-black text-center leading-none"
-                style={{ fontFamily: "'Luckiest Guy', cursive", color: team.color, textShadow: "2px 2px 0 #000" }}
+                style={{
+                  fontFamily: "'Luckiest Guy', cursive",
+                  color: team.color,
+                  textShadow: "2px 2px 0 #000",
+                }}
               >
                 {team.name.toUpperCase()}
               </div>

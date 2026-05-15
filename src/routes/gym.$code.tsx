@@ -622,10 +622,20 @@ function GymBoard({ code }: { code: string }) {
   };
 
   return (
-    <div
-      onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
-      className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}
-    >
+    <>
+      <OrientationLock />
+      <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+        <div
+          className="relative bg-white shadow-2xl"
+          style={{
+            width: "min(100vw, calc(100vh * 16 / 9))",
+            height: "min(100vh, calc(100vw * 9 / 16))",
+          }}
+        >
+          <div
+            onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
+            className={`flex flex-col gap-4 relative w-full h-full ${inPlayMode ? "overflow-hidden p-2" : "overflow-y-auto p-6"}`}
+          >
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <div className="absolute top-2 right-2 z-40 flex items-center gap-2">

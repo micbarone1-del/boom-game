@@ -709,7 +709,7 @@ function PlayPage() {
         <button
           onClick={onRoll}
           disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at || isPaused}
-          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked && !isPaused ? "anim-roll-pulse" : ""}`}
+          className={`ink-border rounded-3xl p-5 text-3xl font-black flex flex-col items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed flex-1 min-h-0 ${isMyTurn && !rolling && !room?.locked && !isPaused ? "anim-roll-pulse" : ""}`}
           style={{
             background: isPaused
               ? "var(--muted)"
@@ -748,7 +748,7 @@ function PlayPage() {
         </button>
       )}
 
-      <div className="ink-border rounded-2xl bg-white p-3">
+      <div className="ink-border rounded-2xl bg-white p-3 shrink-0 max-h-[28vh] overflow-hidden">
         <h2 className="text-base font-black mb-2 flex items-center gap-2">
           <Trophy size={18} /> LIVE LEADERBOARD
         </h2>

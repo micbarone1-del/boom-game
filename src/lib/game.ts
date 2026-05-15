@@ -4,10 +4,36 @@ export const LANDING_SPLASH_MS = 3200;
 export const SEQUENCE_BUFFER_MS = 900;
 export const TRAP_REVEAL_MS = 1000;
 export const COUNTDOWN_LEAD_MS = 3000;
+/** Maximum seconds a player has to be defused before the bomb blows up. */
+export const TRAP_TIMEOUT_MS = 60_000;
+/** Maximum number of independent "slots" (solo player or team) on the board. */
+export const MAX_TEAMS = 3;
 
 export const EXERCISES_EASY = ["Jumping Jacks", "High Knees", "Sit-ups", "Crunches"];
 export const EXERCISES_MEDIUM = ["Squats", "Lunges", "Push-ups", "Mountain Climbers"];
 export const EXERCISES_HARD = ["Burpees", "Plank-Ups", "Jump Squats", "Pike Push-ups"];
+
+/** Unusual / silly combos used by CRAZY (?!) cells. */
+export const EXERCISES_CRAZY = [
+  "Spin & Burpee",
+  "Wheel & Pushup",
+  "Crab-Walk Pushups",
+  "Bear-Crawl Squats",
+  "Frog Jumps & Plank",
+  "Side-Roll Sit-ups",
+  "Donkey Kick Pushups",
+  "Inchworm Burpee",
+];
+
+/** Lighter exercises used by GROUP cells (everybody together). */
+export const EXERCISES_GROUP = [
+  "Jumping Jacks",
+  "High Knees",
+  "Air Squats",
+  "Wall Sit",
+  "Plank Hold",
+  "Marching In Place",
+];
 
 /** Hard caps so we never ask for crazy numbers like 56 burpees. */
 const REP_CAP: Record<1 | 2 | 3, number> = { 1: 20, 2: 14, 3: 10 };
@@ -17,9 +43,11 @@ export type CellType =
   | "easy"
   | "medium"
   | "hard"
-  | "rest"
   | "setback"
   | "boost"
+  | "surprise"
+  | "crazy"
+  | "group"
   | "finish";
 
 export type Cell = {

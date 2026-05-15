@@ -4,6 +4,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
 import { generateRoomCode, BOARD_SIZE, BOARD, HOP_MS, LANDING_SPLASH_MS, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
+import { TRAP_TIMEOUT_MS } from "@/lib/game";
+import { PRESETS, applyPreset } from "@/lib/presets";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";

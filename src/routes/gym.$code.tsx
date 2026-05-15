@@ -1002,23 +1002,14 @@ function GymBoard({ code }: { code: string }) {
       </div>
       )}
 
-      {/* Spotify lives only in lobby mode. Keep the iframe mounted (offscreen)
-          while playing so audio keeps playing without restarting. */}
-      <div
-        className={inPlayMode ? "fixed -left-[9999px] top-0 w-px h-px overflow-hidden pointer-events-none opacity-0" : ""}
-        aria-hidden={inPlayMode}
-      >
-        <SpotifyEmbed code={code} />
-      </div>
-
       {/* Tutorial — shown in lobby AND while paused. Invite lives in the header. */}
       {!inPlayMode && (
-      <div className="flex-1 min-h-0 grid grid-cols-12 gap-3">
+      <div className="flex-1 min-h-0 grid grid-cols-12 gap-3 overflow-hidden">
         <div className="col-span-5 flex flex-col gap-3 min-h-0">
-          <div className="shrink-0"><TutorialCarousel compact /></div>
+          <div className="flex-[1.1] min-h-0"><TutorialCarousel compact /></div>
           <div className="ink-border rounded-2xl bg-white p-3 flex-1 min-h-0 flex flex-col">
             <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0"><Trophy size={20} /> LIVE LEADERBOARD</h2>
-            <div className="grid gap-1 overflow-y-auto pr-1">
+            <div className="grid gap-1 overflow-hidden pr-1">
           {[...players]
             .sort((a, b) => {
               if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
@@ -1043,16 +1034,19 @@ function GymBoard({ code }: { code: string }) {
             </div>
           </div>
         </div>
-        <div className="col-span-7 ink-border rounded-2xl p-3 pt-5 bg-white flex gap-4 flex-wrap content-start overflow-y-auto">
+        <div className="col-span-7 ink-border rounded-2xl p-3 bg-white grid grid-cols-3 gap-3 content-start overflow-hidden">
         {players.length === 0 && (
-          <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
+          <div className="col-span-3 text-2xl font-black p-4 text-center" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+            Waiting for players to join… scan the QR!
+          </div>
         )}
         {[...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p) => {
           const isTurn = room?.current_turn_player_id === p.id;
           return (
             <div
               key={p.id}
-              className={`relative flex flex-col items-center gap-2 px-3 pt-2 ${isTurn ? "anim-shake" : ""}`}
+              className={`relative flex flex-col items-center justify-center gap-2 min-h-[8rem] rounded-2xl ${isTurn ? "anim-shake" : ""}`}
+              style={{ background: p.team_id ? `color-mix(in oklab, ${teamColor(p.team_id)} 22%, white)` : "white" }}
             >
               <button
                 onClick={async () => {
@@ -1066,11 +1060,12 @@ function GymBoard({ code }: { code: string }) {
                 className="absolute -top-2 -right-2 z-20 w-6 h-6 rounded-full bg-white ink-border-sm text-xs font-black leading-none flex items-center justify-center hover:bg-[var(--boom-red)] hover:text-white"
               >×</button>
               <div className="pt-2">
-                <PlayerToken avatar={p.avatar_url} username={p.username} size={56} active={isTurn} showName={false} showInitial />
+                <PlayerToken avatar={p.avatar_url} username={p.username} size={76} active={isTurn} showName={false} showInitial ringColor={p.team_id ? teamColor(p.team_id) : undefined} />
               </div>
-              <span className="text-xs font-black flex items-center gap-1 mt-1">
+              <span className="text-sm font-black flex items-center gap-1 mt-1 truncate max-w-full px-2">
                 {p.username}
               </span>
+              {p.team_id && <span className="text-[10px] font-black opacity-80">{teamName(p.team_id).toUpperCase()}</span>}
               <span className="text-[11px] font-black flex items-center gap-1 opacity-80">
                 {p.finished_at && <Trophy size={12} />}
                 {p.finished_at ? `#${p.finish_rank}` : `Sp.${p.current_space}`} · {p.score ?? 0}pts

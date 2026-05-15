@@ -1124,7 +1124,7 @@ function GymBoard({ code }: { code: string }) {
             >
               <Pause size={16} fill="currentColor" /> PAUSE
             </button>
-            {!isPaused && Date.now() >= trap.started_at && (
+            {!isPaused && Date.now() >= trap.started_at && players.length <= 1 && (
               <div className="mt-6">
                 <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
                   TEAM VERIFICATION

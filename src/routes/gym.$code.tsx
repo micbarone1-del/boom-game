@@ -1010,13 +1010,13 @@ function GymBoard({ code }: { code: string }) {
       </div>
 
       {/* Tutorial — shown in lobby AND while paused. Invite lives in the header. */}
-      {!inPlayMode && <TutorialCarousel compact />}
-
-      {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (
-      <div className="ink-border rounded-2xl bg-white p-3">
-        <h2 className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</h2>
-        <div className="grid gap-1">
+      <div className="flex-1 min-h-0 grid grid-cols-12 gap-3">
+        <div className="col-span-5 flex flex-col gap-3 min-h-0">
+          <div className="shrink-0"><TutorialCarousel compact /></div>
+          <div className="ink-border rounded-2xl bg-white p-3 flex-1 min-h-0 flex flex-col">
+            <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0"><Trophy size={20} /> LIVE LEADERBOARD</h2>
+            <div className="grid gap-1 overflow-y-auto pr-1">
           {[...players]
             .sort((a, b) => {
               if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
@@ -1038,13 +1038,10 @@ function GymBoard({ code }: { code: string }) {
                 </div>
               </div>
             ))}
+            </div>
+          </div>
         </div>
-      </div>
-      )}
-
-      {/* Players strip */}
-      {!inPlayMode && (
-      <div className="ink-border rounded-2xl p-3 pt-5 bg-white flex gap-6 overflow-x-auto">
+        <div className="col-span-7 ink-border rounded-2xl p-3 pt-5 bg-white flex gap-4 flex-wrap content-start overflow-y-auto">
         {players.length === 0 && (
           <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
         )}
@@ -1079,6 +1076,7 @@ function GymBoard({ code }: { code: string }) {
             </div>
           );
         })}
+        </div>
       </div>
       )}
 

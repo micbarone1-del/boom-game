@@ -478,12 +478,14 @@ function PlayPage() {
             username={me.username}
             size={56}
             active={isMyTurn}
+            ringColor={me.team_id ? teamColor(me.team_id) : undefined}
+            mascot
             className={rolling ? "anim-hop" : "anim-land"}
           />
         </div>
       </header>
 
-      <div className="ink-border rounded-2xl bg-white p-4 text-center">
+      <div className="ink-border rounded-2xl bg-white p-3 text-center shrink-0">
         <div className="text-sm font-bold opacity-70">YOU ARE ON SPACE</div>
         <div
           className="text-6xl font-black comic-shadow"
@@ -495,12 +497,12 @@ function PlayPage() {
           Fitness Lvl {me.fitness_level} · Difficulty x{room?.difficulty_multiplier ?? 5}
         </div>
         {me.team_id && (
-          <div className="mt-2 inline-flex items-center gap-2 ink-border-sm rounded-full px-3 py-1 text-xs font-black bg-white">
+          <div className="mt-1 inline-flex items-center gap-2 ink-border-sm rounded-full px-3 py-1 text-xs font-black bg-white">
             <span className="w-3 h-3 rounded-full" style={{ background: teamColor(me.team_id) }} />
             {teamName(me.team_id).toUpperCase()}
           </div>
         )}
-        <div className="mt-1 text-sm font-black">{describeCell(getCell(me.current_space))}</div>
+        <div className="mt-1 text-xs font-black truncate">{describeCell(getCell(me.current_space))}</div>
       </div>
 
       {isPaused && (

@@ -222,6 +222,25 @@ export function rollDice(): number {
 
 export const FINISH_BONUS = 250;
 
+/**
+ * The Rotating Judge: the player who took the previous turn (the one before
+ * the player who triggered the current trap). Skips finished players.
+ * Returns null when only the trigger player is active (solo mode) so the gym
+ * screen can still show the DEFUSED button itself.
+ */
+export function getJudgeId(
+  players: Array<{ id: string; joined_at: string; finished_at: string | null }>,
+  triggeredById: string,
+): string | null {
+  const order = [...players]
+    .filter((p) => !p.finished_at)
+    .sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+  if (order.length <= 1) return null;
+  const idx = order.findIndex((p) => p.id === triggeredById);
+  if (idx < 0) return null;
+  return order[(idx - 1 + order.length) % order.length].id;
+}
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**

@@ -13,6 +13,9 @@ import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { sfx } from "@/lib/sfx";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
+import { TutorialCarousel } from "@/components/TutorialCarousel";
+import { ShareLinkButton } from "@/components/ShareLinkButton";
+import { OrientationLock } from "@/components/OrientationLock";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -619,10 +622,20 @@ function GymBoard({ code }: { code: string }) {
   };
 
   return (
-    <div
-      onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
-      className={`flex flex-col gap-4 relative ${inPlayMode ? "h-screen overflow-hidden p-2" : "min-h-screen p-6"}`}
-    >
+    <>
+      <OrientationLock />
+      <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+        <div
+          className="relative bg-white shadow-2xl"
+          style={{
+            width: "min(100vw, calc(100vh * 16 / 9))",
+            height: "min(100vh, calc(100vw * 9 / 16))",
+          }}
+        >
+          <div
+            onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
+            className={`flex flex-col gap-4 relative w-full h-full ${inPlayMode ? "overflow-hidden p-2" : "overflow-y-auto p-6"}`}
+          >
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
         <div className="absolute top-2 right-2 z-40 flex items-center gap-2">
@@ -921,6 +934,23 @@ function GymBoard({ code }: { code: string }) {
         <SpotifyEmbed code={code} />
       </div>
 
+      {/* Tutorial + Share invite — visible in lobby AND while paused */}
+      {!inPlayMode && (
+        <div className="grid gap-3 md:grid-cols-[2fr_1fr]">
+          <TutorialCarousel />
+          <div className="ink-border rounded-3xl bg-white p-4 flex flex-col items-center justify-center gap-3 text-center">
+            <div
+              className="text-xl font-black"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+            >
+              INVITE YOUR CREW
+            </div>
+            <div className="text-xs font-bold opacity-70 break-all max-w-full">{joinUrl}</div>
+            <ShareLinkButton url={joinUrl} code={code} />
+          </div>
+        </div>
+      )}
+
       {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (
       <div className="ink-border rounded-2xl bg-white p-3">
@@ -1094,7 +1124,7 @@ function GymBoard({ code }: { code: string }) {
             >
               <Pause size={16} fill="currentColor" /> PAUSE
             </button>
-            {!isPaused && Date.now() >= trap.started_at && (
+            {!isPaused && Date.now() >= trap.started_at && players.length <= 1 && (
               <div className="mt-6">
                 <h2 className="text-xl font-black mb-3" style={{ color: "var(--boom-ink)" }}>
                   TEAM VERIFICATION
@@ -1248,6 +1278,9 @@ function GymBoard({ code }: { code: string }) {
       )}
       {/* countdown rendered inline inside the timer box */}
     </div>
+        </div>
+      </div>
+    </>
   );
 }
 

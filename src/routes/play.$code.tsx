@@ -19,12 +19,13 @@ import {
   getEffectiveCell,
   getOverrideReps,
   type BoardOverrides,
+  getJudgeId,
 } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
 import { CountdownIntro } from "@/components/CountdownIntro";
-import { Bomb, Dice5, Trophy, Camera, Pause } from "lucide-react";
+import { Bomb, Dice5, Trophy, Camera, Pause, Gavel } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
 // SFX intentionally not imported on the player UI — sound only plays on the
@@ -201,6 +202,45 @@ function PlayPage() {
 
   const isMyTurn = room?.current_turn_player_id === me.id;
   const triggeredByMe = trap?.triggered_by === me.id;
+  const judgeId = trap ? getJudgeId(players, trap.triggered_by) : null;
+  const iAmJudge = !!trap && judgeId === me.id && !triggeredByMe;
+  const triggerPlayer = trap ? players.find((p) => p.id === trap.triggered_by) : null;
+
+  const judgeDefuse = async () => {
+    if (!room || !trap || !triggerPlayer || isPaused) return;
+    const finalSpace = triggerPlayer.current_space;
+    if (finalSpace >= BOARD_SIZE) {
+      await finishPlayer(triggerPlayer.id, code);
+    }
+    const order = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+    const idx = order.findIndex((p) => p.id === triggerPlayer.id);
+    let next = order[(idx + 1) % order.length];
+    for (let i = 1; i <= order.length; i++) {
+      const candidate = order[(idx + i) % order.length];
+      if (candidate.finished_at) continue;
+      if (finalSpace >= BOARD_SIZE && candidate.id === triggerPlayer.id) continue;
+      next = candidate;
+      break;
+    }
+    await supabase.from("workout_logs").insert({
+      room_code: code,
+      player_id: triggerPlayer.id,
+      exercise_name: trap.exercise,
+      target_reps: trap.reps,
+      time_taken_ms: Date.now() - trap.started_at,
+      verified_by_judge: true,
+    });
+    await supabase
+      .from("rooms")
+      .update({
+        trap: null,
+        locked: false,
+        current_turn_player_id: next.id,
+        last_dice: null,
+      })
+      .eq("code", code);
+  };
+
   const roomPausedNow = async () => {
     if (pausedRef.current) return true;
     const { data } = await supabase.from("rooms").select("paused").eq("code", code).maybeSingle();
@@ -347,7 +387,69 @@ function PlayPage() {
         <div className="mt-1 text-sm font-black">{describeCell(getCell(me.current_space))}</div>
       </div>
 
-      {trap ? (() => {
+      {trap && iAmJudge ? (() => {
+        const anchor = trap.started_at;
+        const remaining = anchor - Date.now();
+        const ready = remaining <= 0;
+        return (
+          <div className="fixed inset-0 z-[70] bg-[var(--boom-ink)] text-white flex flex-col items-center justify-center p-6 gap-6 text-center">
+            <Gavel size={120} className="anim-shake" />
+            <div
+              className="font-black comic-shadow leading-none"
+              style={{
+                fontFamily: "'Luckiest Guy', cursive",
+                fontSize: "clamp(3rem, 12vw, 6rem)",
+                color: "var(--boom-yellow)",
+                textShadow: "5px 5px 0 #000",
+              }}
+            >
+              YOU ARE THE JUDGE
+            </div>
+            <div className="flex items-center gap-3">
+              <PlayerToken
+                avatar={triggerPlayer?.avatar_url ?? null}
+                username={triggerPlayer?.username ?? "?"}
+                size={72}
+                active
+                showName={false}
+                showInitial
+              />
+              <div className="text-left">
+                <div className="text-sm opacity-80 font-bold">JUDGING</div>
+                <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+                  {triggerPlayer?.username}
+                </div>
+                <div className="text-lg font-black" style={{ color: "var(--boom-red)" }}>
+                  {trap.reps} {trap.exercise}
+                </div>
+              </div>
+            </div>
+            <div className="ink-border rounded-2xl bg-white text-[var(--boom-ink)] px-8 py-5" style={{ borderColor: "var(--boom-yellow)", borderWidth: 8 }}>
+              {!ready ? (
+                <>
+                  <CountdownIntro startAt={anchor} inline />
+                  <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart />
+                </>
+              ) : (
+                <FuseTimer startedAt={anchor} big color="var(--boom-ink)" />
+              )}
+            </div>
+            {ready ? (
+              <button
+                onClick={judgeDefuse}
+                className="ink-border rounded-2xl px-10 py-6 text-4xl font-black comic-shadow active:scale-95 transition-transform"
+                style={{ background: "var(--boom-green)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+              >
+                DEFUSED
+              </button>
+            ) : (
+              <p className="text-lg font-bold opacity-80 max-w-sm">
+                Watch the form. The DEFUSED button unlocks when the timer starts.
+              </p>
+            )}
+          </div>
+        );
+      })() : trap ? (() => {
         const trapSpace = trap.space ?? players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0;
         const trapCellType = getCell(trapSpace).type;
         const cellColor =
@@ -421,7 +523,7 @@ function PlayPage() {
           {triggeredByMe ? (
             <p className="font-bold text-lg">Crush those reps — your team will judge you on the GYM SCREEN.</p>
           ) : (
-            <p className="font-bold text-lg">Head to the GYM SCREEN to vote DEFUSED or BLOW IT UP.</p>
+            <p className="font-bold text-lg">The Judge is verifying — sit tight!</p>
           )}
           </div>
         </div>

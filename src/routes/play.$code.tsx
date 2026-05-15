@@ -202,6 +202,45 @@ function PlayPage() {
 
   const isMyTurn = room?.current_turn_player_id === me.id;
   const triggeredByMe = trap?.triggered_by === me.id;
+  const judgeId = trap ? getJudgeId(players, trap.triggered_by) : null;
+  const iAmJudge = !!trap && judgeId === me.id && !triggeredByMe;
+  const triggerPlayer = trap ? players.find((p) => p.id === trap.triggered_by) : null;
+
+  const judgeDefuse = async () => {
+    if (!room || !trap || !triggerPlayer || isPaused) return;
+    const finalSpace = triggerPlayer.current_space;
+    if (finalSpace >= BOARD_SIZE) {
+      await finishPlayer(triggerPlayer.id, code);
+    }
+    const order = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+    const idx = order.findIndex((p) => p.id === triggerPlayer.id);
+    let next = order[(idx + 1) % order.length];
+    for (let i = 1; i <= order.length; i++) {
+      const candidate = order[(idx + i) % order.length];
+      if (candidate.finished_at) continue;
+      if (finalSpace >= BOARD_SIZE && candidate.id === triggerPlayer.id) continue;
+      next = candidate;
+      break;
+    }
+    await supabase.from("workout_logs").insert({
+      room_code: code,
+      player_id: triggerPlayer.id,
+      exercise_name: trap.exercise,
+      target_reps: trap.reps,
+      time_taken_ms: Date.now() - trap.started_at,
+      verified_by_judge: true,
+    });
+    await supabase
+      .from("rooms")
+      .update({
+        trap: null,
+        locked: false,
+        current_turn_player_id: next.id,
+        last_dice: null,
+      })
+      .eq("code", code);
+  };
+
   const roomPausedNow = async () => {
     if (pausedRef.current) return true;
     const { data } = await supabase.from("rooms").select("paused").eq("code", code).maybeSingle();

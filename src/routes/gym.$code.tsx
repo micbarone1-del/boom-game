@@ -664,6 +664,7 @@ function GymBoard({ code }: { code: string }) {
       time_taken_ms: Date.now() - trap.started_at,
       verified_by_judge: true,
     });
+    await recalcPlayerScore(triggerPlayer.id, code);
     await supabase
       .from("rooms")
       .update({

@@ -11,7 +11,7 @@ export type Room = {
   last_dice: number | null;
   status: string;
   paused?: boolean;
-  board_overrides: Record<string, { exercise?: string; reps?: number }> | null;
+  board_overrides: Record<string, { exercise?: string; reps?: number; min_reps?: number; max_reps?: number; unit?: "reps" | "seconds" }> | null;
 };
 
 export type Player = {
@@ -26,6 +26,8 @@ export type Player = {
   score: number;
   finished_at: string | null;
   finish_rank: number | null;
+  team_id?: string | null;
+  is_team_lead?: boolean | null;
 };
 
 export function useRoom(code: string | undefined) {

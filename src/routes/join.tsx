@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { savePlayerSession } from "@/lib/game";
+import { assignTeamForJoin, savePlayerSession } from "@/lib/game";
 import { Bomb, LogIn, LogOut, UserCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/join")({
@@ -138,7 +138,10 @@ function JoinPage() {
     setSubmitting(true);
     try {
       // verify room
-      const { data: room } = await supabase.from("rooms").select("code").eq("code", code).maybeSingle();
+      const [{ data: room }, { data: roomPlayers }] = await Promise.all([
+        supabase.from("rooms").select("code").eq("code", code).maybeSingle(),
+        supabase.from("players").select("id, fitness_level, joined_at, team_id, is_team_lead, current_space").eq("room_code", code).order("joined_at"),
+      ]);
       if (!room) { setError("Room not found. Check the code."); setSubmitting(false); return; }
 
       let avatar_url: string | null = savedAvatar;
@@ -169,8 +172,12 @@ function JoinPage() {
         }
       }
       if (!playerRowId) {
+        const team = assignTeamForJoin(roomPlayers ?? [], fitness);
         const { data: inserted, error: insErr } = await supabase.from("players").insert({
           room_code: code, username, fitness_level: fitness, avatar_url, user_id: userId,
+          team_id: team.team_id,
+          is_team_lead: team.is_team_lead,
+          current_space: team.current_space,
         }).select().single();
         if (insErr || !inserted) throw insErr || new Error("insert failed");
         playerRowId = inserted.id;

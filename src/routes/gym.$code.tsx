@@ -803,18 +803,6 @@ function GymBoard({ code }: { code: string }) {
             className={`flex flex-col gap-3 relative w-full h-full overflow-hidden ${inPlayMode ? "p-2" : "p-3"}`}
           >
             <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
-            {!inPlayMode && (
-              <div className="absolute top-2 right-2 z-40 flex items-center gap-2">
-                <SfxButton variant="white" />
-                <button
-                  onClick={() => setShowCustomize(true)}
-                  className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
-                  title="Customize exercises and reps"
-                >
-                  <Settings size={16} /> CUSTOMIZE
-                </button>
-              </div>
-            )}
             {inPlayMode ? (
               <header className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -827,6 +815,10 @@ function GymBoard({ code }: { code: string }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <div className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm leading-none flex flex-col items-center">
+                    <span className="text-[9px] opacity-70">TRAINING</span>
+                    <span style={{ color: "var(--boom-red)" }}>{trainingSelection.toUpperCase()}</span>
+                  </div>
                   <SfxButton />
                   {!isPaused && (
                     <button

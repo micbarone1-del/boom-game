@@ -5,7 +5,7 @@ export const SEQUENCE_BUFFER_MS = 900;
 export const TRAP_REVEAL_MS = 1000;
 export const COUNTDOWN_LEAD_MS = 3000;
 /** Maximum seconds a player has to be defused before the bomb blows up. */
-export const TRAP_TIMEOUT_MS = 60_000;
+export const TRAP_TIMEOUT_MS = 30_000;
 /** Maximum number of independent "slots" (solo player or team) on the board. */
 export const MAX_TEAMS = 3;
 
@@ -388,4 +388,22 @@ export function loadPlayerSession(): { roomCode: string; playerId: string } | nu
 
 export function clearPlayerSession() {
   if (typeof window !== "undefined") localStorage.removeItem(PLAYER_KEY);
+}
+
+/**
+ * Recompute a player's running score = sum of target_reps logged so far in
+ * this room. Called after every defuse so the leaderboard updates live
+ * (finishPlayer overwrites with the bonus-included final score on win).
+ */
+export async function recalcPlayerScore(playerId: string, roomCode: string) {
+  const { data: logs } = await supabase
+    .from("workout_logs")
+    .select("target_reps")
+    .eq("room_code", roomCode)
+    .eq("player_id", playerId);
+  const total = (logs ?? []).reduce(
+    (s, l: { target_reps: number | null }) => s + (l.target_reps ?? 0),
+    0,
+  );
+  await supabase.from("players").update({ score: total }).eq("id", playerId);
 }

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
-import { generateRoomCode, BOARD_SIZE, BOARD, HOP_MS, LANDING_SPLASH_MS, getCell, describeCell, finishPlayer, type Trap, type BoardOverrides } from "@/lib/game";
+import { generateRoomCode, BOARD_SIZE, BOARD, HOP_MS, LANDING_SPLASH_MS, getCell, describeCell, finishPlayer, recalcPlayerScore, type Trap, type BoardOverrides } from "@/lib/game";
 import { TRAP_TIMEOUT_MS } from "@/lib/game";
 import { PRESETS, applyPreset } from "@/lib/presets";
 import { PlayerToken } from "@/components/PlayerToken";
@@ -161,6 +161,21 @@ function GymBoard({ code }: { code: string }) {
   const prevTurnKeyRef = useRef<string | null>(null);
   const turnAnnounceRef = useRef<{ key: number } | null>(null);
   useEffect(() => { turnAnnounceRef.current = turnAnnounce ? { key: turnAnnounce.key } : null; }, [turnAnnounce]);
+  const turnAnnounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Hard safety: any time turnAnnounce is set, ensure it clears within 2.6s
+  // even if the effect that scheduled it never fires its cleanup (e.g. trap
+  // arrives mid-flight and unmounts the overlay logic).
+  useEffect(() => {
+    if (!turnAnnounce) return;
+    if (turnAnnounceTimerRef.current) clearTimeout(turnAnnounceTimerRef.current);
+    turnAnnounceTimerRef.current = setTimeout(() => setTurnAnnounce(null), 2600);
+    return () => {
+      if (turnAnnounceTimerRef.current) {
+        clearTimeout(turnAnnounceTimerRef.current);
+        turnAnnounceTimerRef.current = null;
+      }
+    };
+  }, [turnAnnounce]);
   // Per-player rendered space (animated hop-by-hop toward the real current_space).
   const [hopSpaces, setHopSpaces] = useState<Record<string, number>>({});
   const [hoppingIds, setHoppingIds] = useState<Set<string>>(new Set());
@@ -649,6 +664,7 @@ function GymBoard({ code }: { code: string }) {
       time_taken_ms: Date.now() - trap.started_at,
       verified_by_judge: true,
     });
+    await recalcPlayerScore(triggerPlayer.id, code);
     await supabase
       .from("rooms")
       .update({
@@ -726,24 +742,22 @@ function GymBoard({ code }: { code: string }) {
         </header>
       ) : (
       <header className="flex items-center justify-between flex-wrap gap-4">
-        <div className="absolute top-2 left-2 z-40 flex items-center gap-3">
+        <div className="flex items-center gap-3 pt-1">
           <img src={bombMascot} alt="" width={1024} height={1024} className="w-10 h-10" />
           <div>
             <div
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
-              className="text-4xl text-[var(--boom-red)] comic-shadow"
+              className="text-3xl text-[var(--boom-red)] comic-shadow leading-none"
             >
               BOOM!
             </div>
-            <div className="text-sm font-bold">Gym Screen</div>
+            <div className="text-xs font-bold">Gym Screen</div>
           </div>
-        </div>
-        <div className="ml-auto flex items-center gap-3 flex-wrap justify-end pt-10">
           {!gameHasStarted && (
             <button
               onClick={startGame}
               disabled={players.length === 0 || starting}
-              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-boom disabled:opacity-50 disabled:cursor-not-allowed py-2 px-4 text-base"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
             >
               {starting ? "IGNITING…" : "START GAME"}
@@ -753,7 +767,7 @@ function GymBoard({ code }: { code: string }) {
             <>
               <button
                 onClick={resumeGame}
-                className="btn-boom flex items-center gap-2"
+                className="btn-boom flex items-center gap-2 py-2 px-4 text-base"
                 style={{ fontFamily: "'Luckiest Guy', cursive" }}
               >
                 <Play size={20} fill="currentColor" /> PLAY
@@ -761,42 +775,43 @@ function GymBoard({ code }: { code: string }) {
               <button
                 onClick={restartGame}
                 disabled={restarting}
-                className="btn-boom disabled:opacity-50"
+                className="btn-boom disabled:opacity-50 py-2 px-4 text-base"
                 style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
               >
                 {restarting ? "BOOMING…" : "RESTART"}
               </button>
             </>
           )}
-          {!inPlayMode && (
-          <div className="ink-border-sm rounded-xl p-1.5 bg-white flex items-center gap-2">
-            <div className="flex flex-col">
-              <div className="text-[9px] font-bold leading-none">JOIN</div>
-              <div
-                className="text-base font-black tracking-wider leading-tight"
-                style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
-              >
-                {code}
-              </div>
-              <button
-                onClick={() => navigator.clipboard?.writeText(joinUrl)}
-                className="text-[8px] font-bold underline text-left"
-                title="Copy join link"
-              >
-                copy link
-              </button>
-            </div>
-            <button
-              onClick={() => setQrZoom(true)}
-              className="bg-white"
-              title="Tap to enlarge QR"
-              aria-label="Enlarge QR code to join this room"
-            >
-              <QRCodeSVG value={joinUrl} size={56} level="M" />
-            </button>
-          </div>
-          )}
         </div>
+        {/* Combined Invite + QR card — shown next to the action buttons in the lobby */}
+        {!inPlayMode && (
+        <div className="ink-border rounded-2xl bg-white p-2 flex items-center gap-3 ml-auto">
+          <div className="flex flex-col items-start gap-1 max-w-[180px]">
+            <div
+              className="text-base font-black leading-none"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+            >
+              INVITE YOUR CREW
+            </div>
+            <div className="text-[10px] font-bold opacity-70 break-all leading-tight">{joinUrl}</div>
+            <ShareLinkButton url={joinUrl} code={code} />
+            <div className="text-[9px] font-bold leading-none mt-1">
+              CODE:{" "}
+              <span style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+                {code}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => setQrZoom(true)}
+            className="bg-white"
+            title="Tap to enlarge QR"
+            aria-label="Enlarge QR code to join this room"
+          >
+            <QRCodeSVG value={joinUrl} size={84} level="M" />
+          </button>
+        </div>
+        )}
       </header>
       )}
       {qrZoom && (
@@ -849,8 +864,8 @@ function GymBoard({ code }: { code: string }) {
         {/* Snake board: 10-cell horizontal rows joined by single-cell vertical connectors */}
         <div className="flex flex-col gap-1.5 pt-6">
           {(() => {
-            const COLS = 10;
-            const LAP = 11; // 10 horizontal + 1 connector
+            const COLS = 15;
+            const LAP = 16; // 15 horizontal + 1 connector
             const rows: { space: number; col: number }[][] = [];
             for (let lap = 0; lap * LAP + 1 <= BOARD_SIZE; lap++) {
               const lapStart = lap * LAP + 1;
@@ -989,22 +1004,8 @@ function GymBoard({ code }: { code: string }) {
         <SpotifyEmbed code={code} />
       </div>
 
-      {/* Tutorial + Share invite — visible in lobby AND while paused */}
-      {!inPlayMode && (
-        <div className="grid gap-3 md:grid-cols-[2fr_1fr]">
-          <TutorialCarousel />
-          <div className="ink-border rounded-3xl bg-white p-4 flex flex-col items-center justify-center gap-3 text-center">
-            <div
-              className="text-xl font-black"
-              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
-            >
-              INVITE YOUR CREW
-            </div>
-            <div className="text-xs font-bold opacity-70 break-all max-w-full">{joinUrl}</div>
-            <ShareLinkButton url={joinUrl} code={code} />
-          </div>
-        </div>
-      )}
+      {/* Tutorial — shown in lobby AND while paused. Invite lives in the header. */}
+      {!inPlayMode && <TutorialCarousel compact />}
 
       {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (
@@ -1401,10 +1402,17 @@ function CustomizeBoardModal({
 
   const resetAll = () => setDraft({});
 
-  const applyPresetClick = () => {
-    const p = PRESETS.find((x) => x.id === presetId);
+  // Auto-apply + auto-save when a preset is picked: every exercise on the
+  // board updates instantly to match the chosen discipline.
+  const onPresetChange = async (id: string) => {
+    setPresetId(id);
+    const p = PRESETS.find((x) => x.id === id);
     if (!p) return;
-    setDraft(applyPreset(p));
+    const next = applyPreset(p);
+    setDraft(next);
+    setSaving(true);
+    await supabase.from("rooms").update({ board_overrides: next }).eq("code", code);
+    setSaving(false);
   };
 
   return (
@@ -1426,22 +1434,18 @@ function CustomizeBoardModal({
           <span className="text-xs font-black opacity-70">PRESET:</span>
           <select
             value={presetId}
-            onChange={(e) => setPresetId(e.target.value)}
+            onChange={(e) => { void onPresetChange(e.target.value); }}
             className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
           >
             {PRESETS.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <button
-            onClick={applyPresetClick}
-            className="ink-border-sm rounded-lg px-3 py-1 font-black text-sm"
-            style={{ background: "var(--boom-yellow)" }}
-          >
-            APPLY PRESET
-          </button>
           <span className="text-[11px] font-bold opacity-70 flex-1 min-w-[180px]">
             {PRESETS.find((p) => p.id === presetId)?.description}
+          </span>
+          <span className="text-[11px] font-black" style={{ color: saving ? "var(--boom-red)" : "var(--boom-green)" }}>
+            {saving ? "SAVING…" : "AUTO-SAVED"}
           </span>
         </div>
         <div className="flex-1 overflow-y-auto pr-1">

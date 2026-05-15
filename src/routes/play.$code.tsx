@@ -522,7 +522,7 @@ function PlayPage() {
           const remaining = anchor - Date.now();
           const ready = remaining <= 0;
           return (
-            <div className="fixed inset-0 z-[70] bg-[var(--boom-ink)] text-white flex flex-col items-center justify-center p-6 gap-6 text-center">
+            <div className="fixed inset-0 z-[70] bg-[var(--boom-ink)] text-white flex flex-col items-center justify-center p-6 gap-5 text-center overflow-hidden">
               <Gavel size={120} className="anim-shake" />
               <div
                 className="font-black comic-shadow leading-none"
@@ -543,6 +543,8 @@ function PlayPage() {
                   active
                   showName={false}
                   showInitial
+                  ringColor={triggerPlayer?.team_id ? teamColor(triggerPlayer.team_id) : undefined}
+                  mascot
                 />
                 <div className="text-left">
                   <div className="text-sm opacity-80 font-bold">JUDGING</div>
@@ -557,17 +559,18 @@ function PlayPage() {
                   </div>
                 </div>
               </div>
+              <WorkoutIllustration exercise={trap.exercise} color="var(--boom-yellow)" compact />
               <div
                 className="ink-border rounded-2xl bg-white text-[var(--boom-ink)] px-8 py-5"
                 style={{ borderColor: "var(--boom-yellow)", borderWidth: 8 }}
               >
                 {!ready ? (
                   <>
-                    <CountdownIntro startAt={anchor} inline />
-                    <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart />
+                    <CountdownIntro startAt={anchor} inline paused={isPaused} />
+                    <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart paused={isPaused} />
                   </>
                 ) : (
-                  <FuseTimer startedAt={anchor} big color="var(--boom-ink)" />
+                  <FuseTimer startedAt={anchor} big color="var(--boom-ink)" paused={isPaused} />
                 )}
               </div>
               {ready ? (

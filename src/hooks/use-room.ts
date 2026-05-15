@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Trap } from "@/lib/game";
 
 export type Room = {
   code: string;
@@ -7,7 +8,7 @@ export type Room = {
   difficulty_multiplier: number;
   current_turn_player_id: string | null;
   locked: boolean;
-  trap: any;
+  trap: Trap | null;
   last_dice: number | null;
   status: string;
   paused?: boolean;

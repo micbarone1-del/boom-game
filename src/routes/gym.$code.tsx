@@ -1303,13 +1303,14 @@ function CustomizeBoardModal({
 }) {
   const [draft, setDraft] = useState<BoardOverrides>(() => ({ ...overrides }));
   const [saving, setSaving] = useState(false);
+  const [presetId, setPresetId] = useState<string>("default");
   const exerciseCells = BOARD.filter(
     (c) => c.type === "easy" || c.type === "medium" || c.type === "hard",
   );
 
   const update = (
     space: number,
-    patch: { exercise?: string; reps?: number; min_reps?: number; max_reps?: number },
+    patch: { exercise?: string; reps?: number; min_reps?: number; max_reps?: number; unit?: "reps" | "seconds" },
   ) => {
     setDraft((prev) => {
       const cur = prev[String(space)] ?? {};
@@ -1326,18 +1327,20 @@ function CustomizeBoardModal({
       const reps = v.reps && v.reps > 0 ? Math.round(v.reps) : undefined;
       let min = v.min_reps && v.min_reps > 0 ? Math.round(v.min_reps) : undefined;
       let max = v.max_reps && v.max_reps > 0 ? Math.round(v.max_reps) : undefined;
+      const unit: "reps" | "seconds" | undefined = v.unit === "seconds" ? "seconds" : undefined;
       // If a fixed reps value is provided, drop the range — fixed wins.
       if (reps) { min = undefined; max = undefined; }
       // Normalise so min <= max when both are set.
       if (min !== undefined && max !== undefined && min > max) {
         const t = min; min = max; max = t;
       }
-      if (exercise || reps || min || max) {
+      if (exercise || reps || min || max || unit) {
         clean[k] = {
           ...(exercise ? { exercise } : {}),
           ...(reps ? { reps } : {}),
           ...(min ? { min_reps: min } : {}),
           ...(max ? { max_reps: max } : {}),
+          ...(unit ? { unit } : {}),
         };
       }
     }
@@ -1347,6 +1350,12 @@ function CustomizeBoardModal({
   };
 
   const resetAll = () => setDraft({});
+
+  const applyPresetClick = () => {
+    const p = PRESETS.find((x) => x.id === presetId);
+    if (!p) return;
+    setDraft(applyPreset(p));
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
@@ -1363,6 +1372,28 @@ function CustomizeBoardModal({
           range so a random number of reps is picked each time. Leave fields empty to keep the
           default (auto-scaled to each player's fitness level). FIXED beats MIN/MAX if both are set.
         </p>
+        <div className="flex flex-wrap items-center gap-2 mb-3 ink-border-sm rounded-xl p-2 bg-[var(--boom-cream)]">
+          <span className="text-xs font-black opacity-70">PRESET:</span>
+          <select
+            value={presetId}
+            onChange={(e) => setPresetId(e.target.value)}
+            className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
+          >
+            {PRESETS.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button
+            onClick={applyPresetClick}
+            className="ink-border-sm rounded-lg px-3 py-1 font-black text-sm"
+            style={{ background: "var(--boom-yellow)" }}
+          >
+            APPLY PRESET
+          </button>
+          <span className="text-[11px] font-bold opacity-70 flex-1 min-w-[180px]">
+            {PRESETS.find((p) => p.id === presetId)?.description}
+          </span>
+        </div>
         <div className="flex-1 overflow-y-auto pr-1">
           <div className="grid gap-2">
             {exerciseCells.map((c) => {
@@ -1370,6 +1401,7 @@ function CustomizeBoardModal({
               const tierBg =
                 c.type === "easy" ? "var(--boom-yellow)" :
                 c.type === "medium" ? "var(--boom-orange)" : "var(--boom-red)";
+              const unit: "reps" | "seconds" = (o.unit === "seconds" ? "seconds" : "reps");
               return (
                 <div key={c.space} className="ink-border-sm rounded-xl p-2 flex items-center gap-2 flex-wrap bg-white">
                   <span className="rounded-lg px-2 py-1 text-xs font-black ink-border-sm"
@@ -1385,6 +1417,17 @@ function CustomizeBoardModal({
                       onChange={(e) => update(c.space, { exercise: e.target.value })}
                       className="ink-border-sm rounded-lg px-2 py-1 text-sm font-bold bg-white text-black"
                     />
+                  </label>
+                  <label className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-black opacity-60">UNIT</span>
+                    <button
+                      type="button"
+                      onClick={() => update(c.space, { unit: unit === "reps" ? "seconds" : "reps" })}
+                      className="ink-border-sm rounded-lg px-2 py-1 text-xs font-black"
+                      style={{ background: unit === "seconds" ? "var(--boom-blue)" : "white", color: unit === "seconds" ? "white" : "black" }}
+                    >
+                      {unit === "seconds" ? "SEC" : "REPS"}
+                    </button>
                   </label>
                   <label className="w-20 flex flex-col gap-0.5">
                     <span className="text-[10px] font-black opacity-60">FIXED</span>

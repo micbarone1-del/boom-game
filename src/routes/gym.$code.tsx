@@ -865,26 +865,13 @@ function GymBoard({ code }: { code: string }) {
                     </button>
                   )}
                   {gameHasStarted && isPaused && (
-                    <>
-                      <button
-                        onClick={resumeGame}
-                        className="btn-boom flex items-center gap-2 py-3 px-5 text-lg ml-2"
-                        style={{ fontFamily: "'Luckiest Guy', cursive" }}
-                      >
-                        <Play size={20} fill="currentColor" /> PLAY
-                      </button>
-                      <button
-                        onClick={restartGame}
-                        disabled={restarting}
-                        className="btn-boom disabled:opacity-50 py-3 px-5 text-lg"
-                        style={{
-                          fontFamily: "'Luckiest Guy', cursive",
-                          background: "var(--boom-red)",
-                        }}
-                      >
-                        {restarting ? "BOOMING…" : "RESTART"}
-                      </button>
-                    </>
+                    <button
+                      onClick={resumeGame}
+                      className="btn-boom flex items-center gap-2 py-3 px-5 text-lg ml-2"
+                      style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                    >
+                      <Play size={20} fill="currentColor" /> PLAY
+                    </button>
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

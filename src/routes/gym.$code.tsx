@@ -19,6 +19,7 @@ import { TutorialCarousel } from "@/components/TutorialCarousel";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { OrientationLock } from "@/components/OrientationLock";
 import { ExplosionOverlay } from "@/components/ExplosionOverlay";
+import { GameStartReveal } from "@/components/GameStartReveal";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -897,9 +898,11 @@ function GymBoard({ code }: { code: string }) {
                     cell.type === "hard" ? "var(--boom-red)" :
                     cell.type === "boost" ? "var(--boom-green)" :
                     cell.type === "surprise" ? "#ec4899" :
-                    cell.type === "crazy" ? "#f97316" :
+                    cell.type === "crazy" ? "#22d3ee" :
                     cell.type === "group" ? "var(--boom-blue)" :
                     "#7c3aed";
+                  const isLight = cell.type === "start" || cell.type === "finish";
+                  const numColor = isLight ? "var(--boom-ink)" : "white";
                   return (
                     <div
                       key={space}
@@ -927,14 +930,14 @@ function GymBoard({ code }: { code: string }) {
                       )}
                       <span
                         className="font-black leading-none"
-                        style={{ color: "var(--boom-ink)", fontSize: "clamp(0.7rem, 22cqw, 1.75rem)" }}
+                        style={{ color: numColor, fontSize: "clamp(0.7rem, 22cqw, 1.75rem)" }}
                       >
                         {space}
                       </span>
-                      {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%]" />}
-                      {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%]" />}
+                      {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "hard" && <Flame className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "boost" && <Zap className="w-[60%] h-[60%]" />}
+                      {cell.type === "boost" && <Zap className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "setback" && <ArrowLeft className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "surprise" && <HelpCircle className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "crazy" && <AlertTriangle className="w-[60%] h-[60%] text-white" />}
@@ -982,7 +985,9 @@ function GymBoard({ code }: { code: string }) {
             { c: "var(--boom-yellow)", l: "Easy" },
             { c: "var(--boom-orange)", l: "Medium" },
             { c: "var(--boom-red)", l: "Hard" },
-            { c: "var(--boom-blue)", l: "Rest" },
+            { c: "#ec4899", l: "Surprise" },
+            { c: "#22d3ee", l: "Crazy" },
+            { c: "var(--boom-blue)", l: "All Together" },
             { c: "var(--boom-green)", l: "Blast +" },
             { c: "#7c3aed", l: "Setback −" },
           ].map((x) => (

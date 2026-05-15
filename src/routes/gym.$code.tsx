@@ -47,6 +47,7 @@ import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { OrientationLock } from "@/components/OrientationLock";
 import { ExplosionOverlay } from "@/components/ExplosionOverlay";
 import { GameStartReveal } from "@/components/GameStartReveal";
+import { WorkoutIllustration } from "@/components/WorkoutIllustration";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,

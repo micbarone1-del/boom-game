@@ -387,7 +387,69 @@ function PlayPage() {
         <div className="mt-1 text-sm font-black">{describeCell(getCell(me.current_space))}</div>
       </div>
 
-      {trap ? (() => {
+      {trap && iAmJudge ? (() => {
+        const anchor = trap.started_at;
+        const remaining = anchor - Date.now();
+        const ready = remaining <= 0;
+        return (
+          <div className="fixed inset-0 z-[70] bg-[var(--boom-ink)] text-white flex flex-col items-center justify-center p-6 gap-6 text-center">
+            <Gavel size={120} className="anim-shake" />
+            <div
+              className="font-black comic-shadow leading-none"
+              style={{
+                fontFamily: "'Luckiest Guy', cursive",
+                fontSize: "clamp(3rem, 12vw, 6rem)",
+                color: "var(--boom-yellow)",
+                textShadow: "5px 5px 0 #000",
+              }}
+            >
+              YOU ARE THE JUDGE
+            </div>
+            <div className="flex items-center gap-3">
+              <PlayerToken
+                avatar={triggerPlayer?.avatar_url ?? null}
+                username={triggerPlayer?.username ?? "?"}
+                size={72}
+                active
+                showName={false}
+                showInitial
+              />
+              <div className="text-left">
+                <div className="text-sm opacity-80 font-bold">JUDGING</div>
+                <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+                  {triggerPlayer?.username}
+                </div>
+                <div className="text-lg font-black" style={{ color: "var(--boom-red)" }}>
+                  {trap.reps} {trap.exercise}
+                </div>
+              </div>
+            </div>
+            <div className="ink-border rounded-2xl bg-white text-[var(--boom-ink)] px-8 py-5" style={{ borderColor: "var(--boom-yellow)", borderWidth: 8 }}>
+              {!ready ? (
+                <>
+                  <CountdownIntro startAt={anchor} inline />
+                  <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart />
+                </>
+              ) : (
+                <FuseTimer startedAt={anchor} big color="var(--boom-ink)" />
+              )}
+            </div>
+            {ready ? (
+              <button
+                onClick={judgeDefuse}
+                className="ink-border rounded-2xl px-10 py-6 text-4xl font-black comic-shadow active:scale-95 transition-transform"
+                style={{ background: "var(--boom-green)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+              >
+                DEFUSED
+              </button>
+            ) : (
+              <p className="text-lg font-bold opacity-80 max-w-sm">
+                Watch the form. The DEFUSED button unlocks when the timer starts.
+              </p>
+            )}
+          </div>
+        );
+      })() : trap ? (() => {
         const trapSpace = trap.space ?? players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0;
         const trapCellType = getCell(trapSpace).type;
         const cellColor =

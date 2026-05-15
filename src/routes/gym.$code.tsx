@@ -457,6 +457,51 @@ function GymBoard({ code }: { code: string }) {
     return () => clearInterval(i);
   }, [trap]);
 
+  // 60-second timeout: if a trap is still active 60s after the countdown
+  // ended, the bomb explodes — show overlay, send the active player back to
+  // start, clear the trap, and pass the turn to the next player.
+  const explosionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (explosionTimerRef.current) {
+      clearTimeout(explosionTimerRef.current);
+      explosionTimerRef.current = null;
+    }
+    if (!trap || !room || isPaused) return;
+    if (trap.kind === "group") return; // group cells don't explode
+    const deadline = trap.started_at + TRAP_TIMEOUT_MS;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return;
+    explosionTimerRef.current = setTimeout(async () => {
+      const triggered = players.find((p) => p.id === trap.triggered_by);
+      if (!triggered) return;
+      setExploding(true);
+      sfx.play("setback");
+      // Send player back to start.
+      await supabase.from("players").update({ current_space: 1 }).eq("id", triggered.id);
+      // Pick next turn (skip finished + the just-exploded one once).
+      const order = [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+      const idx = order.findIndex((p) => p.id === triggered.id);
+      let next = order[(idx + 1) % order.length];
+      for (let i = 1; i <= order.length; i++) {
+        const c = order[(idx + i) % order.length];
+        if (c.finished_at) continue;
+        next = c;
+        break;
+      }
+      await supabase
+        .from("rooms")
+        .update({ trap: null, locked: false, current_turn_player_id: next?.id ?? null })
+        .eq("code", code);
+      setTimeout(() => setExploding(false), 1800);
+    }, remaining);
+    return () => {
+      if (explosionTimerRef.current) {
+        clearTimeout(explosionTimerRef.current);
+        explosionTimerRef.current = null;
+      }
+    };
+  }, [trap, room, players, isPaused, code]);
+
   const resumeGame = async () => {
     void sfx.unlock();
     setPaused(false);

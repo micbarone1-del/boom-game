@@ -208,8 +208,6 @@ export function describeCell(cell: Cell): string {
       return "🚀 Start line";
     case "finish":
       return "🏆 FINISH!";
-    case "rest":
-      return "☕ Rest — skip your turn";
     case "boost":
       return cell.delta && cell.delta >= 10
         ? `🚀 MEGA BLAST +${cell.delta}!`
@@ -224,6 +222,12 @@ export function describeCell(cell: Cell): string {
       return `Medium: ${cell.exercise}`;
     case "hard":
       return `HARD: ${cell.exercise}`;
+    case "surprise":
+      return `❓ Surprise exercise!`;
+    case "crazy":
+      return `🤪 Crazy exercise!`;
+    case "group":
+      return `👥 Everybody together!`;
   }
 }
 
@@ -232,9 +236,11 @@ export const CELL_LABEL: Record<CellType, string> = {
   easy: "EASY",
   medium: "MED",
   hard: "HARD",
-  rest: "REST",
   setback: "BACK",
   boost: "BLAST",
+  surprise: "?",
+  crazy: "!?",
+  group: "ALL",
   finish: "FINISH",
 };
 

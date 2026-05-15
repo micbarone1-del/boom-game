@@ -13,7 +13,7 @@ export function ShareLinkButton({
   compact?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
-  const canShare = typeof navigator !== "undefined" && !!(navigator as any).share;
+  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const onShare = async () => {
     const shareData = {
@@ -23,7 +23,7 @@ export function ShareLinkButton({
     };
     try {
       if (canShare) {
-        await (navigator as any).share(shareData);
+        await navigator.share(shareData);
         return;
       }
     } catch {

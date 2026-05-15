@@ -363,6 +363,12 @@ export type Trap = {
   awaiting_verification?: boolean;
   /** The final board space the trap is anchored on (post-boost/setback). */
   space?: number;
+  /** Trap kind — defaults to a normal exercise trap. */
+  kind?: "exercise" | "surprise" | "crazy" | "group" | "vs";
+  /** "reps" (default) or "seconds" for time-based exercises. */
+  unit?: "reps" | "seconds";
+  /** For VS mode: the opponent player ids on the same space. */
+  vs_opponents?: string[];
 };
 
 const PLAYER_KEY = "boom.player";

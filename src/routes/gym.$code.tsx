@@ -1250,7 +1250,7 @@ function GymBoard({ code }: { code: string }) {
                       return (
                         <div
                           key={p.id}
-                          className={`relative flex flex-col items-center justify-center gap-2 min-h-[8rem] rounded-2xl ${isTurn ? "anim-shake" : ""}`}
+                          className={`relative flex flex-col items-center justify-center gap-1 min-h-0 rounded-2xl ${isTurn ? "anim-shake" : ""}`}
                           style={{
                             background: p.team_id
                               ? `color-mix(in oklab, ${teamColor(p.team_id)} 22%, white)`
@@ -1277,14 +1277,15 @@ function GymBoard({ code }: { code: string }) {
                             <PlayerToken
                               avatar={p.avatar_url}
                               username={p.username}
-                              size={76}
+                              size={54}
                               active={isTurn}
                               showName={false}
                               showInitial
                               ringColor={p.team_id ? teamColor(p.team_id) : undefined}
+                              mascot
                             />
                           </div>
-                          <span className="text-sm font-black flex items-center gap-1 mt-1 truncate max-w-full px-2">
+                          <span className="text-xs font-black flex items-center gap-1 mt-1 truncate max-w-full px-2">
                             {p.username}
                           </span>
                           {p.team_id && (

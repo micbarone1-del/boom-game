@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Shows a big 3-2-1 countdown until `startAt` (epoch ms). Renders nothing once
@@ -10,18 +10,28 @@ export function CountdownIntro({
   color = "var(--boom-red)",
   align = "center",
   inline = false,
+  paused = false,
 }: {
   startAt: number;
   color?: string;
   align?: "center" | "right";
   inline?: boolean;
+  paused?: boolean;
 }) {
   const [now, setNow] = useState(Date.now());
+  const frozenNowRef = useRef<number | null>(null);
   useEffect(() => {
+    if (paused) {
+      frozenNowRef.current = Date.now();
+      setNow(frozenNowRef.current);
+      return;
+    }
+    frozenNowRef.current = null;
     const i = setInterval(() => setNow(Date.now()), 100);
     return () => clearInterval(i);
-  }, []);
-  const remaining = startAt - now;
+  }, [paused]);
+  const displayNow = paused && frozenNowRef.current ? frozenNowRef.current : now;
+  const remaining = startAt - displayNow;
   if (remaining <= 0) return null;
   // Only show the 3-2-1 numbers in the final 3.5s before start, regardless of
   // how far in the future the anchor is. This lets the host pad the anchor

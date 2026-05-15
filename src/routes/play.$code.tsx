@@ -297,7 +297,7 @@ function PlayPage() {
     }
     // The "start" cell is not a real landing spot — if a roll or setback would
     // park you on it, nudge forward one space so play doesn't stall.
-    let finalCellPeek = getEffectiveCell(final, overrides);
+    const finalCellPeek = getEffectiveCell(final, overrides);
     if (finalCellPeek.type === "start") {
       final = Math.min(BOARD_SIZE, final + 1);
     }

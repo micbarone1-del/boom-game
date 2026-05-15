@@ -267,8 +267,9 @@ function PlayPage() {
 
   const roomPausedNow = async () => {
     if (pausedRef.current) return true;
-    const { data } = await supabase.from("rooms").select("paused").eq("code", code).maybeSingle();
-    return !!(data as { paused?: boolean } | null)?.paused;
+    const { data } = await supabase.from("rooms").select("paused,locked").eq("code", code).maybeSingle();
+    const live = data as { paused?: boolean; locked?: boolean } | null;
+    return !!live?.paused || !!live?.locked;
   };
 
   const onRoll = async () => {

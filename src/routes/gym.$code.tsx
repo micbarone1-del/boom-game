@@ -1362,9 +1362,12 @@ function GymBoard({ code }: { code: string }) {
                         ? "EVERYBODY IS DOING THIS!"
                         : `${players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!`}
                   </p>
-                  <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
-                    Do {trap.reps} {trap.exercise}!
-                  </p>
+                  <div className="mt-2 flex items-center justify-center gap-4">
+                    <WorkoutIllustration exercise={trap.exercise} color="var(--boom-red)" compact />
+                    <p className="text-3xl font-black" style={{ color: "var(--boom-red)" }}>
+                      Do {trap.reps} {trap.exercise}!
+                    </p>
+                  </div>
                   {(() => {
                     const trapCellType =
                       trap.kind === "vs"
@@ -1418,12 +1421,13 @@ function GymBoard({ code }: { code: string }) {
                             </div>
                           ) : (
                             <>
-                              <CountdownIntro startAt={effectiveStart} inline />
+                              <CountdownIntro startAt={effectiveStart} inline paused={isPaused} />
                               <FuseTimer
                                 startedAt={effectiveStart}
                                 big
                                 color="var(--boom-ink)"
                                 hideBeforeStart
+                                paused={isPaused}
                               />
                             </>
                           )}

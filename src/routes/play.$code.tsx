@@ -456,9 +456,11 @@ function PlayPage() {
           trapCellType === "easy" ? "var(--boom-yellow)" :
           trapCellType === "medium" ? "var(--boom-orange)" :
           trapCellType === "hard" ? "var(--boom-red)" :
-          trapCellType === "rest" ? "var(--boom-blue)" :
           trapCellType === "boost" ? "var(--boom-green)" :
           trapCellType === "setback" ? "#7c3aed" :
+          trapCellType === "surprise" ? "#ec4899" :
+          trapCellType === "crazy" ? "#f97316" :
+          trapCellType === "group" ? "var(--boom-blue)" :
           "var(--boom-yellow)";
         return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 overflow-y-auto">

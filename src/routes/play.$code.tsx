@@ -21,7 +21,7 @@ import {
   type BoardOverrides,
   getJudgeId,
 } from "@/lib/game";
-import { pickSurpriseExercise, pickCrazyExercise, pickGroupExercise, getCellUnit } from "@/lib/game";
+import { pickSurpriseExercise, pickCrazyExercise, pickGroupExercise, getCellUnit, recalcPlayerScore } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
@@ -231,6 +231,7 @@ function PlayPage() {
       time_taken_ms: Date.now() - trap.started_at,
       verified_by_judge: true,
     });
+    await recalcPlayerScore(triggerPlayer.id, code);
     await supabase
       .from("rooms")
       .update({
@@ -305,6 +306,7 @@ function PlayPage() {
       const calc = calcRepsForTier(tier, me.fitness_level, room.difficulty_multiplier);
       const reps = getOverrideReps(final, overrides, calc) ?? calc;
       const exercise = finalCell.exercise ?? "Workout";
+      const unit = getCellUnit(final, overrides);
       await supabase
         .from("rooms")
         .update({
@@ -319,6 +321,37 @@ function PlayPage() {
             // Then every screen gets a short reveal before the shared 3-2-1.
             started_at: Date.now() + TRAP_REVEAL_MS + COUNTDOWN_LEAD_MS,
             awaiting_verification: false,
+            kind: "exercise",
+            unit,
+          } satisfies Trap,
+        })
+        .eq("code", code);
+    } else if (
+      finalCell.type === "surprise" ||
+      finalCell.type === "crazy" ||
+      finalCell.type === "group"
+    ) {
+      const pick =
+        finalCell.type === "surprise"
+          ? pickSurpriseExercise(overrides)
+          : finalCell.type === "crazy"
+          ? pickCrazyExercise()
+          : pickGroupExercise();
+      const reps = calcRepsForTier(pick.tier, me.fitness_level, room.difficulty_multiplier);
+      await supabase
+        .from("rooms")
+        .update({
+          locked: true,
+          last_dice: dice,
+          trap: {
+            exercise: pick.exercise,
+            reps,
+            triggered_by: me.id,
+            space: final,
+            started_at: Date.now() + TRAP_REVEAL_MS + COUNTDOWN_LEAD_MS,
+            awaiting_verification: false,
+            kind: finalCell.type,
+            unit: "reps",
           } satisfies Trap,
         })
         .eq("code", code);

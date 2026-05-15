@@ -1126,7 +1126,9 @@ function GymBoard({ code }: { code: string }) {
               BOOM!
             </div>
             <p className="text-2xl font-black mt-2">
-              {players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!
+              {trap.kind === "group"
+                ? "EVERYBODY IS DOING THIS!"
+                : `${players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!`}
             </p>
             <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
               Do {trap.reps} {trap.exercise}!

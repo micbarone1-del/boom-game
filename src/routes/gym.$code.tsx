@@ -15,6 +15,7 @@ import {
   recalcPlayerScore,
   teamColor,
   teamName,
+  getTrainingSelection,
   type Trap,
   type BoardOverrides,
 } from "@/lib/game";
@@ -46,6 +47,7 @@ import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { OrientationLock } from "@/components/OrientationLock";
 import { ExplosionOverlay } from "@/components/ExplosionOverlay";
 import { GameStartReveal } from "@/components/GameStartReveal";
+import { WorkoutIllustration } from "@/components/WorkoutIllustration";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -252,6 +254,8 @@ function GymBoard({ code }: { code: string }) {
   const isPaused = !!room?.paused || paused;
   // Full-screen play mode shows only the board; lobby mode shows QR/Spotify/leaderboard/players.
   const inPlayMode = gameHasStarted && !isPaused;
+  const boardOverrides = (room?.board_overrides ?? {}) as BoardOverrides;
+  const trainingSelection = getTrainingSelection(boardOverrides);
 
   useEffect(() => {
     if (isPaused && pauseStartedAtRef.current === null) pauseStartedAtRef.current = Date.now();
@@ -799,18 +803,6 @@ function GymBoard({ code }: { code: string }) {
             className={`flex flex-col gap-3 relative w-full h-full overflow-hidden ${inPlayMode ? "p-2" : "p-3"}`}
           >
             <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
-            {!inPlayMode && (
-              <div className="absolute top-2 right-2 z-40 flex items-center gap-2">
-                <SfxButton variant="white" />
-                <button
-                  onClick={() => setShowCustomize(true)}
-                  className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
-                  title="Customize exercises and reps"
-                >
-                  <Settings size={16} /> CUSTOMIZE
-                </button>
-              </div>
-            )}
             {inPlayMode ? (
               <header className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -823,6 +815,12 @@ function GymBoard({ code }: { code: string }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <div className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm leading-none flex flex-col items-center">
+                    <span className="text-[9px] opacity-70">TRAINING</span>
+                    <span style={{ color: "var(--boom-red)" }}>
+                      {trainingSelection.toUpperCase()}
+                    </span>
+                  </div>
                   <SfxButton />
                   {!isPaused && (
                     <button
@@ -840,8 +838,8 @@ function GymBoard({ code }: { code: string }) {
                 </div>
               </header>
             ) : (
-              <header className="grid grid-cols-[minmax(19rem,1fr)_minmax(28rem,0.95fr)] items-center gap-3 pr-44 shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
+              <header className="flex items-center justify-between gap-3 shrink-0 min-h-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <img
                     src={bombMascot}
                     alt=""
@@ -869,64 +867,38 @@ function GymBoard({ code }: { code: string }) {
                     </button>
                   )}
                   {gameHasStarted && isPaused && (
-                    <>
-                      <button
-                        onClick={resumeGame}
-                        className="btn-boom flex items-center gap-2 py-3 px-5 text-lg ml-2"
-                        style={{ fontFamily: "'Luckiest Guy', cursive" }}
-                      >
-                        <Play size={20} fill="currentColor" /> PLAY
-                      </button>
-                      <button
-                        onClick={restartGame}
-                        disabled={restarting}
-                        className="btn-boom disabled:opacity-50 py-3 px-5 text-lg"
-                        style={{
-                          fontFamily: "'Luckiest Guy', cursive",
-                          background: "var(--boom-red)",
-                        }}
-                      >
-                        {restarting ? "BOOMING…" : "RESTART"}
-                      </button>
-                    </>
+                    <button
+                      onClick={resumeGame}
+                      className="btn-boom flex items-center gap-2 py-3 px-5 text-lg ml-2"
+                      style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                    >
+                      <Play size={20} fill="currentColor" /> PLAY
+                    </button>
                   )}
                 </div>
-                {/* Combined Invite + QR card — shown next to the action buttons in the lobby */}
-                {!inPlayMode && (
-                  <div className="ink-border rounded-2xl bg-white p-2 flex items-center justify-between gap-3 min-w-0">
-                    <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
-                      <div
-                        className="text-2xl font-black leading-none"
-                        style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
-                      >
-                        INVITE YOUR CREW
-                      </div>
-                      <div className="text-[10px] font-bold opacity-70 truncate leading-tight max-w-full">
-                        {joinUrl}
-                      </div>
-                      <ShareLinkButton url={joinUrl} code={code} compact />
-                      <div className="text-xs font-bold leading-none mt-1">
-                        CODE:{" "}
-                        <span
-                          style={{
-                            fontFamily: "'Luckiest Guy', cursive",
-                            color: "var(--boom-red)",
-                          }}
-                        >
-                          {code}
-                        </span>
-                      </div>
-                    </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {gameHasStarted && (
                     <button
-                      onClick={() => setQrZoom(true)}
-                      className="bg-white"
-                      title="Tap to enlarge QR"
-                      aria-label="Enlarge QR code to join this room"
+                      onClick={restartGame}
+                      disabled={restarting}
+                      className="btn-boom disabled:opacity-50 py-3 px-4 text-base"
+                      style={{
+                        fontFamily: "'Luckiest Guy', cursive",
+                        background: "var(--boom-red)",
+                      }}
                     >
-                      <QRCodeSVG value={joinUrl} size={96} level="M" />
+                      {restarting ? "BOOMING…" : "RESTART"}
                     </button>
-                  </div>
-                )}
+                  )}
+                  <SfxButton variant="white" />
+                  <button
+                    onClick={() => setShowCustomize(true)}
+                    className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-1"
+                    title="Customize exercises and reps"
+                  >
+                    <Settings size={16} /> CUSTOMIZE
+                  </button>
+                </div>
               </header>
             )}
             {qrZoom && (
@@ -1131,6 +1103,7 @@ function GymBoard({ code }: { code: string }) {
                                             showName={false}
                                             showInitial
                                             ringColor={p.team_id ? teamColor(p.team_id) : undefined}
+                                            mascot
                                             className={isHopping ? "anim-hop" : "anim-land"}
                                           />
                                         </div>
@@ -1176,59 +1149,85 @@ function GymBoard({ code }: { code: string }) {
               </div>
             )}
 
-            {/* Tutorial — shown in lobby AND while paused. Invite lives in the header. */}
+            {/* Four-quadrant lobby / pause screen */}
             {!inPlayMode && (
-              <div className="flex-1 min-h-0 grid grid-cols-12 gap-3 overflow-hidden">
-                <div className="col-span-5 flex flex-col gap-3 min-h-0">
-                  <div className="flex-[1.1] min-h-0">
-                    <TutorialCarousel compact />
-                  </div>
-                  <div className="ink-border rounded-2xl bg-white p-3 flex-1 min-h-0 flex flex-col">
-                    <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0">
-                      <Trophy size={20} /> LIVE LEADERBOARD
-                    </h2>
-                    <div className="grid gap-1 overflow-hidden pr-1">
-                      {[...players]
-                        .sort((a, b) => {
-                          if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
-                          if (a.finish_rank) return -1;
-                          if (b.finish_rank) return 1;
-                          return (
-                            (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space
-                          );
-                        })
-                        .map((p, i) => (
-                          <div
-                            key={p.id}
-                            className="flex items-center justify-between gap-3 px-2 py-1 rounded-lg"
-                            style={{ background: i === 0 ? "var(--boom-yellow)" : "transparent" }}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="text-xl font-black w-6"
-                                style={{ fontFamily: "'Luckiest Guy', cursive" }}
-                              >
-                                {i + 1}
-                              </span>
-                              <PlayerToken
-                                avatar={p.avatar_url}
-                                username={p.username}
-                                size={28}
-                                showName={false}
-                              />
-                              <span className="text-sm font-black">{p.username}</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs font-black">
-                              <span>Sp.{p.current_space}</span>
-                              <span style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
-                              {p.finished_at && <Trophy size={14} />}
-                            </div>
-                          </div>
-                        ))}
+              <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-3 overflow-hidden">
+                <div className="min-h-0">
+                  <TutorialCarousel compact showDots={false} />
+                </div>
+                <div className="ink-border rounded-2xl bg-white p-3 min-h-0 flex items-center justify-between gap-3 overflow-hidden">
+                  <div className="flex flex-col items-start gap-2 min-w-0 flex-1">
+                    <div
+                      className="text-4xl font-black leading-none"
+                      style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+                    >
+                      INVITE YOUR CREW
+                    </div>
+                    <div className="text-xs font-bold opacity-70 truncate leading-tight max-w-full">
+                      {joinUrl}
+                    </div>
+                    <ShareLinkButton url={joinUrl} code={code} compact />
+                    <div className="text-lg font-bold leading-none mt-1">
+                      CODE:{" "}
+                      <span
+                        style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+                      >
+                        {code}
+                      </span>
                     </div>
                   </div>
+                  <button
+                    onClick={() => setQrZoom(true)}
+                    className="bg-white shrink-0"
+                    title="Tap to enlarge QR"
+                    aria-label="Enlarge QR code to join this room"
+                  >
+                    <QRCodeSVG value={joinUrl} size={150} level="M" />
+                  </button>
                 </div>
-                <div className="col-span-7 ink-border rounded-2xl p-3 bg-white grid grid-cols-3 gap-3 content-start overflow-hidden">
+                <div className="ink-border rounded-2xl bg-white p-3 min-h-0 flex flex-col overflow-hidden">
+                  <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0">
+                    <Trophy size={20} /> LIVE LEADERBOARD
+                  </h2>
+                  <div className="grid gap-1 overflow-hidden pr-1">
+                    {[...players]
+                      .sort((a, b) => {
+                        if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+                        if (a.finish_rank) return -1;
+                        if (b.finish_rank) return 1;
+                        return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
+                      })
+                      .map((p, i) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between gap-3 px-2 py-1 rounded-lg"
+                          style={{ background: i === 0 ? "var(--boom-yellow)" : "transparent" }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="text-xl font-black w-6"
+                              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                            >
+                              {i + 1}
+                            </span>
+                            <PlayerToken
+                              avatar={p.avatar_url}
+                              username={p.username}
+                              size={28}
+                              showName={false}
+                            />
+                            <span className="text-sm font-black">{p.username}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs font-black">
+                            <span>Sp.{p.current_space}</span>
+                            <span style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
+                            {p.finished_at && <Trophy size={14} />}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+                <div className="ink-border rounded-2xl p-3 bg-white grid grid-cols-3 gap-2 content-start overflow-hidden min-h-0">
                   {players.length === 0 && (
                     <div
                       className="col-span-3 text-2xl font-black p-4 text-center"
@@ -1244,7 +1243,7 @@ function GymBoard({ code }: { code: string }) {
                       return (
                         <div
                           key={p.id}
-                          className={`relative flex flex-col items-center justify-center gap-2 min-h-[8rem] rounded-2xl ${isTurn ? "anim-shake" : ""}`}
+                          className={`relative flex flex-col items-center justify-center gap-1 min-h-0 rounded-2xl ${isTurn ? "anim-shake" : ""}`}
                           style={{
                             background: p.team_id
                               ? `color-mix(in oklab, ${teamColor(p.team_id)} 22%, white)`
@@ -1271,14 +1270,15 @@ function GymBoard({ code }: { code: string }) {
                             <PlayerToken
                               avatar={p.avatar_url}
                               username={p.username}
-                              size={76}
+                              size={54}
                               active={isTurn}
                               showName={false}
                               showInitial
                               ringColor={p.team_id ? teamColor(p.team_id) : undefined}
+                              mascot
                             />
                           </div>
-                          <span className="text-sm font-black flex items-center gap-1 mt-1 truncate max-w-full px-2">
+                          <span className="text-xs font-black flex items-center gap-1 mt-1 truncate max-w-full px-2">
                             {p.username}
                           </span>
                           {p.team_id && (
@@ -1354,9 +1354,12 @@ function GymBoard({ code }: { code: string }) {
                         ? "EVERYBODY IS DOING THIS!"
                         : `${players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!`}
                   </p>
-                  <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
-                    Do {trap.reps} {trap.exercise}!
-                  </p>
+                  <div className="mt-2 flex items-center justify-center gap-4">
+                    <WorkoutIllustration exercise={trap.exercise} color="var(--boom-red)" compact />
+                    <p className="text-3xl font-black" style={{ color: "var(--boom-red)" }}>
+                      Do {trap.reps} {trap.exercise}!
+                    </p>
+                  </div>
                   {(() => {
                     const trapCellType =
                       trap.kind === "vs"
@@ -1410,12 +1413,13 @@ function GymBoard({ code }: { code: string }) {
                             </div>
                           ) : (
                             <>
-                              <CountdownIntro startAt={effectiveStart} inline />
+                              <CountdownIntro startAt={effectiveStart} inline paused={isPaused} />
                               <FuseTimer
                                 startedAt={effectiveStart}
                                 big
                                 color="var(--boom-ink)"
                                 hideBeforeStart
+                                paused={isPaused}
                               />
                             </>
                           )}
@@ -1639,6 +1643,10 @@ function CustomizeBoardModal({
     // strip empty entries
     const clean: BoardOverrides = {};
     for (const [k, v] of Object.entries(draft)) {
+      if (k === "__preset" && v.preset_id) {
+        clean[k] = { preset_id: v.preset_id };
+        continue;
+      }
       const exercise = v.exercise?.trim();
       const reps = v.reps && v.reps > 0 ? Math.round(v.reps) : undefined;
       let min = v.min_reps && v.min_reps > 0 ? Math.round(v.min_reps) : undefined;

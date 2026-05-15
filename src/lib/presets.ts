@@ -96,7 +96,7 @@ export const PRESETS: TrainingPreset[] = [
 
 /** Apply a preset on top of the default board, returning a fresh BoardOverrides. */
 export function applyPreset(preset: TrainingPreset): BoardOverrides {
-  const overrides: BoardOverrides = {};
+  const overrides: BoardOverrides = { __preset: { preset_id: preset.id } };
   let easyIdx = 0,
     mediumIdx = 0,
     hardIdx = 0;

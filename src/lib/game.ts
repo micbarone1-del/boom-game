@@ -206,6 +206,7 @@ export function getCell(space: number): Cell {
 export type BoardOverrides = Record<
   string,
   {
+    preset_id?: string;
     exercise?: string;
     reps?: number;
     min_reps?: number;
@@ -223,6 +224,24 @@ export function getEffectiveCell(space: number, overrides?: BoardOverrides | nul
     return { ...base, exercise: o.exercise ?? base.exercise };
   }
   return base;
+}
+
+export function getTrainingSelection(overrides?: BoardOverrides | null): string {
+  const preset = overrides?.__preset?.preset_id;
+  if (!preset) return Object.keys(overrides ?? {}).length > 0 ? "Custom" : "Default";
+  return preset
+    .split("-")
+    .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export function resolveMovementLanding(space: number, movement: "boost" | "setback"): number {
+  let final = Math.max(1, Math.min(BOARD_SIZE, space));
+  const blocked: CellType[] = movement === "boost" ? ["setback"] : ["boost"];
+  while (final > 1 && final < BOARD_SIZE && blocked.includes(getCell(final).type)) {
+    final += movement === "boost" ? 1 : -1;
+  }
+  return Math.max(1, Math.min(BOARD_SIZE, final));
 }
 
 /** Returns the unit (reps or seconds) for an exercise cell, defaulting to reps. */

@@ -28,7 +28,7 @@ const SLIDES = [
   },
 ];
 
-export function TutorialCarousel({ compact = false }: { compact?: boolean }) {
+export function TutorialCarousel({ compact = false, showDots = true }: { compact?: boolean; showDots?: boolean }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setI((n) => (n + 1) % SLIDES.length), 4000);
@@ -67,15 +67,17 @@ export function TutorialCarousel({ compact = false }: { compact?: boolean }) {
           </div>
         );
       })}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {SLIDES.map((_, idx) => (
-          <span
-            key={idx}
-            className="w-2 h-2 rounded-full ink-border-sm"
-            style={{ background: idx === i ? "var(--boom-ink)" : "white" }}
-          />
-        ))}
-      </div>
+      {showDots && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {SLIDES.map((_, idx) => (
+            <span
+              key={idx}
+              className="w-2 h-2 rounded-full ink-border-sm"
+              style={{ background: idx === i ? "var(--boom-ink)" : "white" }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

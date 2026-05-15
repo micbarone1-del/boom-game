@@ -1,5 +1,4 @@
 import { PlayerToken, playerColor } from "@/components/PlayerToken";
-import bombMascot from "@/assets/bomb-mascot.png";
 import { teamColor, teamName } from "@/lib/game";
 
 type Player = {
@@ -12,8 +11,7 @@ type Player = {
 /**
  * Pre-game reveal — flashes the line-up of players (or teams) with a giant
  * "LET'S START!" banner. Shown for ~2.6s before the first turn announcement.
- * Each player gets a personalised bomb mascot tinted with their token color
- * (placeholder for the upcoming team-color system).
+ * Each team gets a personalised bomb mascot in its team color.
  */
 export function GameStartReveal({ players }: { players: Player[] }) {
   const teams = players
@@ -53,22 +51,16 @@ export function GameStartReveal({ players }: { players: Player[] }) {
               key={team.id}
               className="ink-border rounded-3xl bg-white px-5 py-4 flex flex-col items-center gap-3 anim-mascot-pop min-w-[13rem]"
             >
-              <div className="relative" style={{ width: 132, height: 132 }}>
-                <img
-                  src={bombMascot}
-                  alt=""
-                  width={256}
-                  height={256}
-                  className="absolute inset-0 w-full h-full anim-fuse"
-                  style={{
-                    filter: `drop-shadow(0 0 28px ${team.color})`,
-                  }}
-                />
-                <div
-                  className="absolute inset-0 rounded-full mix-blend-multiply pointer-events-none"
-                  style={{ background: team.color, opacity: 0.35 }}
-                />
-              </div>
+              <PlayerToken
+                avatar={null}
+                username={team.name}
+                size={132}
+                active
+                showName={false}
+                showInitial={false}
+                ringColor={team.color}
+                mascot
+              />
               <div
                 className="text-3xl font-black text-center leading-none"
                 style={{
@@ -90,6 +82,7 @@ export function GameStartReveal({ players }: { players: Player[] }) {
                     showName={false}
                     showInitial
                     ringColor={team.color}
+                    mascot
                   />
                 ))}
               </div>

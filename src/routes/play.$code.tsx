@@ -22,6 +22,7 @@ import {
   getJudgeId,
   teamColor,
   teamName,
+  resolveMovementLanding,
 } from "@/lib/game";
 import {
   pickSurpriseExercise,
@@ -37,6 +38,7 @@ import { CountdownIntro } from "@/components/CountdownIntro";
 import { Bomb, Dice5, Trophy, Camera, Pause, Gavel } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { BoomCamera } from "@/components/BoomCamera";
+import { WorkoutIllustration } from "@/components/WorkoutIllustration";
 // SFX intentionally not imported on the player UI — sound only plays on the
 // gym screen so the iPad is the single audio source.
 
@@ -265,8 +267,13 @@ function PlayPage() {
 
   const roomPausedNow = async () => {
     if (pausedRef.current) return true;
-    const { data } = await supabase.from("rooms").select("paused").eq("code", code).maybeSingle();
-    return !!(data as { paused?: boolean } | null)?.paused;
+    const { data } = await supabase
+      .from("rooms")
+      .select("paused,locked")
+      .eq("code", code)
+      .maybeSingle();
+    const live = data as { paused?: boolean; locked?: boolean } | null;
+    return !!live?.paused || !!live?.locked;
   };
 
   const onRoll = async () => {
@@ -289,9 +296,9 @@ function PlayPage() {
     // Apply any movement effect first; the destination cell decides what happens next.
     let final = target;
     if (cell.type === "boost") {
-      final = Math.min(BOARD_SIZE, target + (cell.delta ?? 0));
+      final = resolveMovementLanding(Math.min(BOARD_SIZE, target + (cell.delta ?? 0)), "boost");
     } else if (cell.type === "setback") {
-      final = Math.max(1, target + (cell.delta ?? 0)); // delta is negative
+      final = resolveMovementLanding(Math.max(1, target + (cell.delta ?? 0)), "setback"); // delta is negative
     } else if (cell.type === "finish") {
       final = BOARD_SIZE;
     }
@@ -434,8 +441,15 @@ function PlayPage() {
     setRolling(false);
   };
 
+  const trapJudgeName =
+    trap?.kind === "group"
+      ? "anybody can judge"
+      : judgeId
+        ? (players.find((p) => p.id === judgeId)?.username ?? "the previous player")
+        : "the gym screen";
+
   return (
-    <main className="min-h-screen p-4 flex flex-col gap-4 max-w-md mx-auto">
+    <main className="fixed inset-0 overflow-hidden p-3 flex flex-col gap-3 max-w-md mx-auto w-full bg-[var(--background)]">
       <h1 className="sr-only">BOOM! Player Controller — Room {code}</h1>
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -469,12 +483,14 @@ function PlayPage() {
             username={me.username}
             size={56}
             active={isMyTurn}
+            ringColor={me.team_id ? teamColor(me.team_id) : undefined}
+            mascot
             className={rolling ? "anim-hop" : "anim-land"}
           />
         </div>
       </header>
 
-      <div className="ink-border rounded-2xl bg-white p-4 text-center">
+      <div className="ink-border rounded-2xl bg-white p-3 text-center shrink-0">
         <div className="text-sm font-bold opacity-70">YOU ARE ON SPACE</div>
         <div
           className="text-6xl font-black comic-shadow"
@@ -486,18 +502,22 @@ function PlayPage() {
           Fitness Lvl {me.fitness_level} · Difficulty x{room?.difficulty_multiplier ?? 5}
         </div>
         {me.team_id && (
-          <div className="mt-2 inline-flex items-center gap-2 ink-border-sm rounded-full px-3 py-1 text-xs font-black bg-white">
+          <div className="mt-1 inline-flex items-center gap-2 ink-border-sm rounded-full px-3 py-1 text-xs font-black bg-white">
             <span className="w-3 h-3 rounded-full" style={{ background: teamColor(me.team_id) }} />
             {teamName(me.team_id).toUpperCase()}
           </div>
         )}
-        <div className="mt-1 text-sm font-black">{describeCell(getCell(me.current_space))}</div>
+        <div className="mt-1 text-xs font-black truncate">
+          {describeCell(getCell(me.current_space))}
+        </div>
       </div>
 
       {isPaused && (
         <div
           className="fixed inset-0 z-[130] bg-black/80 text-white flex flex-col items-center justify-center gap-4 p-6 text-center"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          onClickCapture={(e) => e.stopPropagation()}
         >
           <Pause size={72} fill="currentColor" className="anim-shake" />
           <div className="text-5xl comic-shadow" style={{ color: "var(--boom-yellow)" }}>
@@ -513,7 +533,7 @@ function PlayPage() {
           const remaining = anchor - Date.now();
           const ready = remaining <= 0;
           return (
-            <div className="fixed inset-0 z-[70] bg-[var(--boom-ink)] text-white flex flex-col items-center justify-center p-6 gap-6 text-center">
+            <div className="fixed inset-0 z-[70] bg-[var(--boom-ink)] text-white flex flex-col items-center justify-center p-6 gap-5 text-center overflow-hidden">
               <Gavel size={120} className="anim-shake" />
               <div
                 className="font-black comic-shadow leading-none"
@@ -534,6 +554,8 @@ function PlayPage() {
                   active
                   showName={false}
                   showInitial
+                  ringColor={triggerPlayer?.team_id ? teamColor(triggerPlayer.team_id) : undefined}
+                  mascot
                 />
                 <div className="text-left">
                   <div className="text-sm opacity-80 font-bold">JUDGING</div>
@@ -548,17 +570,24 @@ function PlayPage() {
                   </div>
                 </div>
               </div>
+              <WorkoutIllustration exercise={trap.exercise} color="var(--boom-yellow)" compact />
               <div
                 className="ink-border rounded-2xl bg-white text-[var(--boom-ink)] px-8 py-5"
                 style={{ borderColor: "var(--boom-yellow)", borderWidth: 8 }}
               >
                 {!ready ? (
                   <>
-                    <CountdownIntro startAt={anchor} inline />
-                    <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart />
+                    <CountdownIntro startAt={anchor} inline paused={isPaused} />
+                    <FuseTimer
+                      startedAt={anchor}
+                      big
+                      color="var(--boom-ink)"
+                      hideBeforeStart
+                      paused={isPaused}
+                    />
                   </>
                 ) : (
-                  <FuseTimer startedAt={anchor} big color="var(--boom-ink)" />
+                  <FuseTimer startedAt={anchor} big color="var(--boom-ink)" paused={isPaused} />
                 )}
               </div>
               {ready ? (
@@ -605,9 +634,9 @@ function PlayPage() {
                             ? "var(--boom-blue)"
                             : "var(--boom-yellow)";
           return (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-3 overflow-hidden">
               <div
-                className="ink-border rounded-3xl bg-white p-6 w-full max-w-md text-center anim-boom flex flex-col items-center gap-4"
+                className="ink-border rounded-3xl bg-white p-4 w-full max-w-md text-center anim-boom flex flex-col items-center gap-3 max-h-full"
                 style={{ color: "var(--boom-ink)" }}
               >
                 <img
@@ -617,6 +646,7 @@ function PlayPage() {
                   height={1024}
                   className="w-32 h-32 -mt-16 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
                 />
+                <WorkoutIllustration exercise={trap.exercise} color={cellColor} compact />
                 <div className="anim-mascot-bounce inline-block">
                   <div
                     className="text-6xl font-black comic-shadow"
@@ -665,12 +695,13 @@ function PlayPage() {
                           </div>
                         ) : (
                           <>
-                            <CountdownIntro startAt={anchor} inline />
+                            <CountdownIntro startAt={anchor} inline paused={isPaused} />
                             <FuseTimer
                               startedAt={anchor}
                               big
                               color="var(--boom-ink)"
                               hideBeforeStart
+                              paused={isPaused}
                             />
                           </>
                         )}
@@ -680,7 +711,9 @@ function PlayPage() {
                 </div>
                 {triggeredByMe ? (
                   <p className="font-bold text-lg">
-                    Crush those reps — your team will judge you on the GYM SCREEN.
+                    {trap.kind === "group"
+                      ? "Crush those reps — anybody can judge."
+                      : `Crush those reps — ${trapJudgeName} will judge you.`}
                   </p>
                 ) : (
                   <p className="font-bold text-lg">The Judge is verifying — sit tight!</p>
@@ -693,7 +726,7 @@ function PlayPage() {
         <button
           onClick={onRoll}
           disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at || isPaused}
-          className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked && !isPaused ? "anim-roll-pulse" : ""}`}
+          className={`ink-border rounded-3xl p-5 text-3xl font-black flex flex-col items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed flex-1 min-h-0 ${isMyTurn && !rolling && !room?.locked && !isPaused ? "anim-roll-pulse" : ""}`}
           style={{
             background: isPaused
               ? "var(--muted)"
@@ -732,7 +765,7 @@ function PlayPage() {
         </button>
       )}
 
-      <div className="ink-border rounded-2xl bg-white p-3">
+      <div className="ink-border rounded-2xl bg-white p-3 shrink-0 max-h-[28vh] overflow-hidden">
         <h2 className="text-base font-black mb-2 flex items-center gap-2">
           <Trophy size={18} /> LIVE LEADERBOARD
         </h2>
@@ -768,6 +801,8 @@ function PlayPage() {
                       size={28}
                       active={room?.current_turn_player_id === p.id}
                       showName={false}
+                      ringColor={p.team_id ? teamColor(p.team_id) : undefined}
+                      mascot
                     />
                     <span className="text-sm font-black truncate max-w-[100px]">
                       {p.username}

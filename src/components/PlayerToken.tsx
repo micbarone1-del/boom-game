@@ -1,4 +1,4 @@
-import { Flame } from "lucide-react";
+import { Bomb, Flame } from "lucide-react";
 
 // Colors chosen to NOT clash with cell backgrounds
 // (cell bg uses yellow/orange/red/blue/green/purple).
@@ -27,6 +27,7 @@ export function PlayerToken({
   showName = true,
   showInitial = false,
   ringColor,
+  mascot = false,
   className = "",
 }: {
   avatar?: string | null;
@@ -36,6 +37,7 @@ export function PlayerToken({
   showName?: boolean;
   showInitial?: boolean;
   ringColor?: string;
+  mascot?: boolean;
   className?: string;
 }) {
   const color = ringColor ?? playerColor(username);
@@ -60,12 +62,25 @@ export function PlayerToken({
             boxShadow: `0 0 0 ${ring}px ${color}, 0 0 0 ${ring + 2}px #111`,
           }}
         >
-          {avatar ? (
+          {mascot ? (
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ background: color, color: "white" }}
+            >
+              <Bomb size={Math.round(size * 0.7)} fill="currentColor" strokeWidth={2.6} />
+            </div>
+          ) : avatar ? (
             <img src={avatar} alt={username} className="w-full h-full object-cover" />
           ) : (
             <div
               className="w-full h-full flex items-center justify-center"
-              style={{ background: color, color: "white", fontSize: Math.round(size * 0.5), fontWeight: 600, fontFamily: "system-ui, -apple-system, sans-serif" }}
+              style={{
+                background: color,
+                color: "white",
+                fontSize: Math.round(size * 0.5),
+                fontWeight: 600,
+                fontFamily: "system-ui, -apple-system, sans-serif",
+              }}
             >
               {initial}
             </div>
@@ -91,7 +106,10 @@ export function PlayerToken({
         )}
       </div>
       {showName && (
-        <span className="text-xs font-bold truncate max-w-[80px]" style={{ color: "var(--boom-ink)" }}>
+        <span
+          className="text-xs font-bold truncate max-w-[80px]"
+          style={{ color: "var(--boom-ink)" }}
+        >
           {username}
         </span>
       )}

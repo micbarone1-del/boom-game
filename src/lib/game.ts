@@ -71,58 +71,58 @@ const RAW_BOARD: Array<[CellType, number?]> = [
   ["easy"],          // 2
   ["easy"],          // 3
   ["boost", 3],      // 4
-  ["medium"],        // 5
+  ["surprise"],      // 5
   ["hard"],          // 6
   ["easy"],          // 7
-  ["rest"],          // 8
+  ["surprise"],      // 8
   ["medium"],        // 9
   ["setback", -2],   // 10
   ["boost", 4],      // 11
-  ["easy"],          // 12
+  ["group"],         // 12
   ["hard"],          // 13
   ["medium"],        // 14
   ["easy"],          // 15
   ["setback", -3],   // 16
-  ["medium"],        // 17
+  ["crazy"],         // 17
   ["easy"],          // 18
   ["hard"],          // 19
-  ["rest"],          // 20
+  ["group"],         // 20
   ["medium"],        // 21
   ["boost", 10],     // 22  ← MEGA BLAST!
   ["easy"],          // 23
   ["medium"],        // 24
   ["hard"],          // 25
-  ["easy"],          // 26
+  ["surprise"],      // 26
   ["setback", -2],   // 27
-  ["medium"],        // 28
+  ["crazy"],         // 28
   ["easy"],          // 29
   ["boost", 3],      // 30
   ["hard"],          // 31
-  ["easy"],          // 32
+  ["surprise"],      // 32
   ["medium"],        // 33
   ["setback", -999], // 34  ← BACK TO START
-  ["easy"],          // 35
+  ["group"],         // 35
   ["medium"],        // 36
-  ["rest"],          // 37
+  ["crazy"],         // 37
   ["hard"],          // 38
   ["boost", 4],      // 39
-  ["easy"],          // 40
+  ["crazy"],         // 40
   ["medium"],        // 41
   ["setback", -3],   // 42
   ["hard"],          // 43
-  ["easy"],          // 44
+  ["surprise"],      // 44
   ["boost", 3],      // 45
   ["medium"],        // 46
-  ["easy"],          // 47
+  ["group"],         // 47
   ["hard"],          // 48
   ["setback", -2],   // 49
   ["medium"],        // 50
-  ["easy"],          // 51
+  ["crazy"],         // 51
   ["boost", 5],      // 52
   ["hard"],          // 53
   ["medium"],        // 54
   ["setback", -3],   // 55
-  ["easy"],          // 56
+  ["group"],         // 56
   ["medium"],        // 57
   ["hard"],          // 58
   ["boost", 2],      // 59

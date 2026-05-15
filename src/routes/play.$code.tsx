@@ -21,6 +21,7 @@ import {
   type BoardOverrides,
   getJudgeId,
 } from "@/lib/game";
+import { pickSurpriseExercise, pickCrazyExercise, pickGroupExercise, getCellUnit } from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";

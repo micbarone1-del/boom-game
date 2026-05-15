@@ -962,6 +962,7 @@ function GymBoard({ code }: { code: string }) {
                                   active={room?.current_turn_player_id === p.id}
                                   showName={false}
                                   showInitial
+                                  ringColor={p.team_id ? teamColor(p.team_id) : undefined}
                                   className={isHopping ? "anim-hop" : "anim-land"}
                                 />
                               </div>
@@ -990,6 +991,7 @@ function GymBoard({ code }: { code: string }) {
             { c: "#ec4899", l: "Surprise" },
             { c: "#22d3ee", l: "Crazy" },
             { c: "var(--boom-blue)", l: "All Together" },
+            { c: "var(--boom-ink)", l: "VS Battle" },
             { c: "var(--boom-green)", l: "Blast +" },
             { c: "#7c3aed", l: "Setback −" },
           ].map((x) => (

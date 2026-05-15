@@ -1,11 +1,31 @@
 import { useEffect, useState } from "react";
-import { Smartphone, Dices, Bomb, Gavel } from "lucide-react";
+import { Smartphone, Tv, Bomb, Gavel } from "lucide-react";
 
 const SLIDES = [
-  { Icon: Smartphone, text: "YOUR PHONE IS THE REMOTE.", color: "var(--boom-yellow)" },
-  { Icon: Dices, text: "ROLL TO SURVIVE.", color: "var(--boom-green)" },
-  { Icon: Bomb, text: "BOOM = SWEAT.", color: "var(--boom-red)" },
-  { Icon: Gavel, text: "DON'T CHEAT. Your friends judge you.", color: "var(--boom-blue)" },
+  {
+    Icon: Smartphone,
+    text: "YOUR PHONE IS THE REMOTE",
+    sub: "scan or click to join the lobby",
+    color: "var(--boom-yellow)",
+  },
+  {
+    Icon: Tv,
+    text: "WATCH THE BIG SCREEN",
+    sub: "tap roll on your phone to race your token across the map",
+    color: "var(--boom-green)",
+  },
+  {
+    Icon: Bomb,
+    text: "TRAPS = PARTY WORKOUTS",
+    sub: "land on a BOOM for fun fitness challenges",
+    color: "var(--boom-red)",
+  },
+  {
+    Icon: Gavel,
+    text: "DON'T CHEAT",
+    sub: "the previous player judges your form using the phone",
+    color: "var(--boom-blue)",
+  },
 ];
 
 export function TutorialCarousel({ compact = false }: { compact?: boolean }) {
@@ -16,7 +36,7 @@ export function TutorialCarousel({ compact = false }: { compact?: boolean }) {
   }, []);
   return (
     <div
-      className={`relative ink-border rounded-3xl bg-white overflow-hidden ${compact ? "h-[180px]" : "h-[260px]"}`}
+      className={`relative ink-border rounded-3xl bg-white overflow-hidden ${compact ? "h-full min-h-0" : "h-[260px]"}`}
       aria-label="How to play"
     >
       {SLIDES.map((s, idx) => {
@@ -25,21 +45,24 @@ export function TutorialCarousel({ compact = false }: { compact?: boolean }) {
         return (
           <div
             key={idx}
-            className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 gap-4 transition-opacity duration-700"
+            className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 gap-3 transition-opacity duration-700"
             style={{ opacity: active ? 1 : 0, background: s.color }}
             aria-hidden={!active}
           >
-            <Icon size={compact ? 64 : 96} strokeWidth={2.5} />
+            <Icon size={compact ? 56 : 96} strokeWidth={2.5} />
             <div
               className="font-black comic-shadow leading-tight"
               style={{
                 fontFamily: "'Luckiest Guy', cursive",
-                fontSize: compact ? "2.5rem" : "4rem",
+                fontSize: compact ? "clamp(1.8rem, 4vw, 3rem)" : "4rem",
                 color: "var(--boom-ink)",
                 textShadow: "3px 3px 0 #fff",
               }}
             >
               {s.text}
+            </div>
+            <div className="text-sm md:text-base font-black max-w-[30rem] leading-tight text-[var(--boom-ink)]">
+              {s.sub}
             </div>
           </div>
         );

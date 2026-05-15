@@ -20,8 +20,16 @@ import {
   getOverrideReps,
   type BoardOverrides,
   getJudgeId,
+  teamColor,
+  teamName,
 } from "@/lib/game";
-import { pickSurpriseExercise, pickCrazyExercise, pickGroupExercise, getCellUnit, recalcPlayerScore } from "@/lib/game";
+import {
+  pickSurpriseExercise,
+  pickCrazyExercise,
+  pickGroupExercise,
+  getCellUnit,
+  recalcPlayerScore,
+} from "@/lib/game";
 import { PlayerToken } from "@/components/PlayerToken";
 import { FuseTimer } from "@/components/FuseTimer";
 import { CellMascot, mascotForCell } from "@/components/CellMascot";
@@ -37,7 +45,11 @@ export const Route = createFileRoute("/play/$code")({
   head: ({ params }) => ({
     meta: [
       { title: `Play Room ${params.code} — BOOM!` },
-      { name: "description", content: "Your phone controller for a BOOM! workout game. Roll the dice, log reps, and judge your teammates' form." },
+      {
+        name: "description",
+        content:
+          "Your phone controller for a BOOM! workout game. Roll the dice, log reps, and judge your teammates' form.",
+      },
       { property: "og:title", content: `BOOM! Player Controller — Room ${params.code}` },
       { property: "og:description", content: "Phone controller for a BOOM! workout game session." },
       { name: "robots", content: "noindex" },
@@ -62,7 +74,10 @@ function PlayPage() {
   const [showFinalRanking, setShowFinalRanking] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [myPrevSpace, setMyPrevSpace] = useState<number | null>(null);
-  const [myLanded, setMyLanded] = useState<{ type: import("@/lib/game").CellType; key: number } | null>(null);
+  const [myLanded, setMyLanded] = useState<{
+    type: import("@/lib/game").CellType;
+    key: number;
+  } | null>(null);
   const [myTurnFlash, setMyTurnFlash] = useState<number | null>(null);
   const prevMyTurnRef = useRef<boolean>(false);
   const isPaused = !!room?.paused;
@@ -109,7 +124,10 @@ function PlayPage() {
       }, stableMs);
       const clearT = setTimeout(() => setMyLanded(null), stableMs + LANDING_SPLASH_MS);
       setMyPrevSpace(meNow.current_space);
-      return () => { clearTimeout(showT); clearTimeout(clearT); };
+      return () => {
+        clearTimeout(showT);
+        clearTimeout(clearT);
+      };
     }
     setMyPrevSpace(meNow.current_space);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -152,7 +170,7 @@ function PlayPage() {
     }
     const remaining = trap.started_at - Date.now();
     // Beep only inside the final 3-2-1 window so we don't beep early.
-      // No sound on the player UI — the iPad/gym screen owns audio.
+    // No sound on the player UI — the iPad/gym screen owns audio.
   });
 
   // Auto-clear final ranking when host restarts (everyone back to space 0, no finishers)
@@ -196,7 +214,9 @@ function PlayPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center gap-4">
         <p className="text-xl font-bold">You're not in this room yet.</p>
-        <Link to="/join" search={{ code }} className="btn-boom">JOIN</Link>
+        <Link to="/join" search={{ code }} className="btn-boom">
+          JOIN
+        </Link>
       </div>
     );
   }
@@ -256,7 +276,10 @@ function PlayPage() {
     setLastRoll(null);
     const dice = rollDice();
     await new Promise((r) => setTimeout(r, 600));
-    if (await roomPausedNow()) { setRolling(false); return; }
+    if (await roomPausedNow()) {
+      setRolling(false);
+      return;
+    }
     // Reveal the rolled number AFTER the dice-shake animation finishes.
     setLastRoll(dice);
     const target = Math.min(BOARD_SIZE, me.current_space + dice);
@@ -274,21 +297,35 @@ function PlayPage() {
     }
     // The "start" cell is not a real landing spot — if a roll or setback would
     // park you on it, nudge forward one space so play doesn't stall.
-    let finalCellPeek = getEffectiveCell(final, overrides);
+    const finalCellPeek = getEffectiveCell(final, overrides);
     if (finalCellPeek.type === "start") {
       final = Math.min(BOARD_SIZE, final + 1);
     }
     const finalCell = getEffectiveCell(final, overrides);
-    console.log("[roll]", { from: me.current_space, dice, target, cellType: cell.type, delta: cell.delta, final, finalType: finalCell.type });
+    console.log("[roll]", {
+      from: me.current_space,
+      dice,
+      target,
+      cellType: cell.type,
+      delta: cell.delta,
+      final,
+      finalType: finalCell.type,
+    });
 
     // Stage 1: hop the token to the dice-landing cell so the player visibly
     // arrives on the BLAST/SETBACK cell (and the gym plays its splash).
-    if (await roomPausedNow()) { setRolling(false); return; }
+    if (await roomPausedNow()) {
+      setRolling(false);
+      return;
+    }
     await supabase.from("players").update({ current_space: target }).eq("id", me.id);
     const stage1Distance = Math.max(1, Math.abs(target - me.current_space));
     const stage1Ms = stage1Distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
     await new Promise((r) => setTimeout(r, stage1Ms));
-    if (await roomPausedNow()) { setRolling(false); return; }
+    if (await roomPausedNow()) {
+      setRolling(false);
+      return;
+    }
 
     // Stage 2: if a boost/setback/finish moved the destination, hop again so
     // the token visibly accelerates forward (or back) to the final space.
@@ -297,8 +334,20 @@ function PlayPage() {
       const stage2Distance = Math.max(1, Math.abs(final - target));
       const stage2Ms = stage2Distance * HOP_MS + LANDING_SPLASH_MS + SEQUENCE_BUFFER_MS;
       await new Promise((r) => setTimeout(r, stage2Ms));
-      if (await roomPausedNow()) { setRolling(false); return; }
+      if (await roomPausedNow()) {
+        setRolling(false);
+        return;
+      }
     }
+
+    const vsOpponents = players
+      .filter(
+        (p) =>
+          p.id !== me.id &&
+          !p.finished_at &&
+          (p.current_space === final || (p.current_space === 0 && final === 1)),
+      )
+      .map((p) => p.id);
 
     // Exercise destination -> lock with trap (after hop animation finishes).
     if (finalCell.type === "easy" || finalCell.type === "medium" || finalCell.type === "hard") {
@@ -321,7 +370,9 @@ function PlayPage() {
             // Then every screen gets a short reveal before the shared 3-2-1.
             started_at: Date.now() + TRAP_REVEAL_MS + COUNTDOWN_LEAD_MS,
             awaiting_verification: false,
-            kind: "exercise",
+            kind: vsOpponents.length > 0 && final > 1 && final < BOARD_SIZE ? "vs" : "exercise",
+            vs_opponents:
+              vsOpponents.length > 0 && final > 1 && final < BOARD_SIZE ? vsOpponents : undefined,
             unit,
           } satisfies Trap,
         })
@@ -335,8 +386,8 @@ function PlayPage() {
         finalCell.type === "surprise"
           ? pickSurpriseExercise(overrides)
           : finalCell.type === "crazy"
-          ? pickCrazyExercise()
-          : pickGroupExercise();
+            ? pickCrazyExercise()
+            : pickGroupExercise();
       const reps = calcRepsForTier(pick.tier, me.fitness_level, room.difficulty_multiplier);
       await supabase
         .from("rooms")
@@ -372,24 +423,35 @@ function PlayPage() {
         next = candidate;
         break;
       }
-      await supabase.from("rooms").update({
-        last_dice: dice,
-        current_turn_player_id: next.id,
-      }).eq("code", code);
+      await supabase
+        .from("rooms")
+        .update({
+          last_dice: dice,
+          current_turn_player_id: next.id,
+        })
+        .eq("code", code);
     }
     setRolling(false);
   };
-
 
   return (
     <main className="min-h-screen p-4 flex flex-col gap-4 max-w-md mx-auto">
       <h1 className="sr-only">BOOM! Player Controller — Room {code}</h1>
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src={bombMascot} alt="" width={1024} height={1024} loading="lazy" className="w-12 h-12 anim-fuse" />
+          <img
+            src={bombMascot}
+            alt=""
+            width={1024}
+            height={1024}
+            loading="lazy"
+            className="w-12 h-12 anim-fuse"
+          />
           <div>
             <div className="text-xs font-bold opacity-70">ROOM</div>
-            <div className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{code}</div>
+            <div className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+              {code}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -414,169 +476,242 @@ function PlayPage() {
 
       <div className="ink-border rounded-2xl bg-white p-4 text-center">
         <div className="text-sm font-bold opacity-70">YOU ARE ON SPACE</div>
-        <div className="text-6xl font-black comic-shadow" style={{ color: "var(--boom-red)", fontFamily: "'Luckiest Guy', cursive" }}>
+        <div
+          className="text-6xl font-black comic-shadow"
+          style={{ color: "var(--boom-red)", fontFamily: "'Luckiest Guy', cursive" }}
+        >
           #{me.current_space}
         </div>
-        <div className="text-xs mt-1">Fitness Lvl {me.fitness_level} · Difficulty x{room?.difficulty_multiplier ?? 5}</div>
+        <div className="text-xs mt-1">
+          Fitness Lvl {me.fitness_level} · Difficulty x{room?.difficulty_multiplier ?? 5}
+        </div>
+        {me.team_id && (
+          <div className="mt-2 inline-flex items-center gap-2 ink-border-sm rounded-full px-3 py-1 text-xs font-black bg-white">
+            <span className="w-3 h-3 rounded-full" style={{ background: teamColor(me.team_id) }} />
+            {teamName(me.team_id).toUpperCase()}
+          </div>
+        )}
         <div className="mt-1 text-sm font-black">{describeCell(getCell(me.current_space))}</div>
       </div>
 
-      {trap && iAmJudge ? (() => {
-        const anchor = trap.started_at;
-        const remaining = anchor - Date.now();
-        const ready = remaining <= 0;
-        return (
-          <div className="fixed inset-0 z-[70] bg-[var(--boom-ink)] text-white flex flex-col items-center justify-center p-6 gap-6 text-center">
-            <Gavel size={120} className="anim-shake" />
-            <div
-              className="font-black comic-shadow leading-none"
-              style={{
-                fontFamily: "'Luckiest Guy', cursive",
-                fontSize: "clamp(3rem, 12vw, 6rem)",
-                color: "var(--boom-yellow)",
-                textShadow: "5px 5px 0 #000",
-              }}
-            >
-              YOU ARE THE JUDGE
-            </div>
-            <div className="flex items-center gap-3">
-              <PlayerToken
-                avatar={triggerPlayer?.avatar_url ?? null}
-                username={triggerPlayer?.username ?? "?"}
-                size={72}
-                active
-                showName={false}
-                showInitial
-              />
-              <div className="text-left">
-                <div className="text-sm opacity-80 font-bold">JUDGING</div>
-                <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-                  {triggerPlayer?.username}
-                </div>
-                <div className="text-lg font-black" style={{ color: "var(--boom-red)" }}>
-                  {trap.reps} {trap.exercise}
+      {isPaused && (
+        <div
+          className="fixed inset-0 z-[130] bg-black/80 text-white flex flex-col items-center justify-center gap-4 p-6 text-center"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <Pause size={72} fill="currentColor" className="anim-shake" />
+          <div className="text-5xl comic-shadow" style={{ color: "var(--boom-yellow)" }}>
+            GAME PAUSED
+          </div>
+          <div className="text-lg font-black opacity-90">Wait for the gym screen to resume</div>
+        </div>
+      )}
+
+      {!isPaused && trap && iAmJudge ? (
+        (() => {
+          const anchor = trap.started_at;
+          const remaining = anchor - Date.now();
+          const ready = remaining <= 0;
+          return (
+            <div className="fixed inset-0 z-[70] bg-[var(--boom-ink)] text-white flex flex-col items-center justify-center p-6 gap-6 text-center">
+              <Gavel size={120} className="anim-shake" />
+              <div
+                className="font-black comic-shadow leading-none"
+                style={{
+                  fontFamily: "'Luckiest Guy', cursive",
+                  fontSize: "clamp(3rem, 12vw, 6rem)",
+                  color: "var(--boom-yellow)",
+                  textShadow: "5px 5px 0 #000",
+                }}
+              >
+                YOU ARE THE JUDGE
+              </div>
+              <div className="flex items-center gap-3">
+                <PlayerToken
+                  avatar={triggerPlayer?.avatar_url ?? null}
+                  username={triggerPlayer?.username ?? "?"}
+                  size={72}
+                  active
+                  showName={false}
+                  showInitial
+                />
+                <div className="text-left">
+                  <div className="text-sm opacity-80 font-bold">JUDGING</div>
+                  <div
+                    className="text-2xl font-black"
+                    style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                  >
+                    {triggerPlayer?.username}
+                  </div>
+                  <div className="text-lg font-black" style={{ color: "var(--boom-red)" }}>
+                    {trap.reps} {trap.exercise}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="ink-border rounded-2xl bg-white text-[var(--boom-ink)] px-8 py-5" style={{ borderColor: "var(--boom-yellow)", borderWidth: 8 }}>
-              {!ready ? (
-                <>
-                  <CountdownIntro startAt={anchor} inline />
-                  <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart />
-                </>
-              ) : (
-                <FuseTimer startedAt={anchor} big color="var(--boom-ink)" />
-              )}
-            </div>
-            {ready ? (
-              <button
-                onClick={judgeDefuse}
-                className="ink-border rounded-2xl px-10 py-6 text-4xl font-black comic-shadow active:scale-95 transition-transform"
-                style={{ background: "var(--boom-green)", color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+              <div
+                className="ink-border rounded-2xl bg-white text-[var(--boom-ink)] px-8 py-5"
+                style={{ borderColor: "var(--boom-yellow)", borderWidth: 8 }}
               >
-                DEFUSED
-              </button>
-            ) : (
-              <p className="text-lg font-bold opacity-80 max-w-sm">
-                Watch the form. The DEFUSED button unlocks when the timer starts.
-              </p>
-            )}
-          </div>
-        );
-      })() : trap ? (() => {
-        const trapSpace = trap.space ?? players.find(p=>p.id===trap.triggered_by)?.current_space ?? 0;
-        const trapCellType = getCell(trapSpace).type;
-        const cellColor =
-          trapCellType === "easy" ? "var(--boom-yellow)" :
-          trapCellType === "medium" ? "var(--boom-orange)" :
-          trapCellType === "hard" ? "var(--boom-red)" :
-          trapCellType === "boost" ? "var(--boom-green)" :
-          trapCellType === "setback" ? "#7c3aed" :
-          trapCellType === "surprise" ? "#ec4899" :
-          trapCellType === "crazy" ? "#f97316" :
-          trapCellType === "group" ? "var(--boom-blue)" :
-          "var(--boom-yellow)";
-        return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
-          <div
-            className="ink-border rounded-3xl bg-white p-6 w-full max-w-md text-center anim-boom flex flex-col items-center gap-4"
-            style={{ color: "var(--boom-ink)" }}
-          >
-          <img
-            src={mascotForCell(getCell(trapSpace).type)}
-            alt=""
-            width={1024}
-            height={1024}
-            className="w-32 h-32 -mt-16 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
-          />
-          <div className="anim-mascot-bounce inline-block">
-            <div
-              className="text-6xl font-black comic-shadow"
-              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
-            >
-              BOOM!
-            </div>
-          </div>
-          <p className="text-xl font-black">
-            {trap.kind === "group"
-              ? "EVERYBODY IS DOING THIS!"
-              : triggeredByMe
-              ? "YOU ARE ABOUT TO EXPLODE!"
-              : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
-          </p>
-          <p className="text-3xl font-black" style={{ color: "var(--boom-red)" }}>{trap.reps} {trap.exercise}</p>
-          <div className="flex justify-center py-2">
-            {(() => {
-              const anchor = trap.started_at;
-              const remaining = anchor - Date.now();
-              const inCountdown = remaining > 0 && remaining <= 3500;
-              const ready = remaining <= 3500; // show countdown UI only at the end
-              return (
-                <div
-                  className={`ink-border rounded-2xl px-8 py-5 ${ready && inCountdown ? "anim-border-flash" : ""}`}
+                {!ready ? (
+                  <>
+                    <CountdownIntro startAt={anchor} inline />
+                    <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart />
+                  </>
+                ) : (
+                  <FuseTimer startedAt={anchor} big color="var(--boom-ink)" />
+                )}
+              </div>
+              {ready ? (
+                <button
+                  onClick={judgeDefuse}
+                  className="ink-border rounded-2xl px-10 py-6 text-4xl font-black comic-shadow active:scale-95 transition-transform"
                   style={{
-                    background: "white",
-                    color: "var(--boom-ink)",
-                    transform: "rotate(-3deg)",
-                    borderWidth: 8,
-                    borderStyle: "solid",
-                    borderColor: cellColor,
-                    minWidth: "14rem",
+                    background: "var(--boom-green)",
+                    color: "white",
+                    fontFamily: "'Luckiest Guy', cursive",
                   }}
                 >
-                  {!ready ? (
-                    <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-                      GET READY…
-                    </div>
-                  ) : (
-                    <>
-                      <CountdownIntro startAt={anchor} inline />
-                      <FuseTimer startedAt={anchor} big color="var(--boom-ink)" hideBeforeStart />
-                    </>
-                  )}
+                  DEFUSED
+                </button>
+              ) : (
+                <p className="text-lg font-bold opacity-80 max-w-sm">
+                  Watch the form. The DEFUSED button unlocks when the timer starts.
+                </p>
+              )}
+            </div>
+          );
+        })()
+      ) : !isPaused && trap ? (
+        (() => {
+          const trapSpace =
+            trap.space ?? players.find((p) => p.id === trap.triggered_by)?.current_space ?? 0;
+          const trapCellType = getCell(trapSpace).type;
+          const cellColor =
+            trapCellType === "easy"
+              ? "var(--boom-yellow)"
+              : trapCellType === "medium"
+                ? "var(--boom-orange)"
+                : trapCellType === "hard"
+                  ? "var(--boom-red)"
+                  : trapCellType === "boost"
+                    ? "var(--boom-green)"
+                    : trapCellType === "setback"
+                      ? "#7c3aed"
+                      : trapCellType === "surprise"
+                        ? "#ec4899"
+                        : trapCellType === "crazy"
+                          ? "#f97316"
+                          : trapCellType === "group"
+                            ? "var(--boom-blue)"
+                            : "var(--boom-yellow)";
+          return (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+              <div
+                className="ink-border rounded-3xl bg-white p-6 w-full max-w-md text-center anim-boom flex flex-col items-center gap-4"
+                style={{ color: "var(--boom-ink)" }}
+              >
+                <img
+                  src={mascotForCell(getCell(trapSpace).type)}
+                  alt=""
+                  width={1024}
+                  height={1024}
+                  className="w-32 h-32 -mt-16 anim-mascot-pop drop-shadow-[0_0_20px_rgba(255,200,0,0.8)]"
+                />
+                <div className="anim-mascot-bounce inline-block">
+                  <div
+                    className="text-6xl font-black comic-shadow"
+                    style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+                  >
+                    BOOM!
+                  </div>
                 </div>
-              );
-            })()}
-          </div>
-          {triggeredByMe ? (
-            <p className="font-bold text-lg">Crush those reps — your team will judge you on the GYM SCREEN.</p>
-          ) : (
-            <p className="font-bold text-lg">The Judge is verifying — sit tight!</p>
-          )}
-          </div>
-        </div>
-        );
-      })() : me.finished_at ? null : (
+                <p className="text-xl font-black">
+                  {trap.kind === "vs"
+                    ? "VS BATTLE ON THIS SPACE!"
+                    : trap.kind === "group"
+                      ? "EVERYBODY IS DOING THIS!"
+                      : triggeredByMe
+                        ? "YOU ARE ABOUT TO EXPLODE!"
+                        : `${players.find((p) => p.id === trap.triggered_by)?.username || "Someone"} is about to explode!`}
+                </p>
+                <p className="text-3xl font-black" style={{ color: "var(--boom-red)" }}>
+                  {trap.reps} {trap.exercise}
+                </p>
+                <div className="flex justify-center py-2">
+                  {(() => {
+                    const anchor = trap.started_at;
+                    const remaining = anchor - Date.now();
+                    const inCountdown = remaining > 0 && remaining <= 3500;
+                    const ready = remaining <= 3500; // show countdown UI only at the end
+                    return (
+                      <div
+                        className={`ink-border rounded-2xl px-8 py-5 ${ready && inCountdown ? "anim-border-flash" : ""}`}
+                        style={{
+                          background: "white",
+                          color: "var(--boom-ink)",
+                          transform: "rotate(-3deg)",
+                          borderWidth: 8,
+                          borderStyle: "solid",
+                          borderColor: cellColor,
+                          minWidth: "14rem",
+                        }}
+                      >
+                        {!ready ? (
+                          <div
+                            className="text-2xl font-black"
+                            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                          >
+                            GET READY…
+                          </div>
+                        ) : (
+                          <>
+                            <CountdownIntro startAt={anchor} inline />
+                            <FuseTimer
+                              startedAt={anchor}
+                              big
+                              color="var(--boom-ink)"
+                              hideBeforeStart
+                            />
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+                {triggeredByMe ? (
+                  <p className="font-bold text-lg">
+                    Crush those reps — your team will judge you on the GYM SCREEN.
+                  </p>
+                ) : (
+                  <p className="font-bold text-lg">The Judge is verifying — sit tight!</p>
+                )}
+              </div>
+            </div>
+          );
+        })()
+      ) : me.finished_at ? null : (
         <button
           onClick={onRoll}
           disabled={!isMyTurn || rolling || room?.locked || !!me.finished_at || isPaused}
           className={`ink-border rounded-3xl p-8 text-3xl font-black flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMyTurn && !rolling && !room?.locked && !isPaused ? "anim-roll-pulse" : ""}`}
-          style={{ background: isPaused ? "var(--muted)" : isMyTurn ? "var(--boom-yellow)" : "var(--muted)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
+          style={{
+            background: isPaused
+              ? "var(--muted)"
+              : isMyTurn
+                ? "var(--boom-yellow)"
+                : "var(--muted)",
+            color: "var(--boom-ink)",
+            fontFamily: "'Luckiest Guy', cursive",
+          }}
         >
           {lastRoll != null ? (
             <span
               className="comic-shadow leading-none"
-              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "5rem", color: "var(--boom-red)" }}
+              style={{
+                fontFamily: "'Luckiest Guy', cursive",
+                fontSize: "5rem",
+                color: "var(--boom-red)",
+              }}
             >
               {lastRoll}
             </span>
@@ -584,13 +719,23 @@ function PlayPage() {
             <Dice5 size={64} className={rolling ? "anim-shake" : ""} />
           )}
           <span className="text-xl">
-            {isPaused ? "GAME PAUSED" : lastRoll != null ? `YOU ROLLED ${lastRoll}` : rolling ? "ROLLING…" : isMyTurn ? "ROLL DICE" : "Wait for your turn"}
+            {isPaused
+              ? "GAME PAUSED"
+              : lastRoll != null
+                ? `YOU ROLLED ${lastRoll}`
+                : rolling
+                  ? "ROLLING…"
+                  : isMyTurn
+                    ? "ROLL DICE"
+                    : "Wait for your turn"}
           </span>
         </button>
       )}
 
       <div className="ink-border rounded-2xl bg-white p-3">
-        <h2 className="text-base font-black mb-2 flex items-center gap-2"><Trophy size={18}/> LIVE LEADERBOARD</h2>
+        <h2 className="text-base font-black mb-2 flex items-center gap-2">
+          <Trophy size={18} /> LIVE LEADERBOARD
+        </h2>
         <div className="flex flex-col gap-1">
           {[...players]
             .sort((a, b) => {
@@ -602,13 +747,32 @@ function PlayPage() {
             .map((p, i) => {
               const isMe = p.id === me.id;
               return (
-                <div key={p.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg"
-                  style={{ background: i === 0 ? "var(--boom-yellow)" : isMe ? "var(--muted)" : "transparent" }}>
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg"
+                  style={{
+                    background:
+                      i === 0 ? "var(--boom-yellow)" : isMe ? "var(--muted)" : "transparent",
+                  }}
+                >
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-black w-5" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{i + 1}</span>
-                    <PlayerToken avatar={p.avatar_url} username={p.username} size={28}
-                      active={room?.current_turn_player_id === p.id} showName={false} />
-                    <span className="text-sm font-black truncate max-w-[100px]">{p.username}{isMe ? " (you)" : ""}</span>
+                    <span
+                      className="text-lg font-black w-5"
+                      style={{ fontFamily: "'Luckiest Guy', cursive" }}
+                    >
+                      {i + 1}
+                    </span>
+                    <PlayerToken
+                      avatar={p.avatar_url}
+                      username={p.username}
+                      size={28}
+                      active={room?.current_turn_player_id === p.id}
+                      showName={false}
+                    />
+                    <span className="text-sm font-black truncate max-w-[100px]">
+                      {p.username}
+                      {isMe ? " (you)" : ""}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs font-black">
                     <span>Sp.{p.current_space}</span>
@@ -623,7 +787,10 @@ function PlayPage() {
 
       {/* Personal trophy badge */}
       {me.finished_at && (
-        <div className="ink-border rounded-2xl p-4 text-center" style={{ background: "var(--boom-yellow)" }}>
+        <div
+          className="ink-border rounded-2xl p-4 text-center"
+          style={{ background: "var(--boom-yellow)" }}
+        >
           <Trophy className="mx-auto" size={32} />
           <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
             FINISHED #{me.finish_rank}!
@@ -651,7 +818,10 @@ function PlayPage() {
       {showFinalRanking && (
         <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 p-4">
           <div className="ink-border rounded-3xl bg-white p-5 max-w-sm w-full text-center anim-boom">
-            <div className="text-3xl font-black comic-shadow mb-3" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+            <div
+              className="text-3xl font-black comic-shadow mb-3"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+            >
               FINAL RANKING
             </div>
             <div className="flex flex-col gap-1.5 text-left mb-4">
@@ -663,20 +833,33 @@ function PlayPage() {
                   return (b.score ?? 0) - (a.score ?? 0) || b.current_space - a.current_space;
                 })
                 .map((p, i) => (
-                  <div key={p.id} className="flex items-center justify-between gap-2 p-2 rounded-lg ink-border-sm"
-                    style={{ background: i === 0 ? "var(--boom-yellow)" : "white" }}>
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between gap-2 p-2 rounded-lg ink-border-sm"
+                    style={{ background: i === 0 ? "var(--boom-yellow)" : "white" }}
+                  >
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-black w-6 text-center">
                         {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
                       </span>
-                      <PlayerToken avatar={p.avatar_url} username={p.username} size={28} showName={false} />
+                      <PlayerToken
+                        avatar={p.avatar_url}
+                        username={p.username}
+                        size={28}
+                        showName={false}
+                      />
                       <span className="font-black text-sm">{p.username}</span>
                     </div>
-                    <span className="font-black text-sm" style={{ color: "var(--boom-red)" }}>{p.score ?? 0} pts</span>
+                    <span className="font-black text-sm" style={{ color: "var(--boom-red)" }}>
+                      {p.score ?? 0} pts
+                    </span>
                   </div>
                 ))}
             </div>
-            <button onClick={() => setShowFinalRanking(false)} className="ink-border-sm rounded-xl px-4 py-2 font-black text-sm">
+            <button
+              onClick={() => setShowFinalRanking(false)}
+              className="ink-border-sm rounded-xl px-4 py-2 font-black text-sm"
+            >
               CLOSE
             </button>
             <p className="text-xs opacity-70 mt-2">Waiting for the host to restart…</p>
@@ -698,14 +881,6 @@ function PlayPage() {
         />
       )}
       {/* countdown rendered inline inside the timer box */}
-      {isPaused && (
-        <div
-          className="fixed top-2 left-1/2 -translate-x-1/2 z-[100] ink-border rounded-2xl bg-[var(--boom-red)] text-white px-4 py-2 flex items-center gap-2 pointer-events-none comic-shadow"
-          style={{ fontFamily: "'Luckiest Guy', cursive" }}
-        >
-          <Pause size={20} fill="currentColor" /> GAME PAUSED
-        </div>
-      )}
     </main>
   );
 }

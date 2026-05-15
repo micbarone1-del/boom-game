@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Trap } from "@/lib/game";
 
 export type Room = {
   code: string;
@@ -7,11 +8,20 @@ export type Room = {
   difficulty_multiplier: number;
   current_turn_player_id: string | null;
   locked: boolean;
-  trap: any;
+  trap: Trap | null;
   last_dice: number | null;
   status: string;
   paused?: boolean;
-  board_overrides: Record<string, { exercise?: string; reps?: number }> | null;
+  board_overrides: Record<
+    string,
+    {
+      exercise?: string;
+      reps?: number;
+      min_reps?: number;
+      max_reps?: number;
+      unit?: "reps" | "seconds";
+    }
+  > | null;
 };
 
 export type Player = {
@@ -26,6 +36,8 @@ export type Player = {
   score: number;
   finished_at: string | null;
   finish_rank: number | null;
+  team_id?: string | null;
+  is_team_lead?: boolean | null;
 };
 
 export function useRoom(code: string | undefined) {
@@ -51,22 +63,30 @@ export function useRoom(code: string | undefined) {
 
     const channel = supabase
       .channel(`room:${code}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: `code=eq.${code}` },
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "rooms", filter: `code=eq.${code}` },
         (payload) => {
           if (payload.eventType === "DELETE") setRoom(null);
           else setRoom(payload.new as Room);
-        })
-      .on("postgres_changes", { event: "*", schema: "public", table: "players", filter: `room_code=eq.${code}` },
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "players", filter: `room_code=eq.${code}` },
         (payload) => {
           setPlayers((prev) => {
             if (payload.eventType === "INSERT") return [...prev, payload.new as Player];
             if (payload.eventType === "UPDATE")
-              return prev.map((p) => (p.id === (payload.new as Player).id ? (payload.new as Player) : p));
+              return prev.map((p) =>
+                p.id === (payload.new as Player).id ? (payload.new as Player) : p,
+              );
             if (payload.eventType === "DELETE")
               return prev.filter((p) => p.id !== (payload.old as Player).id);
             return prev;
           });
-        })
+        },
+      )
       .subscribe();
 
     // When the tab returns from background/standby, the realtime websocket

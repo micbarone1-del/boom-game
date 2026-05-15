@@ -5,13 +5,15 @@ export function ShareLinkButton({
   url,
   code,
   className = "",
+  compact = false,
 }: {
   url: string;
   code: string;
   className?: string;
+  compact?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
-  const canShare = typeof navigator !== "undefined" && !!(navigator as any).share;
+  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const onShare = async () => {
     const shareData = {
@@ -21,7 +23,7 @@ export function ShareLinkButton({
     };
     try {
       if (canShare) {
-        await (navigator as any).share(shareData);
+        await navigator.share(shareData);
         return;
       }
     } catch {
@@ -47,21 +49,21 @@ export function ShareLinkButton({
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-2 ${compact ? "flex-wrap" : ""} ${className}`}>
       <button
         onClick={onShare}
-        className="ink-border-sm rounded-xl px-3 py-2 bg-[var(--boom-green)] text-white font-black text-sm flex items-center gap-2 active:scale-95 transition-transform"
+        className={`ink-border-sm rounded-xl bg-[var(--boom-green)] text-white font-black flex items-center justify-center gap-2 active:scale-95 transition-transform ${compact ? "px-2 py-1 text-xs" : "px-3 py-2 text-sm"}`}
         title="Share invite link"
       >
-        <Share2 size={16} /> SHARE INVITE
+        <Share2 size={compact ? 14 : 16} /> {compact ? "SHARE" : "SHARE INVITE"}
       </button>
       <button
         onClick={onCopy}
-        className="ink-border-sm rounded-xl px-3 py-2 bg-white font-black text-sm flex items-center gap-2 active:scale-95 transition-transform"
+        className={`ink-border-sm rounded-xl bg-white font-black flex items-center justify-center gap-2 active:scale-95 transition-transform ${compact ? "px-2 py-1 text-xs" : "px-3 py-2 text-sm"}`}
         title="Copy join URL"
       >
-        {copied ? <Check size={16} /> : <Copy size={16} />}
-        {copied ? "COPIED" : "COPY LINK"}
+        {copied ? <Check size={compact ? 14 : 16} /> : <Copy size={compact ? 14 : 16} />}
+        {copied ? "COPIED" : compact ? "COPY" : "COPY LINK"}
       </button>
     </div>
   );

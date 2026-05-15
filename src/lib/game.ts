@@ -8,6 +8,63 @@ export const COUNTDOWN_LEAD_MS = 3000;
 export const TRAP_TIMEOUT_MS = 30_000;
 /** Maximum number of independent "slots" (solo player or team) on the board. */
 export const MAX_TEAMS = 3;
+export const TEAM_IDS = ["green", "red", "blue"] as const;
+export type TeamId = (typeof TEAM_IDS)[number];
+
+export const TEAM_COLORS: Record<TeamId, string> = {
+  green: "#22c55e",
+  red: "#ef4444",
+  blue: "#3b82f6",
+};
+
+export function teamName(teamId?: string | null): string {
+  if (!teamId) return "Solo";
+  return `Team ${teamId.slice(0, 1).toUpperCase()}${teamId.slice(1)}`;
+}
+
+export function teamColor(teamId?: string | null): string {
+  return TEAM_COLORS[(teamId as TeamId) ?? "green"] ?? "#ec4899";
+}
+
+type TeamAssignablePlayer = {
+  id: string;
+  fitness_level: number;
+  joined_at: string;
+  team_id?: string | null;
+  is_team_lead?: boolean | null;
+  current_space?: number | null;
+};
+
+export function assignTeamForJoin(existingPlayers: TeamAssignablePlayer[], fitnessLevel: number) {
+  const ordered = [...existingPlayers].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
+  const teamFor = (p: TeamAssignablePlayer, idx: number) =>
+    p.team_id ?? TEAM_IDS[Math.min(idx, TEAM_IDS.length - 1)];
+  const used = new Set(ordered.map(teamFor));
+
+  if (used.size < MAX_TEAMS) {
+    const team_id = TEAM_IDS.find((id) => !used.has(id)) ?? TEAM_IDS[used.size];
+    return { team_id, is_team_lead: true, current_space: 0 };
+  }
+
+  const teams = TEAM_IDS.map((id) => {
+    const members = ordered.filter((p, idx) => teamFor(p, idx) === id);
+    const avgFitness =
+      members.reduce((sum, p) => sum + (p.fitness_level || 5), 0) / Math.max(1, members.length);
+    const lead = members.find((p) => p.is_team_lead) ?? members[0];
+    return { id, members, avgFitness, lead };
+  });
+  teams.sort(
+    (a, b) =>
+      Math.abs(a.avgFitness - fitnessLevel) - Math.abs(b.avgFitness - fitnessLevel) ||
+      a.members.length - b.members.length,
+  );
+  const chosen = teams[0] ?? { id: TEAM_IDS[0], lead: ordered[0] };
+  return {
+    team_id: chosen.id,
+    is_team_lead: false,
+    current_space: chosen.lead?.current_space ?? 0,
+  };
+}
 
 export const EXERCISES_EASY = ["Jumping Jacks", "High Knees", "Sit-ups", "Crunches"];
 export const EXERCISES_MEDIUM = ["Squats", "Lunges", "Push-ups", "Mountain Climbers"];
@@ -67,66 +124,66 @@ export type Cell = {
  * 41 exercise spaces split across easy/medium/hard tiers.
  */
 const RAW_BOARD: Array<[CellType, number?]> = [
-  ["start"],         // 1
-  ["easy"],          // 2
-  ["easy"],          // 3
-  ["boost", 3],      // 4
-  ["surprise"],      // 5
-  ["hard"],          // 6
-  ["easy"],          // 7
-  ["surprise"],      // 8
-  ["medium"],        // 9
-  ["setback", -2],   // 10
-  ["boost", 4],      // 11
-  ["group"],         // 12
-  ["hard"],          // 13
-  ["medium"],        // 14
-  ["easy"],          // 15
-  ["setback", -3],   // 16
-  ["crazy"],         // 17
-  ["easy"],          // 18
-  ["hard"],          // 19
-  ["group"],         // 20
-  ["medium"],        // 21
-  ["boost", 10],     // 22  ← MEGA BLAST!
-  ["easy"],          // 23
-  ["medium"],        // 24
-  ["hard"],          // 25
-  ["surprise"],      // 26
-  ["setback", -2],   // 27
-  ["crazy"],         // 28
-  ["easy"],          // 29
-  ["boost", 3],      // 30
-  ["hard"],          // 31
-  ["surprise"],      // 32
-  ["medium"],        // 33
+  ["start"], // 1
+  ["easy"], // 2
+  ["easy"], // 3
+  ["boost", 3], // 4
+  ["surprise"], // 5
+  ["hard"], // 6
+  ["easy"], // 7
+  ["surprise"], // 8
+  ["medium"], // 9
+  ["setback", -2], // 10
+  ["boost", 4], // 11
+  ["group"], // 12
+  ["hard"], // 13
+  ["medium"], // 14
+  ["easy"], // 15
+  ["setback", -3], // 16
+  ["crazy"], // 17
+  ["easy"], // 18
+  ["hard"], // 19
+  ["group"], // 20
+  ["medium"], // 21
+  ["boost", 10], // 22  ← MEGA BLAST!
+  ["easy"], // 23
+  ["medium"], // 24
+  ["hard"], // 25
+  ["surprise"], // 26
+  ["setback", -2], // 27
+  ["crazy"], // 28
+  ["easy"], // 29
+  ["boost", 3], // 30
+  ["hard"], // 31
+  ["surprise"], // 32
+  ["medium"], // 33
   ["setback", -999], // 34  ← BACK TO START
-  ["group"],         // 35
-  ["medium"],        // 36
-  ["crazy"],         // 37
-  ["hard"],          // 38
-  ["boost", 4],      // 39
-  ["crazy"],         // 40
-  ["medium"],        // 41
-  ["setback", -3],   // 42
-  ["hard"],          // 43
-  ["surprise"],      // 44
-  ["boost", 3],      // 45
-  ["medium"],        // 46
-  ["group"],         // 47
-  ["hard"],          // 48
-  ["setback", -2],   // 49
-  ["medium"],        // 50
-  ["crazy"],         // 51
-  ["boost", 5],      // 52
-  ["hard"],          // 53
-  ["medium"],        // 54
-  ["setback", -3],   // 55
-  ["group"],         // 56
-  ["medium"],        // 57
-  ["hard"],          // 58
-  ["boost", 2],      // 59
-  ["finish"],        // 60
+  ["group"], // 35
+  ["medium"], // 36
+  ["crazy"], // 37
+  ["hard"], // 38
+  ["boost", 4], // 39
+  ["crazy"], // 40
+  ["medium"], // 41
+  ["setback", -3], // 42
+  ["hard"], // 43
+  ["surprise"], // 44
+  ["boost", 3], // 45
+  ["medium"], // 46
+  ["group"], // 47
+  ["hard"], // 48
+  ["setback", -2], // 49
+  ["medium"], // 50
+  ["crazy"], // 51
+  ["boost", 5], // 52
+  ["hard"], // 53
+  ["medium"], // 54
+  ["setback", -3], // 55
+  ["group"], // 56
+  ["medium"], // 57
+  ["hard"], // 58
+  ["boost", 2], // 59
+  ["finish"], // 60
 ];
 
 export const BOARD: Cell[] = RAW_BOARD.map(([type, n], i) => {
@@ -148,7 +205,13 @@ export function getCell(space: number): Cell {
 
 export type BoardOverrides = Record<
   string,
-  { exercise?: string; reps?: number; min_reps?: number; max_reps?: number; unit?: "reps" | "seconds" }
+  {
+    exercise?: string;
+    reps?: number;
+    min_reps?: number;
+    max_reps?: number;
+    unit?: "reps" | "seconds";
+  }
 >;
 
 /** Returns the cell with any host overrides applied (custom exercise name). */
@@ -163,10 +226,7 @@ export function getEffectiveCell(space: number, overrides?: BoardOverrides | nul
 }
 
 /** Returns the unit (reps or seconds) for an exercise cell, defaulting to reps. */
-export function getCellUnit(
-  space: number,
-  overrides?: BoardOverrides | null,
-): "reps" | "seconds" {
+export function getCellUnit(space: number, overrides?: BoardOverrides | null): "reps" | "seconds" {
   return overrides?.[String(space)]?.unit ?? "reps";
 }
 
@@ -182,7 +242,10 @@ export function pickSurpriseExercise(overrides?: BoardOverrides | null): {
       pool.push({ name: eff.exercise ?? "Workout", tier: c.tier ?? 1 });
     }
   }
-  const pick = pool[Math.floor(Math.random() * pool.length)] ?? { name: "Squats", tier: 2 as 1 | 2 | 3 };
+  const pick = pool[Math.floor(Math.random() * pool.length)] ?? {
+    name: "Squats",
+    tier: 2 as 1 | 2 | 3,
+  };
   return { exercise: pick.name, tier: pick.tier };
 }
 
@@ -225,11 +288,7 @@ export function getOverrideReps(
 }
 
 /** Reps for a tier given the player's fitness level + room difficulty. Capped to keep things sane. */
-export function calcRepsForTier(
-  tier: 1 | 2 | 3,
-  fitnessLevel: number,
-  multiplier: number,
-): number {
+export function calcRepsForTier(tier: 1 | 2 | 3, fitnessLevel: number, multiplier: number): number {
   // Average of fitness (1-10) and difficulty multiplier (default 5) on a 0-1 scale.
   const intensity = (fitnessLevel + multiplier) / 20; // ~0.5 at defaults
   const base = tier === 1 ? 14 : tier === 2 ? 10 : 7;
@@ -249,9 +308,7 @@ export function describeCell(cell: Cell): string {
         ? `🚀 MEGA BLAST +${cell.delta}!`
         : `⚡ Blast forward +${cell.delta}`;
     case "setback":
-      return cell.delta && cell.delta <= -50
-        ? `🐌 BACK TO START!`
-        : `⬅ Setback ${cell.delta}`;
+      return cell.delta && cell.delta <= -50 ? `🐌 BACK TO START!` : `⬅ Setback ${cell.delta}`;
     case "easy":
       return `Easy: ${cell.exercise}`;
     case "medium":
@@ -333,7 +390,10 @@ export async function finishPlayer(playerId: string, roomCode: string) {
     .select("target_reps")
     .eq("room_code", roomCode)
     .eq("player_id", playerId);
-  const totalReps = (logs ?? []).reduce((s, l: any) => s + (l.target_reps ?? 0), 0);
+  const totalReps = (logs ?? []).reduce(
+    (s, l: { target_reps: number | null }) => s + (l.target_reps ?? 0),
+    0,
+  );
 
   const { data: alreadyFinished } = await supabase
     .from("players")
@@ -359,7 +419,7 @@ export type Trap = {
   exercise: string;
   reps: number;
   triggered_by: string; // player id
-  started_at: number;   // ms epoch
+  started_at: number; // ms epoch
   awaiting_verification?: boolean;
   /** The final board space the trap is anchored on (post-boost/setback). */
   space?: number;
@@ -383,7 +443,9 @@ export function loadPlayerSession(): { roomCode: string; playerId: string } | nu
   try {
     const v = localStorage.getItem(PLAYER_KEY);
     return v ? JSON.parse(v) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export function clearPlayerSession() {

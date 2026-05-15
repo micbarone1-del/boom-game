@@ -784,6 +784,8 @@ function PlayPage() {
                       size={28}
                       active={room?.current_turn_player_id === p.id}
                       showName={false}
+                      ringColor={p.team_id ? teamColor(p.team_id) : undefined}
+                      mascot
                     />
                     <span className="text-sm font-black truncate max-w-[100px]">
                       {p.username}

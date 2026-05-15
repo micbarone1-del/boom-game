@@ -1261,6 +1261,9 @@ function GymBoard({ code }: { code: string }) {
       )}
       {/* countdown rendered inline inside the timer box */}
     </div>
+        </div>
+      </div>
+    </>
   );
 }
 

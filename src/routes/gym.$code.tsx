@@ -1111,6 +1111,7 @@ function GymBoard({ code }: { code: string }) {
                                             showName={false}
                                             showInitial
                                             ringColor={p.team_id ? teamColor(p.team_id) : undefined}
+                                            mascot
                                             className={isHopping ? "anim-hop" : "anim-land"}
                                           />
                                         </div>

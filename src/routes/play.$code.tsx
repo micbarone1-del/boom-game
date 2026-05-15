@@ -518,7 +518,9 @@ function PlayPage() {
             </div>
           </div>
           <p className="text-xl font-black">
-            {triggeredByMe
+            {trap.kind === "group"
+              ? "EVERYBODY IS DOING THIS!"
+              : triggeredByMe
               ? "YOU ARE ABOUT TO EXPLODE!"
               : `${players.find(p=>p.id===trap.triggered_by)?.username || "Someone"} is about to explode!`}
           </p>
@@ -697,17 +699,11 @@ function PlayPage() {
       )}
       {/* countdown rendered inline inside the timer box */}
       {isPaused && (
-        <div className="fixed inset-0 z-[100] bg-black/85 flex flex-col items-center justify-center gap-6 p-6 text-center">
-          <Pause size={96} className="text-white" fill="currentColor" />
-          <div
-            className="text-6xl font-black comic-shadow text-white"
-            style={{ fontFamily: "'Luckiest Guy', cursive" }}
-          >
-            GAME PAUSED
-          </div>
-          <p className="text-white text-lg font-bold opacity-80">
-            Waiting for the host to resume…
-          </p>
+        <div
+          className="fixed top-2 left-1/2 -translate-x-1/2 z-[100] ink-border rounded-2xl bg-[var(--boom-red)] text-white px-4 py-2 flex items-center gap-2 pointer-events-none comic-shadow"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <Pause size={20} fill="currentColor" /> GAME PAUSED
         </div>
       )}
     </main>

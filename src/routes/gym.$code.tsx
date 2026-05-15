@@ -19,6 +19,7 @@ import { TutorialCarousel } from "@/components/TutorialCarousel";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { OrientationLock } from "@/components/OrientationLock";
 import { ExplosionOverlay } from "@/components/ExplosionOverlay";
+import { GameStartReveal } from "@/components/GameStartReveal";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -541,6 +542,8 @@ function GymBoard({ code }: { code: string }) {
     // host hit RESTART from the paused screen.
     setPaused(false);
     sfx.play("gameStart");
+    setExploding(true);
+    setTimeout(() => setExploding(false), 2600);
     const first = orderedPlayers[0];
     const resetSpaces = Object.fromEntries(players.map((p) => [p.id, 0]));
     prevRef.current = resetSpaces;
@@ -607,7 +610,7 @@ function GymBoard({ code }: { code: string }) {
     setExploding(true);
     void sfx.unlock();
     sfx.play("blast");
-    setTimeout(() => setExploding(false), 1800);
+    setTimeout(() => setExploding(false), 2600);
     const { error } = await supabase
       .from("rooms")
       .update({
@@ -701,7 +704,7 @@ function GymBoard({ code }: { code: string }) {
         >
           <div
             onPointerDownCapture={() => { if (!sfx.isMuted()) void sfx.unlock(); }}
-            className={`flex flex-col gap-4 relative w-full h-full ${inPlayMode ? "overflow-hidden p-2" : "overflow-y-auto p-6"}`}
+            className={`flex flex-col gap-3 relative w-full h-full overflow-hidden ${inPlayMode ? "p-2" : "p-3"}`}
           >
       <h1 className="sr-only">BOOM! Gym Screen — Room {code}</h1>
       {!inPlayMode && (
@@ -897,9 +900,11 @@ function GymBoard({ code }: { code: string }) {
                     cell.type === "hard" ? "var(--boom-red)" :
                     cell.type === "boost" ? "var(--boom-green)" :
                     cell.type === "surprise" ? "#ec4899" :
-                    cell.type === "crazy" ? "#f97316" :
+                    cell.type === "crazy" ? "#22d3ee" :
                     cell.type === "group" ? "var(--boom-blue)" :
                     "#7c3aed";
+                  const isLight = cell.type === "start" || cell.type === "finish";
+                  const numColor = isLight ? "var(--boom-ink)" : "white";
                   return (
                     <div
                       key={space}
@@ -927,14 +932,14 @@ function GymBoard({ code }: { code: string }) {
                       )}
                       <span
                         className="font-black leading-none"
-                        style={{ color: "var(--boom-ink)", fontSize: "clamp(0.7rem, 22cqw, 1.75rem)" }}
+                        style={{ color: numColor, fontSize: "clamp(0.7rem, 22cqw, 1.75rem)" }}
                       >
                         {space}
                       </span>
-                      {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%]" />}
-                      {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%]" />}
+                      {cell.type === "easy" && <MiniDumbbell className="w-[60%] h-[60%] text-white" />}
+                      {cell.type === "medium" && <Dumbbell className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "hard" && <Flame className="w-[60%] h-[60%] text-white" />}
-                      {cell.type === "boost" && <Zap className="w-[60%] h-[60%]" />}
+                      {cell.type === "boost" && <Zap className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "setback" && <ArrowLeft className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "surprise" && <HelpCircle className="w-[60%] h-[60%] text-white" />}
                       {cell.type === "crazy" && <AlertTriangle className="w-[60%] h-[60%] text-white" />}
@@ -982,7 +987,9 @@ function GymBoard({ code }: { code: string }) {
             { c: "var(--boom-yellow)", l: "Easy" },
             { c: "var(--boom-orange)", l: "Medium" },
             { c: "var(--boom-red)", l: "Hard" },
-            { c: "var(--boom-blue)", l: "Rest" },
+            { c: "#ec4899", l: "Surprise" },
+            { c: "#22d3ee", l: "Crazy" },
+            { c: "var(--boom-blue)", l: "All Together" },
             { c: "var(--boom-green)", l: "Blast +" },
             { c: "#7c3aed", l: "Setback −" },
           ].map((x) => (
@@ -1005,13 +1012,13 @@ function GymBoard({ code }: { code: string }) {
       </div>
 
       {/* Tutorial — shown in lobby AND while paused. Invite lives in the header. */}
-      {!inPlayMode && <TutorialCarousel compact />}
-
-      {/* Live leaderboard — visible to everyone in the room */}
       {!inPlayMode && (
-      <div className="ink-border rounded-2xl bg-white p-3">
-        <h2 className="text-lg font-black mb-2 flex items-center gap-2"><Trophy size={20} /> LIVE LEADERBOARD</h2>
-        <div className="grid gap-1">
+      <div className="flex-1 min-h-0 grid grid-cols-12 gap-3">
+        <div className="col-span-5 flex flex-col gap-3 min-h-0">
+          <div className="shrink-0"><TutorialCarousel compact /></div>
+          <div className="ink-border rounded-2xl bg-white p-3 flex-1 min-h-0 flex flex-col">
+            <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0"><Trophy size={20} /> LIVE LEADERBOARD</h2>
+            <div className="grid gap-1 overflow-y-auto pr-1">
           {[...players]
             .sort((a, b) => {
               if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
@@ -1033,13 +1040,10 @@ function GymBoard({ code }: { code: string }) {
                 </div>
               </div>
             ))}
+            </div>
+          </div>
         </div>
-      </div>
-      )}
-
-      {/* Players strip */}
-      {!inPlayMode && (
-      <div className="ink-border rounded-2xl p-3 pt-5 bg-white flex gap-6 overflow-x-auto">
+        <div className="col-span-7 ink-border rounded-2xl p-3 pt-5 bg-white flex gap-4 flex-wrap content-start overflow-y-auto">
         {players.length === 0 && (
           <div className="text-lg font-bold p-2">Waiting for players to join… scan the QR!</div>
         )}
@@ -1074,6 +1078,7 @@ function GymBoard({ code }: { code: string }) {
             </div>
           );
         })}
+        </div>
       </div>
       )}
 
@@ -1121,7 +1126,9 @@ function GymBoard({ code }: { code: string }) {
               BOOM!
             </div>
             <p className="text-2xl font-black mt-2">
-              {players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!
+              {trap.kind === "group"
+                ? "EVERYBODY IS DOING THIS!"
+                : `${players.find((p) => p.id === trap.triggered_by)?.username ?? "Someone"} IS ABOUT TO EXPLODE!`}
             </p>
             <p className="text-3xl font-black mt-2" style={{ color: "var(--boom-red)" }}>
               Do {trap.reps} {trap.exercise}!
@@ -1135,7 +1142,7 @@ function GymBoard({ code }: { code: string }) {
                 trapCellType === "boost" ? "var(--boom-green)" :
                 trapCellType === "setback" ? "#7c3aed" :
                 trapCellType === "surprise" ? "#ec4899" :
-                trapCellType === "crazy" ? "#f97316" :
+                trapCellType === "crazy" ? "#22d3ee" :
                 trapCellType === "group" ? "var(--boom-blue)" :
                 "var(--boom-yellow)";
               const effectiveStart = trap.started_at;
@@ -1312,28 +1319,7 @@ function GymBoard({ code }: { code: string }) {
       {timeoutBoom && <ExplosionOverlay username={timeoutBoom} />}
       {/* Start-of-game explosion overlay */}
       {exploding && (
-        <div className="fixed inset-0 z-[65] flex items-center justify-center pointer-events-none overflow-hidden bg-black/40">
-          <img
-            src={bombMascot}
-            alt=""
-            width={1024}
-            height={1024}
-            className="absolute anim-mascot-explode"
-            style={{ width: "90vmin", height: "90vmin" }}
-          />
-          <div
-            className="relative comic-shadow anim-shake"
-            style={{
-              fontFamily: "'Luckiest Guy', cursive",
-              fontSize: "clamp(6rem, 22vw, 16rem)",
-              color: "var(--boom-yellow)",
-              textShadow: "6px 6px 0 #000, -3px -3px 0 #000",
-              lineHeight: 1,
-            }}
-          >
-            BOOM!
-          </div>
-        </div>
+        <GameStartReveal players={orderedPlayers} />
       )}
       {/* countdown rendered inline inside the timer box */}
     </div>

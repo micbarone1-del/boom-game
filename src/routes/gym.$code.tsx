@@ -542,6 +542,8 @@ function GymBoard({ code }: { code: string }) {
     // host hit RESTART from the paused screen.
     setPaused(false);
     sfx.play("gameStart");
+    setExploding(true);
+    setTimeout(() => setExploding(false), 2600);
     const first = orderedPlayers[0];
     const resetSpaces = Object.fromEntries(players.map((p) => [p.id, 0]));
     prevRef.current = resetSpaces;

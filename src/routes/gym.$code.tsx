@@ -1156,14 +1156,41 @@ function GymBoard({ code }: { code: string }) {
               </div>
             )}
 
-            {/* Tutorial — shown in lobby AND while paused. Invite lives in the header. */}
+            {/* Four-quadrant lobby / pause screen */}
             {!inPlayMode && (
-              <div className="flex-1 min-h-0 grid grid-cols-12 gap-3 overflow-hidden">
-                <div className="col-span-5 flex flex-col gap-3 min-h-0">
-                  <div className="flex-[1.1] min-h-0">
-                    <TutorialCarousel compact />
+              <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-3 overflow-hidden">
+                <div className="min-h-0">
+                  <TutorialCarousel compact showDots={false} />
+                </div>
+                <div className="ink-border rounded-2xl bg-white p-3 min-h-0 flex items-center justify-between gap-3 overflow-hidden">
+                  <div className="flex flex-col items-start gap-2 min-w-0 flex-1">
+                    <div
+                      className="text-4xl font-black leading-none"
+                      style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+                    >
+                      INVITE YOUR CREW
+                    </div>
+                    <div className="text-xs font-bold opacity-70 truncate leading-tight max-w-full">
+                      {joinUrl}
+                    </div>
+                    <ShareLinkButton url={joinUrl} code={code} compact />
+                    <div className="text-lg font-bold leading-none mt-1">
+                      CODE:{" "}
+                      <span style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+                        {code}
+                      </span>
+                    </div>
                   </div>
-                  <div className="ink-border rounded-2xl bg-white p-3 flex-1 min-h-0 flex flex-col">
+                  <button
+                    onClick={() => setQrZoom(true)}
+                    className="bg-white shrink-0"
+                    title="Tap to enlarge QR"
+                    aria-label="Enlarge QR code to join this room"
+                  >
+                    <QRCodeSVG value={joinUrl} size={150} level="M" />
+                  </button>
+                </div>
+                <div className="ink-border rounded-2xl bg-white p-3 min-h-0 flex flex-col overflow-hidden">
                     <h2 className="text-lg font-black mb-2 flex items-center gap-2 shrink-0">
                       <Trophy size={20} /> LIVE LEADERBOARD
                     </h2>
@@ -1206,9 +1233,8 @@ function GymBoard({ code }: { code: string }) {
                           </div>
                         ))}
                     </div>
-                  </div>
                 </div>
-                <div className="col-span-7 ink-border rounded-2xl p-3 bg-white grid grid-cols-3 gap-3 content-start overflow-hidden">
+                <div className="ink-border rounded-2xl p-3 bg-white grid grid-cols-3 gap-2 content-start overflow-hidden min-h-0">
                   {players.length === 0 && (
                     <div
                       className="col-span-3 text-2xl font-black p-4 text-center"

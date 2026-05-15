@@ -436,8 +436,15 @@ function PlayPage() {
     setRolling(false);
   };
 
+  const trapJudgeName =
+    trap?.kind === "group"
+      ? "anybody"
+      : judgeId
+        ? (players.find((p) => p.id === judgeId)?.username ?? "the previous player")
+        : "the gym screen";
+
   return (
-    <main className="min-h-screen p-4 flex flex-col gap-4 max-w-md mx-auto">
+    <main className="fixed inset-0 overflow-hidden p-3 flex flex-col gap-3 max-w-md mx-auto w-full bg-[var(--background)]">
       <h1 className="sr-only">BOOM! Player Controller — Room {code}</h1>
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">

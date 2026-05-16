@@ -73,7 +73,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "BOOM — The Workout Game" },
-      { name: "google-site-verification", content: "3E0GP3Qppw7fyNQddzTeuD4TOPNalBEoVgZXOmpeCIs" },
+      { name: "google-site-verification", content: "Iz6aaM0wG40huCITpX5SbL5vcERIT74TLSfe_Sm7rcw" },
       { name: "description", content: "A chaotic real-time multiplayer party-fitness game. Roll the dice, dodge the traps, and BLAST through workout penalties with friends." },
       { property: "og:title", content: "BOOM — The Workout Game" },
       { property: "og:description", content: "A chaotic real-time multiplayer party-fitness game. Roll the dice, dodge the traps, and BLAST through workout penalties with friends." },

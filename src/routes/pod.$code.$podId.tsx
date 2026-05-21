@@ -57,7 +57,7 @@ function mascotColor(url: string | null) {
 }
 
 function PodPage() {
-  const { code } = Route.useParams();
+  const { code, podId } = Route.useParams();
   const { room, players, loading } = useRoom(code);
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase | null>(null);
@@ -66,8 +66,11 @@ function PodPage() {
   const tick = () => force((n) => n + 1);
 
   const ordered = useMemo(
-    () => [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at)),
-    [players],
+    () =>
+      players
+        .filter((p) => p.pod_id === podId)
+        .sort((a, b) => a.joined_at.localeCompare(b.joined_at)),
+    [players, podId],
   );
 
   // Initialize phase once players are loaded.

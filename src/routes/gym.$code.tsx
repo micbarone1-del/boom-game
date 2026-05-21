@@ -195,29 +195,39 @@ function SlotCard({
           ) : (
             <img src={slot.avatar!} alt="" className="w-full h-full object-cover" />
           )}
-          {!isMascot && (
-            <span className="absolute bottom-0 right-0 bg-white rounded-full p-0.5">
-              <CameraIcon size={12} />
-            </span>
-          )}
+          <span className="absolute bottom-0 right-0 bg-white rounded-full p-1 ink-border-sm">
+            <CameraIcon size={12} />
+          </span>
         </button>
         <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={handleFile} />
-        <input
-          type="text"
-          value={slot.name}
-          onChange={(e) => onChange({ name: e.target.value })}
-          placeholder={label}
-          className="flex-1 ink-border-sm rounded-xl px-3 py-2 text-lg font-bold bg-white"
-        />
-        {!isMascot && (
-          <button
-            onClick={() => onChange({ avatar: `mascot:${mascotColor}` })}
-            className="text-xs opacity-60"
-            aria-label="Remove photo"
-          >
-            <X size={18} />
-          </button>
-        )}
+        <div className="flex-1 flex flex-col gap-1">
+          <input
+            type="text"
+            value={slot.name}
+            onChange={(e) => onChange({ name: e.target.value })}
+            placeholder={label}
+            className="ink-border-sm rounded-xl px-3 py-2 text-lg font-bold bg-white"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="text-xs font-black opacity-80 flex items-center gap-1"
+            >
+              <CameraIcon size={12} /> {isMascot ? "Add photo" : "Change photo"}
+            </button>
+            {!isMascot && (
+              <button
+                type="button"
+                onClick={() => onChange({ avatar: `mascot:${mascotColor}` })}
+                className="text-xs opacity-60 flex items-center gap-1"
+                aria-label="Remove photo"
+              >
+                <X size={14} /> Remove
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-1.5 flex-wrap">

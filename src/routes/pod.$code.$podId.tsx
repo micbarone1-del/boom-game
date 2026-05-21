@@ -198,11 +198,11 @@ function PodPage() {
     await supabase
       .from("players")
       .update({ current_space: 0, score: 0, finished_at: null, finish_rank: null })
-      .eq("room_code", code);
+      .eq("pod_id", podId);
     await supabase
-      .from("rooms")
-      .update({ status: "lobby", trap: null, locked: false, current_turn_player_id: null })
-      .eq("code", code);
+      .from("pods")
+      .update({ status: "lobby", current_space: 0, score: 0, current_turn_player_id: null })
+      .eq("id", podId);
     clipsRef.current.clear();
     navigate({ to: "/gym/$code", params: { code } });
   };

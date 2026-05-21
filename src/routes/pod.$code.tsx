@@ -23,7 +23,6 @@ import { sfx, speak, repPop, startArcadeRise } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { WorkoutIllustration } from "@/components/WorkoutIllustration";
-import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 
 export const Route = createFileRoute("/pod/$code")({
   component: PodPage,
@@ -370,10 +369,7 @@ function PlayerPhase({
 
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
-      <div className="absolute top-2 left-2 right-2 z-20">
-        <SpotifyEmbed code={code} />
-      </div>
-      <div className="text-xs font-bold opacity-60 uppercase tracking-wider mt-32">Your turn</div>
+      <div className="text-xs font-bold opacity-60 uppercase tracking-wider">Your turn</div>
       <Avatar player={player} size={140} />
       <div
         className="text-4xl font-black"

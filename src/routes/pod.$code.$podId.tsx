@@ -22,13 +22,13 @@ import {
 import { sfx, speak, repPop, startArcadeRise, startArcadeMusic } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
-import { mascotForCell } from "@/components/CellMascot";
+import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
 
-export const Route = createFileRoute("/pod/$code")({
+export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,
   head: ({ params }) => ({
     meta: [
-      { title: `Pod ${params.code} — BOOM!` },
+      { title: `Pod ${params.podId.slice(0, 6)} — BOOM!` },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -57,7 +57,7 @@ function mascotColor(url: string | null) {
 }
 
 function PodPage() {
-  const { code } = Route.useParams();
+  const { code, podId } = Route.useParams();
   const { room, players, loading } = useRoom(code);
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase | null>(null);
@@ -66,8 +66,11 @@ function PodPage() {
   const tick = () => force((n) => n + 1);
 
   const ordered = useMemo(
-    () => [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at)),
-    [players],
+    () =>
+      players
+        .filter((p) => p.pod_id === podId)
+        .sort((a, b) => a.joined_at.localeCompare(b.joined_at)),
+    [players, podId],
   );
 
   // Initialize phase once players are loaded.
@@ -195,11 +198,11 @@ function PodPage() {
     await supabase
       .from("players")
       .update({ current_space: 0, score: 0, finished_at: null, finish_rank: null })
-      .eq("room_code", code);
+      .eq("pod_id", podId);
     await supabase
-      .from("rooms")
-      .update({ status: "lobby", trap: null, locked: false, current_turn_player_id: null })
-      .eq("code", code);
+      .from("pods")
+      .update({ status: "lobby", current_space: 0, score: 0, current_turn_player_id: null })
+      .eq("id", podId);
     clipsRef.current.clear();
     navigate({ to: "/gym/$code", params: { code } });
   };
@@ -454,6 +457,7 @@ function SwitchPhase({
   const [count, setCount] = useState(3);
   const spokeRef = useRef(false);
   const mascotImg = mascotForCell(trap.cellType);
+  const flavor = CELL_FLAVOR[trap.cellType];
 
   useEffect(() => {
     if (spokeRef.current) return;
@@ -473,23 +477,47 @@ function SwitchPhase({
   }, [count, onDone]);
 
   return (
-    <main className="fixed inset-0 flex flex-col items-center justify-between p-4 gap-3 bg-[var(--background)]">
-      {/* Cell-type mascot at top (separate from countdown so they don't overlap) */}
-      <div className="flex flex-col items-center gap-1 mt-2">
+    <main
+      className="fixed inset-0 flex flex-col items-center justify-between p-4 gap-3"
+      style={{ background: flavor.color, transition: "background 250ms" }}
+    >
+      {/* Cell mascot + label banner */}
+      <div className="flex flex-col items-center gap-2 mt-2 w-full">
         <img
           src={mascotImg}
           alt=""
           key={`cellmascot-${trap.cellType}`}
-          className="w-32 h-32 anim-mascot-bounce drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
+          className="w-28 h-28 anim-mascot-bounce drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
         />
-        <div className="text-center">
+        <div
+          className="ink-border rounded-2xl px-4 py-1 bg-white"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <span
+            className="text-2xl font-black"
+            style={{ color: flavor.color === "#7c3aed" ? "#7c3aed" : "var(--boom-ink)" }}
+          >
+            {flavor.label}
+          </span>
+        </div>
+        <div className="text-center ink-border rounded-2xl bg-white px-4 py-2 max-w-[92%]">
           <div
-            className="text-3xl font-black leading-tight"
-            style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}
+            className="font-black leading-tight"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: "var(--boom-ink)",
+              fontSize: "clamp(1.6rem, 6vw, 2.25rem)",
+            }}
           >
             {trap.exercise}
           </div>
-          <div className="text-xl font-bold">
+          <div
+            className="font-bold"
+            style={{
+              color: "var(--boom-ink)",
+              fontSize: "clamp(1rem, 4vw, 1.25rem)",
+            }}
+          >
             {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
           </div>
         </div>

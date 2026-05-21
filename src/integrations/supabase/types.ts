@@ -24,6 +24,7 @@ export type Database = {
           id: string
           is_team_lead: boolean
           joined_at: string
+          pod_id: string | null
           room_code: string
           score: number
           status: string
@@ -40,6 +41,7 @@ export type Database = {
           id?: string
           is_team_lead?: boolean
           joined_at?: string
+          pod_id?: string | null
           room_code: string
           score?: number
           status?: string
@@ -56,6 +58,7 @@ export type Database = {
           id?: string
           is_team_lead?: boolean
           joined_at?: string
+          pod_id?: string | null
           room_code?: string
           score?: number
           status?: string
@@ -72,6 +75,42 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      pods: {
+        Row: {
+          created_at: string
+          current_space: number
+          current_turn_player_id: string | null
+          id: string
+          name: string
+          room_code: string
+          score: number
+          slot: number
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          current_space?: number
+          current_turn_player_id?: string | null
+          id?: string
+          name: string
+          room_code: string
+          score?: number
+          slot: number
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          current_space?: number
+          current_turn_player_id?: string | null
+          id?: string
+          name?: string
+          room_code?: string
+          score?: number
+          slot?: number
+          status?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

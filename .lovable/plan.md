@@ -1,101 +1,47 @@
-# Single-Phone Pod Mode
+## What we're building
 
-Replace the multi-device player flow with one shared phone that rotates between 3 players. The host's device runs the whole game.
+### 1. Room → Pods → Players model
+- **Gym screen** (`/gym/$code`): big-screen lobby like the original build. Shows the **room code** + a **QR code** that points to a join URL. Lists the pods that have joined live, with their members and fitness levels. The host clicks **START** when ready.
+- **Pod join** (new `/join/$code` route on the pod's phone): the shared pod phone opens this URL, picks a free pod slot (Pod 1 / 2 / 3), enters **2–4 player names + avatars + fitness levels**, then taps **READY**. The pod's screen then becomes the existing `/pod/$code/$podId` pass-and-play game UI.
+- **Cap:** up to **3 pods per room**, **2–4 players per pod**. The lobby blocks a 4th pod from joining.
 
-## What gets removed
-
-- `src/routes/join.tsx` — no QR join, no per-player phones
-- `src/routes/play.$code.tsx` — old per-player view
-- `src/components/ShareLinkButton.tsx` usage in lobby (no link to share)
-- Multi-device judging logic (`getJudgeId` rotation against arbitrary player counts, `trap.awaiting_verification` cross-device handoff)
-
-The `rooms` / `players` / `workout_logs` tables stay — they still persist game state so a refresh on the host phone doesn't lose progress.
-
-## New flow
-
-### 1. Setup (in `gym.$code.tsx`, the lobby)
-
-Host sees a "Build your pod" screen instead of a QR code:
-- Three player slots (A, B, C), each with:
-  - Name input
-  - Avatar: upload photo **or** pick "Boom mascot" + color swatch (pink/cyan/lime/yellow/orange/purple)
-  - Fitness level: 3 buttons — **Base** (→ stored as 3), **Intermediate** (→ 6), **Advanced** (→ 9), mapping into the existing 1–10 `fitness_level` column so reps math keeps working
-- "START" button (disabled until all 3 names are filled) → inserts 3 rows in `players`, sets `rooms.status = 'playing'`, navigates to `/pod/$code`
-
-### 2. Pod gameplay (new `src/routes/pod.$code.tsx`)
-
-One route, four UI states driven by a local `phase` state machine: `player → switch → judge → resolve`.
-
-**Player UI (phase: `player`)**
-- Full-screen avatar of the active player + their name
-- Big "ROLL" dice box (reuses existing dice animation)
-- No camera, no leaderboard
-- Bottom: horizontal progress bar (full width) with 3 small player tokens positioned at `left: (current_space-1)/59 * 100%`. Finish line marker at the right end.
-- Roll → animate dice → compute landing space (reuses `getCell`, `resolveMovementLanding`, `pickSurpriseExercise`, etc.) → write `current_space` → if landing is an exercise/surprise/crazy/group cell, go to `switch`. If it's boost/setback with no exercise, animate the slide on the bar and stay in `player` for the same player's next roll? No — pass to next player. (Boost/setback resolves and turn passes; matches existing behavior.)
-
-**Switch UI (phase: `switch`)**
-- Full-screen animation: active player avatar slides left labeled "PLAYER", next-in-rotation avatar slides right labeled "JUDGE"
-- Exercise card in the middle (icon + name + reps/seconds)
-- SpeechSynthesis announces: *"Player {A}. {Exercise}. Judge is {B}."* using a robotic voice (pick a `SpeechSynthesisVoice` matching `/Google|Microsoft|en-US/` and set `pitch=0.4, rate=0.85` for the robotic feel; existing `sfx.ts` gets a `speak()` helper)
-- 3-2-1 countdown overlay, then auto-transition to `judge`
-
-**Judge UI (phase: `judge`)**
-- `<video>` element showing `getUserMedia({ video: { facingMode: 'user' }, audio: false })` live preview, full-screen
-- Overlays in corners: Boom logo (top-left), mascot (top-right), `boomworkout.fun` (bottom-left), points so far (bottom-right)
-- Bottom-center: large circular SVG ring that closes as the trap timer runs down (uses `TRAP_TIMEOUT_MS` and a known `started_at`). Inside the ring: **DEFUSE** button.
-- `MediaRecorder` starts when the phase enters and stops on completion/failure. The blob is kept in a `useRef<Map<turnId, Blob>>` (in-memory only — no upload, no stitching).
-- **Reps exercises**: tap DEFUSE per rep. Each tap plays a tone whose pitch rises with `repCount / target` (Web Audio API oscillator). Completing the last rep triggers the "well done" SFX.
-- **Seconds exercises**: hold DEFUSE. While held, accumulate `hold_ms`. Show a growing inner fill on the ring. Release before target = reset. Reaching target = success.
-- Background: rising arcade tone tied to elapsed/`TRAP_TIMEOUT_MS` ratio.
-- Success → robotic voice "Well done {Player A}, {points} points" → write `workout_logs` row → recalc score → go to next player's `player` phase.
-- Timeout → boom SFX + voice "Player {A} exploded! Back to start" → reset that player's `current_space` to 0 → go to next player's `player` phase.
-
-**Finish line**
-- When a player's `current_space` reaches 60 after a successful trap: full-screen flash (white → orange → red), winner avatar zooms in with bomb particles, voice says "Player {X} wins!". Reuses `ExplosionOverlay`.
-
-**Wrap-up (phase: `done`)**
-- Ranking list with avatar, name, points, finish rank (uses existing `finishPlayer` + `recalcPlayerScore`)
-- Per-turn clip gallery: list of recorded blobs with thumbnails (first-frame canvas snapshot) and download/share buttons (`navigator.share` with the blob when supported, else a download link). No stitched summary — labeled "Coming soon".
-- "PLAY AGAIN" button → resets room (clears players' `current_space`, `score`, `finished_at`; sets `status='lobby'`) → navigates back to `/gym/$code`.
+### 2. Switch animation
+On the pod's switch phase, show the **cell color as the background**, the **mascot label** ("EASY PEASY!", "BEAST MODE!", "OH NOOO!", etc. from `CellMascot`), and the **exercise name + reps** prominently — instead of the current neutral panel.
 
 ## Technical details
 
-**Rotation**: helper `nextPlayerId(players, currentId)` — sort by `joined_at`, return next; cycles A→B→C→A. Skips finished players.
+### Schema migration
+- Add `pods` table: `id uuid pk`, `room_code text fk`, `slot int` (1–3, unique per room), `name text` (e.g. "Pod 1"), `current_space int default 0`, `score int default 0`, `status text default 'lobby'`, `current_player_index int default 0`, `created_at`.
+- Add `players.pod_id uuid` (nullable for backward compat); drop sole reliance on `room_code` for turn order. Players belong to a pod, pods belong to a room.
+- Enable realtime on `pods`.
+- Keep RLS open (existing pattern).
 
-**State machine in `pod.$code.tsx`**:
-```ts
-type Phase =
-  | { kind: 'player'; playerId: string }
-  | { kind: 'switch'; playerId: string; judgeId: string; trap: Trap }
-  | { kind: 'judge';  playerId: string; judgeId: string; trap: Trap; startedAt: number }
-  | { kind: 'resolve'; outcome: 'success' | 'fail'; playerId: string }
-  | { kind: 'done'; winnerId: string }
-```
-Persisted to `rooms.trap` JSON for refresh resilience (already a JSONB column).
+### Routes
+- `/gym/$code` → rewrite as **lobby**: room code badge, QR code (use `qrcode.react`), live list of pods + their players (from `useRoom` extended with pods), Spotify embed, START button (sets `rooms.status = 'playing'`).
+- `/join/$code` (new) → pod onboarding (the current "Build your Pod" form, but slot-aware). On submit: insert `pods` row + 2–4 `players` rows, then navigate to `/pod/$code/$podId`.
+- `/pod/$code/$podId` → existing pod game UI, scoped to the pod's players + pod's `current_space`/turn. Turn rotation only cycles inside the pod. Game-board state (trap, dice) stays on `rooms` so all pods share difficulty/board overrides.
+- `/` (home) → "Create room" → `/gym/new` (host) and "Join a room" → `/join/$code` (pod).
 
-**Voice helper** (`src/lib/sfx.ts`):
-```ts
-export function speak(text: string, opts?: { pitch?: number; rate?: number }) { ... }
-```
-Picks a robotic-sounding voice from `speechSynthesis.getVoices()`, defaults `pitch=0.4, rate=0.85, volume=1`. Cancels prior utterances.
+### Lobby ↔ pod sync
+- `useRoom` extended to also fetch `pods` and group `players` by `pod_id`.
+- Pod screen subscribes to its own pod row for `current_space` / `current_player_index` so the gym screen can show all 3 pods' progress on the shared board.
 
-**Camera permission**: requested on first entry to `judge` phase; if denied, show fallback UI ("Enable camera to continue") with a retry button — the game still works without recording, just no clip is captured.
+### Switch animation
+- In `pod.$code.tsx` `SwitchPhase`, set the outer container background to `FLAVOR[cellType].color` (reusing the mapping from `CellMascot`), render the mascot image + label banner at the top, and keep the exercise name/reps large. Keep the countdown clearly separated below.
 
-**Recording lifecycle**: one `MediaRecorder` instance per turn. Stream is acquired once at game start (when first entering `judge`) and reused; recorder is `start()`/`stop()`-ed per turn. Blobs accumulated in `useRef`.
+## Out of scope (will not touch)
+- Per-pod scoring leaderboard rework (single shared board still applies; per-pod position is added but cross-pod ranking UI is unchanged).
+- Auth / accounts.
+- Spotify behavior beyond keeping the existing embed on the gym screen.
 
-**Fitness mapping**: lobby stores `fitness_level` as 3/6/9; existing `calcRepsForTier` already takes 1–10, so reps math is unchanged.
+## File touch list
+- `supabase/migrations/<new>.sql` — add `pods`, `players.pod_id`, realtime.
+- `src/hooks/use-room.ts` — fetch + subscribe to `pods`.
+- `src/routes/gym.$code.tsx` — rewrite as big-screen lobby with QR + pod list + START.
+- `src/routes/join.$code.tsx` — new, pod onboarding form (adapted from current gym setup).
+- `src/routes/pod.$code.$podId.tsx` — rename/refactor from `pod.$code.tsx` to be pod-scoped.
+- `src/routes/index.tsx` — Create vs Join entry points.
+- `src/routes/pod.$code.$podId.tsx` `SwitchPhase` — color background + mascot label.
+- `bun add qrcode.react`.
 
-**Mascot avatar persistence**: when host picks the mascot, store `avatar_url = null` and add a new column? No — encode it as a sentinel like `mascot:#ec4899` in `avatar_url` (text). `PlayerToken` already supports `mascot` prop; read the sentinel and render accordingly. Avoids a migration.
-
-## Files changed
-
-- **New**: `src/routes/pod.$code.tsx`, `src/components/pod/PlayerPhase.tsx`, `src/components/pod/SwitchPhase.tsx`, `src/components/pod/JudgePhase.tsx`, `src/components/pod/WrapUp.tsx`, `src/components/pod/ProgressBar.tsx`, `src/components/pod/CameraOverlay.tsx`
-- **Rewritten**: `src/routes/gym.$code.tsx` (lobby becomes pod setup)
-- **Edited**: `src/lib/sfx.ts` (add `speak`, rising tone, boom), `src/routes/index.tsx` (CTA → "Start a Pod")
-- **Deleted**: `src/routes/join.tsx`, `src/routes/play.$code.tsx`
-
-## Out of scope (called out explicitly)
-
-- Server-side video stitching / summary edit — the wrap-up labels this "Coming soon"
-- Cross-device play — fully removed
-- Social-media-native share targets beyond the Web Share API
+Want me to proceed with this?

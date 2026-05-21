@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
-import { Bomb, Music } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { Bomb, Music, LogIn } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/")({
@@ -52,6 +52,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
+  const [joinCode, setJoinCode] = useState("");
+  const tryJoin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const c = joinCode.trim().toUpperCase();
+    if (!c) return;
+    navigate({ to: "/join/$code", params: { code: c } });
+  };
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 gap-8">
       <div className="text-center">
@@ -76,7 +84,7 @@ function Index() {
           BOOM!
         </h1>
         <p className="mt-2 text-sm md:text-base" style={{ color: "var(--boom-ink)" }}>
-          One phone. Three players. Hot-potato workout chaos.
+          A gym room. Up to 3 pods. Hot-potato workout chaos.
         </p>
       </div>
 
@@ -92,23 +100,40 @@ function Index() {
             className="text-2xl font-black comic-shadow"
             style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
           >
-            GYM
+            HOST GYM
           </span>
         </Link>
-        <Link
-          to="/gym/$code"
-          params={{ code: "new" }}
-          className="ink-border rounded-3xl px-8 py-5 flex items-center justify-center gap-3 hover:-translate-y-1 transition-transform"
+        <form
+          onSubmit={tryJoin}
+          className="ink-border rounded-3xl px-5 py-4 flex flex-col gap-3"
           style={{ background: "var(--boom-red)" }}
         >
-          <Bomb size={36} style={{ color: "white" }} />
-          <span
-            className="text-2xl font-black comic-shadow"
-            style={{ color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+          <div className="flex items-center gap-2 justify-center">
+            <Bomb size={28} style={{ color: "white" }} />
+            <span
+              className="text-2xl font-black comic-shadow"
+              style={{ color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              JOIN POD
+            </span>
+          </div>
+          <input
+            type="text"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            placeholder="ROOM CODE"
+            maxLength={12}
+            className="ink-border-sm rounded-xl px-3 py-2 text-center text-xl font-black bg-white tracking-widest"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          />
+          <button
+            type="submit"
+            disabled={!joinCode.trim()}
+            className="ink-border-sm rounded-xl px-4 py-2 bg-white font-black flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            START POD
-          </span>
-        </Link>
+            <LogIn size={16} /> Go
+          </button>
+        </form>
       </div>
     </main>
   );

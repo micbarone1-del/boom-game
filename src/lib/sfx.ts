@@ -48,10 +48,10 @@ const state = (_g.__boomSfx ||= {
   arcadeGain: null as GainNode | null,
   arcadeStep: 0,
 }) as BoomSfxGlobal;
-// Master volume — kept close to 1 so the robotic voice (SpeechSynthesis,
-// which is OS-volume controlled and can't be amplified by Web Audio) sits at
-// roughly the same loudness as our SFX.
-const MASTER_VOLUME = 1.1;
+// Master volume — kept low so the robotic voice (SpeechSynthesis volume is
+// capped at 1.0 and OS-controlled) feels relatively maximum compared to the
+// synthesized SFX. Lowering MASTER lets speech cut through.
+const MASTER_VOLUME = 0.55;
 let muted = false;
 let fallbackBeep: HTMLAudioElement | null = null;
 // Bumped key (v4) so any previously-stuck "muted" state from earlier
@@ -472,38 +472,20 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   try {
     sfx.unlock();
-    // Make sure the engine is awake (no-op after first user gesture).
     primeSpeech();
     const u = new SpeechSynthesisUtterance(text);
     const v = pickRoboticVoice();
     if (v) u.voice = v;
-    // Some devices ignore extreme pitch values and play silently — keep it
-    // in the audible range while still sounding mechanical.
     u.pitch = opts.pitch ?? 0.7;
-    u.rate = opts.rate ?? 0.85;
-    u.volume = opts.volume ?? 1;
-    window.speechSynthesis.cancel();
+    u.rate = opts.rate ?? 0.9;
+    u.volume = 1; // always max — caller can't make it louder
+    // Cancel any pending utterance so the new line doesn't queue up behind
+    // a stale phase's narration (the #1 cause of "voice comes and goes").
+    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    // Small delay lets Safari finish the cancel before speak fires.
     window.setTimeout(() => {
-      try {
-        window.speechSynthesis.speak(u);
-      } catch {
-        /* ignore */
-      }
-    }, 40);
-    window.setTimeout(() => {
-      if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-        try {
-          const retry = new SpeechSynthesisUtterance(text);
-          if (v) retry.voice = v;
-          retry.pitch = opts.pitch ?? 0.9;
-          retry.rate = opts.rate ?? 0.78;
-          retry.volume = opts.volume ?? 1;
-          window.speechSynthesis.speak(retry);
-        } catch {
-          /* ignore */
-        }
-      }
-    }, 350);
+      try { window.speechSynthesis.speak(u); } catch { /* ignore */ }
+    }, 60);
   } catch {
     /* ignore */
   }

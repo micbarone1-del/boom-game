@@ -454,6 +454,7 @@ function SwitchPhase({
 }) {
   const [count, setCount] = useState(3);
   const spokeRef = useRef(false);
+  const mascotImg = mascotForCell(trap.cellType);
 
   useEffect(() => {
     if (spokeRef.current) return;
@@ -473,66 +474,112 @@ function SwitchPhase({
   }, [count, onDone]);
 
   return (
-    <main className="fixed inset-0 flex flex-col items-center justify-center p-4 gap-6 bg-[var(--background)]">
+    <main className="fixed inset-0 flex flex-col items-center justify-between p-4 gap-3 bg-[var(--background)]">
+      {/* Cell-type mascot at top (separate from countdown so they don't overlap) */}
+      <div className="flex flex-col items-center gap-1 mt-2">
+        <img
+          src={mascotImg}
+          alt=""
+          key={`cellmascot-${trap.cellType}`}
+          className="w-32 h-32 anim-mascot-bounce drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
+        />
+        <div className="text-center">
+          <div
+            className="text-3xl font-black leading-tight"
+            style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}
+          >
+            {trap.exercise}
+          </div>
+          <div className="text-xl font-bold">
+            {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
+          </div>
+        </div>
+      </div>
+
+      {/* Player → Judge handoff */}
       <div className="flex items-center justify-around w-full max-w-md">
-        <div className="flex flex-col items-center gap-2 anim-fade-in">
-          <Avatar player={player} size={100} />
-          <div className="text-sm font-black uppercase" style={{ color: "var(--boom-red)" }}>
+        <div className="flex flex-col items-center gap-1 anim-fade-in">
+          <Avatar player={player} size={72} />
+          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
             Player
           </div>
-          <div className="text-base font-bold">{player.username}</div>
+          <div className="text-sm font-bold">{player.username}</div>
         </div>
-        <div className="text-5xl">➡️</div>
-        <div className="flex flex-col items-center gap-2 anim-fade-in">
-          <Avatar player={judge} size={100} />
-          <div className="text-sm font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
+        <div className="text-4xl">➡️</div>
+        <div className="flex flex-col items-center gap-1 anim-fade-in">
+          <Avatar player={judge} size={72} />
+          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
             Judge
           </div>
-          <div className="text-base font-bold">{judge.username}</div>
+          <div className="text-sm font-bold">{judge.username}</div>
         </div>
       </div>
 
-      <WorkoutIllustration exercise={trap.exercise} />
-      <div className="text-center">
-        <div
-          className="text-4xl font-black leading-tight"
-          style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}
-        >
-          {trap.exercise}
-        </div>
-        <div className="text-2xl font-bold">
-          {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
-        </div>
+      {/* Countdown — standalone, no mascot underneath */}
+      <div
+        key={`count-${count}`}
+        className="anim-pop"
+        style={{
+          fontFamily: "'Luckiest Guy', cursive",
+          color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
+          fontSize: count > 0 ? "8rem" : "4.5rem",
+          lineHeight: 1,
+          textShadow: "0 6px 0 rgba(0,0,0,0.35), 3px 3px 0 #fff",
+          WebkitTextStroke: "3px #111",
+        }}
+      >
+        {count > 0 ? count : "GO!"}
       </div>
 
-      <div className="relative flex items-center justify-center">
-        <img
-          src={bombMascot}
-          alt=""
-          key={`mascot-${count}`}
-          className="w-40 h-40 anim-fuse"
-          style={{ filter: "drop-shadow(0 6px 0 rgba(0,0,0,0.25))" }}
-        />
-        <div
-          key={`count-${count}`}
-          className="absolute inset-0 flex items-center justify-center anim-pop"
-          style={{
-            fontFamily: "'Luckiest Guy', cursive",
-            color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
-            fontSize: count > 0 ? "9rem" : "5rem",
-            lineHeight: 1,
-            textShadow: "0 6px 0 rgba(0,0,0,0.35), 3px 3px 0 #fff",
-            WebkitTextStroke: "3px #111",
-          }}
-        >
-          {count > 0 ? count : "GO!"}
-        </div>
-      </div>
-
-      <div className="text-base font-bold opacity-80 text-center px-6">
+      <div className="text-base font-bold opacity-80 text-center px-6 pb-2">
         Pass the phone to {judge.username}
       </div>
     </main>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Post-roll hop overlay — zoomed-in token hopping along the path
+// ---------------------------------------------------------------------------
+
+function HopOverlay({
+  player,
+  from,
+  to,
+  step,
+}: {
+  player: Player;
+  from: number;
+  to: number;
+  step: number;
+}) {
+  const cur = Math.min(to, from + step);
+  const totalSteps = Math.max(1, to - from);
+  const progress = step / totalSteps;
+  return (
+    <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/70 anim-fade-in">
+      <div className="text-white text-sm font-bold opacity-80 mb-2 uppercase tracking-wider">
+        Hopping…
+      </div>
+      <div
+        className="text-white text-5xl font-black mb-4"
+        style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}
+      >
+        Cell {cur}
+      </div>
+      <div
+        key={`hop-${step}`}
+        className="anim-hop"
+      >
+        <Avatar player={player} size={140} />
+      </div>
+      <div className="mt-6 w-3/4 max-w-sm h-3 rounded-full bg-white/20 overflow-hidden ink-border-sm">
+        <div
+          className="h-full transition-all duration-200"
+          style={{ width: `${progress * 100}%`, background: "var(--boom-yellow)" }}
+        />
+      </div>
+    </div>
   );
 }
 

@@ -142,6 +142,7 @@ function ac(): AudioContext | null {
 function unlockAudio(): Promise<boolean> {
   fallbackPlay(false);
   state.fallbackUnlocked = true;
+  primeSpeech();
   const c = ac();
   if (!c) return Promise.resolve(true);
   // iOS/Safari often needs a source node to be created + started directly in
@@ -184,6 +185,7 @@ function out(c: AudioContext): AudioNode {
 async function ensureReady(): Promise<boolean> {
   fallbackPlay(false);
   state.fallbackUnlocked = true;
+  primeSpeech();
   const c = ac();
   if (!c) return true;
   try {

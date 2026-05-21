@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PodCodeRouteImport } from './routes/pod.$code'
+import { Route as JoinCodeRouteImport } from './routes/join.$code'
 import { Route as GymCodeRouteImport } from './routes/gym.$code'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -29,6 +30,11 @@ const PodCodeRoute = PodCodeRouteImport.update({
   path: '/pod/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JoinCodeRoute = JoinCodeRouteImport.update({
+  id: '/join/$code',
+  path: '/join/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GymCodeRoute = GymCodeRouteImport.update({
   id: '/gym/$code',
   path: '/gym/$code',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gym/$code': typeof GymCodeRoute
+  '/join/$code': typeof JoinCodeRoute
   '/pod/$code': typeof PodCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gym/$code': typeof GymCodeRoute
+  '/join/$code': typeof JoinCodeRoute
   '/pod/$code': typeof PodCodeRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,28 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gym/$code': typeof GymCodeRoute
+  '/join/$code': typeof JoinCodeRoute
   '/pod/$code': typeof PodCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sitemap.xml' | '/gym/$code' | '/pod/$code'
+  fullPaths: '/' | '/sitemap.xml' | '/gym/$code' | '/join/$code' | '/pod/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sitemap.xml' | '/gym/$code' | '/pod/$code'
-  id: '__root__' | '/' | '/sitemap.xml' | '/gym/$code' | '/pod/$code'
+  to: '/' | '/sitemap.xml' | '/gym/$code' | '/join/$code' | '/pod/$code'
+  id:
+    | '__root__'
+    | '/'
+    | '/sitemap.xml'
+    | '/gym/$code'
+    | '/join/$code'
+    | '/pod/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   GymCodeRoute: typeof GymCodeRoute
+  JoinCodeRoute: typeof JoinCodeRoute
   PodCodeRoute: typeof PodCodeRoute
 }
 
@@ -92,6 +108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PodCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join/$code': {
+      id: '/join/$code'
+      path: '/join/$code'
+      fullPath: '/join/$code'
+      preLoaderRoute: typeof JoinCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gym/$code': {
       id: '/gym/$code'
       path: '/gym/$code'
@@ -106,6 +129,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   GymCodeRoute: GymCodeRoute,
+  JoinCodeRoute: JoinCodeRoute,
   PodCodeRoute: PodCodeRoute,
 }
 export const routeTree = rootRouteImport

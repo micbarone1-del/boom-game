@@ -218,14 +218,12 @@ function PodPage() {
   if (phase.kind === "player") {
     const player = ordered.find((p) => p.id === phase.playerId)!;
     return (
-      <>
-        <PlayerPhase
-          player={player}
-          players={ordered}
-          onRoll={(d) => onRollComplete(player, d)}
-          code={code}
-        />
-      </>
+      <PlayerPhase
+        player={player}
+        players={ordered}
+        onRoll={(d) => onRollComplete(player, d)}
+        code={code}
+      />
     );
   }
 

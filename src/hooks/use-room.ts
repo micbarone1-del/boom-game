@@ -38,11 +38,25 @@ export type Player = {
   finish_rank: number | null;
   team_id?: string | null;
   is_team_lead?: boolean | null;
+  pod_id?: string | null;
+};
+
+export type Pod = {
+  id: string;
+  room_code: string;
+  slot: number;
+  name: string;
+  current_space: number;
+  score: number;
+  status: string;
+  current_turn_player_id: string | null;
+  created_at: string;
 };
 
 export function useRoom(code: string | undefined) {
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [pods, setPods] = useState<Pod[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,13 +64,15 @@ export function useRoom(code: string | undefined) {
     let mounted = true;
 
     const fetchAll = async () => {
-      const [{ data: r }, { data: p }] = await Promise.all([
+      const [{ data: r }, { data: p }, { data: pd }] = await Promise.all([
         supabase.from("rooms").select("*").eq("code", code).maybeSingle(),
         supabase.from("players").select("*").eq("room_code", code).order("joined_at"),
+        supabase.from("pods").select("*").eq("room_code", code).order("slot"),
       ]);
       if (!mounted) return;
       setRoom((r as Room) ?? null);
       setPlayers((p as Player[]) ?? []);
+      setPods((pd as Pod[]) ?? []);
       setLoading(false);
     };
     fetchAll();
@@ -83,6 +99,22 @@ export function useRoom(code: string | undefined) {
               );
             if (payload.eventType === "DELETE")
               return prev.filter((p) => p.id !== (payload.old as Player).id);
+            return prev;
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pods", filter: `room_code=eq.${code}` },
+        (payload) => {
+          setPods((prev) => {
+            if (payload.eventType === "INSERT") return [...prev, payload.new as Pod];
+            if (payload.eventType === "UPDATE")
+              return prev.map((p) =>
+                p.id === (payload.new as Pod).id ? (payload.new as Pod) : p,
+              );
+            if (payload.eventType === "DELETE")
+              return prev.filter((p) => p.id !== (payload.old as Pod).id);
             return prev;
           });
         },
@@ -114,5 +146,5 @@ export function useRoom(code: string | undefined) {
     };
   }, [code]);
 
-  return { room, players, loading };
+  return { room, players, pods, loading };
 }

@@ -84,7 +84,6 @@ function Index() {
         <Link
           to="/gym/$code"
           params={{ code: "new" }}
-          search={{ tab: "gym" } as never}
           className="ink-border rounded-3xl px-8 py-5 flex items-center justify-center gap-3 hover:-translate-y-1 transition-transform"
           style={{ background: "var(--boom-yellow)" }}
         >

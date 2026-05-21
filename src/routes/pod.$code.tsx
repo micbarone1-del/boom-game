@@ -23,6 +23,7 @@ import { sfx, speak, repPop, startArcadeRise, startArcadeMusic } from "@/lib/sfx
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { WorkoutIllustration } from "@/components/WorkoutIllustration";
+import { CellMascot, mascotForCell } from "@/components/CellMascot";
 
 export const Route = createFileRoute("/pod/$code")({
   component: PodPage,
@@ -46,6 +47,7 @@ type ActiveTrap = {
   reps: number; // target reps OR seconds
   unit: "reps" | "seconds";
   finalSpace: number;
+  cellType: CellType;
 };
 
 function avatarIsMascot(url: string | null) {
@@ -123,6 +125,7 @@ function PodPage() {
         reps,
         unit: overrides[String(final)]?.unit ?? "reps",
         finalSpace: final,
+        cellType: finalCell.type,
       };
       setPhase({ kind: "switch", playerId: player.id, judgeId: nextPlayerId(player.id), trap });
       return;
@@ -140,6 +143,7 @@ function PodPage() {
         reps,
         unit: "reps",
         finalSpace: final,
+        cellType: finalCell.type,
       };
       setPhase({ kind: "switch", playerId: player.id, judgeId: nextPlayerId(player.id), trap });
       return;

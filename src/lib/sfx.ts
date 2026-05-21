@@ -30,6 +30,9 @@ type BoomSfxGlobal = {
   masterGain: GainNode | null;
   unlocked: boolean;
   fallbackUnlocked: boolean;
+  arcadeTimer: number | null;
+  arcadeGain: GainNode | null;
+  arcadeStep: number;
 };
 
 // Persist across HMR module reloads — otherwise we'd create a new
@@ -41,6 +44,9 @@ const state = (_g.__boomSfx ||= {
   masterGain: null as GainNode | null,
   unlocked: false,
   fallbackUnlocked: false,
+  arcadeTimer: null as number | null,
+  arcadeGain: null as GainNode | null,
+  arcadeStep: 0,
 }) as BoomSfxGlobal;
 // Master volume — bumped so SFX cut through background music (e.g. Spotify).
 const MASTER_VOLUME = 2.6;

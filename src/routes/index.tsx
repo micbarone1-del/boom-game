@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Bomb } from "lucide-react";
+import { Bomb, Music } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/")({
@@ -80,20 +80,36 @@ function Index() {
         </p>
       </div>
 
-      <Link
-        to="/gym/$code"
-        params={{ code: "new" }}
-        className="ink-border rounded-3xl px-10 py-6 flex items-center gap-4 hover:-translate-y-1 transition-transform"
-        style={{ background: "var(--boom-red)" }}
-      >
-        <Bomb size={48} style={{ color: "white" }} />
-        <span
-          className="text-3xl font-black comic-shadow"
-          style={{ color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+      <div className="flex flex-col gap-4 w-full max-w-xs">
+        <Link
+          to="/gym/$code"
+          params={{ code: "new" }}
+          className="ink-border rounded-3xl px-8 py-5 flex items-center justify-center gap-3 hover:-translate-y-1 transition-transform"
+          style={{ background: "var(--boom-yellow)" }}
         >
-          START A POD
-        </span>
-      </Link>
+          <Music size={36} style={{ color: "var(--boom-ink)" }} />
+          <span
+            className="text-2xl font-black comic-shadow"
+            style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            GYM
+          </span>
+        </Link>
+        <Link
+          to="/gym/$code"
+          params={{ code: "new" }}
+          className="ink-border rounded-3xl px-8 py-5 flex items-center justify-center gap-3 hover:-translate-y-1 transition-transform"
+          style={{ background: "var(--boom-red)" }}
+        >
+          <Bomb size={36} style={{ color: "white" }} />
+          <span
+            className="text-2xl font-black comic-shadow"
+            style={{ color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            START POD
+          </span>
+        </Link>
+      </div>
     </main>
   );
 }

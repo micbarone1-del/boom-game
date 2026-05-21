@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateRoomCode } from "@/lib/game";
 import { Bomb, Camera as CameraIcon, X } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -136,6 +137,8 @@ function Setup({ code }: { code: string }) {
           />
         ))}
       </div>
+
+      <SpotifyEmbed code={code} />
 
       <button
         onClick={start}

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Tv, Smartphone } from "lucide-react";
+import { Bomb } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/")({
@@ -76,39 +76,24 @@ function Index() {
           BOOM!
         </h1>
         <p className="mt-2 text-sm md:text-base" style={{ color: "var(--boom-ink)" }}>
-          The explosive workout party game
+          One phone. Three players. Hot-potato workout chaos.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 w-full max-w-3xl mt-4">
-        <Link
-          to="/gym/new"
-          className="ink-border rounded-3xl p-8 flex flex-col items-center gap-3 hover:-translate-y-1 transition-transform"
-          style={{ background: "var(--boom-yellow)" }}
+      <Link
+        to="/gym/$code"
+        params={{ code: "new" }}
+        className="ink-border rounded-3xl px-10 py-6 flex items-center gap-4 hover:-translate-y-1 transition-transform"
+        style={{ background: "var(--boom-red)" }}
+      >
+        <Bomb size={48} style={{ color: "white" }} />
+        <span
+          className="text-3xl font-black comic-shadow"
+          style={{ color: "white", fontFamily: "'Luckiest Guy', cursive" }}
         >
-          <Tv size={64} style={{ color: "var(--boom-ink)" }} />
-          <h2 className="text-3xl font-black comic-shadow" style={{ color: "white" }}>
-            GYM SCREEN
-          </h2>
-          <p className="text-center font-bold" style={{ color: "var(--boom-ink)" }}>
-            Big TV / iPad master view. Shows the board for everyone.
-          </p>
-        </Link>
-
-        <Link
-          to="/join"
-          className="ink-border rounded-3xl p-8 flex flex-col items-center gap-3 hover:-translate-y-1 transition-transform"
-          style={{ background: "var(--boom-red)" }}
-        >
-          <Smartphone size={64} style={{ color: "white" }} />
-          <h2 className="text-3xl font-black comic-shadow" style={{ color: "white" }}>
-            JOIN GAME
-          </h2>
-          <p className="text-center font-bold" style={{ color: "white" }}>
-            Phone controller. Roll dice, log reps, judge form.
-          </p>
-        </Link>
-      </div>
+          START A POD
+        </span>
+      </Link>
     </main>
   );
 }

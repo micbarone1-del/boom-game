@@ -408,3 +408,96 @@ export const sfx = {
     return muted;
   },
 };
+
+// ---------------------------------------------------------------------------
+// Pod-mode helpers: robotic voice + dynamic tones used by the judge UI.
+// ---------------------------------------------------------------------------
+
+let _voices: SpeechSynthesisVoice[] = [];
+function loadVoices() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  _voices = window.speechSynthesis.getVoices();
+  if (_voices.length === 0) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      _voices = window.speechSynthesis.getVoices();
+    };
+  }
+}
+if (typeof window !== "undefined") loadVoices();
+
+function pickRoboticVoice(): SpeechSynthesisVoice | undefined {
+  if (_voices.length === 0) loadVoices();
+  // Prefer voices that tend to sound more synthetic/robotic.
+  const prefs = [/zarvox/i, /albert/i, /fred/i, /trinoids/i, /google/i, /microsoft/i, /en-?us/i];
+  for (const re of prefs) {
+    const v = _voices.find((v) => re.test(v.name) || re.test(v.lang));
+    if (v) return v;
+  }
+  return _voices[0];
+}
+
+export function speak(text: string, opts: { pitch?: number; rate?: number; volume?: number } = {}) {
+  if (muted) return;
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = pickRoboticVoice();
+    if (v) u.voice = v;
+    u.pitch = opts.pitch ?? 0.4;
+    u.rate = opts.rate ?? 0.9;
+    u.volume = opts.volume ?? 1;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Single short pop tied to rep progress — pitch climbs toward target. */
+export function repPop(progress: number) {
+  if (muted) return;
+  const c = ac();
+  if (!c) return;
+  const p = Math.max(0, Math.min(1, progress));
+  const freq = 440 + p * 880;
+  const t0 = c.currentTime + 0.005;
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = "square";
+  o.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+  o.connect(g).connect(out(c));
+  o.start(t0);
+  o.stop(t0 + 0.14);
+}
+
+/** A sustained rising arcade tone — call once to start, returns a stop fn. */
+export function startArcadeRise(durationMs: number): () => void {
+  const c = ac();
+  if (!c || muted) return () => {};
+  const t0 = c.currentTime + 0.01;
+  const tEnd = t0 + durationMs / 1000;
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(180, t0);
+  o.frequency.exponentialRampToValueAtTime(900, tEnd);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.2);
+  g.gain.linearRampToValueAtTime(0.12, tEnd);
+  o.connect(g).connect(out(c));
+  o.start(t0);
+  o.stop(tEnd + 0.05);
+  return () => {
+    try {
+      const tn = c.currentTime + 0.01;
+      g.gain.cancelScheduledValues(tn);
+      g.gain.exponentialRampToValueAtTime(0.0001, tn + 0.1);
+      o.stop(tn + 0.12);
+    } catch {
+      /* ignore */
+    }
+  };
+}

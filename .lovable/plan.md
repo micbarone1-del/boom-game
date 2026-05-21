@@ -1,95 +1,101 @@
+# Single-Phone Pod Mode
 
-This is a large set of independent changes. Below is the implementation plan grouped by area, with the technical notes at the end.
+Replace the multi-device player flow with one shared phone that rotates between 3 players. The host's device runs the whole game.
 
-## 1. Turn timer + explosion (60s cap)
+## What gets removed
 
-- When a trap starts (`trap.started_at`), the player has 60 seconds to be defused (by judge or solo).
-- If 60s elapses and the trap is still active:
-  - Play a new "explosion" animation on the gym screen and on the active player's phone.
-  - Reset that player's `current_space` to `1`.
-  - Clear the trap and advance to the next turn.
-- Visual: red flash + shake + bomb particle burst, ~1.6s. Reuses existing `BoomCamera` shake.
-- Implementation lives in `src/routes/gym.$code.tsx` (authoritative timeout) and `src/routes/play.$code.tsx` (mirror animation).
+- `src/routes/join.tsx` — no QR join, no per-player phones
+- `src/routes/play.$code.tsx` — old per-player view
+- `src/components/ShareLinkButton.tsx` usage in lobby (no link to share)
+- Multi-device judging logic (`getJudgeId` rotation against arbitrary player counts, `trap.awaiting_verification` cross-device handoff)
 
-## 2. Player cap of 3 + Teams
+The `rooms` / `players` / `workout_logs` tables stay — they still persist game state so a refresh on the host phone doesn't lose progress.
 
-- Hard cap concurrent "slots" at 3. Slots = teams (or solo players when <4 joined).
-- Players 1-3: each is their own team (auto-assigned color).
-- Player 4+: joins an existing team chosen by closest `fitness_level`.
-- Team colors: Green, Red, Blue, Yellow, Purple (cap 5 distinct, but max 3 used).
-- Team names = color names ("Team Green", etc.).
-- Reps for a team turn = computed using the *acting player's* fitness level (so reps adapt per member); on team turns, each team member takes turns being the "acting member" round-robin.
-- Rotating Judge: extends to teams — the previous team's *all* members can press DEFUSED.
-- Mid-game join: announcement overlay ("Player X joined Team Y") on gym + every phone, fired at end of current turn.
+## New flow
 
-### Team formation animation
-- On game start, gym screen shows split-screen reveal of each team with team color, bomb mascot tinted to team color, member avatars sliding in.
-- Each player's phone flashes "YOU ARE IN TEAM <COLOR>" full-screen in that color for ~3s.
+### 1. Setup (in `gym.$code.tsx`, the lobby)
 
-### Schema
-New columns on `players`:
-- `team_id text` (e.g. "green") — nullable.
-- `is_team_lead boolean default false`.
+Host sees a "Build your pod" screen instead of a QR code:
+- Three player slots (A, B, C), each with:
+  - Name input
+  - Avatar: upload photo **or** pick "Boom mascot" + color swatch (pink/cyan/lime/yellow/orange/purple)
+  - Fitness level: 3 buttons — **Base** (→ stored as 3), **Intermediate** (→ 6), **Advanced** (→ 9), mapping into the existing 1–10 `fitness_level` column so reps math keeps working
+- "START" button (disabled until all 3 names are filled) → inserts 3 rows in `players`, sets `rooms.status = 'playing'`, navigates to `/pod/$code`
 
-(Teams are not their own table — color id on each player is enough, and `current_space` is shared via the team lead. We mirror moves: when team lead's `current_space` updates, all teammates copy it via a server-side update or a client-side reconciliation in `gym.$code.tsx`.)
+### 2. Pod gameplay (new `src/routes/pod.$code.tsx`)
 
-Simpler alternative considered: a `teams` table. I'll go with the column approach to minimize migration scope; if it gets messy I'll switch.
+One route, four UI states driven by a local `phase` state machine: `player → switch → judge → resolve`.
 
-## 3. Cell 39 boost fix
+**Player UI (phase: `player`)**
+- Full-screen avatar of the active player + their name
+- Big "ROLL" dice box (reuses existing dice animation)
+- No camera, no leaderboard
+- Bottom: horizontal progress bar (full width) with 3 small player tokens positioned at `left: (current_space-1)/59 * 100%`. Finish line marker at the right end.
+- Roll → animate dice → compute landing space (reuses `getCell`, `resolveMovementLanding`, `pickSurpriseExercise`, etc.) → write `current_space` → if landing is an exercise/surprise/crazy/group cell, go to `switch`. If it's boost/setback with no exercise, animate the slide on the bar and stay in `player` for the same player's next roll? No — pass to next player. (Boost/setback resolves and turn passes; matches existing behavior.)
 
-- Bug: cell 39 has `["boost", 4]` but reportedly doesn't apply. Likely culprit: the trap pipeline reads the *pre-move* cell type or there's an off-by-one in the override map. I'll trace `gym.$code.tsx` move resolution and unify it so boost/setback always apply post-landing on the resolved space, then add a regression check.
+**Switch UI (phase: `switch`)**
+- Full-screen animation: active player avatar slides left labeled "PLAYER", next-in-rotation avatar slides right labeled "JUDGE"
+- Exercise card in the middle (icon + name + reps/seconds)
+- SpeechSynthesis announces: *"Player {A}. {Exercise}. Judge is {B}."* using a robotic voice (pick a `SpeechSynthesisVoice` matching `/Google|Microsoft|en-US/` and set `pitch=0.4, rate=0.85` for the robotic feel; existing `sfx.ts` gets a `speak()` helper)
+- 3-2-1 countdown overlay, then auto-transition to `judge`
 
-## 4. Seconds-as-unit for exercises
+**Judge UI (phase: `judge`)**
+- `<video>` element showing `getUserMedia({ video: { facingMode: 'user' }, audio: false })` live preview, full-screen
+- Overlays in corners: Boom logo (top-left), mascot (top-right), `boomworkout.fun` (bottom-left), points so far (bottom-right)
+- Bottom-center: large circular SVG ring that closes as the trap timer runs down (uses `TRAP_TIMEOUT_MS` and a known `started_at`). Inside the ring: **DEFUSE** button.
+- `MediaRecorder` starts when the phase enters and stops on completion/failure. The blob is kept in a `useRef<Map<turnId, Blob>>` (in-memory only — no upload, no stitching).
+- **Reps exercises**: tap DEFUSE per rep. Each tap plays a tone whose pitch rises with `repCount / target` (Web Audio API oscillator). Completing the last rep triggers the "well done" SFX.
+- **Seconds exercises**: hold DEFUSE. While held, accumulate `hold_ms`. Show a growing inner fill on the ring. Release before target = reset. Reaching target = success.
+- Background: rising arcade tone tied to elapsed/`TRAP_TIMEOUT_MS` ratio.
+- Success → robotic voice "Well done {Player A}, {points} points" → write `workout_logs` row → recalc score → go to next player's `player` phase.
+- Timeout → boom SFX + voice "Player {A} exploded! Back to start" → reset that player's `current_space` to 0 → go to next player's `player` phase.
 
-- `board_overrides[space]` extends with `unit: "reps" | "seconds"` (default reps).
-- Customization UI in gym lobby gets a Reps/Seconds toggle per cell.
-- Player UI shows "30 seconds" instead of "30 reps" and the FuseTimer becomes a countdown timer for seconds-based exercises.
-- Workout log stores `target_reps` either way (semantic = target value); we add a flag column `unit text default 'reps'`.
+**Finish line**
+- When a player's `current_space` reaches 60 after a successful trap: full-screen flash (white → orange → red), winner avatar zooms in with bomb particles, voice says "Player {X} wins!". Reuses `ExplosionOverlay`.
 
-## 5. Predefined training presets + illustrations
+**Wrap-up (phase: `done`)**
+- Ranking list with avatar, name, points, finish rank (uses existing `finishPlayer` + `recalcPlayerScore`)
+- Per-turn clip gallery: list of recorded blobs with thumbnails (first-frame canvas snapshot) and download/share buttons (`navigator.share` with the blob when supported, else a download link). No stitched summary — labeled "Coming soon".
+- "PLAY AGAIN" button → resets room (clears players' `current_space`, `score`, `finished_at`; sets `status='lobby'`) → navigates back to `/gym/$code`.
 
-- Presets: Default, Endurance, Legs, Calisthenics, CrossFit, Functional, Kettlebells, Extreme.
-- Each preset = a mapping from cell tier (easy/medium/hard) to a curated exercise pool, applied as `board_overrides` on apply.
-- Selectable from the customization tab via a dropdown + "Apply preset" button.
-- Illustrations: one image per exercise (~60 unique exercises across presets). Generate via `imagegen` as transparent PNGs (~512x512). Shown:
-  - In customization screen next to each cell.
-  - In gym screen during the trap intro.
-  - On player phone during countdown and timer.
-- Storage: `src/assets/exercises/<slug>.png`, mapped via a `EXERCISE_ART: Record<string, string>` lookup.
-- Note: generating ~60 illustrations is expensive in tool calls. I'll generate the first batch (~20 most common exercises) and add a fallback `Dumbbell` icon for the rest, then expand.
+## Technical details
 
-## 6. New cell types replacing/expanding board
+**Rotation**: helper `nextPlayerId(players, currentId)` — sort by `joined_at`, return next; cycles A→B→C→A. Skips finished players.
 
-- Remove all "rest" (pause) cells — convert them into other types.
-- Add cell types:
-  - `surprise` (?) — picks a random exercise from current pool with a roulette animation.
-  - `crazy` (danger) — picks from a curated unusual-exercise list ("Spin & Burpee", "Wheel & Pushup", "Crab-walk Pushup", etc.).
-  - `group` — everyone does a lighter exercise together; everyone is judge; turn advances when majority press DONE.
-  - `vs` — triggered dynamically when 2+ tokens land on the same non-start cell (no static cell needed).
-- Distribution: 5 surprise + 5 crazy + 5 group, replacing the 3 rest cells and reducing some easy/medium counts to keep board at 60.
+**State machine in `pod.$code.tsx`**:
+```ts
+type Phase =
+  | { kind: 'player'; playerId: string }
+  | { kind: 'switch'; playerId: string; judgeId: string; trap: Trap }
+  | { kind: 'judge';  playerId: string; judgeId: string; trap: Trap; startedAt: number }
+  | { kind: 'resolve'; outcome: 'success' | 'fail'; playerId: string }
+  | { kind: 'done'; winnerId: string }
+```
+Persisted to `rooms.trap` JSON for refresh resilience (already a JSONB column).
 
-### VS mode
-- When the moving player lands on an occupied cell (excluding cell 1):
-  - Both players (or teams) do the same exercise.
-  - Sequential timer: player A goes first, then player B.
-  - Faster time → +50 score bonus.
+**Voice helper** (`src/lib/sfx.ts`):
+```ts
+export function speak(text: string, opts?: { pitch?: number; rate?: number }) { ... }
+```
+Picks a robotic-sounding voice from `speechSynthesis.getVoices()`, defaults `pitch=0.4, rate=0.85, volume=1`. Cancels prior utterances.
 
-## 7. Files touched (overview)
+**Camera permission**: requested on first entry to `judge` phase; if denied, show fallback UI ("Enable camera to continue") with a retry button — the game still works without recording, just no clip is captured.
 
-- New migration: add `team_id`, `is_team_lead` to `players`; add `unit` to `workout_logs`; extend `board_overrides` JSON shape (no schema change needed for the JSON itself).
-- `src/lib/game.ts` — board redesign, new cell types, team helpers, judge expansion, preset definitions.
-- `src/routes/gym.$code.tsx` — timer enforcement, explosion, team formation, mid-join announcement, VS handling, group cells, surprise/crazy animations.
-- `src/routes/play.$code.tsx` — team color overlays, explosion mirror, group/VS UI, seconds countdown, exercise illustration in countdown.
-- `src/components/` — new: `ExplosionOverlay.tsx`, `TeamRevealAnimation.tsx`, `TeamFlashOverlay.tsx`, `RouletteAnimation.tsx`, `JoinAnnouncement.tsx`, `ExerciseArt.tsx`.
-- `src/lib/presets.ts` — preset definitions.
-- `src/lib/exercise-art.ts` — slug→image map.
-- `src/assets/exercises/*.png` — generated illustrations (batched).
+**Recording lifecycle**: one `MediaRecorder` instance per turn. Stream is acquired once at game start (when first entering `judge`) and reused; recorder is `start()`/`stop()`-ed per turn. Blobs accumulated in `useRef`.
 
-## 8. Risks & open questions
+**Fitness mapping**: lobby stores `fitness_level` as 3/6/9; existing `calcRepsForTier` already takes 1–10, so reps math is unchanged.
 
-- 60-exercise illustration generation is slow; I'll do a phased rollout (common exercises first, fallback icon for rest).
-- Team mechanics across realtime + RLS are tricky; will validate with manual playthrough.
-- Group cells changing turn semantics may interact with rotating judge — for group cells, "everyone is judge" means the turn auto-completes when N-1 players confirm.
-- VS mode adds a sequential mini-flow; will reuse the existing trap pipeline with a `vs` discriminator.
+**Mascot avatar persistence**: when host picks the mascot, store `avatar_url = null` and add a new column? No — encode it as a sentinel like `mascot:#ec4899` in `avatar_url` (text). `PlayerToken` already supports `mascot` prop; read the sentinel and render accordingly. Avoids a migration.
 
-If you approve, I'll execute in this order: (1) cell 39 fix + seconds unit (quick wins) → (2) timer/explosion → (3) new cell types + remove rest → (4) presets + illustrations → (5) teams system + animations.
+## Files changed
+
+- **New**: `src/routes/pod.$code.tsx`, `src/components/pod/PlayerPhase.tsx`, `src/components/pod/SwitchPhase.tsx`, `src/components/pod/JudgePhase.tsx`, `src/components/pod/WrapUp.tsx`, `src/components/pod/ProgressBar.tsx`, `src/components/pod/CameraOverlay.tsx`
+- **Rewritten**: `src/routes/gym.$code.tsx` (lobby becomes pod setup)
+- **Edited**: `src/lib/sfx.ts` (add `speak`, rising tone, boom), `src/routes/index.tsx` (CTA → "Start a Pod")
+- **Deleted**: `src/routes/join.tsx`, `src/routes/play.$code.tsx`
+
+## Out of scope (called out explicitly)
+
+- Server-side video stitching / summary edit — the wrap-up labels this "Coming soon"
+- Cross-device play — fully removed
+- Social-media-native share targets beyond the Web Share API

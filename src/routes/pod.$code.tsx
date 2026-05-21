@@ -233,7 +233,9 @@ function PodPage() {
         player={p}
         judge={j}
         trap={phase.trap}
-        onDone={() => setPhase({ kind: "judge", ...phase })}
+        onDone={() =>
+          setPhase({ kind: "judge", playerId: phase.playerId, judgeId: phase.judgeId, trap: phase.trap })
+        }
       />
     );
   }
@@ -913,4 +915,6 @@ function WrapUp({
 }
 
 // Suppress unused-import lint for icons consumed conditionally.
-void Play; void describeCell; void getCell; void CellType;
+void Play;
+void describeCell;
+void getCell;

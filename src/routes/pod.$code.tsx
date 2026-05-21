@@ -352,6 +352,7 @@ function PlayerPhase({
 }) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
+  const [hopping, setHopping] = useState<{ from: number; to: number; step: number } | null>(null);
 
   const handleRoll = async () => {
     if (rolling) return;
@@ -371,7 +372,18 @@ function PlayerPhase({
     const final = rollDice();
     setFace(final);
     sfx.play("didIt");
-    await new Promise((r) => setTimeout(r, 700));
+    await new Promise((r) => setTimeout(r, 500));
+    // Hopping animation — token jumps cell-by-cell from current space to target.
+    const from = player.current_space;
+    const to = Math.min(BOARD_SIZE, from + final);
+    setHopping({ from, to, step: 0 });
+    for (let i = 1; i <= final; i++) {
+      await new Promise((r) => setTimeout(r, 220));
+      setHopping({ from, to, step: i });
+      sfx.play("hop");
+    }
+    await new Promise((r) => setTimeout(r, 350));
+    setHopping(null);
     setRolling(false);
     onRoll(final);
     void start;
@@ -379,6 +391,9 @@ function PlayerPhase({
 
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
+      {hopping && (
+        <HopOverlay player={player} from={hopping.from} to={hopping.to} step={hopping.step} />
+      )}
       <button
         onClick={() => {
           if (confirm("Restart the game? Scores and positions will be reset.")) onRestart();

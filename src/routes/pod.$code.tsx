@@ -524,7 +524,7 @@ function JudgePhase({
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
+          video: { facingMode: { ideal: "environment" } },
           audio: true,
         });
         if (cancelled) {
@@ -683,7 +683,7 @@ function JudgePhase({
         playsInline
         muted
         className="absolute inset-0 w-full h-full object-cover"
-        style={{ transform: "scaleX(-1)" }}
+        // Rear camera — no mirror flip
       />
 
       {/* Corner overlays */}

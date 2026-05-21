@@ -19,7 +19,7 @@ import {
   type BoardOverrides,
   type CellType,
 } from "@/lib/game";
-import { sfx, speak, repPop, startArcadeRise } from "@/lib/sfx";
+import { sfx, speak, repPop, startArcadeRise, startArcadeMusic } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { WorkoutIllustration } from "@/components/WorkoutIllustration";
@@ -348,6 +348,9 @@ function PlayerPhase({
 
   const handleRoll = async () => {
     if (rolling) return;
+    void sfx.unlock();
+    startArcadeMusic();
+    speak(`${player.username}, roll the dice.`, { volume: 1, rate: 0.8, pitch: 0.8 });
     setRolling(true);
     setFace(null);
     sfx.play("hop");

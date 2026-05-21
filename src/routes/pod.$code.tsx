@@ -23,6 +23,7 @@ import { sfx, speak, repPop, startArcadeRise } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { WorkoutIllustration } from "@/components/WorkoutIllustration";
+import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 
 export const Route = createFileRoute("/pod/$code")({
   component: PodPage,
@@ -217,11 +218,14 @@ function PodPage() {
   if (phase.kind === "player") {
     const player = ordered.find((p) => p.id === phase.playerId)!;
     return (
-      <PlayerPhase
-        player={player}
-        players={ordered}
-        onRoll={(d) => onRollComplete(player, d)}
-      />
+      <>
+        <PlayerPhase
+          player={player}
+          players={ordered}
+          onRoll={(d) => onRollComplete(player, d)}
+          code={code}
+        />
+      </>
     );
   }
 
@@ -335,10 +339,12 @@ function PlayerPhase({
   player,
   players,
   onRoll,
+  code,
 }: {
   player: Player;
   players: Player[];
   onRoll: (dice: number) => void;
+  code: string;
 }) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
@@ -366,7 +372,10 @@ function PlayerPhase({
 
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
-      <div className="text-xs font-bold opacity-60 uppercase tracking-wider">Your turn</div>
+      <div className="absolute top-2 left-2 right-2 z-20">
+        <SpotifyEmbed code={code} />
+      </div>
+      <div className="text-xs font-bold opacity-60 uppercase tracking-wider mt-32">Your turn</div>
       <Avatar player={player} size={140} />
       <div
         className="text-4xl font-black"

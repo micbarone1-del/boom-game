@@ -427,6 +427,27 @@ function loadVoices() {
 }
 if (typeof window !== "undefined") loadVoices();
 
+/**
+ * iOS/Safari requires SpeechSynthesis to be kicked off from a user gesture
+ * the first time. We push a silent utterance on first unlock so subsequent
+ * speak() calls (which often happen inside effects/timers) actually fire.
+ */
+let _speechPrimed = false;
+function primeSpeech() {
+  if (_speechPrimed) return;
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  try {
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    u.rate = 1;
+    window.speechSynthesis.speak(u);
+    _speechPrimed = true;
+    loadVoices();
+  } catch {
+    /* ignore */
+  }
+}
+
 function pickRoboticVoice(): SpeechSynthesisVoice | undefined {
   if (_voices.length === 0) loadVoices();
   // Prefer voices that tend to sound more synthetic/robotic.
@@ -443,11 +464,15 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   try {
     window.speechSynthesis.cancel();
+    // Make sure the engine is awake (no-op after first user gesture).
+    primeSpeech();
     const u = new SpeechSynthesisUtterance(text);
     const v = pickRoboticVoice();
     if (v) u.voice = v;
-    u.pitch = opts.pitch ?? 0.4;
-    u.rate = opts.rate ?? 0.9;
+    // Some devices ignore extreme pitch values and play silently — keep it
+    // in the audible range while still sounding mechanical.
+    u.pitch = opts.pitch ?? 0.7;
+    u.rate = opts.rate ?? 0.85;
     u.volume = opts.volume ?? 1;
     window.speechSynthesis.speak(u);
   } catch {

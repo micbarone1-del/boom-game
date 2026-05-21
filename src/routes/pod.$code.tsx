@@ -717,11 +717,35 @@ function JudgePhase({
           {player.username}
         </div>
       </div>
+      {/* Big readable exercise banner */}
+      <div className="absolute top-16 left-0 right-0 z-20 flex justify-center px-4 pointer-events-none">
+        <div
+          className="rounded-2xl ink-border px-5 py-2 text-center max-w-[92%]"
+          style={{ background: "var(--boom-yellow)" }}
+        >
+          <div
+            className="font-black leading-tight"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: "var(--boom-ink)",
+              fontSize: "clamp(1.75rem, 6.5vw, 2.5rem)",
+            }}
+          >
+            {trap.exercise}
+          </div>
+          <div
+            className="font-bold"
+            style={{
+              color: "var(--boom-ink)",
+              fontSize: "clamp(1rem, 4vw, 1.25rem)",
+            }}
+          >
+            {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
+          </div>
+        </div>
+      </div>
       <div className="absolute bottom-3 left-3 z-20 text-white text-xs font-bold opacity-90" style={{ textShadow: "1px 1px 0 #000" }}>
         boomworkout.fun
-      </div>
-      <div className="absolute bottom-3 right-3 z-20 text-white text-xs font-bold opacity-90" style={{ textShadow: "1px 1px 0 #000" }}>
-        {trap.exercise}
       </div>
 
       {/* Center: ring + defuse */}

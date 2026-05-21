@@ -683,7 +683,6 @@ function JudgePhase({
         playsInline
         muted
         className="absolute inset-0 w-full h-full object-cover"
-        // Rear camera — no mirror flip
       />
 
       {/* Corner overlays */}

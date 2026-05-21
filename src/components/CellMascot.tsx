@@ -6,7 +6,7 @@ import bombBoost from "@/assets/bomb-boost.png";
 import bombSetback from "@/assets/bomb-setback.png";
 import type { CellType } from "@/lib/game";
 
-const FLAVOR: Record<CellType, { label: string; color: string; img: string; sad?: boolean }> = {
+export const CELL_FLAVOR: Record<CellType, { label: string; color: string; img: string; sad?: boolean }> = {
   easy:    { label: "EASY PEASY!",    color: "var(--boom-yellow)", img: bombEasy },
   medium:  { label: "GETTIN' SWEATY!", color: "var(--boom-orange)", img: bombMedium },
   hard:    { label: "BEAST MODE!",    color: "var(--boom-red)",    img: bombHard },
@@ -20,13 +20,13 @@ const FLAVOR: Record<CellType, { label: string; color: string; img: string; sad?
 };
 
 export function mascotForCell(type: CellType): string {
-  return FLAVOR[type].img;
+  return CELL_FLAVOR[type].img;
 }
 
 export function CellMascot({ type, username }: { type: CellType; username?: string }) {
   // Finish has its own dedicated explosion overlay — skip the cell splash.
   if (type === "finish") return null;
-  const f = FLAVOR[type];
+  const f = CELL_FLAVOR[type];
   return (
     <div
       className="fixed z-[80] pointer-events-none anim-mascot-splash"

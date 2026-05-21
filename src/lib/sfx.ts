@@ -48,8 +48,10 @@ const state = (_g.__boomSfx ||= {
   arcadeGain: null as GainNode | null,
   arcadeStep: 0,
 }) as BoomSfxGlobal;
-// Master volume — bumped so SFX cut through background music (e.g. Spotify).
-const MASTER_VOLUME = 2.6;
+// Master volume — kept close to 1 so the robotic voice (SpeechSynthesis,
+// which is OS-volume controlled and can't be amplified by Web Audio) sits at
+// roughly the same loudness as our SFX.
+const MASTER_VOLUME = 1.1;
 let muted = false;
 let fallbackBeep: HTMLAudioElement | null = null;
 // Bumped key (v4) so any previously-stuck "muted" state from earlier
@@ -481,7 +483,6 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
     u.rate = opts.rate ?? 0.85;
     u.volume = opts.volume ?? 1;
     window.speechSynthesis.cancel();
-    sfx.play("countdown");
     window.setTimeout(() => {
       try {
         window.speechSynthesis.speak(u);

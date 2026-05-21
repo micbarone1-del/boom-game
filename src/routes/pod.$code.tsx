@@ -464,24 +464,41 @@ function SwitchPhase({
       <WorkoutIllustration exercise={trap.exercise} />
       <div className="text-center">
         <div
-          className="text-3xl font-black"
+          className="text-4xl font-black leading-tight"
           style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}
         >
           {trap.exercise}
         </div>
-        <div className="text-xl font-bold">
+        <div className="text-2xl font-bold">
           {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
         </div>
       </div>
 
-      <div
-        className="text-9xl font-black anim-fade-in"
-        style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
-      >
-        {count > 0 ? count : "GO!"}
+      <div className="relative flex items-center justify-center">
+        <img
+          src={bombMascot}
+          alt=""
+          key={`mascot-${count}`}
+          className="w-40 h-40 anim-fuse"
+          style={{ filter: "drop-shadow(0 6px 0 rgba(0,0,0,0.25))" }}
+        />
+        <div
+          key={`count-${count}`}
+          className="absolute inset-0 flex items-center justify-center anim-pop"
+          style={{
+            fontFamily: "'Luckiest Guy', cursive",
+            color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
+            fontSize: count > 0 ? "9rem" : "5rem",
+            lineHeight: 1,
+            textShadow: "0 6px 0 rgba(0,0,0,0.35), 3px 3px 0 #fff",
+            WebkitTextStroke: "3px #111",
+          }}
+        >
+          {count > 0 ? count : "GO!"}
+        </div>
       </div>
 
-      <div className="text-sm font-bold opacity-70 text-center px-6">
+      <div className="text-base font-bold opacity-80 text-center px-6">
         Pass the phone to {judge.username}
       </div>
     </main>
@@ -700,11 +717,35 @@ function JudgePhase({
           {player.username}
         </div>
       </div>
+      {/* Big readable exercise banner */}
+      <div className="absolute top-16 left-0 right-0 z-20 flex justify-center px-4 pointer-events-none">
+        <div
+          className="rounded-2xl ink-border px-5 py-2 text-center max-w-[92%]"
+          style={{ background: "var(--boom-yellow)" }}
+        >
+          <div
+            className="font-black leading-tight"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: "var(--boom-ink)",
+              fontSize: "clamp(1.75rem, 6.5vw, 2.5rem)",
+            }}
+          >
+            {trap.exercise}
+          </div>
+          <div
+            className="font-bold"
+            style={{
+              color: "var(--boom-ink)",
+              fontSize: "clamp(1rem, 4vw, 1.25rem)",
+            }}
+          >
+            {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
+          </div>
+        </div>
+      </div>
       <div className="absolute bottom-3 left-3 z-20 text-white text-xs font-bold opacity-90" style={{ textShadow: "1px 1px 0 #000" }}>
         boomworkout.fun
-      </div>
-      <div className="absolute bottom-3 right-3 z-20 text-white text-xs font-bold opacity-90" style={{ textShadow: "1px 1px 0 #000" }}>
-        {trap.exercise}
       </div>
 
       {/* Center: ring + defuse */}

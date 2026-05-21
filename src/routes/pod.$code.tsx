@@ -222,6 +222,7 @@ function PodPage() {
         players={ordered}
         onRoll={(d) => onRollComplete(player, d)}
         code={code}
+        onRestart={restart}
       />
     );
   }

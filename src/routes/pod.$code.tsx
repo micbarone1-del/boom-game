@@ -23,7 +23,6 @@ import { sfx, speak, repPop, startArcadeRise } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { WorkoutIllustration } from "@/components/WorkoutIllustration";
-import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 
 export const Route = createFileRoute("/pod/$code")({
   component: PodPage,

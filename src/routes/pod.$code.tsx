@@ -222,6 +222,7 @@ function PodPage() {
         players={ordered}
         onRoll={(d) => onRollComplete(player, d)}
         code={code}
+        onRestart={restart}
       />
     );
   }
@@ -337,11 +338,13 @@ function PlayerPhase({
   players,
   onRoll,
   code,
+  onRestart,
 }: {
   player: Player;
   players: Player[];
   onRoll: (dice: number) => void;
   code: string;
+  onRestart: () => void;
 }) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
@@ -372,6 +375,15 @@ function PlayerPhase({
 
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
+      <button
+        onClick={() => {
+          if (confirm("Restart the game? Scores and positions will be reset.")) onRestart();
+        }}
+        className="absolute top-3 right-3 z-30 rounded-full ink-border-sm bg-white px-3 py-2 flex items-center gap-1 text-xs font-black active:scale-95"
+        aria-label="Restart game"
+      >
+        <RotateCcw size={14} /> Restart
+      </button>
       <div className="text-xs font-bold opacity-60 uppercase tracking-wider">Your turn</div>
       <Avatar player={player} size={140} />
       <div

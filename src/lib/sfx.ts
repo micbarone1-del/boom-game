@@ -30,6 +30,9 @@ type BoomSfxGlobal = {
   masterGain: GainNode | null;
   unlocked: boolean;
   fallbackUnlocked: boolean;
+  arcadeTimer: number | null;
+  arcadeGain: GainNode | null;
+  arcadeStep: number;
 };
 
 // Persist across HMR module reloads — otherwise we'd create a new
@@ -41,6 +44,9 @@ const state = (_g.__boomSfx ||= {
   masterGain: null as GainNode | null,
   unlocked: false,
   fallbackUnlocked: false,
+  arcadeTimer: null as number | null,
+  arcadeGain: null as GainNode | null,
+  arcadeStep: 0,
 }) as BoomSfxGlobal;
 // Master volume — bumped so SFX cut through background music (e.g. Spotify).
 const MASTER_VOLUME = 2.6;
@@ -463,7 +469,7 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
   if (muted) return;
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   try {
-    window.speechSynthesis.cancel();
+    sfx.unlock();
     // Make sure the engine is awake (no-op after first user gesture).
     primeSpeech();
     const u = new SpeechSynthesisUtterance(text);
@@ -474,10 +480,99 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
     u.pitch = opts.pitch ?? 0.7;
     u.rate = opts.rate ?? 0.85;
     u.volume = opts.volume ?? 1;
-    window.speechSynthesis.speak(u);
+    window.speechSynthesis.cancel();
+    sfx.play("countdown");
+    window.setTimeout(() => {
+      try {
+        window.speechSynthesis.speak(u);
+      } catch {
+        /* ignore */
+      }
+    }, 40);
+    window.setTimeout(() => {
+      if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+        try {
+          const retry = new SpeechSynthesisUtterance(text);
+          if (v) retry.voice = v;
+          retry.pitch = opts.pitch ?? 0.9;
+          retry.rate = opts.rate ?? 0.78;
+          retry.volume = opts.volume ?? 1;
+          window.speechSynthesis.speak(retry);
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 350);
   } catch {
     /* ignore */
   }
+}
+
+function playArcadeLoopStep() {
+  if (muted) return;
+  const c = ac();
+  if (!c) return;
+  const root = [110, 130.81, 146.83, 164.81][state.arcadeStep % 4];
+  const melody = [2, 4, 7, 11, 14, 11, 7, 4][state.arcadeStep % 8];
+  const t0 = safeStart(c);
+  const stepDur = 0.18;
+  let musicGain = state.arcadeGain;
+  if (!musicGain || musicGain.context !== c) {
+    musicGain = c.createGain();
+    musicGain.gain.value = 0.1;
+    musicGain.connect(out(c));
+    state.arcadeGain = musicGain;
+  }
+  const bass = c.createOscillator();
+  const lead = c.createOscillator();
+  const bassGain = c.createGain();
+  const leadGain = c.createGain();
+  bass.type = "square";
+  lead.type = "sawtooth";
+  bass.frequency.setValueAtTime(root, t0);
+  lead.frequency.setValueAtTime(root * Math.pow(2, melody / 12) * 2, t0);
+  bassGain.gain.setValueAtTime(0.0001, t0);
+  bassGain.gain.exponentialRampToValueAtTime(0.16, t0 + 0.01);
+  bassGain.gain.exponentialRampToValueAtTime(0.0001, t0 + stepDur);
+  leadGain.gain.setValueAtTime(0.0001, t0);
+  leadGain.gain.exponentialRampToValueAtTime(0.07, t0 + 0.01);
+  leadGain.gain.exponentialRampToValueAtTime(0.0001, t0 + stepDur * 0.75);
+  bass.connect(bassGain).connect(musicGain);
+  lead.connect(leadGain).connect(musicGain);
+  bass.start(t0);
+  lead.start(t0);
+  bass.stop(t0 + stepDur + 0.03);
+  lead.stop(t0 + stepDur + 0.03);
+  state.arcadeStep += 1;
+}
+
+export function startArcadeMusic() {
+  if (muted || typeof window === "undefined") return;
+  void ensureReady().then(() => playArcadeLoopStep());
+  if (state.arcadeTimer) return;
+  state.arcadeTimer = window.setInterval(playArcadeLoopStep, 210);
+}
+
+export function stopArcadeMusic() {
+  if (typeof window !== "undefined" && state.arcadeTimer) {
+    window.clearInterval(state.arcadeTimer);
+  }
+  state.arcadeTimer = null;
+  try {
+    const c = ac();
+    const g = state.arcadeGain;
+    if (c && g) {
+      const t = c.currentTime + 0.01;
+      g.gain.cancelScheduledValues(t);
+      g.gain.linearRampToValueAtTime(0.0001, t + 0.15);
+      window.setTimeout(() => {
+        try {
+          g.disconnect();
+        } catch {}
+        if (state.arcadeGain === g) state.arcadeGain = null;
+      }, 220);
+    }
+  } catch {}
 }
 
 /** Single short pop tied to rep progress — pitch climbs toward target. */

@@ -12,6 +12,10 @@ export type Room = {
   last_dice: number | null;
   status: string;
   paused?: boolean;
+  game_started_at?: string | null;
+  game_ends_at?: string | null;
+  game_state?: "idle" | "playing" | "timeout_continue" | "game_over";
+  continue_deadline_at?: string | null;
   board_overrides: Record<
     string,
     {

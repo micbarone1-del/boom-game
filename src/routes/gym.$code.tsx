@@ -95,9 +95,19 @@ function Lobby({ code }: { code: string }) {
   const start = async () => {
     if (!canStart) return;
     setStarting(true);
+    const startedAt = new Date();
+    const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
     await supabase
       .from("rooms")
-      .update({ status: "playing", trap: null, locked: false })
+      .update({
+        status: "playing",
+        trap: null,
+        locked: false,
+        game_started_at: startedAt.toISOString(),
+        game_ends_at: endsAt.toISOString(),
+        game_state: "playing",
+        continue_deadline_at: null,
+      })
       .eq("code", code);
     await supabase.from("pods").update({ status: "playing" }).eq("room_code", code);
     setStarting(false);

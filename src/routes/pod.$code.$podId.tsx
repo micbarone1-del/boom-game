@@ -406,16 +406,30 @@ function PlayerPhase({
   onRoll,
   code,
   onRestart,
+  startedAt,
+  endsAt,
 }: {
   player: Player;
   players: Player[];
   onRoll: (dice: number) => void;
   code: string;
   onRestart: () => void;
+  startedAt: number | null;
+  endsAt: number | null;
 }) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
   const [hopping, setHopping] = useState<{ from: number; to: number; step: number } | null>(null);
+
+  // Drive arcade BGM intensity from fuse progress.
+  useEffect(() => {
+    if (!startedAt || !endsAt) return;
+    const i = setInterval(() => {
+      const p = Math.max(0, Math.min(1, (Date.now() - startedAt) / (endsAt - startedAt)));
+      setBgmIntensity(p);
+    }, 1000);
+    return () => clearInterval(i);
+  }, [startedAt, endsAt]);
 
   const handleRoll = async () => {
     if (rolling) return;
@@ -496,6 +510,14 @@ function PlayerPhase({
       <div className="text-sm opacity-60">Tap to roll</div>
 
       <ProgressBar players={players} activeId={player.id} />
+      {startedAt && endsAt && (
+        <div className="absolute left-0 right-0 bottom-16 px-3 z-30 pointer-events-none">
+          <FuseBar startedAt={startedAt} endsAt={endsAt} height={14} />
+          <div className="text-center text-[10px] opacity-70 mt-1 font-bold">
+            Room {code} · share to add more pods
+          </div>
+        </div>
+      )}
     </main>
   );
 }

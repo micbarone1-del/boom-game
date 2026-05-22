@@ -2,11 +2,16 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRoom } from "@/hooks/use-room";
+import { useRoom, type Player, type Pod, type Room } from "@/hooks/use-room";
 import { generateRoomCode } from "@/lib/game";
 import { Bomb, Copy, Play } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
+import { FuseBar } from "@/components/FuseBar";
+import { GymMap } from "@/components/GymMap";
+import { PodActivityTicker } from "@/components/PodActivityTicker";
+import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
+import { setBgmIntensity, startArcadeMusic } from "@/lib/sfx";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -90,9 +95,19 @@ function Lobby({ code }: { code: string }) {
   const start = async () => {
     if (!canStart) return;
     setStarting(true);
+    const startedAt = new Date();
+    const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
     await supabase
       .from("rooms")
-      .update({ status: "playing", trap: null, locked: false })
+      .update({
+        status: "playing",
+        trap: null,
+        locked: false,
+        game_started_at: startedAt.toISOString(),
+        game_ends_at: endsAt.toISOString(),
+        game_state: "playing",
+        continue_deadline_at: null,
+      })
       .eq("code", code);
     await supabase.from("pods").update({ status: "playing" }).eq("room_code", code);
     setStarting(false);
@@ -102,6 +117,11 @@ function Lobby({ code }: { code: string }) {
     return (
       <div className="min-h-screen flex items-center justify-center text-2xl">Loading gym…</div>
     );
+  }
+
+  // Once playing, show the shared map view instead of the lobby.
+  if (room.status === "playing" || room.game_state === "playing" || room.game_state === "timeout_continue" || room.game_state === "game_over") {
+    return <MapView room={room} players={players} pods={pods} code={code} />;
   }
 
   return (
@@ -242,6 +262,105 @@ function Lobby({ code }: { code: string }) {
           Every pod needs at least 2 players to start.
         </p>
       )}
+    </main>
+  );
+}
+
+function MapView({ room, players, pods, code }: { room: Room; players: Player[]; pods: Pod[]; code: string }) {
+  const startedAt = room.game_started_at ? new Date(room.game_started_at).getTime() : null;
+  const endsAt = room.game_ends_at ? new Date(room.game_ends_at).getTime() : null;
+  const continueAt = room.continue_deadline_at ? new Date(room.continue_deadline_at).getTime() : null;
+
+  // Drive BGM intensity from fuse progress.
+  useEffect(() => {
+    startArcadeMusic();
+    if (!startedAt || !endsAt) return;
+    const i = setInterval(() => {
+      const p = Math.max(0, Math.min(1, (Date.now() - startedAt) / (endsAt - startedAt)));
+      setBgmIntensity(p);
+    }, 1000);
+    return () => clearInterval(i);
+  }, [startedAt, endsAt]);
+
+  // Watch for timeout: first client transitions room state.
+  useEffect(() => {
+    if (!endsAt || room.game_state !== "playing") return;
+    const i = setInterval(async () => {
+      if (Date.now() < endsAt) return;
+      const anyFinished = players.some((p) => p.finished_at);
+      if (anyFinished) return;
+      await supabase
+        .from("rooms")
+        .update({
+          game_state: "timeout_continue",
+          continue_deadline_at: new Date(Date.now() + 10_000).toISOString(),
+        })
+        .eq("code", code)
+        .eq("game_state", "playing");
+      clearInterval(i);
+    }, 1000);
+    return () => clearInterval(i);
+  }, [endsAt, room.game_state, players, code]);
+
+  // Continue countdown → game over.
+  useEffect(() => {
+    if (room.game_state !== "timeout_continue" || !continueAt) return;
+    const i = setInterval(async () => {
+      if (Date.now() < continueAt) return;
+      await supabase
+        .from("rooms")
+        .update({ game_state: "game_over" })
+        .eq("code", code)
+        .eq("game_state", "timeout_continue");
+      clearInterval(i);
+    }, 500);
+    return () => clearInterval(i);
+  }, [room.game_state, continueAt, code]);
+
+  return (
+    <main className="min-h-screen p-3 max-w-5xl mx-auto flex flex-col gap-3">
+      <header className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <img src={bombMascot} alt="" className="w-10 h-10 anim-fuse" />
+          <div>
+            <h1
+              className="text-2xl font-black leading-none"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
+            >
+              THE GYM
+            </h1>
+            <div className="text-xs font-bold opacity-70">Room {code}</div>
+          </div>
+        </div>
+        <div className="flex-1 max-w-md">
+          <FuseBar startedAt={startedAt} endsAt={endsAt} paused={room.game_state !== "playing"} />
+        </div>
+      </header>
+
+      <GymMap players={players} pods={pods} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {pods.map((pod) => {
+          const podPlayers = players.filter((p) => p.pod_id === pod.id);
+          return (
+            <div key={pod.id} className="ink-border rounded-2xl bg-white p-2 text-sm">
+              <div className="font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+                {pod.name}
+              </div>
+              <div className="text-xs opacity-70">
+                {podPlayers.length} players · score {podPlayers.reduce((s, p) => s + (p.score ?? 0), 0)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <PodActivityTicker roomCode={code} pods={pods} />
+
+      {room.game_state === "timeout_continue" && continueAt && (
+        <TimesOutOverlay continueDeadlineAt={continueAt} showContinue={false} />
+      )}
+      {room.game_state === "game_over" && <GameOverOverlay />}
     </main>
   );
 }

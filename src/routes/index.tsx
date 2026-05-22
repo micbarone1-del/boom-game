@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bomb, Music, LogIn } from "lucide-react";
+import { Bomb, Music, LogIn, Play } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { generateRoomCode } from "@/lib/game";
 import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/")({
@@ -54,11 +56,23 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
+  const [creating, setCreating] = useState(false);
   const tryJoin = (e: React.FormEvent) => {
     e.preventDefault();
     const c = joinCode.trim().toUpperCase();
     if (!c) return;
     navigate({ to: "/join/$code", params: { code: c } });
+  };
+  const startSolo = async () => {
+    if (creating) return;
+    setCreating(true);
+    const code = generateRoomCode();
+    const { error } = await supabase.from("rooms").insert({ code });
+    if (error) {
+      setCreating(false);
+      return;
+    }
+    navigate({ to: "/join/$code", params: { code }, search: { auto: 1 } as never });
   };
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 gap-8">
@@ -89,30 +103,38 @@ function Index() {
       </div>
 
       <div className="flex flex-col gap-4 w-full max-w-xs">
-        <Link
-          to="/gym/$code"
-          params={{ code: "new" }}
-          className="ink-border rounded-3xl px-8 py-5 flex items-center justify-center gap-3 hover:-translate-y-1 transition-transform"
-          style={{ background: "var(--boom-yellow)" }}
+        <button
+          onClick={startSolo}
+          disabled={creating}
+          className="ink-border rounded-3xl px-8 py-5 flex items-center justify-center gap-3 hover:-translate-y-1 transition-transform disabled:opacity-50"
+          style={{ background: "var(--boom-red)" }}
         >
-          <Music size={36} style={{ color: "var(--boom-ink)" }} />
+          <Play size={36} color="white" fill="white" />
           <span
-            className="text-2xl font-black comic-shadow"
-            style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
+            className="text-3xl font-black"
+            style={{
+              color: "white",
+              fontFamily: "'Luckiest Guy', cursive",
+              textShadow: "2px 2px 0 #000, 0 0 8px rgba(0,0,0,.6)",
+            }}
           >
-            HOST GYM
+            {creating ? "IGNITING…" : "START PLAYING"}
           </span>
-        </Link>
+        </button>
         <form
           onSubmit={tryJoin}
           className="ink-border rounded-3xl px-5 py-4 flex flex-col gap-3"
-          style={{ background: "var(--boom-red)" }}
+          style={{ background: "var(--boom-orange)" }}
         >
           <div className="flex items-center gap-2 justify-center">
             <Bomb size={28} style={{ color: "white" }} />
             <span
-              className="text-2xl font-black comic-shadow"
-              style={{ color: "white", fontFamily: "'Luckiest Guy', cursive" }}
+              className="text-2xl font-black"
+              style={{
+                color: "white",
+                fontFamily: "'Luckiest Guy', cursive",
+                textShadow: "2px 2px 0 #000, 0 0 6px rgba(0,0,0,.5)",
+              }}
             >
               JOIN POD
             </span>
@@ -134,6 +156,14 @@ function Index() {
             <LogIn size={16} /> Go
           </button>
         </form>
+        <Link
+          to="/gym/$code"
+          params={{ code: "new" }}
+          className="text-center text-sm font-black underline opacity-80 flex items-center justify-center gap-1"
+          style={{ color: "var(--boom-ink)" }}
+        >
+          <Music size={14} /> Have a big screen? Host the gym →
+        </Link>
       </div>
     </main>
   );

@@ -536,6 +536,47 @@ export function startArcadeMusic() {
   state.arcadeTimer = window.setInterval(playArcadeLoopStep, 210);
 }
 
+/**
+ * Ramp the arcade BGM intensity from 0..1 (calm → frantic). Increases
+ * tempo (interval) and gain so the fuse timer feels more urgent.
+ */
+export function setBgmIntensity(progress: number) {
+  if (typeof window === "undefined") return;
+  const p = Math.max(0, Math.min(1, progress));
+  const interval = Math.round(210 - p * 110); // 210ms → 100ms
+  if (state.arcadeTimer) {
+    window.clearInterval(state.arcadeTimer);
+    state.arcadeTimer = window.setInterval(playArcadeLoopStep, interval);
+  }
+  const g = state.arcadeGain;
+  const c = ac();
+  if (g && c) {
+    try {
+      const t = c.currentTime + 0.02;
+      g.gain.cancelScheduledValues(t);
+      g.gain.linearRampToValueAtTime(0.1 + p * 0.5, t + 0.3);
+    } catch {}
+  }
+}
+
+/** Big robotic "TIME'S OUT!" with explosion. */
+export function playTimesOut() {
+  if (muted) return;
+  effects.blowUp();
+  setTimeout(() => effects.blowUp(), 200);
+  speak("Time's out!", { pitch: 0.5, rate: 0.8, volume: 1 });
+}
+
+/** Arcade lose riff + robotic "Game over". */
+export function playGameOver() {
+  if (muted) return;
+  const notes = [523, 440, 349, 262, 196, 147];
+  notes.forEach((f, i) =>
+    beep({ freq: f, dur: 0.22, type: "square", gain: 0.22, delay: i * 0.18 }),
+  );
+  setTimeout(() => speak("Game over.", { pitch: 0.5, rate: 0.75, volume: 1 }), 600);
+}
+
 export function stopArcadeMusic() {
   if (typeof window !== "undefined" && state.arcadeTimer) {
     window.clearInterval(state.arcadeTimer);

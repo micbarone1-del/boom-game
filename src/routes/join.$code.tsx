@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
 import { Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
@@ -7,6 +7,9 @@ import bombMascot from "@/assets/bomb-mascot.png";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,
+  validateSearch: (s: Record<string, unknown>) => ({
+    auto: s.auto === 1 || s.auto === "1" ? 1 : undefined,
+  }),
   head: ({ params }) => ({
     meta: [
       { title: `Join ${params.code} — BOOM!` },
@@ -33,6 +36,7 @@ function emptySlot(i: number): Slot {
 
 function JoinView() {
   const { code } = Route.useParams();
+  const { auto } = Route.useSearch();
   const navigate = useNavigate();
   const { room, players, pods, loading } = useRoom(code);
   const [chosenSlot, setChosenSlot] = useState<number | null>(null);
@@ -46,6 +50,15 @@ function JoinView() {
     () => [1, 2, 3].filter((s) => !takenSlots.has(s)),
     [takenSlots],
   );
+
+  // Auto-pick first free slot when arriving via Start Playing.
+  useEffect(() => {
+    if (!auto || loading || !room) return;
+    if (chosenSlot === null && availableSlots.length > 0) {
+      setChosenSlot(availableSlots[0]);
+      setPodName((prev) => prev || `Pod ${availableSlots[0]}`);
+    }
+  }, [auto, loading, room, chosenSlot, availableSlots]);
 
   if (loading) {
     return (
@@ -122,6 +135,22 @@ function JoinView() {
       setSubmitting(false);
       setError(pErr.message);
       return;
+    }
+    // If this is the first pod AND they came via auto (solo flow), auto-start
+    // the room with the 15-min fuse so they don't need a host screen.
+    if (auto && pods.length === 0) {
+      const startedAt = new Date();
+      const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
+      await supabase
+        .from("rooms")
+        .update({
+          status: "playing",
+          game_started_at: startedAt.toISOString(),
+          game_ends_at: endsAt.toISOString(),
+          game_state: "playing",
+        })
+        .eq("code", code);
+      await supabase.from("pods").update({ status: "playing" }).eq("id", pod.id);
     }
     navigate({ to: "/pod/$code/$podId", params: { code, podId: pod.id } });
   };

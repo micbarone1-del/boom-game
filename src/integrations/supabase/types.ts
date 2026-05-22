@@ -149,9 +149,13 @@ export type Database = {
         Row: {
           board_overrides: Json
           code: string
+          continue_deadline_at: string | null
           created_at: string
           current_turn_player_id: string | null
           difficulty_multiplier: number
+          game_ends_at: string | null
+          game_started_at: string | null
+          game_state: string
           host_id: string
           last_dice: number | null
           locked: boolean
@@ -162,9 +166,13 @@ export type Database = {
         Insert: {
           board_overrides?: Json
           code: string
+          continue_deadline_at?: string | null
           created_at?: string
           current_turn_player_id?: string | null
           difficulty_multiplier?: number
+          game_ends_at?: string | null
+          game_started_at?: string | null
+          game_state?: string
           host_id?: string
           last_dice?: number | null
           locked?: boolean
@@ -175,9 +183,13 @@ export type Database = {
         Update: {
           board_overrides?: Json
           code?: string
+          continue_deadline_at?: string | null
           created_at?: string
           current_turn_player_id?: string | null
           difficulty_multiplier?: number
+          game_ends_at?: string | null
+          game_started_at?: string | null
+          game_state?: string
           host_id?: string
           last_dice?: number | null
           locked?: boolean

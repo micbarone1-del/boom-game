@@ -19,10 +19,12 @@ import {
   type BoardOverrides,
   type CellType,
 } from "@/lib/game";
-import { sfx, speak, repPop, startArcadeRise, startArcadeMusic } from "@/lib/sfx";
+import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
+import { FuseBar } from "@/components/FuseBar";
+import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,
@@ -87,6 +89,10 @@ function PodPage() {
   if (loading || !room || ordered.length === 0 || !phase) {
     return <div className="min-h-screen flex items-center justify-center text-2xl">Loading pod…</div>;
   }
+
+  const startedAt = room.game_started_at ? new Date(room.game_started_at).getTime() : null;
+  const endsAt = room.game_ends_at ? new Date(room.game_ends_at).getTime() : null;
+  const continueAt = room.continue_deadline_at ? new Date(room.continue_deadline_at).getTime() : null;
 
   const overrides = (room.board_overrides ?? {}) as BoardOverrides;
 
@@ -195,41 +201,85 @@ function PodPage() {
   };
 
   const restart = async () => {
+    const startedAtNew = new Date();
+    const endsAtNew = new Date(startedAtNew.getTime() + 15 * 60 * 1000);
     await supabase
       .from("players")
       .update({ current_space: 0, score: 0, finished_at: null, finish_rank: null })
       .eq("pod_id", podId);
     await supabase
       .from("pods")
-      .update({ status: "lobby", current_space: 0, score: 0, current_turn_player_id: null })
+      .update({ status: "playing", current_space: 0, score: 0, current_turn_player_id: null })
       .eq("id", podId);
+    // Restart the room fuse so everyone gets a fresh 15 minutes.
+    await supabase
+      .from("rooms")
+      .update({
+        status: "playing",
+        game_started_at: startedAtNew.toISOString(),
+        game_ends_at: endsAtNew.toISOString(),
+        game_state: "playing",
+        continue_deadline_at: null,
+      })
+      .eq("code", code);
     clipsRef.current.clear();
-    navigate({ to: "/gym/$code", params: { code } });
+    setPhase({ kind: "player", playerId: ordered[0].id });
   };
+
+  const onContinue = async () => {
+    const newEnds = new Date(Date.now() + 5 * 60 * 1000);
+    await supabase
+      .from("rooms")
+      .update({
+        game_state: "playing",
+        game_ends_at: newEnds.toISOString(),
+        continue_deadline_at: null,
+      })
+      .eq("code", code);
+  };
+
+  // Render the timeout / game-over overlays on top of whatever phase is active.
+  const overlay = (() => {
+    if (room.game_state === "timeout_continue" && continueAt) {
+      return <TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue />;
+    }
+    if (room.game_state === "game_over") {
+      return <GameOverOverlay onRestart={restart} />;
+    }
+    return null;
+  })();
 
   // --- Render the active phase ---
 
   if (phase.kind === "done") {
     return (
-      <WrapUp
-        players={ordered}
-        winnerId={phase.winnerId}
-        clips={clipsRef.current}
-        onRestart={restart}
-      />
+      <>
+        <WrapUp
+          players={ordered}
+          winnerId={phase.winnerId}
+          clips={clipsRef.current}
+          onRestart={restart}
+        />
+        {overlay}
+      </>
     );
   }
 
   if (phase.kind === "player") {
     const player = ordered.find((p) => p.id === phase.playerId)!;
     return (
-      <PlayerPhase
-        player={player}
-        players={ordered}
-        onRoll={(d) => onRollComplete(player, d)}
-        code={code}
-        onRestart={restart}
-      />
+      <>
+        <PlayerPhase
+          player={player}
+          players={ordered}
+          onRoll={(d) => onRollComplete(player, d)}
+          code={code}
+          onRestart={restart}
+          startedAt={startedAt}
+          endsAt={endsAt}
+        />
+        {overlay}
+      </>
     );
   }
 
@@ -237,31 +287,42 @@ function PodPage() {
     const p = ordered.find((x) => x.id === phase.playerId)!;
     const j = ordered.find((x) => x.id === phase.judgeId)!;
     return (
-      <SwitchPhase
-        player={p}
-        judge={j}
-        trap={phase.trap}
-        onDone={() =>
-          setPhase({ kind: "judge", playerId: phase.playerId, judgeId: phase.judgeId, trap: phase.trap })
-        }
-      />
+      <>
+        <SwitchPhase
+          player={p}
+          judge={j}
+          trap={phase.trap}
+          onDone={() =>
+            setPhase({ kind: "judge", playerId: phase.playerId, judgeId: phase.judgeId, trap: phase.trap })
+          }
+        />
+        {overlay}
+      </>
     );
   }
 
   if (phase.kind === "judge") {
     const p = ordered.find((x) => x.id === phase.playerId)!;
     return (
-      <JudgePhase
-        player={p}
-        trap={phase.trap}
-        onComplete={onJudgeResult}
-      />
+      <>
+        <JudgePhase
+          player={p}
+          trap={phase.trap}
+          onComplete={onJudgeResult}
+        />
+        {overlay}
+      </>
     );
   }
 
   // resolve
   const p = ordered.find((x) => x.id === phase.playerId)!;
-  return <ResolveSplash player={p} outcome={phase.outcome} />;
+  return (
+    <>
+      <ResolveSplash player={p} outcome={phase.outcome} />
+      {overlay}
+    </>
+  );
 }
 
 // ---------------------------------------------------------------------------

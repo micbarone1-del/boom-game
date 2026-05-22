@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
 import { Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
@@ -52,12 +52,13 @@ function JoinView() {
   );
 
   // Auto-pick first free slot when arriving via Start Playing.
-  if (auto && chosenSlot === null && availableSlots.length > 0 && !loading && room) {
-    // Use setTimeout-safe state set via microtask via setState in event-free render:
-    // (safe; setChosenSlot just enqueues a re-render)
-    setChosenSlot(availableSlots[0]);
-    if (!podName) setPodName(`Pod ${availableSlots[0]}`);
-  }
+  useEffect(() => {
+    if (!auto || loading || !room) return;
+    if (chosenSlot === null && availableSlots.length > 0) {
+      setChosenSlot(availableSlots[0]);
+      setPodName((prev) => prev || `Pod ${availableSlots[0]}`);
+    }
+  }, [auto, loading, room, chosenSlot, availableSlots]);
 
   if (loading) {
     return (

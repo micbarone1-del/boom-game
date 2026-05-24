@@ -610,18 +610,71 @@ export function repPop(progress: number) {
   const c = ac();
   if (!c) return;
   const p = Math.max(0, Math.min(1, progress));
-  const freq = 440 + p * 880;
+  // Mario-mushroom style 1-up: two-step rising chirp, loud.
+  const t0 = c.currentTime + 0.005;
+  const f1 = 600 + p * 600;
+  const f2 = f1 * 1.5;
+  const mk = (f: number, delay: number, dur: number, gain: number) => {
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = "square";
+    o.frequency.setValueAtTime(f, t0 + delay);
+    o.frequency.exponentialRampToValueAtTime(f * 1.12, t0 + delay + dur);
+    g.gain.setValueAtTime(0.0001, t0 + delay);
+    g.gain.exponentialRampToValueAtTime(gain, t0 + delay + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + delay + dur);
+    o.connect(g).connect(out(c));
+    o.start(t0 + delay);
+    o.stop(t0 + delay + dur + 0.02);
+  };
+  mk(f1, 0, 0.07, 0.32);
+  mk(f2, 0.07, 0.11, 0.32);
+}
+
+/** Long victorious jingle for defuse success — loud + cheerful. */
+export function playDefuseJingle() {
+  if (muted) return;
+  const notes = [523, 659, 784, 1047, 880, 1047, 1319, 1568];
+  notes.forEach((f, i) =>
+    beep({ freq: f, dur: 0.18, type: "square", gain: 0.28, delay: i * 0.11 }),
+  );
+  // Sparkle layer
+  [1568, 2093, 2637].forEach((f, i) =>
+    beep({ freq: f, dur: 0.12, type: "triangle", gain: 0.18, delay: 0.9 + i * 0.08 }),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Techno kick layer — 4-on-the-floor on top of arcade music.
+// ---------------------------------------------------------------------------
+
+let _technoTimer: number | null = null;
+function playKick() {
+  const c = ac();
+  if (!c || muted) return;
   const t0 = c.currentTime + 0.005;
   const o = c.createOscillator();
   const g = c.createGain();
-  o.type = "square";
-  o.frequency.setValueAtTime(freq, t0);
+  o.type = "sine";
+  o.frequency.setValueAtTime(140, t0);
+  o.frequency.exponentialRampToValueAtTime(40, t0 + 0.14);
   g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+  g.gain.exponentialRampToValueAtTime(0.55, t0 + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
   o.connect(g).connect(out(c));
   o.start(t0);
-  o.stop(t0 + 0.14);
+  o.stop(t0 + 0.22);
+}
+export function startTechnoLayer() {
+  if (typeof window === "undefined" || _technoTimer) return;
+  void ensureReady().then(() => playKick());
+  _technoTimer = window.setInterval(playKick, 480); // ~125 BPM 4/4
+}
+export function stopTechnoLayer() {
+  if (typeof window !== "undefined" && _technoTimer) {
+    window.clearInterval(_technoTimer);
+    _technoTimer = null;
+  }
 }
 
 /** A sustained rising arcade tone — call once to start, returns a stop fn. */

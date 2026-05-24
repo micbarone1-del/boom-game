@@ -230,8 +230,22 @@ function PodPage() {
       });
       await recalcPlayerScore(playerId, code);
       if (trap.finalSpace >= BOARD_SIZE) {
-        await finishPlayer(playerId, code);
-        setPhase({ kind: "done", winnerId: playerId });
+        if ((room.phase ?? "board") === "board") {
+          const total = Math.max(1, players.length);
+          const maxHp = total * 220;
+          await supabase
+            .from("rooms")
+            .update({
+              phase: "boss",
+              boss_hp: maxHp,
+              boss_max_hp: maxHp,
+              boss_started_at: new Date().toISOString(),
+            })
+            .eq("code", code);
+        } else {
+          await finishPlayer(playerId, code);
+          setPhase({ kind: "done", winnerId: playerId });
+        }
         return;
       }
       setPhase({ kind: "resolve", playerId, outcome, trap });

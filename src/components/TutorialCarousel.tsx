@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Smartphone, Bomb, Gavel } from "lucide-react";
+import { Smartphone, Bomb, Gavel, Clock } from "lucide-react";
 
 const SLIDES = [
   {
@@ -17,8 +17,14 @@ const SLIDES = [
   {
     Icon: Gavel,
     text: "DON'T CHEAT",
-    sub: "the player next to you judges your form using the phone",
+    sub: "Pass the phone to the next player (he will judge your form taking a video)",
     color: "var(--boom-blue)",
+  },
+  {
+    Icon: Clock,
+    text: "BEAT THE CLOCK",
+    sub: "now the judge becomes the player (defuse before the time is up)",
+    color: "var(--boom-green)",
   },
 ];
 

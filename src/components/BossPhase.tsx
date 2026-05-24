@@ -277,17 +277,40 @@ export function BossPhase({
       {inner.kind === "hit" && (
         <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
           <div
-            className="text-8xl font-black anim-pop"
+            className="text-8xl font-black anim-pop text-center"
             style={{
               fontFamily: "'Luckiest Guy', cursive",
-              color: "var(--boom-yellow)",
+              color: inner.damage > 0 ? "var(--boom-yellow)" : "var(--boom-red)",
               textShadow: "5px 5px 0 #000, 0 0 30px #ef4444",
             }}
           >
-            -{inner.damage}
+            {inner.damage > 0 ? `-${inner.damage}` : "MISS!"}
           </div>
         </div>
       )}
+
+      <div className="absolute left-0 right-0 bottom-0 z-40 p-3 pointer-events-none">
+        <div className="flex items-center justify-between text-white text-[11px] font-black px-1 mb-1">
+          <span className="flex items-center gap-1" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}>
+            <Skull size={14} /> BOSS HP
+          </span>
+          <span style={{ fontFamily: "'Luckiest Guy', cursive", color: remaining < 30_000 ? "var(--boom-yellow)" : "#fff", textShadow: "1px 1px 0 #000" }}>
+            <Flame size={12} className="inline mb-1" /> {mm}:{ss}
+          </span>
+        </div>
+        <div className="relative h-10 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
+          <div
+            className="absolute inset-y-0 left-0 transition-all duration-500"
+            style={{
+              width: `${hpPct * 100}%`,
+              background: "linear-gradient(90deg, #16a34a 0%, #facc15 60%, #ef4444 100%)",
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}>
+            {room.boss_hp ?? 0} / {room.boss_max_hp ?? 0}
+          </div>
+        </div>
+      </div>
 
     </main>
   );

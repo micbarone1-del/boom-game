@@ -469,10 +469,16 @@ function BossJudge({
   player,
   attack,
   onComplete,
+  burst,
+  flashing,
+  shaking,
 }: {
   player: Player;
   attack: Attack;
   onComplete: (outcome: "success" | "fail", achievedReps: number) => void;
+  burst: { id: number; dmg: number } | null;
+  flashing: boolean;
+  shaking: boolean;
 }) {
   const [reps, setReps] = useState(0);
   const [holdMs, setHoldMs] = useState(0);
@@ -481,6 +487,37 @@ function BossJudge({
   const done = useRef(false);
   const arcadeStop = useRef<(() => void) | null>(null);
   const holding = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+        }
+      } catch {
+        /* no camera — fall back to dark background */
+      }
+    })();
+    return () => {
+      cancelled = true;
+      const s = streamRef.current;
+      if (s) s.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     arcadeStop.current = startArcadeRise(TRAP_TIMEOUT_MS);
@@ -547,6 +584,48 @@ function BossJudge({
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-end pb-10 pointer-events-auto">
+      {/* Camera background */}
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        className="absolute inset-0 w-full h-full object-cover -z-10"
+      />
+      <div className="absolute inset-0 bg-black/40 -z-10" />
+
+      {/* Smaller moving boss overlay */}
+      <div className="absolute top-3 right-3 pointer-events-none">
+        <div className="boss-sway relative">
+          <img
+            src={bossMascot}
+            alt=""
+            className={`w-24 h-24 object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
+            style={{
+              filter: flashing
+                ? "brightness(2.4) drop-shadow(0 0 18px #fff)"
+                : "drop-shadow(0 4px 0 rgba(0,0,0,0.6))",
+            }}
+          />
+          {burst && (
+            <div
+              key={burst.id}
+              className="absolute inset-0 flex items-center justify-center anim-pop"
+              aria-hidden
+            >
+              <div className="text-4xl" style={{ filter: "drop-shadow(0 0 12px #fff)" }}>💥</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Player name tag */}
+      <div className="absolute top-3 left-3 text-white">
+        <div className="text-xs font-bold opacity-80" style={{ textShadow: "1px 1px 0 #000" }}>Player</div>
+        <div className="text-lg font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}>
+          {player.username}
+        </div>
+      </div>
+
       <div
         className="ink-border rounded-2xl px-4 py-2 mb-3 bg-white text-center"
         style={{ fontFamily: "'Luckiest Guy', cursive" }}

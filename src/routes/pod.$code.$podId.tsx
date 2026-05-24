@@ -439,6 +439,7 @@ function PlayerPhase({
     if (rolling) return;
     void sfx.unlock();
     startArcadeMusic();
+    startTechnoLayer();
     speak(`${player.username}, roll the dice.`, { volume: 1, rate: 0.8, pitch: 0.8 });
     setRolling(true);
     setFace(null);
@@ -477,12 +478,14 @@ function PlayerPhase({
       )}
       <button
         onClick={() => {
-          if (confirm("Restart the game? Scores and positions will be reset.")) onRestart();
+          if (confirm("Leave this pod and go back to Home?")) {
+            window.location.href = "/";
+          }
         }}
         className="absolute top-3 right-3 z-30 rounded-full ink-border-sm bg-white px-3 py-2 flex items-center gap-1 text-xs font-black active:scale-95"
-        aria-label="Restart game"
+        aria-label="Back to Home"
       >
-        <RotateCcw size={14} /> Restart
+        <RotateCcw size={14} /> Home
       </button>
       <div className="text-xs font-bold opacity-60 uppercase tracking-wider">Your turn</div>
       <Avatar player={player} size={140} />

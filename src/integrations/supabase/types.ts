@@ -148,6 +148,10 @@ export type Database = {
       rooms: {
         Row: {
           board_overrides: Json
+          boss_defeated_at: string | null
+          boss_hp: number
+          boss_max_hp: number
+          boss_started_at: string | null
           code: string
           continue_deadline_at: string | null
           created_at: string
@@ -160,11 +164,16 @@ export type Database = {
           last_dice: number | null
           locked: boolean
           paused: boolean
+          phase: string
           status: string
           trap: Json | null
         }
         Insert: {
           board_overrides?: Json
+          boss_defeated_at?: string | null
+          boss_hp?: number
+          boss_max_hp?: number
+          boss_started_at?: string | null
           code: string
           continue_deadline_at?: string | null
           created_at?: string
@@ -177,11 +186,16 @@ export type Database = {
           last_dice?: number | null
           locked?: boolean
           paused?: boolean
+          phase?: string
           status?: string
           trap?: Json | null
         }
         Update: {
           board_overrides?: Json
+          boss_defeated_at?: string | null
+          boss_hp?: number
+          boss_max_hp?: number
+          boss_started_at?: string | null
           code?: string
           continue_deadline_at?: string | null
           created_at?: string
@@ -194,6 +208,7 @@ export type Database = {
           last_dice?: number | null
           locked?: boolean
           paused?: boolean
+          phase?: string
           status?: string
           trap?: Json | null
         }

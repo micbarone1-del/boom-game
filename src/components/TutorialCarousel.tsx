@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Smartphone, Tv, Bomb, Gavel } from "lucide-react";
+import { Smartphone, Bomb, Gavel } from "lucide-react";
 
 const SLIDES = [
   {
@@ -7,12 +7,6 @@ const SLIDES = [
     text: "YOUR PHONE IS THE REMOTE",
     sub: "scan or click to join the lobby",
     color: "var(--boom-yellow)",
-  },
-  {
-    Icon: Tv,
-    text: "WATCH THE BIG SCREEN",
-    sub: "tap roll on your phone to race your token across the map",
-    color: "var(--boom-green)",
   },
   {
     Icon: Bomb,
@@ -23,7 +17,7 @@ const SLIDES = [
   {
     Icon: Gavel,
     text: "DON'T CHEAT",
-    sub: "the previous player judges your form using the phone",
+    sub: "the player next to you judges your form using the phone",
     color: "var(--boom-blue)",
   },
 ];

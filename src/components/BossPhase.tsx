@@ -166,6 +166,10 @@ export function BossPhase({
         time_taken_ms: 0,
         verified_by_judge: true,
       });
+      await supabase
+        .from("players")
+        .update({ current_space: Math.max(0, (cur?.current_space ?? 0) - 1) })
+        .eq("id", attack.playerId);
       // Update player score.
       const cur = podPlayers.find((p) => p.id === attack.playerId);
       await supabase

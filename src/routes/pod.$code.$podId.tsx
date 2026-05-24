@@ -24,6 +24,7 @@ import { Bomb, Dice5, Play, Share2, Download, RotateCcw, Flame } from "lucide-re
 import bombMascot from "@/assets/bomb-mascot.png";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
+import { BossPhase, BossVictory } from "@/components/BossPhase";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,
@@ -94,6 +95,28 @@ function PodPage() {
   const continueAt = room.continue_deadline_at ? new Date(room.continue_deadline_at).getTime() : null;
 
   const overrides = (room.board_overrides ?? {}) as BoardOverrides;
+
+  // --- Shared boss trigger ----------------------------------------------
+  // The first time ANY player crosses FINISH (board phase), flip the room
+  // into the shared boss fight. HP scales with the total number of players
+  // currently in the room so it stays balanced regardless of pod count.
+  useEffect(() => {
+    if (!room) return;
+    if ((room.phase ?? "board") !== "board") return;
+    const finished = players.find((p) => p.current_space >= BOARD_SIZE);
+    if (!finished) return;
+    const total = Math.max(1, players.length);
+    const maxHp = total * 220;
+    void supabase
+      .from("rooms")
+      .update({
+        phase: "boss",
+        boss_hp: maxHp,
+        boss_max_hp: maxHp,
+        boss_started_at: new Date().toISOString(),
+      })
+      .eq("code", code);
+  }, [room, players, code]);
 
   const nextPlayerId = (fromId: string): string => {
     const active = ordered.filter((p) => !p.finished_at);
@@ -251,6 +274,19 @@ function PodPage() {
     }
     return null;
   })();
+
+  // Boss fight + victory take over the screen.
+  if (room.phase === "victory") {
+    return <BossVictory room={room} players={ordered} onRestart={restart} />;
+  }
+  if (room.phase === "boss") {
+    return (
+      <>
+        <BossPhase room={room} podPlayers={ordered} overrides={overrides} code={code} />
+        {overlay}
+      </>
+    );
+  }
 
   // --- Render the active phase ---
 

@@ -24,7 +24,7 @@ export function cellPos(idx: number): { row: number; col: number } {
   return { row: 6, col: 15 - (idx - 47) };
 }
 
-function cellBg(type: CellType) {
+export function cellBg(type: CellType) {
   if (type === "start") return "#3b82f6";
   if (type === "finish")
     return "repeating-linear-gradient(45deg,#fde047 0 10px,#f59e0b 10px 20px)";

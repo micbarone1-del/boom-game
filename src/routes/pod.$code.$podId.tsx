@@ -813,7 +813,7 @@ function HopOverlay({
 }) {
   const cur = Math.min(to, from + step);
   const totalSteps = Math.max(1, to - from);
-  const progress = step / totalSteps;
+  const progress = Math.min(1, step / totalSteps);
   const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
   const tokenLeft = ((Math.min(step, totalSteps) + 0.5) / pathSpaces.length) * 100;
 

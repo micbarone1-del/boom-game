@@ -847,17 +847,25 @@ function HopOverlay({
                   }}
                 >
                   {cell.space}
-                  {isHere && (
-                    <div
-                      key={`tok-${step}`}
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 anim-hop"
-                    >
-                      <Avatar player={player} size={44} />
-                    </div>
-                  )}
                 </div>
               );
             })}
+            {/* Player token: absolutely positioned on the board, transitions
+                between cell centres so the avatar visibly hops across cells. */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: cx,
+                top: cy,
+                transform: "translate(-50%, -50%)",
+                transition: "left 220ms ease-in-out, top 220ms ease-in-out",
+                zIndex: 10,
+              }}
+            >
+              <div key={`tok-${step}`} className="anim-hop">
+                <Avatar player={player} size={44} />
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -38,7 +38,7 @@ function cellBg(type: CellType) {
     case "boost": return "#22c55e";      // boost = green lightning
     case "setback": return "#a855f7";    // purple
   }
-  return CELL_FLAVOR[type]?.color ?? "#eee";
+  return "#eee";
 }
 
 function CellGlyph({ type }: { type: CellType }) {

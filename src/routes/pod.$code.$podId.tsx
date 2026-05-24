@@ -834,7 +834,7 @@ function HopOverlay({
   const tokenLeft = ((Math.min(step, totalSteps) + 0.5) / pathSpaces.length) * 100;
 
   return (
-    <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden">
+    <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden anim-hop-zoom">
       <div className="text-white text-xs font-bold opacity-80 mb-1 uppercase tracking-wider">
         Hopping…
       </div>

@@ -88,20 +88,11 @@ function PodPage() {
     setPhase({ kind: "player", playerId: ordered[0].id });
   }, [loading, ordered, phase]);
 
-  if (loading || !room || ordered.length === 0 || !phase) {
-    return <div className="min-h-screen flex items-center justify-center text-2xl">Loading pod…</div>;
-  }
-
-  const startedAt = room.game_started_at ? new Date(room.game_started_at).getTime() : null;
-  const endsAt = room.game_ends_at ? new Date(room.game_ends_at).getTime() : null;
-  const continueAt = room.continue_deadline_at ? new Date(room.continue_deadline_at).getTime() : null;
-
-  const overrides = (room.board_overrides ?? {}) as BoardOverrides;
-
   // --- Shared boss trigger ----------------------------------------------
   // The first time ANY player crosses FINISH (board phase), flip the room
   // into the shared boss fight. HP scales with the total number of players
   // currently in the room so it stays balanced regardless of pod count.
+  // Must live ABOVE the early "Loading pod…" return so hook order stays stable.
   useEffect(() => {
     if (!room) return;
     if ((room.phase ?? "board") !== "board") return;
@@ -119,6 +110,16 @@ function PodPage() {
       })
       .eq("code", code);
   }, [room, players, code]);
+
+  if (loading || !room || ordered.length === 0 || !phase) {
+    return <div className="min-h-screen flex items-center justify-center text-2xl">Loading pod…</div>;
+  }
+
+  const startedAt = room.game_started_at ? new Date(room.game_started_at).getTime() : null;
+  const endsAt = room.game_ends_at ? new Date(room.game_ends_at).getTime() : null;
+  const continueAt = room.continue_deadline_at ? new Date(room.continue_deadline_at).getTime() : null;
+
+  const overrides = (room.board_overrides ?? {}) as BoardOverrides;
 
   const nextPlayerId = (fromId: string): string => {
     const active = ordered.filter((p) => !p.finished_at);

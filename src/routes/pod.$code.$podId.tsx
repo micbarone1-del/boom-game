@@ -257,7 +257,6 @@ function PodPage() {
   if (phase.kind === "done") {
     return (
       <>
-        <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
         <WrapUp
           players={ordered}
           winnerId={phase.winnerId}
@@ -273,7 +272,6 @@ function PodPage() {
     const player = ordered.find((p) => p.id === phase.playerId)!;
     return (
       <>
-        <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
         <PlayerPhase
           player={player}
           players={ordered}
@@ -293,7 +291,6 @@ function PodPage() {
     const j = ordered.find((x) => x.id === phase.judgeId)!;
     return (
       <>
-        <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
         <SwitchPhase
           player={p}
           judge={j}
@@ -311,7 +308,6 @@ function PodPage() {
     const p = ordered.find((x) => x.id === phase.playerId)!;
     return (
       <>
-        <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
         <JudgePhase
           player={p}
           trap={phase.trap}
@@ -326,83 +322,11 @@ function PodPage() {
   const p = ordered.find((x) => x.id === phase.playerId)!;
   return (
     <>
-      <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
       <ResolveSplash player={p} outcome={phase.outcome} />
       {overlay}
     </>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Global fuse bar — always-visible top strip so players see time burning
-// regardless of which phase they are in.
-// ---------------------------------------------------------------------------
-function GlobalFuseBar({
-  startedAt,
-  endsAt,
-}: {
-  startedAt: number | null;
-  endsAt: number | null;
-}) {
-  const [, force] = useState(0);
-  useEffect(() => {
-    if (!startedAt || !endsAt) return;
-    const i = setInterval(() => force((n) => n + 1), 250);
-    return () => clearInterval(i);
-  }, [startedAt, endsAt]);
-  if (!startedAt || !endsAt) return null;
-  const total = Math.max(1, endsAt - startedAt);
-  const elapsed = Math.max(0, Math.min(total, Date.now() - startedAt));
-  const p = elapsed / total;
-  const remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
-  const mm = String(Math.floor(remaining / 60));
-  const ss = String(remaining % 60).padStart(2, "0");
-  const danger = p > 0.8;
-  return (
-    <div className="fixed top-0 left-0 right-0 z-[60] pointer-events-none px-2 pt-2">
-      <div
-        className="relative h-5 w-full rounded-full overflow-hidden ink-border-sm"
-        style={{ background: "#fff8e6" }}
-      >
-        <div
-          className="absolute inset-y-0 left-0 transition-all duration-300"
-          style={{
-            width: `${p * 100}%`,
-            background:
-              "linear-gradient(90deg, #1a1a1a 0%, #5a2a08 60%, #f59e0b 100%)",
-          }}
-        />
-        <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-300"
-          style={{ left: `${p * 100}%` }}
-        >
-          <Flame
-            size={22}
-            fill="var(--boom-red)"
-            color="var(--boom-yellow)"
-            className="anim-fuse"
-            style={{ filter: "drop-shadow(0 0 6px rgba(255,80,0,.9))" }}
-          />
-        </div>
-        <div
-          className="absolute inset-0 flex items-center justify-center text-[11px] font-black tabular-nums"
-          style={{
-            fontFamily: "'Luckiest Guy', cursive",
-            color: danger ? "#fff" : "var(--boom-ink)",
-            textShadow: danger ? "0 1px 2px #000" : "0 1px 0 #fff",
-            letterSpacing: 1,
-          }}
-        >
-          FUSE {mm}:{ss}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Progress bar (3 player tokens positioned along cells 1..60)
-// ---------------------------------------------------------------------------
 
 function ProgressBar({
   players,

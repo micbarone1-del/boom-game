@@ -333,10 +333,57 @@ function PodPage() {
 // Progress bar (3 player tokens positioned along cells 1..60)
 // ---------------------------------------------------------------------------
 
-function ProgressBar({ players, activeId }: { players: Player[]; activeId: string }) {
+function ProgressBar({
+  players,
+  activeId,
+  startedAt,
+  endsAt,
+}: {
+  players: Player[];
+  activeId: string;
+  startedAt?: number | null;
+  endsAt?: number | null;
+}) {
+  const [, force] = useState(0);
+  useEffect(() => {
+    if (!startedAt || !endsAt) return;
+    const i = setInterval(() => force((n) => n + 1), 500);
+    return () => clearInterval(i);
+  }, [startedAt, endsAt]);
+  const fuseP =
+    startedAt && endsAt
+      ? Math.max(0, Math.min(1, (Date.now() - startedAt) / (endsAt - startedAt)))
+      : 0;
+  const remaining =
+    startedAt && endsAt ? Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)) : 0;
+  const mm = String(Math.floor(remaining / 60));
+  const ss = String(remaining % 60).padStart(2, "0");
   return (
     <div className="absolute left-0 right-0 bottom-0 p-3 pointer-events-none z-30">
-      <div className="relative h-10 rounded-full bg-white/90 ink-border-sm">
+      {startedAt && endsAt && (
+        <div className="flex justify-between items-center text-[11px] font-black px-1 mb-1" style={{ color: "var(--boom-ink)" }}>
+          <span style={{ fontFamily: "'Luckiest Guy', cursive" }}>FUSE · PROGRESS</span>
+          <span
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: fuseP > 0.8 ? "var(--boom-red)" : "var(--boom-ink)",
+            }}
+          >
+            {mm}:{ss}
+          </span>
+        </div>
+      )}
+      <div className="relative h-10 rounded-full bg-white/90 ink-border-sm overflow-hidden">
+        {/* Fuse burn underlay */}
+        {startedAt && endsAt && (
+          <div
+            className="absolute inset-y-0 left-0 transition-all duration-500"
+            style={{
+              width: `${fuseP * 100}%`,
+              background: "linear-gradient(90deg, rgba(34,34,34,.85) 0%, rgba(122,58,12,.75) 80%, rgba(245,158,11,.85) 100%)",
+            }}
+          />
+        )}
         {/* finish flag */}
         <div
           className="absolute -top-2 -right-2 text-xl"

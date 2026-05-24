@@ -318,10 +318,12 @@ export function BossPhase({
 
 function BossAnnounce({
   player,
+  judge,
   attack,
   onDone,
 }: {
   player: Player;
+  judge: Player;
   attack: Attack;
   onDone: () => void;
 }) {
@@ -337,8 +339,8 @@ function BossAnnounce({
     if (spoke.current) return;
     spoke.current = true;
     const unit = attack.unit === "seconds" ? `${attack.reps} seconds` : `${attack.reps} reps`;
-    speak(`${player.username}: attack the boss with ${attack.exercise}, ${unit}!`);
-  }, [player.username, attack]);
+    speak(`Player ${player.username}. ${attack.exercise}, ${unit}. Judge: ${judge.username}.`);
+  }, [player.username, judge.username, attack]);
   useEffect(() => {
     if (count <= 0) {
       onDoneRef.current();

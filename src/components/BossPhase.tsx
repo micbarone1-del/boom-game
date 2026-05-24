@@ -99,6 +99,7 @@ export function BossPhase({
   const remaining = Math.max(0, bossEndsAt - Date.now());
 
   const player = active[turnIdx % Math.max(1, active.length)];
+  const judge = active[(turnIdx + 1) % Math.max(1, active.length)] ?? player;
 
   // Intro → first announce
   useEffect(() => {
@@ -110,19 +111,19 @@ export function BossPhase({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startTurn = () => {
-    if (!player) return;
+  const startTurn = (turnPlayer = player) => {
+    if (!turnPlayer) return;
     // 50/50 crazy vs hard surprise pool
     const pick =
       Math.random() < 0.5 ? pickCrazyExercise() : pickSurpriseExercise(overrides);
     const reps = calcRepsForTier(
       pick.tier,
-      player.fitness_level,
+      turnPlayer.fitness_level,
       room.difficulty_multiplier,
     );
     const isHold = /\bhold\b/i.test(pick.exercise);
     const attack: Attack = {
-      playerId: player.id,
+      playerId: turnPlayer.id,
       exercise: pick.exercise,
       reps,
       unit: isHold ? "seconds" : "reps",
@@ -142,8 +143,8 @@ export function BossPhase({
   ) => {
     if (inner.kind !== "judge") return;
     const attack = inner.attack;
-    if (outcome === "success") {
-      const damage = Math.max(1, achievedReps * (attack.tier === 3 ? 3 : 2));
+    const damage = Math.max(0, achievedReps * (attack.tier === 3 ? 3 : 2));
+    if (damage > 0) {
       setHitFlash(Date.now());
       // Race-safe decrement.
       const newHp = Math.max(0, (room.boss_hp ?? 0) - damage);
@@ -171,13 +172,20 @@ export function BossPhase({
         .from("players")
         .update({ score: (cur?.score ?? 0) + damage })
         .eq("id", attack.playerId);
-      setInner({ kind: "hit", attack, damage });
+      sfx.play("didIt");
+      speak(`${player.username} hits the boss for ${damage}.`);
+      setInner({ kind: "hit", attack, damage, outcome });
     } else {
-      setInner({ kind: "miss", attack });
+      sfx.play("blowUp");
+      speak(`${player.username} missed the boss.`);
+      setInner({ kind: "hit", attack, damage: 0, outcome });
     }
     setTimeout(() => {
-      setTurnIdx((i) => i + 1);
-      startTurn();
+      setTurnIdx((i) => {
+        const next = i + 1;
+        startTurn(active[next % Math.max(1, active.length)]);
+        return next;
+      });
     }, 2000);
   };
 

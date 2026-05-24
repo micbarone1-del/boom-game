@@ -197,22 +197,22 @@ export function GymMap({
       {/* Legend chips (mirrors published gym) */}
       <div className="relative flex flex-wrap gap-2 justify-center items-center mt-6 text-[11px] font-black">
         {[
-          ["EASY", "#facc15", "#111"],
-          ["MEDIUM", "#fb923c", "#111"],
-          ["HARD", "#ef4444", "#fff"],
-          ["SURPRISE", "#ec4899", "#fff"],
-          ["CRAZY", "#22d3ee", "#111"],
-          ["ALL TOGETHER", "#3b82f6", "#fff"],
-          ["VS BATTLE", "#111", "#fff"],
-          ["BLAST +", "#22c55e", "#fff"],
-          ["SETBACK -", "#a855f7", "#fff"],
-        ].map(([label, bg, fg]) => (
+          ["EASY", "#facc15"],
+          ["MEDIUM", "#fb923c"],
+          ["HARD", "#ef4444"],
+          ["SURPRISE", "#ec4899"],
+          ["CRAZY", "#22d3ee"],
+          ["ALL TOGETHER", "#3b82f6"],
+          ["VS BATTLE", "#fff"],
+          ["BLAST +", "#22c55e"],
+          ["SETBACK -", "#a855f7"],
+        ].map(([label, bg]) => (
           <span
             key={label}
             className="px-2.5 py-1 rounded-full ink-border-sm"
             style={{
               background: bg,
-              color: fg,
+              color: "#111",
               fontFamily: "'Luckiest Guy', cursive",
               letterSpacing: 0.4,
             }}

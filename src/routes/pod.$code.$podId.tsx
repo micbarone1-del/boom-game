@@ -23,7 +23,6 @@ import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity,
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
-import { FuseBar } from "@/components/FuseBar";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 
 export const Route = createFileRoute("/pod/$code/$podId")({

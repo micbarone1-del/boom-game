@@ -355,6 +355,7 @@ function PodPage() {
           onRestart={restart}
           startedAt={startedAt}
           endsAt={endsAt}
+          overrides={overrides}
         />
         {overlay}
       </>

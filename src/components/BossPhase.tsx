@@ -460,12 +460,8 @@ function BossJudge({
     done.current = true;
     arcadeStop.current?.();
     if (outcome === "success") {
-      playDefuseJingle();
-      speak(`${player.username} hits the boss!`);
       onComplete("success", attack.reps);
     } else {
-      sfx.play("blowUp");
-      speak(`${player.username} missed the boss.`);
       const achieved = attack.unit === "seconds"
         ? Math.floor(holdMs / 1000)
         : reps;

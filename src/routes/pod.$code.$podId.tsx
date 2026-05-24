@@ -813,19 +813,10 @@ function HopOverlay({
 }) {
   const cur = Math.min(to, from + step);
   const totalSteps = Math.max(1, to - from);
-  const progress = step / totalSteps;
-  // Build the same snake layout the gym board uses, then translate so the
-  // hopping cell stays centred while we scale in for a punchy zoom.
-  const CELL = 64; // logical cell size in px
-  const GAP = 6;
-  const boardW = COLS * CELL + (COLS - 1) * GAP;
-  const boardH = ROWS * CELL + (ROWS - 1) * GAP;
-  // current cell centre (0-indexed); BOARD is 0-indexed in code, displayed as 1-based.
-  const curIdx = Math.max(0, Math.min(BOARD.length - 1, cur - 1));
-  const { row, col } = cellPos(curIdx);
-  const cx = col * (CELL + GAP) + CELL / 2;
-  const cy = row * (CELL + GAP) + CELL / 2;
-  const scale = 1.8;
+  const progress = Math.min(1, step / totalSteps);
+  const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
+  const tokenLeft = ((Math.min(step, totalSteps) + 0.5) / pathSpaces.length) * 100;
+
   return (
     <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden">
       <div className="text-white text-xs font-bold opacity-80 mb-1 uppercase tracking-wider">
@@ -838,64 +829,53 @@ function HopOverlay({
         Cell {cur}
       </div>
       <div
-        className="relative w-full"
-        style={{ height: "min(55vh, 360px)", perspective: 800 }}
+        className="relative w-full max-w-[440px] px-3"
+        style={{ height: "min(44vh, 300px)", perspective: 800 }}
       >
-        {/* Viewport: centred container that pans the big board underneath */}
-        <div className="absolute inset-0 overflow-hidden flex items-center justify-center">
-          <div
-            className="relative transition-transform duration-300 ease-out"
-            style={{
-              width: boardW,
-              height: boardH,
-              transform: `scale(${scale}) translate(${boardW / 2 - cx}px, ${boardH / 2 - cy}px)`,
-              transformOrigin: "center center",
-            }}
-          >
-            {BOARD.map((cell, idx) => {
-              const pos = cellPos(idx);
-              const isHere = idx === curIdx;
-              const isPath = idx + 1 >= from && idx + 1 <= cur;
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative w-full pb-24 pt-20">
+            <div className="absolute left-8 right-8 top-[112px] h-2 rounded-full bg-white/25" />
+            <div
+              className="absolute top-[84px] z-30 transition-[left] duration-200 ease-out"
+              style={{ left: `${tokenLeft}%`, transform: "translateX(-50%)" }}
+            >
+              <div key={`tok-${step}`} className="anim-hop-visible">
+                <div className="rounded-full bg-white p-1 shadow-[0_0_0_4px_#111,0_12px_0_rgba(0,0,0,0.35),0_0_28px_rgba(255,230,60,0.95)]">
+                  <Avatar player={player} size={72} />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="grid gap-2"
+              style={{ gridTemplateColumns: `repeat(${pathSpaces.length}, minmax(0, 1fr))` }}
+            >
+              {pathSpaces.map((space, i) => {
+                const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
+                const cell = BOARD[idx];
+                const isHere = i === step;
+                const isDone = i <= step;
               return (
                 <div
-                  key={cell.space}
-                  className={`absolute rounded-xl flex items-center justify-center font-black ${isHere ? "anim-mascot-bounce" : ""}`}
+                    key={`${space}-${i}`}
+                    className={`relative aspect-square min-w-0 rounded-xl flex items-center justify-center font-black ${isHere ? "anim-mascot-bounce" : ""}`}
                   style={{
-                    width: CELL,
-                    height: CELL,
-                    left: pos.col * (CELL + GAP),
-                    top: pos.row * (CELL + GAP),
-                    background: cellBg(cell.type),
+                    background: space <= 0 ? "var(--boom-ink)" : cellBg(cell.type),
                     border: "3px solid #111",
                     boxShadow: isHere
-                      ? `0 0 0 3px #fff, 0 0 24px 8px ${POD_COLORS[0]}, 3px 3px 0 #111`
-                      : isPath
-                        ? `0 0 0 2px #fff, 3px 3px 0 #111`
-                        : "3px 3px 0 #111",
+                      ? "0 0 0 4px #fff, 0 0 26px 8px var(--boom-yellow), 4px 4px 0 #111"
+                      : isDone
+                        ? "0 0 0 2px #fff, 4px 4px 0 #111"
+                        : "4px 4px 0 #111",
                     color: "#fff",
-                    opacity: isHere || isPath ? 1 : 0.85,
-                    fontSize: 14,
+                    opacity: isDone ? 1 : 0.65,
+                    fontSize: "clamp(0.75rem, 3vw, 1rem)",
                   }}
                 >
-                  {cell.space}
+                  {space <= 0 ? "GO" : cell.space}
                 </div>
               );
             })}
-            {/* Player token: absolutely positioned on the board, transitions
-                between cell centres so the avatar visibly hops across cells. */}
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: cx,
-                top: cy - CELL * 0.55,
-                transform: "translate(-50%, -50%)",
-                transition: "left 220ms ease-in-out, top 220ms ease-in-out",
-                zIndex: 50,
-              }}
-            >
-              <div key={`tok-${step}`} className="anim-hop">
-                <Avatar player={player} size={56} />
-              </div>
             </div>
           </div>
         </div>

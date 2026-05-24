@@ -887,14 +887,14 @@ function HopOverlay({
               className="absolute pointer-events-none"
               style={{
                 left: cx,
-                top: cy,
+                top: cy - CELL * 0.55,
                 transform: "translate(-50%, -50%)",
                 transition: "left 220ms ease-in-out, top 220ms ease-in-out",
-                zIndex: 10,
+                zIndex: 50,
               }}
             >
               <div key={`tok-${step}`} className="anim-hop">
-                <Avatar player={player} size={44} />
+                <Avatar player={player} size={56} />
               </div>
             </div>
           </div>

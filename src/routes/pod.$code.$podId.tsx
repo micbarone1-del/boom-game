@@ -19,7 +19,7 @@ import {
   type BoardOverrides,
   type CellType,
 } from "@/lib/game";
-import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity } from "@/lib/sfx";
+import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
@@ -128,10 +128,13 @@ function PodPage() {
     ) {
       const tier = finalCell.tier ?? 1;
       const reps = calcRepsForTier(tier, player.fitness_level, room.difficulty_multiplier);
+      const overrideUnit = overrides[String(final)]?.unit;
+      const isHold = /\bhold\b/i.test(finalCell.exercise ?? "");
+      const unit: "reps" | "seconds" = overrideUnit ?? (isHold ? "seconds" : "reps");
       const trap: ActiveTrap = {
         exercise: finalCell.exercise ?? "Workout",
         reps,
-        unit: overrides[String(final)]?.unit ?? "reps",
+        unit,
         finalSpace: final,
         cellType: finalCell.type,
       };
@@ -146,10 +149,11 @@ function PodPage() {
             ? pickCrazyExercise()
             : pickGroupExercise();
       const reps = calcRepsForTier(pick.tier, player.fitness_level, room.difficulty_multiplier);
+      const isHold = /\bhold\b/i.test(pick.exercise);
       const trap: ActiveTrap = {
         exercise: pick.exercise,
         reps,
-        unit: "reps",
+        unit: isHold ? "seconds" : "reps",
         finalSpace: final,
         cellType: finalCell.type,
       };

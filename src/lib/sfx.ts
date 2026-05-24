@@ -473,7 +473,12 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
   try {
     sfx.unlock();
     primeSpeech();
-    const u = new SpeechSynthesisUtterance(text);
+    // TTS engines expand "reps" → "representatives". Force phonetic
+    // pronunciation. Same trick for short tokens that get over-expanded.
+    const normalized = text
+      .replace(/\breps\b/gi, "repss")
+      .replace(/\brep\b/gi, "repp");
+    const u = new SpeechSynthesisUtterance(normalized);
     const v = pickRoboticVoice();
     if (v) u.voice = v;
     u.pitch = opts.pitch ?? 0.7;

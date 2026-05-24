@@ -554,6 +554,7 @@ function PlayerPhase({
   onRestart,
   startedAt,
   endsAt,
+  overrides,
 }: {
   player: Player;
   players: Player[];
@@ -562,10 +563,12 @@ function PlayerPhase({
   onRestart: () => void;
   startedAt: number | null;
   endsAt: number | null;
+  overrides: BoardOverrides;
 }) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
   const [hopping, setHopping] = useState<{ from: number; to: number; step: number } | null>(null);
+  const [powerUp, setPowerUp] = useState(false);
 
   // Drive arcade BGM intensity from fuse progress.
   useEffect(() => {
@@ -601,6 +604,8 @@ function PlayerPhase({
     const from = player.current_space;
     const to = Math.min(BOARD_SIZE, from + final);
     setHopping({ from, to, step: 0 });
+    // Zoom-in intro from the full map to the player token before hopping.
+    await new Promise((r) => setTimeout(r, 750));
     for (let i = 1; i <= final; i++) {
       await new Promise((r) => setTimeout(r, 220));
       setHopping({ from, to, step: i });
@@ -608,6 +613,15 @@ function PlayerPhase({
     }
     await new Promise((r) => setTimeout(r, 350));
     setHopping(null);
+    // Power-up celebration when the landing cell is a boost cell.
+    const landingCell = getEffectiveCell(to, overrides);
+    if (landingCell.type === "boost") {
+      sfx.play("blast");
+      speak(`${player.username}, power up!`, { volume: 1, rate: 0.85, pitch: 1.1 });
+      setPowerUp(true);
+      await new Promise((r) => setTimeout(r, 2200));
+      setPowerUp(false);
+    }
     setRolling(false);
     onRoll(final);
     void start;
@@ -618,6 +632,7 @@ function PlayerPhase({
       {hopping && (
         <HopOverlay player={player} from={hopping.from} to={hopping.to} step={hopping.step} />
       )}
+      {powerUp && <PowerUpOverlay player={player} />}
       <button
         onClick={() => {
           if (confirm("Leave this pod and go back to Home?")) {

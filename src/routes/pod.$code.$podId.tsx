@@ -722,6 +722,7 @@ function JudgePhase({
   const [holdMs, setHoldMs] = useState(0); // for seconds mode
   const [started] = useState(Date.now());
   const [, force] = useState(0);
+  const [pointPops, setPointPops] = useState<Array<{ id: number; n: number }>>([]);
   const completedRef = useRef(false);
   const arcadeStopRef = useRef<(() => void) | null>(null);
   const holdingRef = useRef(false);
@@ -798,7 +799,7 @@ function JudgePhase({
     arcadeStopRef.current?.();
     arcadeStopRef.current = null;
     if (outcome === "success") {
-      sfx.play("win");
+      playDefuseJingle();
       speak(`Well done ${player.username}! ${trap.reps} points!`);
     } else {
       sfx.play("blowUp");
@@ -831,6 +832,9 @@ function JudgePhase({
     setReps((r) => {
       const next = r + 1;
       repPop(next / trap.reps);
+      const pid = Date.now() + Math.random();
+      setPointPops((arr) => [...arr, { id: pid, n: next }]);
+      setTimeout(() => setPointPops((arr) => arr.filter((p) => p.id !== pid)), 900);
       if (next >= trap.reps) {
         setTimeout(() => finish("success"), 50);
       }
@@ -893,6 +897,25 @@ function JudgePhase({
         muted
         className="absolute inset-0 w-full h-full object-cover"
       />
+      {/* Floating per-rep point popups */}
+      <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+        {pointPops.map((p) => (
+          <div
+            key={p.id}
+            className="absolute anim-pop"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              fontSize: "3.5rem",
+              color: "var(--boom-yellow)",
+              textShadow: "3px 3px 0 #000, -2px -2px 0 #000, 0 0 12px rgba(255,200,0,.8)",
+              top: `${30 + Math.random() * 20}%`,
+              left: `${20 + Math.random() * 60}%`,
+            }}
+          >
+            +{p.n}
+          </div>
+        ))}
+      </div>
 
       {/* Corner overlays */}
       <div className="absolute top-3 left-3 flex items-center gap-2 z-20">

@@ -32,9 +32,10 @@ type Attack = {
 
 type InnerPhase =
   | { kind: "intro" }
-  | { kind: "announce"; attack: Attack }
+  | { kind: "switch"; attack: Attack }
   | { kind: "judge"; attack: Attack }
-  | { kind: "hit"; attack: Attack; damage: number; outcome: "success" | "fail" };
+  | { kind: "hit"; attack: Attack; damage: number; outcome: "success" | "fail" }
+  | { kind: "death" };
 
 function avatarColor(url: string | null) {
   return url && url.startsWith("mascot:") ? url.slice(7) : "#ec4899";
@@ -85,6 +86,7 @@ export function BossPhase({
   const [turnIdx, setTurnIdx] = useState(0);
   const [inner, setInner] = useState<InnerPhase>({ kind: "intro" });
   const [hitFlash, setHitFlash] = useState(0);
+  const [burst, setBurst] = useState<{ id: number; dmg: number } | null>(null);
 
   // Boss fuse — derived from room.boss_started_at.
   const bossStartedAt = room.boss_started_at
@@ -129,11 +131,11 @@ export function BossPhase({
       unit: isHold ? "seconds" : "reps",
       tier: pick.tier,
     };
-    setInner({ kind: "announce", attack });
+    setInner({ kind: "switch", attack });
   };
 
-  const onAnnounceDone = () => {
-    if (inner.kind !== "announce") return;
+  const onSwitchDone = () => {
+    if (inner.kind !== "switch") return;
     setInner({ kind: "judge", attack: inner.attack });
   };
 
@@ -146,16 +148,13 @@ export function BossPhase({
     const damage = Math.max(0, achievedReps * (attack.tier === 3 ? 3 : 2));
     if (damage > 0) {
       setHitFlash(Date.now());
+      setBurst({ id: Date.now(), dmg: damage });
+      setTimeout(() => setBurst(null), 900);
       // Race-safe decrement.
       const newHp = Math.max(0, (room.boss_hp ?? 0) - damage);
       await supabase
         .from("rooms")
-        .update({
-          boss_hp: newHp,
-          ...(newHp <= 0
-            ? { phase: "victory", boss_defeated_at: new Date().toISOString() }
-            : {}),
-        })
+        .update({ boss_hp: newHp })
         .eq("code", code);
       await supabase.from("workout_logs").insert({
         room_code: code,
@@ -175,6 +174,25 @@ export function BossPhase({
       sfx.play("didIt");
       speak(`${player.username} hits the boss for ${damage}.`);
       setInner({ kind: "hit", attack, damage, outcome });
+
+      // Boss dies: play local death sequence, then flip room phase.
+      if (newHp <= 0) {
+        setTimeout(() => {
+          setInner({ kind: "death" });
+          sfx.play("blowUp");
+          speak("Boss defeated! Victory!", { pitch: 1.1 });
+          setTimeout(() => {
+            void supabase
+              .from("rooms")
+              .update({
+                phase: "victory",
+                boss_defeated_at: new Date().toISOString(),
+              })
+              .eq("code", code);
+          }, 3200);
+        }, 1400);
+        return;
+      }
     } else {
       sfx.play("blowUp");
       speak(`${player.username} missed the boss.`);
@@ -214,6 +232,7 @@ export function BossPhase({
   const ss = String(Math.floor((remaining % 60000) / 1000)).padStart(2, "0");
 
   const flashing = Date.now() - hitFlash < 350;
+  const shaking = Date.now() - hitFlash < 600;
 
   return (
     <main
@@ -223,22 +242,47 @@ export function BossPhase({
           "radial-gradient(ellipse at top, #7a0000 0%, #1a0000 60%, #000 100%)",
       }}
     >
-      {/* Boss sprite */}
-      <div className="absolute inset-0 flex items-center justify-center pb-32 pt-6 pointer-events-none">
-        <img
-          src={bossMascot}
-          alt="Boss"
-          width={768}
-          height={768}
-          loading="lazy"
-          className={`w-64 h-64 object-contain ${flashing ? "anim-explosion-flash" : "anim-mascot-bounce"}`}
-          style={{
-            filter: flashing
-              ? "brightness(2.4) drop-shadow(0 0 24px #fff)"
-              : "drop-shadow(0 12px 0 rgba(0,0,0,0.6))",
-          }}
-        />
-      </div>
+      {/* Boss sprite — sways side to side + bobs, hides while judging (it overlays the camera instead) */}
+      {inner.kind !== "judge" && inner.kind !== "death" && (
+        <div className="absolute inset-0 flex items-center justify-center pb-32 pt-6 pointer-events-none">
+          <div className="boss-sway">
+            <img
+              src={bossMascot}
+              alt="Boss"
+              width={768}
+              height={768}
+              loading="lazy"
+              className={`w-64 h-64 object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
+              style={{
+                filter: flashing
+                  ? "brightness(2.4) drop-shadow(0 0 24px #fff)"
+                  : "drop-shadow(0 12px 0 rgba(0,0,0,0.6))",
+              }}
+            />
+            {burst && (
+              <div
+                key={burst.id}
+                className="absolute inset-0 flex items-center justify-center pointer-events-none anim-pop"
+                aria-hidden
+              >
+                <div
+                  className="text-7xl"
+                  style={{ filter: "drop-shadow(0 0 20px #fff)" }}
+                >
+                  💥
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      <style>{`
+        @keyframes boss-sway-kf {
+          0%, 100% { transform: translateX(-14px); }
+          50% { transform: translateX(14px); }
+        }
+        .boss-sway { animation: boss-sway-kf 3.4s ease-in-out infinite; position: relative; }
+      `}</style>
 
       {/* Inner phase UI */}
       {inner.kind === "intro" && (
@@ -255,12 +299,12 @@ export function BossPhase({
         </div>
       )}
 
-      {inner.kind === "announce" && (
-        <BossAnnounce
+      {inner.kind === "switch" && (
+        <BossSwitch
           player={player}
           judge={judge}
           attack={inner.attack}
-          onDone={onAnnounceDone}
+          onDone={onSwitchDone}
         />
       )}
 
@@ -269,6 +313,9 @@ export function BossPhase({
           player={player}
           attack={inner.attack}
           onComplete={onJudgeDone}
+          burst={burst}
+          flashing={flashing}
+          shaking={shaking}
         />
       )}
 
@@ -287,6 +334,9 @@ export function BossPhase({
         </div>
       )}
 
+      {inner.kind === "death" && <BossDeathOverlay />}
+
+      {inner.kind !== "death" && (
       <div className="absolute left-0 right-0 bottom-0 z-40 p-3 pointer-events-none">
         <div className="flex items-center justify-between text-white text-[11px] font-black px-1 mb-1">
           <span className="flex items-center gap-1" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}>
@@ -309,12 +359,13 @@ export function BossPhase({
           </div>
         </div>
       </div>
+      )}
 
     </main>
   );
 }
 
-function BossAnnounce({
+function BossSwitch({
   player,
   judge,
   attack,
@@ -350,7 +401,7 @@ function BossAnnounce({
   }, [count]);
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 bg-black/35 p-4 pb-20">
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 bg-black/55 p-4 pb-20">
       <div className="mt-2 text-center text-4xl font-black text-white" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>
         BOSS ATTACK
       </div>
@@ -401,6 +452,9 @@ function BossAnnounce({
         }}
       >
         {count > 0 ? count : "GO!"}
+      </div>
+      <div className="text-sm font-bold text-white opacity-90 text-center px-6" style={{ textShadow: "1px 1px 0 #000" }}>
+        Pass the phone to {judge.username}
       </div>
     </div>
   );

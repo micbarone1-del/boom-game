@@ -721,6 +721,68 @@ function BossJudge({
 }
 
 /**
+ * Boss death sequence — long shake, big explosion flash, fullscreen mascot
+ * with "YOU WIN!" before the parent route flips to the leaderboard.
+ */
+function BossDeathOverlay() {
+  const [stage, setStage] = useState<"shake" | "explode" | "win">("shake");
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage("explode"), 1400);
+    const t2 = setTimeout(() => setStage("win"), 2000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+  return (
+    <div
+      className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden"
+      style={{
+        background:
+          stage === "win"
+            ? "radial-gradient(ellipse at center, #fde047 0%, #ea580c 60%, #7c2d12 100%)"
+            : "radial-gradient(ellipse at center, #7a0000 0%, #1a0000 60%, #000 100%)",
+        transition: "background 400ms",
+      }}
+    >
+      {stage === "shake" && (
+        <img
+          src={bossMascot}
+          alt=""
+          className="w-72 h-72 object-contain anim-shake"
+          style={{ filter: "brightness(1.6) drop-shadow(0 0 30px #ef4444)" }}
+        />
+      )}
+      {stage === "explode" && (
+        <div className="text-[18rem] anim-pop" style={{ filter: "drop-shadow(0 0 60px #fff)" }}>
+          💥
+        </div>
+      )}
+      {stage === "win" && (
+        <div className="flex flex-col items-center gap-4 anim-pop">
+          <img
+            src={bossMascot}
+            alt=""
+            className="w-80 h-80 object-contain"
+            style={{ filter: "grayscale(1) brightness(0.5) drop-shadow(0 0 20px #000)" }}
+          />
+          <div
+            className="text-7xl font-black text-white text-center"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              textShadow: "5px 5px 0 #000, 0 0 30px #fbbf24",
+              WebkitTextStroke: "2px #111",
+            }}
+          >
+            YOU WIN!
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * Victory screen — shown when room.phase === 'victory'.
  */
 export function BossVictory({

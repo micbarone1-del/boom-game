@@ -76,7 +76,7 @@ function Index() {
     navigate({ to: "/join/$code", params: { code }, search: { auto: 1 } as never });
   };
   return (
-    <main className="min-h-screen flex flex-col items-center p-6 pt-10 pb-16 gap-8">
+    <main className="h-[100svh] overflow-hidden flex flex-col items-center px-4 py-3 gap-3">
       <div className="text-center">
         <img
           src={bombMascot}
@@ -85,34 +85,34 @@ function Index() {
           height={1024}
           fetchPriority="high"
           decoding="async"
-          className="mx-auto w-40 md:w-56 anim-fuse"
+          className="mx-auto w-20 md:w-32 anim-fuse"
         />
         <h1
           className="comic-shadow"
           style={{
             fontFamily: "'Luckiest Guy', cursive",
-            fontSize: "clamp(4rem, 14vw, 9rem)",
+            fontSize: "clamp(2.5rem, 10vw, 5rem)",
             color: "var(--boom-red)",
             lineHeight: 1,
           }}
         >
           BOOM!
         </h1>
-        <p className="mt-2 text-sm md:text-base" style={{ color: "var(--boom-ink)" }}>
+        <p className="mt-1 text-xs md:text-sm" style={{ color: "var(--boom-ink)" }}>
           A gym room. Up to 3 pods. Hot-potato workout chaos.
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 w-full max-w-xs">
+      <div className="flex flex-col gap-2 w-full max-w-xs">
         <button
           onClick={startSolo}
           disabled={creating}
-          className="ink-border rounded-3xl px-8 py-5 flex items-center justify-center gap-3 hover:-translate-y-1 transition-transform disabled:opacity-50"
+          className="ink-border rounded-2xl px-5 py-3 flex items-center justify-center gap-2 hover:-translate-y-1 transition-transform disabled:opacity-50"
           style={{ background: "var(--boom-red)" }}
         >
-          <Play size={36} color="white" fill="white" />
+          <Play size={24} color="white" fill="white" />
           <span
-            className="text-3xl font-black"
+            className="text-xl font-black"
             style={{
               color: "white",
               fontFamily: "'Luckiest Guy', cursive",
@@ -124,13 +124,13 @@ function Index() {
         </button>
         <form
           onSubmit={tryJoin}
-          className="ink-border rounded-3xl px-5 py-4 flex flex-col gap-3"
+          className="ink-border rounded-2xl px-3 py-2 flex flex-col gap-2"
           style={{ background: "var(--boom-orange)" }}
         >
           <div className="flex items-center gap-2 justify-center">
-            <Bomb size={28} style={{ color: "white" }} />
+            <Bomb size={20} style={{ color: "white" }} />
             <span
-              className="text-2xl font-black"
+              className="text-lg font-black"
               style={{
                 color: "white",
                 fontFamily: "'Luckiest Guy', cursive",
@@ -140,35 +140,37 @@ function Index() {
               JOIN POD
             </span>
           </div>
-          <input
-            type="text"
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            placeholder="ROOM CODE"
-            maxLength={12}
-            className="ink-border-sm rounded-xl px-3 py-2 text-center text-xl font-black bg-white tracking-widest"
-            style={{ fontFamily: "'Luckiest Guy', cursive" }}
-          />
-          <button
-            type="submit"
-            disabled={!joinCode.trim()}
-            className="ink-border-sm rounded-xl px-4 py-2 bg-white font-black flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <LogIn size={16} /> Go
-          </button>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              placeholder="ROOM CODE"
+              maxLength={12}
+              className="flex-1 min-w-0 ink-border-sm rounded-xl px-2 py-1.5 text-center text-base font-black bg-white tracking-widest"
+              style={{ fontFamily: "'Luckiest Guy', cursive" }}
+            />
+            <button
+              type="submit"
+              disabled={!joinCode.trim()}
+              className="ink-border-sm rounded-xl px-3 py-1.5 bg-white font-black flex items-center justify-center gap-1 disabled:opacity-50 text-sm"
+            >
+              <LogIn size={14} /> Go
+            </button>
+          </div>
         </form>
         <Link
           to="/gym/$code"
           params={{ code: "new" }}
-          className="text-center text-sm font-black underline opacity-80 flex items-center justify-center gap-1"
+          className="text-center text-xs font-black underline opacity-80 flex items-center justify-center gap-1"
           style={{ color: "var(--boom-ink)" }}
         >
-          <Music size={14} /> Have a big screen? Host the gym →
+          <Music size={12} /> Have a big screen? Host the gym →
         </Link>
       </div>
 
-      <div className="w-full max-w-md">
-        <TutorialCarousel />
+      <div className="w-full max-w-md flex-1 min-h-0">
+        <TutorialCarousel compact />
       </div>
     </main>
   );

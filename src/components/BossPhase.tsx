@@ -323,6 +323,12 @@ function BossAnnounce({
 }) {
   const [count, setCount] = useState(3);
   const spoke = useRef(false);
+  const onDoneRef = useRef(onDone);
+
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
   useEffect(() => {
     if (spoke.current) return;
     spoke.current = true;
@@ -331,13 +337,13 @@ function BossAnnounce({
   }, [player.username, attack]);
   useEffect(() => {
     if (count <= 0) {
-      onDone();
+      onDoneRef.current();
       return;
     }
     sfx.play("countdown");
     const t = setTimeout(() => setCount((c) => c - 1), 800);
     return () => clearTimeout(t);
-  }, [count, onDone]);
+  }, [count]);
 
   const color = avatarColor(player.avatar_url);
 

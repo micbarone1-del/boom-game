@@ -246,6 +246,11 @@ function PodPage() {
         game_ends_at: endsAtNew.toISOString(),
         game_state: "playing",
         continue_deadline_at: null,
+        phase: "board",
+        boss_hp: 0,
+        boss_max_hp: 0,
+        boss_started_at: null,
+        boss_defeated_at: null,
       })
       .eq("code", code);
     clipsRef.current.clear();

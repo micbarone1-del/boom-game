@@ -16,6 +16,11 @@ export type Room = {
   game_ends_at?: string | null;
   game_state?: "idle" | "playing" | "timeout_continue" | "game_over";
   continue_deadline_at?: string | null;
+  phase?: "board" | "boss" | "victory";
+  boss_hp?: number;
+  boss_max_hp?: number;
+  boss_started_at?: string | null;
+  boss_defeated_at?: string | null;
   board_overrides: Record<
     string,
     {

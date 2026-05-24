@@ -14,7 +14,6 @@ import {
   speak,
   repPop,
   startArcadeRise,
-  playDefuseJingle,
 } from "@/lib/sfx";
 import bossMascot from "@/assets/boss-mascot.png";
 
@@ -35,11 +34,31 @@ type InnerPhase =
   | { kind: "intro" }
   | { kind: "announce"; attack: Attack }
   | { kind: "judge"; attack: Attack }
-  | { kind: "hit"; attack: Attack; damage: number }
-  | { kind: "miss"; attack: Attack };
+  | { kind: "hit"; attack: Attack; damage: number; outcome: "success" | "fail" };
 
 function avatarColor(url: string | null) {
   return url && url.startsWith("mascot:") ? url.slice(7) : "#ec4899";
+}
+
+function BossAvatar({ player, size = 72 }: { player: Player; size?: number }) {
+  const color = avatarColor(player.avatar_url);
+  return (
+    <div
+      className="rounded-full overflow-hidden flex items-center justify-center"
+      style={{
+        width: size,
+        height: size,
+        background: color,
+        boxShadow: `0 0 0 4px #111, 0 0 0 8px ${color}, 0 0 0 10px #111`,
+      }}
+    >
+      {player.avatar_url && !player.avatar_url.startsWith("mascot:") ? (
+        <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <Bomb size={size * 0.6} color="white" fill="white" />
+      )}
+    </div>
+  );
 }
 
 /**

@@ -4,8 +4,8 @@ import { mascotForCell } from "@/components/CellMascot";
 import { Bomb, Trophy, HelpCircle, Zap, ArrowLeft, AlertTriangle, Users, Flame, Dumbbell } from "lucide-react";
 
 export const POD_COLORS = ["#fbbf24", "#fb923c", "#4ade80"];
-const COLS = 16;
-const ROWS = 7;
+export const COLS = 16;
+export const ROWS = 7;
 
 /**
  * Snake-with-turn-cells layout that mirrors the published board:
@@ -14,7 +14,7 @@ const ROWS = 7;
  * row 4: cells 33-47 left→right, row 5: cell 48 turn (col 15),
  * row 6: cells 49-60 right→left (finish at col 3).
  */
-function cellPos(idx: number): { row: number; col: number } {
+export function cellPos(idx: number): { row: number; col: number } {
   if (idx <= 14) return { row: 0, col: idx };
   if (idx === 15) return { row: 1, col: 15 };
   if (idx <= 30) return { row: 2, col: 30 - idx };

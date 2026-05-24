@@ -274,6 +274,14 @@
   }
   .anim-hop { animation: hop-jump 0.22s ease-out both; }
 
+  @keyframes hop-visible-jump {
+    0%   { transform: translateY(0) rotate(-6deg) scale(1); }
+    35%  { transform: translateY(-74px) rotate(7deg) scale(1.16); }
+    62%  { transform: translateY(-42px) rotate(-4deg) scale(1.08); }
+    100% { transform: translateY(0) rotate(0deg) scale(1); }
+  }
+  .anim-hop-visible { animation: hop-visible-jump 0.34s cubic-bezier(.18,.9,.25,1.28) both; }
+
   /* Big mascot landing splash — pops in, hangs, fades */
   @keyframes mascot-splash {
     0%   { transform: translate(-50%, -30%) scale(0.2) rotate(-25deg); opacity: 0; }

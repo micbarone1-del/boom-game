@@ -181,11 +181,9 @@ export function BossPhase({
       setInner({ kind: "hit", attack, damage: 0, outcome });
     }
     setTimeout(() => {
-      setTurnIdx((i) => {
-        const next = i + 1;
-        startTurn(active[next % Math.max(1, active.length)]);
-        return next;
-      });
+      const next = turnIdx + 1;
+      setTurnIdx(next);
+      startTurn(active[next % Math.max(1, active.length)]);
     }, 2000);
   };
 

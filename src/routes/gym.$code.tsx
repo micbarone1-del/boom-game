@@ -8,7 +8,7 @@ import { Bomb, Copy, Play } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 import { FuseBar } from "@/components/FuseBar";
-import { GymMap } from "@/components/GymMap";
+import { GymMap, GymScoreboard } from "@/components/GymMap";
 import { PodActivityTicker } from "@/components/PodActivityTicker";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { setBgmIntensity, startArcadeMusic } from "@/lib/sfx";
@@ -337,22 +337,9 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
         </div>
       </header>
 
-      <GymMap players={players} pods={pods} />
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        {pods.map((pod) => {
-          const podPlayers = players.filter((p) => p.pod_id === pod.id);
-          return (
-            <div key={pod.id} className="ink-border rounded-2xl bg-white p-2 text-sm">
-              <div className="font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-                {pod.name}
-              </div>
-              <div className="text-xs opacity-70">
-                {podPlayers.length} players · score {podPlayers.reduce((s, p) => s + (p.score ?? 0), 0)}
-              </div>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-3 items-start">
+        <GymMap players={players} pods={pods} />
+        <GymScoreboard players={players} pods={pods} />
       </div>
 
       <PodActivityTicker roomCode={code} pods={pods} />

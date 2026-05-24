@@ -355,6 +355,7 @@ function PodPage() {
           onRestart={restart}
           startedAt={startedAt}
           endsAt={endsAt}
+          overrides={overrides}
         />
         {overlay}
       </>
@@ -553,6 +554,7 @@ function PlayerPhase({
   onRestart,
   startedAt,
   endsAt,
+  overrides,
 }: {
   player: Player;
   players: Player[];
@@ -561,10 +563,12 @@ function PlayerPhase({
   onRestart: () => void;
   startedAt: number | null;
   endsAt: number | null;
+  overrides: BoardOverrides;
 }) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
   const [hopping, setHopping] = useState<{ from: number; to: number; step: number } | null>(null);
+  const [powerUp, setPowerUp] = useState(false);
 
   // Drive arcade BGM intensity from fuse progress.
   useEffect(() => {
@@ -600,6 +604,8 @@ function PlayerPhase({
     const from = player.current_space;
     const to = Math.min(BOARD_SIZE, from + final);
     setHopping({ from, to, step: 0 });
+    // Zoom-in intro from the full map to the player token before hopping.
+    await new Promise((r) => setTimeout(r, 750));
     for (let i = 1; i <= final; i++) {
       await new Promise((r) => setTimeout(r, 220));
       setHopping({ from, to, step: i });
@@ -607,6 +613,15 @@ function PlayerPhase({
     }
     await new Promise((r) => setTimeout(r, 350));
     setHopping(null);
+    // Power-up celebration when the landing cell is a boost cell.
+    const landingCell = getEffectiveCell(to, overrides);
+    if (landingCell.type === "boost") {
+      sfx.play("blast");
+      speak(`${player.username}, power up!`, { volume: 1, rate: 0.85, pitch: 1.1 });
+      setPowerUp(true);
+      await new Promise((r) => setTimeout(r, 2200));
+      setPowerUp(false);
+    }
     setRolling(false);
     onRoll(final);
     void start;
@@ -617,6 +632,7 @@ function PlayerPhase({
       {hopping && (
         <HopOverlay player={player} from={hopping.from} to={hopping.to} step={hopping.step} />
       )}
+      {powerUp && <PowerUpOverlay player={player} />}
       <button
         onClick={() => {
           if (confirm("Leave this pod and go back to Home?")) {
@@ -818,7 +834,7 @@ function HopOverlay({
   const tokenLeft = ((Math.min(step, totalSteps) + 0.5) / pathSpaces.length) * 100;
 
   return (
-    <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden">
+    <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden anim-hop-zoom">
       <div className="text-white text-xs font-bold opacity-80 mb-1 uppercase tracking-wider">
         Hopping…
       </div>
@@ -885,6 +901,86 @@ function HopOverlay({
           className="h-full transition-all duration-200"
           style={{ width: `${progress * 100}%`, background: "var(--boom-yellow)" }}
         />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Power-up celebration overlay — rainbow fireworks + token + big text.
+// ---------------------------------------------------------------------------
+
+function PowerUpOverlay({ player }: { player: Player }) {
+  const sparks = Array.from({ length: 60 }, (_, i) => i);
+  const fireworks = Array.from({ length: 6 }, (_, i) => i);
+  const rainbow = ["#ff3b30", "#ff9500", "#ffd60a", "#34c759", "#0a84ff", "#bf5af2"];
+  return (
+    <div className="fixed inset-0 z-[60] overflow-hidden anim-fade-in pointer-events-none">
+      {/* Rainbow radial backdrop */}
+      <div
+        className="absolute inset-0 anim-powerup-bg"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.85), rgba(0,0,0,0.7) 70%), conic-gradient(from 0deg, #ff3b30, #ff9500, #ffd60a, #34c759, #0a84ff, #bf5af2, #ff3b30)",
+        }}
+      />
+      {/* Firework bursts */}
+      {fireworks.map((f) => {
+        const top = 15 + Math.random() * 60;
+        const left = 10 + Math.random() * 80;
+        const delay = (f * 0.18).toFixed(2);
+        return (
+          <div
+            key={`fw-${f}`}
+            className="absolute"
+            style={{ top: `${top}%`, left: `${left}%`, animationDelay: `${delay}s` }}
+          >
+            {sparks.slice(0, 18).map((s) => {
+              const angle = (s / 18) * Math.PI * 2;
+              const dist = 90 + Math.random() * 60;
+              const dx = Math.cos(angle) * dist;
+              const dy = Math.sin(angle) * dist;
+              const color = rainbow[s % rainbow.length];
+              return (
+                <span
+                  key={`spark-${f}-${s}`}
+                  className="absolute block rounded-full anim-spark"
+                  style={{
+                    width: 10,
+                    height: 10,
+                    background: color,
+                    boxShadow: `0 0 12px ${color}, 0 0 22px ${color}`,
+                    ["--dx" as any]: `${dx}px`,
+                    ["--dy" as any]: `${dy}px`,
+                    animationDelay: `${delay}s`,
+                  }}
+                />
+              );
+            })}
+          </div>
+        );
+      })}
+      {/* Centered token + text */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
+        <div className="anim-powerup-pop">
+          <div className="rounded-full bg-white p-2 shadow-[0_0_0_6px_#111,0_0_60px_18px_rgba(255,255,255,0.7)]">
+            <Avatar player={player} size={150} />
+          </div>
+        </div>
+        <div
+          className="text-center px-6 anim-powerup-text"
+          style={{
+            fontFamily: "'Luckiest Guy', cursive",
+            color: "#fff",
+            fontSize: "min(14vw, 5.5rem)",
+            lineHeight: 1,
+            WebkitTextStroke: "4px #111",
+            textShadow:
+              "0 6px 0 rgba(0,0,0,0.55), 0 0 20px #ffd60a, 0 0 40px #ff3b30, 0 0 70px #0a84ff",
+          }}
+        >
+          {player.username} Power up!!
+        </div>
       </div>
     </div>
   );

@@ -381,3 +381,45 @@
   }
   .anim-explosion-pop { animation: explosion-pop 1.6s ease-out forwards; }
 }
+
+@layer utilities {
+  /* Zoom-in intro for the hop overlay: starts wide-angle then settles */
+  @keyframes hop-zoom-in {
+    0%   { transform: scale(0.35); opacity: 0; }
+    55%  { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1);    opacity: 1; }
+  }
+  .anim-hop-zoom > * { transform-origin: center center; }
+  .anim-hop-zoom { animation: hop-zoom-in 0.7s cubic-bezier(.2,.8,.25,1.2) both; }
+
+  /* Power-up rainbow backdrop spin + flash */
+  @keyframes powerup-bg {
+    0%   { opacity: 0; transform: rotate(0deg) scale(1.4); filter: blur(8px); }
+    25%  { opacity: 1; }
+    100% { opacity: 1; transform: rotate(240deg) scale(1); filter: blur(0px); }
+  }
+  .anim-powerup-bg { animation: powerup-bg 2.2s ease-out both; }
+
+  @keyframes powerup-pop {
+    0%   { transform: scale(0.2) rotate(-25deg); opacity: 0; }
+    35%  { transform: scale(1.25) rotate(8deg);  opacity: 1; }
+    55%  { transform: scale(1)    rotate(-4deg); opacity: 1; }
+    100% { transform: scale(1.08) rotate(0deg);  opacity: 1; }
+  }
+  .anim-powerup-pop { animation: powerup-pop 0.9s cubic-bezier(.2,1.5,.4,1) both; }
+
+  @keyframes powerup-text {
+    0%   { transform: scale(0.4) translateY(20px); opacity: 0; }
+    40%  { transform: scale(1.15) translateY(0);   opacity: 1; }
+    60%  { transform: scale(0.98); }
+    100% { transform: scale(1);    opacity: 1; }
+  }
+  .anim-powerup-text { animation: powerup-text 1.1s cubic-bezier(.2,1.4,.4,1) 0.25s both; }
+
+  @keyframes spark-burst {
+    0%   { transform: translate(0,0) scale(0.4); opacity: 0; }
+    20%  { opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+  }
+  .anim-spark { animation: spark-burst 1.6s ease-out both; }
+}

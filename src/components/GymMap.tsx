@@ -1,6 +1,6 @@
 import { BOARD, BOARD_SIZE, CELL_LABEL, type CellType } from "@/lib/game";
 import type { Player, Pod } from "@/hooks/use-room";
-import { CELL_FLAVOR, mascotForCell } from "@/components/CellMascot";
+import { mascotForCell } from "@/components/CellMascot";
 import { Bomb, Trophy, HelpCircle, Zap, ArrowLeft, AlertTriangle, Users, Flame, Dumbbell } from "lucide-react";
 
 export const POD_COLORS = ["#fbbf24", "#fb923c", "#4ade80"];

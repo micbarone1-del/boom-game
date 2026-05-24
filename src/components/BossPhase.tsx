@@ -166,10 +166,6 @@ export function BossPhase({
         time_taken_ms: 0,
         verified_by_judge: true,
       });
-      await supabase
-        .from("players")
-        .update({ current_space: Math.max(0, (cur?.current_space ?? 0) - 1) })
-        .eq("id", attack.playerId);
       // Update player score.
       const cur = podPlayers.find((p) => p.id === attack.playerId);
       await supabase
@@ -329,16 +325,6 @@ export function BossPhase({
         </div>
       )}
 
-      {inner.kind === "miss" && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none bg-red-900/40 anim-explosion-flash">
-          <div
-            className="text-7xl font-black text-white"
-            style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "4px 4px 0 #000" }}
-          >
-            MISSED!
-          </div>
-        </div>
-      )}
     </main>
   );
 }

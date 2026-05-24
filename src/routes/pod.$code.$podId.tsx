@@ -444,16 +444,40 @@ function ProgressBar({
           </span>
         </div>
       )}
-      <div className="relative h-10 rounded-full bg-white/90 ink-border-sm overflow-hidden">
-        {/* Fuse burn underlay */}
+      <div
+        className="relative h-10 rounded-full ink-border-sm overflow-hidden"
+        style={{
+          background:
+            "repeating-linear-gradient(45deg, #f59e0b 0 8px, #fbbf24 8px 16px)",
+          boxShadow: "inset 0 2px 4px rgba(0,0,0,.25)",
+        }}
+      >
+        {/* Fuse burn underlay (charred trail left of the flame) */}
         {startedAt && endsAt && (
-          <div
-            className="absolute inset-y-0 left-0 transition-all duration-500"
-            style={{
-              width: `${fuseP * 100}%`,
-              background: "linear-gradient(90deg, rgba(34,34,34,.85) 0%, rgba(122,58,12,.75) 80%, rgba(245,158,11,.85) 100%)",
-            }}
-          />
+          <>
+            <div
+              className="absolute inset-y-0 left-0 transition-all duration-500"
+              style={{
+                width: `${fuseP * 100}%`,
+                background:
+                  "linear-gradient(90deg, #111 0%, #2a2a2a 55%, #5a2a08 90%, #b45309 100%)",
+              }}
+            />
+            {/* Flame at the burn head */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-500 z-10"
+              style={{ left: `${fuseP * 100}%` }}
+              aria-hidden
+            >
+              <Flame
+                size={26}
+                fill="var(--boom-red)"
+                color="var(--boom-yellow)"
+                className="anim-fuse"
+                style={{ filter: "drop-shadow(0 0 8px rgba(255,90,0,.95))" }}
+              />
+            </div>
+          </>
         )}
         {/* finish flag */}
         <div

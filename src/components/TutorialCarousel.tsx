@@ -16,14 +16,14 @@ const SLIDES = [
   },
   {
     Icon: Gavel,
-    text: "DON'T CHEAT",
-    sub: "Pass the phone to the next player (he will judge your form taking a video)",
+    text: "PASS THE PHONE TO THE NEXT PLAYER",
+    sub: "he will judge your form taking a video",
     color: "var(--boom-blue)",
   },
   {
     Icon: Clock,
-    text: "BEAT THE CLOCK",
-    sub: "now the judge becomes the player (defuse before the time is up)",
+    text: "NOW THE JUDGE BECOMES THE PLAYER",
+    sub: "defuse before the time is up",
     color: "var(--boom-green)",
   },
 ];

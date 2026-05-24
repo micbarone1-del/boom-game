@@ -563,15 +563,15 @@ function PlayerPhase({
       </button>
       <div className="text-sm opacity-60">Tap to roll</div>
 
-      <ProgressBar players={players} activeId={player.id} />
-      {startedAt && endsAt && (
-        <div className="absolute left-0 right-0 bottom-16 px-3 z-30 pointer-events-none">
-          <FuseBar startedAt={startedAt} endsAt={endsAt} height={14} />
-          <div className="text-center text-[10px] opacity-70 mt-1 font-bold">
-            Room {code} · share to add more pods
-          </div>
-        </div>
-      )}
+      <ProgressBar
+        players={players}
+        activeId={player.id}
+        startedAt={startedAt}
+        endsAt={endsAt}
+      />
+      <div className="absolute left-0 right-0 bottom-16 z-30 pointer-events-none text-center text-[10px] opacity-70 font-bold">
+        Room {code} · share to add more pods
+      </div>
     </main>
   );
 }

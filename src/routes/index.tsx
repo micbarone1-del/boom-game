@@ -4,6 +4,7 @@ import { Bomb, Music, LogIn, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRoomCode } from "@/lib/game";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { TutorialCarousel } from "@/components/TutorialCarousel";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -164,6 +165,10 @@ function Index() {
         >
           <Music size={14} /> Have a big screen? Host the gym →
         </Link>
+      </div>
+
+      <div className="w-full max-w-md">
+        <TutorialCarousel />
       </div>
     </main>
   );

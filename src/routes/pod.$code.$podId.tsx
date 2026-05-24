@@ -328,10 +328,6 @@ function PodPage() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Global fuse bar — always-visible top strip so players see time burning
-// regardless of which phase they are in.
-// ---------------------------------------------------------------------------
 function ProgressBar({
   players,
   activeId,

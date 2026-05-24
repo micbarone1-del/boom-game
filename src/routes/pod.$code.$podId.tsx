@@ -19,11 +19,10 @@ import {
   type BoardOverrides,
   type CellType,
 } from "@/lib/game";
-import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity } from "@/lib/sfx";
+import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
-import { FuseBar } from "@/components/FuseBar";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
@@ -128,10 +127,13 @@ function PodPage() {
     ) {
       const tier = finalCell.tier ?? 1;
       const reps = calcRepsForTier(tier, player.fitness_level, room.difficulty_multiplier);
+      const overrideUnit = overrides[String(final)]?.unit;
+      const isHold = /\bhold\b/i.test(finalCell.exercise ?? "");
+      const unit: "reps" | "seconds" = overrideUnit ?? (isHold ? "seconds" : "reps");
       const trap: ActiveTrap = {
         exercise: finalCell.exercise ?? "Workout",
         reps,
-        unit: overrides[String(final)]?.unit ?? "reps",
+        unit,
         finalSpace: final,
         cellType: finalCell.type,
       };
@@ -146,10 +148,11 @@ function PodPage() {
             ? pickCrazyExercise()
             : pickGroupExercise();
       const reps = calcRepsForTier(pick.tier, player.fitness_level, room.difficulty_multiplier);
+      const isHold = /\bhold\b/i.test(pick.exercise);
       const trap: ActiveTrap = {
         exercise: pick.exercise,
         reps,
-        unit: "reps",
+        unit: isHold ? "seconds" : "reps",
         finalSpace: final,
         cellType: finalCell.type,
       };
@@ -329,10 +332,57 @@ function PodPage() {
 // Progress bar (3 player tokens positioned along cells 1..60)
 // ---------------------------------------------------------------------------
 
-function ProgressBar({ players, activeId }: { players: Player[]; activeId: string }) {
+function ProgressBar({
+  players,
+  activeId,
+  startedAt,
+  endsAt,
+}: {
+  players: Player[];
+  activeId: string;
+  startedAt?: number | null;
+  endsAt?: number | null;
+}) {
+  const [, force] = useState(0);
+  useEffect(() => {
+    if (!startedAt || !endsAt) return;
+    const i = setInterval(() => force((n) => n + 1), 500);
+    return () => clearInterval(i);
+  }, [startedAt, endsAt]);
+  const fuseP =
+    startedAt && endsAt
+      ? Math.max(0, Math.min(1, (Date.now() - startedAt) / (endsAt - startedAt)))
+      : 0;
+  const remaining =
+    startedAt && endsAt ? Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)) : 0;
+  const mm = String(Math.floor(remaining / 60));
+  const ss = String(remaining % 60).padStart(2, "0");
   return (
     <div className="absolute left-0 right-0 bottom-0 p-3 pointer-events-none z-30">
-      <div className="relative h-10 rounded-full bg-white/90 ink-border-sm">
+      {startedAt && endsAt && (
+        <div className="flex justify-between items-center text-[11px] font-black px-1 mb-1" style={{ color: "var(--boom-ink)" }}>
+          <span style={{ fontFamily: "'Luckiest Guy', cursive" }}>FUSE · PROGRESS</span>
+          <span
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: fuseP > 0.8 ? "var(--boom-red)" : "var(--boom-ink)",
+            }}
+          >
+            {mm}:{ss}
+          </span>
+        </div>
+      )}
+      <div className="relative h-10 rounded-full bg-white/90 ink-border-sm overflow-hidden">
+        {/* Fuse burn underlay */}
+        {startedAt && endsAt && (
+          <div
+            className="absolute inset-y-0 left-0 transition-all duration-500"
+            style={{
+              width: `${fuseP * 100}%`,
+              background: "linear-gradient(90deg, rgba(34,34,34,.85) 0%, rgba(122,58,12,.75) 80%, rgba(245,158,11,.85) 100%)",
+            }}
+          />
+        )}
         {/* finish flag */}
         <div
           className="absolute -top-2 -right-2 text-xl"
@@ -435,6 +485,7 @@ function PlayerPhase({
     if (rolling) return;
     void sfx.unlock();
     startArcadeMusic();
+    startTechnoLayer();
     speak(`${player.username}, roll the dice.`, { volume: 1, rate: 0.8, pitch: 0.8 });
     setRolling(true);
     setFace(null);
@@ -473,12 +524,14 @@ function PlayerPhase({
       )}
       <button
         onClick={() => {
-          if (confirm("Restart the game? Scores and positions will be reset.")) onRestart();
+          if (confirm("Leave this pod and go back to Home?")) {
+            window.location.href = "/";
+          }
         }}
         className="absolute top-3 right-3 z-30 rounded-full ink-border-sm bg-white px-3 py-2 flex items-center gap-1 text-xs font-black active:scale-95"
-        aria-label="Restart game"
+        aria-label="Back to Home"
       >
-        <RotateCcw size={14} /> Restart
+        <RotateCcw size={14} /> Home
       </button>
       <div className="text-xs font-bold opacity-60 uppercase tracking-wider">Your turn</div>
       <Avatar player={player} size={140} />
@@ -509,15 +562,15 @@ function PlayerPhase({
       </button>
       <div className="text-sm opacity-60">Tap to roll</div>
 
-      <ProgressBar players={players} activeId={player.id} />
-      {startedAt && endsAt && (
-        <div className="absolute left-0 right-0 bottom-16 px-3 z-30 pointer-events-none">
-          <FuseBar startedAt={startedAt} endsAt={endsAt} height={14} />
-          <div className="text-center text-[10px] opacity-70 mt-1 font-bold">
-            Room {code} · share to add more pods
-          </div>
-        </div>
-      )}
+      <ProgressBar
+        players={players}
+        activeId={player.id}
+        startedAt={startedAt}
+        endsAt={endsAt}
+      />
+      <div className="absolute left-0 right-0 bottom-16 z-30 pointer-events-none text-center text-[10px] opacity-70 font-bold">
+        Room {code} · share to add more pods
+      </div>
     </main>
   );
 }
@@ -715,6 +768,7 @@ function JudgePhase({
   const [holdMs, setHoldMs] = useState(0); // for seconds mode
   const [started] = useState(Date.now());
   const [, force] = useState(0);
+  const [pointPops, setPointPops] = useState<Array<{ id: number; n: number }>>([]);
   const completedRef = useRef(false);
   const arcadeStopRef = useRef<(() => void) | null>(null);
   const holdingRef = useRef(false);
@@ -791,7 +845,7 @@ function JudgePhase({
     arcadeStopRef.current?.();
     arcadeStopRef.current = null;
     if (outcome === "success") {
-      sfx.play("win");
+      playDefuseJingle();
       speak(`Well done ${player.username}! ${trap.reps} points!`);
     } else {
       sfx.play("blowUp");
@@ -824,6 +878,9 @@ function JudgePhase({
     setReps((r) => {
       const next = r + 1;
       repPop(next / trap.reps);
+      const pid = Date.now() + Math.random();
+      setPointPops((arr) => [...arr, { id: pid, n: next }]);
+      setTimeout(() => setPointPops((arr) => arr.filter((p) => p.id !== pid)), 900);
       if (next >= trap.reps) {
         setTimeout(() => finish("success"), 50);
       }
@@ -886,6 +943,25 @@ function JudgePhase({
         muted
         className="absolute inset-0 w-full h-full object-cover"
       />
+      {/* Floating per-rep point popups */}
+      <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+        {pointPops.map((p) => (
+          <div
+            key={p.id}
+            className="absolute anim-pop"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              fontSize: "3.5rem",
+              color: "var(--boom-yellow)",
+              textShadow: "3px 3px 0 #000, -2px -2px 0 #000, 0 0 12px rgba(255,200,0,.8)",
+              top: `${30 + Math.random() * 20}%`,
+              left: `${20 + Math.random() * 60}%`,
+            }}
+          >
+            +{p.n}
+          </div>
+        ))}
+      </div>
 
       {/* Corner overlays */}
       <div className="absolute top-3 left-3 flex items-center gap-2 z-20">

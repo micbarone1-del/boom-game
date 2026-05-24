@@ -782,24 +782,85 @@ function HopOverlay({
   const cur = Math.min(to, from + step);
   const totalSteps = Math.max(1, to - from);
   const progress = step / totalSteps;
+  // Build the same snake layout the gym board uses, then translate so the
+  // hopping cell stays centred while we scale in for a punchy zoom.
+  const CELL = 64; // logical cell size in px
+  const GAP = 6;
+  const boardW = COLS * CELL + (COLS - 1) * GAP;
+  const boardH = ROWS * CELL + (ROWS - 1) * GAP;
+  // current cell centre (0-indexed); BOARD is 0-indexed in code, displayed as 1-based.
+  const curIdx = Math.max(0, Math.min(BOARD.length - 1, cur - 1));
+  const { row, col } = cellPos(curIdx);
+  const cx = col * (CELL + GAP) + CELL / 2;
+  const cy = row * (CELL + GAP) + CELL / 2;
+  const scale = 1.8;
   return (
-    <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/70 anim-fade-in">
-      <div className="text-white text-sm font-bold opacity-80 mb-2 uppercase tracking-wider">
+    <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden">
+      <div className="text-white text-xs font-bold opacity-80 mb-1 uppercase tracking-wider">
         Hopping…
       </div>
       <div
-        className="text-white text-5xl font-black mb-4"
+        className="text-white text-4xl font-black mb-3"
         style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}
       >
         Cell {cur}
       </div>
       <div
-        key={`hop-${step}`}
-        className="anim-hop"
+        className="relative w-full"
+        style={{ height: "min(55vh, 360px)", perspective: 800 }}
       >
-        <Avatar player={player} size={140} />
+        {/* Viewport: centred container that pans the big board underneath */}
+        <div className="absolute inset-0 overflow-hidden flex items-center justify-center">
+          <div
+            className="relative transition-transform duration-300 ease-out"
+            style={{
+              width: boardW,
+              height: boardH,
+              transform: `scale(${scale}) translate(${boardW / 2 - cx}px, ${boardH / 2 - cy}px)`,
+              transformOrigin: "center center",
+            }}
+          >
+            {BOARD.map((cell, idx) => {
+              const pos = cellPos(idx);
+              const isHere = idx === curIdx;
+              const isPath = idx + 1 >= from && idx + 1 <= cur;
+              return (
+                <div
+                  key={cell.space}
+                  className={`absolute rounded-xl flex items-center justify-center font-black ${isHere ? "anim-mascot-bounce" : ""}`}
+                  style={{
+                    width: CELL,
+                    height: CELL,
+                    left: pos.col * (CELL + GAP),
+                    top: pos.row * (CELL + GAP),
+                    background: cellBg(cell.type),
+                    border: "3px solid #111",
+                    boxShadow: isHere
+                      ? `0 0 0 3px #fff, 0 0 24px 8px ${POD_COLORS[0]}, 3px 3px 0 #111`
+                      : isPath
+                        ? `0 0 0 2px #fff, 3px 3px 0 #111`
+                        : "3px 3px 0 #111",
+                    color: "#fff",
+                    opacity: isHere || isPath ? 1 : 0.85,
+                    fontSize: 14,
+                  }}
+                >
+                  {cell.space}
+                  {isHere && (
+                    <div
+                      key={`tok-${step}`}
+                      className="absolute -top-3 left-1/2 -translate-x-1/2 anim-hop"
+                    >
+                      <Avatar player={player} size={44} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
-      <div className="mt-6 w-3/4 max-w-sm h-3 rounded-full bg-white/20 overflow-hidden ink-border-sm">
+      <div className="mt-4 w-3/4 max-w-sm h-3 rounded-full bg-white/20 overflow-hidden ink-border-sm">
         <div
           className="h-full transition-all duration-200"
           style={{ width: `${progress * 100}%`, background: "var(--boom-yellow)" }}

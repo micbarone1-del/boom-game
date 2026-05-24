@@ -76,7 +76,7 @@ function Index() {
     navigate({ to: "/join/$code", params: { code }, search: { auto: 1 } as never });
   };
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 gap-8">
+    <main className="min-h-screen flex flex-col items-center p-6 pt-10 pb-16 gap-8">
       <div className="text-center">
         <img
           src={bombMascot}

@@ -146,7 +146,6 @@ export function BossPhase({
         time_taken_ms: 0,
         verified_by_judge: true,
       });
-      await supabase.rpc; // no-op to keep types
       // Update player score.
       const cur = podPlayers.find((p) => p.id === attack.playerId);
       await supabase

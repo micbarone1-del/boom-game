@@ -145,6 +145,23 @@ function PodPage() {
 
     await supabase.from("players").update({ current_space: final }).eq("id", player.id);
 
+    // Reaching cell 60 in board phase triggers the shared boss fight
+    // immediately — don't finish/leaderboard the player.
+    if (final >= BOARD_SIZE && (room.phase ?? "board") === "board") {
+      const total = Math.max(1, players.length);
+      const maxHp = total * 220;
+      await supabase
+        .from("rooms")
+        .update({
+          phase: "boss",
+          boss_hp: maxHp,
+          boss_max_hp: maxHp,
+          boss_started_at: new Date().toISOString(),
+        })
+        .eq("code", code);
+      return;
+    }
+
     // Decide phase: if exercise cell -> switch. Otherwise resolve / pass.
     if (
       finalCell.type === "easy" ||
@@ -213,8 +230,22 @@ function PodPage() {
       });
       await recalcPlayerScore(playerId, code);
       if (trap.finalSpace >= BOARD_SIZE) {
-        await finishPlayer(playerId, code);
-        setPhase({ kind: "done", winnerId: playerId });
+        if ((room.phase ?? "board") === "board") {
+          const total = Math.max(1, players.length);
+          const maxHp = total * 220;
+          await supabase
+            .from("rooms")
+            .update({
+              phase: "boss",
+              boss_hp: maxHp,
+              boss_max_hp: maxHp,
+              boss_started_at: new Date().toISOString(),
+            })
+            .eq("code", code);
+        } else {
+          await finishPlayer(playerId, code);
+          setPhase({ kind: "done", winnerId: playerId });
+        }
         return;
       }
       setPhase({ kind: "resolve", playerId, outcome, trap });
@@ -856,14 +887,14 @@ function HopOverlay({
               className="absolute pointer-events-none"
               style={{
                 left: cx,
-                top: cy,
+                top: cy - CELL * 0.55,
                 transform: "translate(-50%, -50%)",
                 transition: "left 220ms ease-in-out, top 220ms ease-in-out",
-                zIndex: 10,
+                zIndex: 50,
               }}
             >
               <div key={`tok-${step}`} className="anim-hop">
-                <Avatar player={player} size={44} />
+                <Avatar player={player} size={56} />
               </div>
             </div>
           </div>

@@ -14,7 +14,6 @@ import {
   speak,
   repPop,
   startArcadeRise,
-  playDefuseJingle,
 } from "@/lib/sfx";
 import bossMascot from "@/assets/boss-mascot.png";
 
@@ -35,11 +34,31 @@ type InnerPhase =
   | { kind: "intro" }
   | { kind: "announce"; attack: Attack }
   | { kind: "judge"; attack: Attack }
-  | { kind: "hit"; attack: Attack; damage: number }
-  | { kind: "miss"; attack: Attack };
+  | { kind: "hit"; attack: Attack; damage: number; outcome: "success" | "fail" };
 
 function avatarColor(url: string | null) {
   return url && url.startsWith("mascot:") ? url.slice(7) : "#ec4899";
+}
+
+function BossAvatar({ player, size = 72 }: { player: Player; size?: number }) {
+  const color = avatarColor(player.avatar_url);
+  return (
+    <div
+      className="rounded-full overflow-hidden flex items-center justify-center"
+      style={{
+        width: size,
+        height: size,
+        background: color,
+        boxShadow: `0 0 0 4px #111, 0 0 0 8px ${color}, 0 0 0 10px #111`,
+      }}
+    >
+      {player.avatar_url && !player.avatar_url.startsWith("mascot:") ? (
+        <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <Bomb size={size * 0.6} color="white" fill="white" />
+      )}
+    </div>
+  );
 }
 
 /**
@@ -80,6 +99,7 @@ export function BossPhase({
   const remaining = Math.max(0, bossEndsAt - Date.now());
 
   const player = active[turnIdx % Math.max(1, active.length)];
+  const judge = active[(turnIdx + 1) % Math.max(1, active.length)] ?? player;
 
   // Intro → first announce
   useEffect(() => {
@@ -91,19 +111,19 @@ export function BossPhase({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startTurn = () => {
-    if (!player) return;
+  const startTurn = (turnPlayer = player) => {
+    if (!turnPlayer) return;
     // 50/50 crazy vs hard surprise pool
     const pick =
       Math.random() < 0.5 ? pickCrazyExercise() : pickSurpriseExercise(overrides);
     const reps = calcRepsForTier(
       pick.tier,
-      player.fitness_level,
+      turnPlayer.fitness_level,
       room.difficulty_multiplier,
     );
     const isHold = /\bhold\b/i.test(pick.exercise);
     const attack: Attack = {
-      playerId: player.id,
+      playerId: turnPlayer.id,
       exercise: pick.exercise,
       reps,
       unit: isHold ? "seconds" : "reps",
@@ -123,8 +143,8 @@ export function BossPhase({
   ) => {
     if (inner.kind !== "judge") return;
     const attack = inner.attack;
-    if (outcome === "success") {
-      const damage = Math.max(1, achievedReps * (attack.tier === 3 ? 3 : 2));
+    const damage = Math.max(0, achievedReps * (attack.tier === 3 ? 3 : 2));
+    if (damage > 0) {
       setHitFlash(Date.now());
       // Race-safe decrement.
       const newHp = Math.max(0, (room.boss_hp ?? 0) - damage);
@@ -152,13 +172,18 @@ export function BossPhase({
         .from("players")
         .update({ score: (cur?.score ?? 0) + damage })
         .eq("id", attack.playerId);
-      setInner({ kind: "hit", attack, damage });
+      sfx.play("didIt");
+      speak(`${player.username} hits the boss for ${damage}.`);
+      setInner({ kind: "hit", attack, damage, outcome });
     } else {
-      setInner({ kind: "miss", attack });
+      sfx.play("blowUp");
+      speak(`${player.username} missed the boss.`);
+      setInner({ kind: "hit", attack, damage: 0, outcome });
     }
     setTimeout(() => {
-      setTurnIdx((i) => i + 1);
-      startTurn();
+      const next = turnIdx + 1;
+      setTurnIdx(next);
+      startTurn(active[next % Math.max(1, active.length)]);
     }, 2000);
   };
 
@@ -198,45 +223,8 @@ export function BossPhase({
           "radial-gradient(ellipse at top, #7a0000 0%, #1a0000 60%, #000 100%)",
       }}
     >
-      {/* Top: boss HP + fuse */}
-      <div className="absolute top-0 left-0 right-0 z-30 p-3 flex flex-col gap-1">
-        <div className="flex items-center justify-between text-white text-xs font-black px-1">
-          <span
-            className="flex items-center gap-1"
-            style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}
-          >
-            <Skull size={14} /> BOSS HP
-          </span>
-          <span
-            style={{
-              fontFamily: "'Luckiest Guy', cursive",
-              color: remaining < 30_000 ? "var(--boom-yellow)" : "#fff",
-              textShadow: "1px 1px 0 #000",
-            }}
-          >
-            <Flame size={12} className="inline mb-1" /> {mm}:{ss}
-          </span>
-        </div>
-        <div className="relative h-6 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
-          <div
-            className="absolute inset-y-0 left-0 transition-all duration-500"
-            style={{
-              width: `${hpPct * 100}%`,
-              background:
-                "linear-gradient(90deg, #16a34a 0%, #facc15 60%, #ef4444 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 flex items-center justify-center text-white text-[11px] font-black"
-            style={{ textShadow: "1px 1px 0 #000" }}
-          >
-            {room.boss_hp ?? 0} / {room.boss_max_hp ?? 0}
-          </div>
-        </div>
-      </div>
-
       {/* Boss sprite */}
-      <div className="flex-1 flex items-center justify-center pt-16">
+      <div className="absolute inset-0 flex items-center justify-center pb-32 pt-6 pointer-events-none">
         <img
           src={bossMascot}
           alt="Boss"
@@ -270,6 +258,7 @@ export function BossPhase({
       {inner.kind === "announce" && (
         <BossAnnounce
           player={player}
+          judge={judge}
           attack={inner.attack}
           onDone={onAnnounceDone}
         />
@@ -286,38 +275,53 @@ export function BossPhase({
       {inner.kind === "hit" && (
         <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
           <div
-            className="text-8xl font-black anim-pop"
+            className="text-8xl font-black anim-pop text-center"
             style={{
               fontFamily: "'Luckiest Guy', cursive",
-              color: "var(--boom-yellow)",
+              color: inner.damage > 0 ? "var(--boom-yellow)" : "var(--boom-red)",
               textShadow: "5px 5px 0 #000, 0 0 30px #ef4444",
             }}
           >
-            -{inner.damage}
+            {inner.damage > 0 ? `-${inner.damage}` : "MISS!"}
           </div>
         </div>
       )}
 
-      {inner.kind === "miss" && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none bg-red-900/40 anim-explosion-flash">
+      <div className="absolute left-0 right-0 bottom-0 z-40 p-3 pointer-events-none">
+        <div className="flex items-center justify-between text-white text-[11px] font-black px-1 mb-1">
+          <span className="flex items-center gap-1" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}>
+            <Skull size={14} /> BOSS HP
+          </span>
+          <span style={{ fontFamily: "'Luckiest Guy', cursive", color: remaining < 30_000 ? "var(--boom-yellow)" : "#fff", textShadow: "1px 1px 0 #000" }}>
+            <Flame size={12} className="inline mb-1" /> {mm}:{ss}
+          </span>
+        </div>
+        <div className="relative h-10 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
           <div
-            className="text-7xl font-black text-white"
-            style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "4px 4px 0 #000" }}
-          >
-            MISSED!
+            className="absolute inset-y-0 left-0 transition-all duration-500"
+            style={{
+              width: `${hpPct * 100}%`,
+              background: "linear-gradient(90deg, #16a34a 0%, #facc15 60%, #ef4444 100%)",
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}>
+            {room.boss_hp ?? 0} / {room.boss_max_hp ?? 0}
           </div>
         </div>
-      )}
+      </div>
+
     </main>
   );
 }
 
 function BossAnnounce({
   player,
+  judge,
   attack,
   onDone,
 }: {
   player: Player;
+  judge: Player;
   attack: Attack;
   onDone: () => void;
 }) {
@@ -333,8 +337,8 @@ function BossAnnounce({
     if (spoke.current) return;
     spoke.current = true;
     const unit = attack.unit === "seconds" ? `${attack.reps} seconds` : `${attack.reps} reps`;
-    speak(`${player.username}: attack the boss with ${attack.exercise}, ${unit}!`);
-  }, [player.username, attack]);
+    speak(`Player ${player.username}. ${attack.exercise}, ${unit}. Judge: ${judge.username}.`);
+  }, [player.username, judge.username, attack]);
   useEffect(() => {
     if (count <= 0) {
       onDoneRef.current();
@@ -345,26 +349,10 @@ function BossAnnounce({
     return () => clearTimeout(t);
   }, [count]);
 
-  const color = avatarColor(player.avatar_url);
-
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-black/60 p-4">
-      <div
-        className="rounded-full overflow-hidden flex items-center justify-center"
-        style={{
-          width: 96,
-          height: 96,
-          background: color,
-          boxShadow: `0 0 0 4px #111, 0 0 0 8px ${color}`,
-        }}
-      >
-        <Bomb size={56} color="white" fill="white" />
-      </div>
-      <div
-        className="text-3xl font-black text-white text-center px-4"
-        style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}
-      >
-        {player.username} ATTACKS!
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 bg-black/35 p-4 pb-20">
+      <div className="mt-2 text-center text-4xl font-black text-white" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>
+        BOSS ATTACK
       </div>
       <div
         className="ink-border rounded-2xl bg-white px-5 py-3 text-center max-w-[92%]"
@@ -381,6 +369,23 @@ function BossAnnounce({
         </div>
         <div className="font-bold" style={{ color: "var(--boom-ink)" }}>
           {attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps`}
+        </div>
+      </div>
+      <div className="flex items-center justify-around w-full max-w-md">
+        <div className="flex flex-col items-center gap-1 anim-fade-in">
+          <BossAvatar player={player} size={72} />
+          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
+            Player
+          </div>
+          <div className="text-sm font-bold text-white" style={{ textShadow: "1px 1px 0 #000" }}>{player.username}</div>
+        </div>
+        <div className="text-4xl">➡️</div>
+        <div className="flex flex-col items-center gap-1 anim-fade-in">
+          <BossAvatar player={judge} size={72} />
+          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
+            Judge
+          </div>
+          <div className="text-sm font-bold text-white" style={{ textShadow: "1px 1px 0 #000" }}>{judge.username}</div>
         </div>
       </div>
       <div
@@ -443,12 +448,8 @@ function BossJudge({
     done.current = true;
     arcadeStop.current?.();
     if (outcome === "success") {
-      playDefuseJingle();
-      speak(`${player.username} hits the boss!`);
       onComplete("success", attack.reps);
     } else {
-      sfx.play("blowUp");
-      speak(`${player.username} missed the boss.`);
       const achieved = attack.unit === "seconds"
         ? Math.floor(holdMs / 1000)
         : reps;

@@ -225,45 +225,8 @@ export function BossPhase({
           "radial-gradient(ellipse at top, #7a0000 0%, #1a0000 60%, #000 100%)",
       }}
     >
-      {/* Top: boss HP + fuse */}
-      <div className="absolute top-0 left-0 right-0 z-30 p-3 flex flex-col gap-1">
-        <div className="flex items-center justify-between text-white text-xs font-black px-1">
-          <span
-            className="flex items-center gap-1"
-            style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}
-          >
-            <Skull size={14} /> BOSS HP
-          </span>
-          <span
-            style={{
-              fontFamily: "'Luckiest Guy', cursive",
-              color: remaining < 30_000 ? "var(--boom-yellow)" : "#fff",
-              textShadow: "1px 1px 0 #000",
-            }}
-          >
-            <Flame size={12} className="inline mb-1" /> {mm}:{ss}
-          </span>
-        </div>
-        <div className="relative h-6 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
-          <div
-            className="absolute inset-y-0 left-0 transition-all duration-500"
-            style={{
-              width: `${hpPct * 100}%`,
-              background:
-                "linear-gradient(90deg, #16a34a 0%, #facc15 60%, #ef4444 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 flex items-center justify-center text-white text-[11px] font-black"
-            style={{ textShadow: "1px 1px 0 #000" }}
-          >
-            {room.boss_hp ?? 0} / {room.boss_max_hp ?? 0}
-          </div>
-        </div>
-      </div>
-
       {/* Boss sprite */}
-      <div className="flex-1 flex items-center justify-center pt-16">
+      <div className="absolute inset-0 flex items-center justify-center pb-32 pt-6 pointer-events-none">
         <img
           src={bossMascot}
           alt="Boss"
@@ -297,6 +260,7 @@ export function BossPhase({
       {inner.kind === "announce" && (
         <BossAnnounce
           player={player}
+          judge={judge}
           attack={inner.attack}
           onDone={onAnnounceDone}
         />

@@ -20,7 +20,7 @@ import {
   type CellType,
 } from "@/lib/game";
 import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle } from "@/lib/sfx";
-import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
+import { Bomb, Dice5, Play, Share2, Download, RotateCcw, Flame } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";

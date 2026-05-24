@@ -25,6 +25,8 @@ import bombMascot from "@/assets/bomb-mascot.png";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { BossPhase, BossVictory } from "@/components/BossPhase";
+import { cellPos, cellBg, COLS, ROWS, POD_COLORS } from "@/components/GymMap";
+import { BOARD } from "@/lib/game";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,

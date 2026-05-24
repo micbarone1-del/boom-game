@@ -206,7 +206,7 @@ export function GymMap({
           ["VS BATTLE", "#fff"],
           ["BLAST +", "#22c55e"],
           ["SETBACK -", "#a855f7"],
-        ].map(([label, bg, fg]) => (
+        ].map(([label, bg]) => (
           <span
             key={label}
             className="px-2.5 py-1 rounded-full ink-border-sm"

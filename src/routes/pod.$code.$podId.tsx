@@ -257,7 +257,6 @@ function PodPage() {
   if (phase.kind === "done") {
     return (
       <>
-        <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
         <WrapUp
           players={ordered}
           winnerId={phase.winnerId}
@@ -273,7 +272,6 @@ function PodPage() {
     const player = ordered.find((p) => p.id === phase.playerId)!;
     return (
       <>
-        <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
         <PlayerPhase
           player={player}
           players={ordered}
@@ -293,7 +291,6 @@ function PodPage() {
     const j = ordered.find((x) => x.id === phase.judgeId)!;
     return (
       <>
-        <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
         <SwitchPhase
           player={p}
           judge={j}
@@ -311,7 +308,6 @@ function PodPage() {
     const p = ordered.find((x) => x.id === phase.playerId)!;
     return (
       <>
-        <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
         <JudgePhase
           player={p}
           trap={phase.trap}
@@ -326,7 +322,6 @@ function PodPage() {
   const p = ordered.find((x) => x.id === phase.playerId)!;
   return (
     <>
-      <GlobalFuseBar startedAt={startedAt} endsAt={endsAt} />
       <ResolveSplash player={p} outcome={phase.outcome} />
       {overlay}
     </>

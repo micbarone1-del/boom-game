@@ -351,26 +351,10 @@ function BossAnnounce({
     return () => clearTimeout(t);
   }, [count]);
 
-  const color = avatarColor(player.avatar_url);
-
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-black/60 p-4">
-      <div
-        className="rounded-full overflow-hidden flex items-center justify-center"
-        style={{
-          width: 96,
-          height: 96,
-          background: color,
-          boxShadow: `0 0 0 4px #111, 0 0 0 8px ${color}`,
-        }}
-      >
-        <Bomb size={56} color="white" fill="white" />
-      </div>
-      <div
-        className="text-3xl font-black text-white text-center px-4"
-        style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}
-      >
-        {player.username} ATTACKS!
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 bg-black/35 p-4 pb-20">
+      <div className="mt-2 text-center text-4xl font-black text-white" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>
+        BOSS ATTACK
       </div>
       <div
         className="ink-border rounded-2xl bg-white px-5 py-3 text-center max-w-[92%]"
@@ -387,6 +371,23 @@ function BossAnnounce({
         </div>
         <div className="font-bold" style={{ color: "var(--boom-ink)" }}>
           {attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps`}
+        </div>
+      </div>
+      <div className="flex items-center justify-around w-full max-w-md">
+        <div className="flex flex-col items-center gap-1 anim-fade-in">
+          <BossAvatar player={player} size={72} />
+          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
+            Player
+          </div>
+          <div className="text-sm font-bold text-white" style={{ textShadow: "1px 1px 0 #000" }}>{player.username}</div>
+        </div>
+        <div className="text-4xl">➡️</div>
+        <div className="flex flex-col items-center gap-1 anim-fade-in">
+          <BossAvatar player={judge} size={72} />
+          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
+            Judge
+          </div>
+          <div className="text-sm font-bold text-white" style={{ textShadow: "1px 1px 0 #000" }}>{judge.username}</div>
         </div>
       </div>
       <div

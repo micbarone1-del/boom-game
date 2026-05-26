@@ -726,8 +726,14 @@ function SwitchPhase({
   return (
     <main
       className="fixed inset-0 flex flex-col items-center justify-between p-4 gap-3"
-      style={{ background: flavor.color, transition: "background 250ms" }}
+      style={{ background: "#ffffff" }}
     >
+      {/* Thick rounded black frame so text reads clearly */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-2 rounded-[2rem]"
+        style={{ border: "8px solid #111" }}
+      />
       {/* Cell mascot + label banner */}
       <div className="flex flex-col items-center gap-2 mt-2 w-full">
         <img
@@ -742,7 +748,7 @@ function SwitchPhase({
         >
           <span
             className="text-2xl font-black"
-            style={{ color: flavor.color === "#7c3aed" ? "#7c3aed" : "var(--boom-ink)" }}
+            style={{ color: flavor.color }}
           >
             {flavor.label}
           </span>

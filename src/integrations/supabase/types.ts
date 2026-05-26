@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      game_results: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          finish_rank: number | null
+          id: string
+          pod_id: string | null
+          room_code: string
+          score: number
+          user_id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          finish_rank?: number | null
+          id?: string
+          pod_id?: string | null
+          room_code: string
+          score?: number
+          user_id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          finish_rank?: number | null
+          id?: string
+          pod_id?: string | null
+          room_code?: string
+          score?: number
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           avatar_url: string | null

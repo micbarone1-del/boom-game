@@ -1364,6 +1364,67 @@ function WrapUp({
   const ranked = [...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   const clipList = Array.from(clips.entries());
   const [spoken, setSpoken] = useState(false);
+  const { user } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [connectingFor, setConnectingFor] = useState<string | null>(null);
+  const [recordedFor, setRecordedFor] = useState<Set<string>>(new Set());
+  const [localPlayers, setLocalPlayers] = useState<Player[]>(players);
+  useEffect(() => setLocalPlayers(players), [players]);
+
+  // When a player slot is linked to the signed-in user, persist a game_results row
+  // (the DB trigger bumps profile lifetime score + games_finished).
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      for (const p of localPlayers) {
+        if (p.user_id !== user.id) continue;
+        if (recordedFor.has(p.id)) continue;
+        const rank =
+          ranked.findIndex((r) => r.id === p.id) >= 0
+            ? ranked.findIndex((r) => r.id === p.id) + 1
+            : null;
+        const { error } = await supabase.from("game_results").insert({
+          user_id: user.id,
+          username: p.username,
+          avatar_url: p.avatar_url,
+          score: p.score ?? 0,
+          finish_rank: rank,
+          room_code: p.room_code,
+          pod_id: p.pod_id ?? null,
+        });
+        if (!error) {
+          setRecordedFor((s) => new Set(s).add(p.id));
+        }
+      }
+    })();
+  }, [user, localPlayers, ranked, recordedFor]);
+
+  const connectSlot = async (playerId: string) => {
+    if (!user) {
+      setConnectingFor(playerId);
+      setAuthOpen(true);
+      return;
+    }
+    const { data, error } = await supabase
+      .from("players")
+      .update({ user_id: user.id })
+      .eq("id", playerId)
+      .select()
+      .single();
+    if (!error && data) {
+      setLocalPlayers((arr) => arr.map((p) => (p.id === playerId ? (data as Player) : p)));
+    }
+  };
+
+  // After signing in via the modal, finish connecting the pending slot.
+  useEffect(() => {
+    if (user && connectingFor) {
+      const id = connectingFor;
+      setConnectingFor(null);
+      void connectSlot(id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   useEffect(() => {
     if (spoken) return;
@@ -1408,24 +1469,72 @@ function WrapUp({
 
       {/* Ranking */}
       <div className="ink-border rounded-2xl p-4 bg-white flex flex-col gap-2">
-        <div className="text-lg font-black mb-1">Final Ranking</div>
-        {ranked.map((p, i) => (
+        <div className="text-lg font-black mb-1" style={{ fontFamily: "'Luckiest Guy', cursive" }}>Final Ranking</div>
+        {[...localPlayers].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p, i) => (
           <div key={p.id} className="flex items-center gap-3 py-2">
             <div className="text-2xl font-black w-8" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
               {i + 1}
             </div>
             <Avatar player={p} size={44} />
-            <div className="flex-1 font-bold">{p.username}</div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold truncate">{p.username}</div>
+              {p.user_id ? (
+                <div className="text-[10px] font-bold opacity-60">✓ profile connected</div>
+              ) : (
+                <button
+                  onClick={() => connectSlot(p.id)}
+                  className="text-[10px] font-black underline opacity-80"
+                  style={{ color: "var(--boom-red)" }}
+                >
+                  Connect profile →
+                </button>
+              )}
+            </div>
             <div className="font-black" style={{ color: "var(--boom-red)" }}>
               {p.score ?? 0}
             </div>
           </div>
         ))}
+        {!user && (
+          <button
+            onClick={() => setAuthOpen(true)}
+            className="btn-boom mt-2 py-2 text-base"
+            style={{ background: "var(--boom-green)", fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            Sign in to save scores
+          </button>
+        )}
       </div>
+
+      {/* Shareable recap videos */}
+      <div className="ink-border rounded-2xl p-4 bg-white flex flex-col gap-2">
+        <div className="text-lg font-black mb-1" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+          Share your recap
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {[...localPlayers]
+            .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+            .map((p, i) => (
+              <RecapVideo
+                key={p.id}
+                player={{
+                  username: p.username,
+                  avatar_url: p.avatar_url,
+                  score: p.score ?? 0,
+                  rank: i + 1,
+                }}
+                total={localPlayers.length}
+              />
+            ))}
+        </div>
+      </div>
+
+      {/* Global leaderboard */}
+      <GlobalLeaderboard highlightUserId={user?.id ?? null} />
 
       {/* Clips */}
       <div className="ink-border rounded-2xl p-4 bg-white flex flex-col gap-2">
-        <div className="text-lg font-black mb-1">Game Highlights</div>
+        <div className="text-lg font-black mb-1" style={{ fontFamily: "'Luckiest Guy', cursive" }}>Judge Highlights</div>
         {clipList.length === 0 ? (
           <div className="text-sm opacity-60">No clips captured this round.</div>
         ) : (
@@ -1457,7 +1566,6 @@ function WrapUp({
             ))}
           </div>
         )}
-        <div className="text-xs opacity-50 italic mt-2">Summary edit — coming soon</div>
       </div>
 
       <button
@@ -1470,6 +1578,13 @@ function WrapUp({
       <Link to="/" className="text-center text-xs opacity-60 underline">
         Back to home
       </Link>
+      <AuthSheet
+        open={authOpen}
+        onClose={() => {
+          setAuthOpen(false);
+          setConnectingFor(null);
+        }}
+      />
     </main>
   );
 }

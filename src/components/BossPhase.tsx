@@ -401,8 +401,9 @@ function BossSwitch({
   }, [count]);
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 bg-black/55 p-4 pb-20">
-      <div className="mt-2 text-center text-4xl font-black text-white" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 p-4 pb-20" style={{ background: "#ffffff" }}>
+      <div aria-hidden className="pointer-events-none absolute inset-2 rounded-[2rem]" style={{ border: "8px solid #111" }} />
+      <div className="mt-2 text-center text-4xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
         BOSS ATTACK
       </div>
       <div
@@ -428,7 +429,7 @@ function BossSwitch({
           <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
             Player
           </div>
-          <div className="text-sm font-bold text-white" style={{ textShadow: "1px 1px 0 #000" }}>{player.username}</div>
+          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{player.username}</div>
         </div>
         <div className="text-4xl">➡️</div>
         <div className="flex flex-col items-center gap-1 anim-fade-in">
@@ -436,7 +437,7 @@ function BossSwitch({
           <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
             Judge
           </div>
-          <div className="text-sm font-bold text-white" style={{ textShadow: "1px 1px 0 #000" }}>{judge.username}</div>
+          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
         </div>
       </div>
       <div
@@ -453,7 +454,7 @@ function BossSwitch({
       >
         {count > 0 ? count : "GO!"}
       </div>
-      <div className="text-sm font-bold text-white opacity-90 text-center px-6" style={{ textShadow: "1px 1px 0 #000" }}>
+      <div className="text-sm font-bold opacity-90 text-center px-6" style={{ color: "var(--boom-ink)" }}>
         Pass the phone to {judge.username}
       </div>
     </div>

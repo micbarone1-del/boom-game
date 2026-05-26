@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRoom } from "@/hooks/use-room";
 import { Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthSheet } from "@/components/AuthSheet";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,
@@ -44,6 +46,9 @@ function JoinView() {
   const [slots, setSlots] = useState<Slot[]>(() => [emptySlot(0), emptySlot(1)]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
 
   const takenSlots = useMemo(() => new Set(pods.map((p) => p.slot)), [pods]);
   const availableSlots = useMemo(
@@ -129,6 +134,7 @@ function JoinView() {
       current_space: 0,
       score: 0,
       joined_at: new Date(now + i).toISOString(),
+      user_id: attachToSlotIdx === i && user ? user.id : null,
     }));
     const { error: pErr } = await supabase.from("players").insert(rows);
     if (pErr) {
@@ -159,7 +165,7 @@ function JoinView() {
     <main className="min-h-screen p-4 max-w-md mx-auto flex flex-col gap-4">
       <header className="flex items-center gap-3 mt-2">
         <img src={bombMascot} alt="" className="w-12 h-12 anim-fuse" />
-        <div>
+        <div className="flex-1">
           <h1
             className="text-3xl font-black leading-none"
             style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
@@ -168,6 +174,19 @@ function JoinView() {
           </h1>
           <p className="text-xs font-bold opacity-70">Room {code} · 2–4 players per pod</p>
         </div>
+        {user ? (
+          <div className="text-[10px] font-bold opacity-70 text-right">
+            <div>signed in</div>
+            <button onClick={() => supabase.auth.signOut()} className="underline">sign out</button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setAuthOpen(true)}
+            className="ink-border-sm rounded-xl px-3 py-2 text-xs font-black bg-white"
+          >
+            Sign in
+          </button>
+        )}
       </header>
 
       {/* Slot picker */}
@@ -215,15 +234,31 @@ function JoinView() {
       {/* Players */}
       <div className="flex flex-col gap-3">
         {slots.map((slot, i) => (
-          <SlotCard
-            key={i}
-            label={`Player ${String.fromCharCode(65 + i)}`}
-            slot={slot}
-            mascotColor={MASCOT_COLORS[i % MASCOT_COLORS.length]}
-            canRemove={slots.length > 2}
-            onRemove={() => removePlayer(i)}
-            onChange={(patch) => setSlotField(i, patch)}
-          />
+          <div key={i} className="flex flex-col gap-1">
+            <SlotCard
+              label={`Player ${String.fromCharCode(65 + i)}`}
+              slot={slot}
+              mascotColor={MASCOT_COLORS[i % MASCOT_COLORS.length]}
+              canRemove={slots.length > 2}
+              onRemove={() => removePlayer(i)}
+              onChange={(patch) => setSlotField(i, patch)}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) {
+                  setAttachToSlotIdx(i);
+                  setAuthOpen(true);
+                } else {
+                  setAttachToSlotIdx(attachToSlotIdx === i ? null : i);
+                }
+              }}
+              className="text-[11px] font-black self-end underline opacity-80"
+              style={{ color: attachToSlotIdx === i ? "var(--boom-red)" : "var(--boom-ink)" }}
+            >
+              {attachToSlotIdx === i ? "✓ this is me" : "this is me →"}
+            </button>
+          </div>
         ))}
         {slots.length < 4 && (
           <button
@@ -254,6 +289,12 @@ function JoinView() {
       <p className="text-[11px] opacity-60 text-center">
         {players.filter((p) => p.pod_id).length} players · {pods.length}/3 pods in this room
       </p>
+      <AuthSheet
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        title="Sign in to BOOM!"
+        subtitle="Track your scores on the global leaderboard"
+      />
     </main>
   );
 }

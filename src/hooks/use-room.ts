@@ -48,6 +48,7 @@ export type Player = {
   team_id?: string | null;
   is_team_lead?: boolean | null;
   pod_id?: string | null;
+  user_id?: string | null;
 };
 
 export type Pod = {

@@ -22,6 +22,10 @@ import {
 import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw, Flame } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthSheet } from "@/components/AuthSheet";
+import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
+import { RecapVideo } from "@/components/RecapVideo";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { BossPhase, BossVictory } from "@/components/BossPhase";

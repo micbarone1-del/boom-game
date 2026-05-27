@@ -1073,7 +1073,7 @@ function HopOverlay({
           {intro === "map" ? "The Board" : `${player.username} is up`}
         </div>
         <div
-          className={`relative w-full max-w-[460px] ${intro === "map" ? "anim-hop-map" : "anim-hop-zoom-token"}`}
+          className={`relative w-full max-w-[560px] ${intro === "map" ? "anim-hop-map" : "anim-hop-zoom-token"}`}
           style={{ transformOrigin: `${(cellPos(from).col + 0.5) / COLS * 100}% ${(cellPos(from).row + 0.5) / ROWS * 100}%` }}
         >
           <div
@@ -1099,16 +1099,19 @@ function HopOverlay({
                     boxShadow: isPlayerHere ? "0 0 0 2px #fff, 0 0 14px 4px #fde047" : undefined,
                   }}
                 >
+                  <HopCellGlyph type={cell.type} />
                   {here.length > 0 && (
-                    <div className="flex gap-[1px]">
+                    <div className="absolute -bottom-0.5 left-0 right-0 flex gap-[1px] justify-center">
                       {here.slice(0, 3).map((pl) => (
                         <div
                           key={pl.id}
                           className="rounded-full"
                           style={{
-                            width: 7, height: 7,
+                            width: 11, height: 11,
                             background: mascotColor(pl.avatar_url),
-                            boxShadow: pl.id === player.id ? "0 0 0 1.5px #fff" : "0 0 0 1px #111",
+                            boxShadow: pl.id === player.id
+                              ? "0 0 0 1.5px #fff, 0 0 0 2.5px #111, 0 0 8px #fde047"
+                              : "0 0 0 1.5px #111",
                           }}
                         />
                       ))}

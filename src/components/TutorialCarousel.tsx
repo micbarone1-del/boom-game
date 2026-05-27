@@ -22,8 +22,8 @@ const SLIDES = [
   },
   {
     Icon: Clock,
-    text: "NOW THE JUDGE BECOMES THE PLAYER",
-    sub: "defuse before the time is up",
+    text: "BE FAST",
+    sub: "complete the game before exploding",
     color: "var(--boom-green)",
   },
 ];

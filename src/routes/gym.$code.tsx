@@ -12,6 +12,7 @@ import { GymMap, GymScoreboard } from "@/components/GymMap";
 import { PodActivityTicker } from "@/components/PodActivityTicker";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { setBgmIntensity, startArcadeMusic } from "@/lib/sfx";
+import { PauseOverlay, PauseToggleButton } from "@/components/PauseOverlay";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -239,7 +240,7 @@ function Lobby({ code }: { code: string }) {
         })}
       </div>
 
-      <SpotifyEmbed code={code} />
+      <SpotifyEmbed code={code} paused={!!room.paused} />
 
       <button
         onClick={start}
@@ -333,8 +334,14 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
           </div>
         </div>
         <div className="flex-1 max-w-md">
-          <FuseBar startedAt={startedAt} endsAt={endsAt} paused={room.game_state !== "playing"} />
+          <FuseBar startedAt={startedAt} endsAt={endsAt} paused={room.game_state !== "playing" || !!room.paused} />
         </div>
+        <PauseToggleButton
+          paused={!!room.paused}
+          onToggle={() =>
+            supabase.from("rooms").update({ paused: !room.paused }).eq("code", code)
+          }
+        />
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-3 items-start">
@@ -348,6 +355,11 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
         <TimesOutOverlay continueDeadlineAt={continueAt} showContinue={false} />
       )}
       {room.game_state === "game_over" && <GameOverOverlay />}
+      {room.paused && (
+        <PauseOverlay
+          onResume={() => supabase.from("rooms").update({ paused: false }).eq("code", code)}
+        />
+      )}
     </main>
   );
 }

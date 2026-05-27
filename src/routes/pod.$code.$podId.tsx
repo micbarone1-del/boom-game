@@ -28,6 +28,7 @@ import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";
 import { mascotForCell, CELL_FLAVOR, CellMascot } from "@/components/CellMascot";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
+import { PauseOverlay, PauseToggleButton } from "@/components/PauseOverlay";
 import { BossPhase, BossVictory } from "@/components/BossPhase";
 // BossVictory is still exported for the standalone /boss-test sandbox but
 // the main flow now delegates to WrapUp for full leaderboard parity.
@@ -373,7 +374,7 @@ function PodPage() {
     // Auto-advance after a beat.
     setTimeout(() => {
       setPhase({ kind: "player", playerId: nextPlayerId(player.id) });
-    }, 2800);
+    }, outcome === "success" ? 1300 : 2200);
   };
 
   const restart = async () => {
@@ -421,13 +422,31 @@ function PodPage() {
 
   // Render the timeout / game-over overlays on top of whatever phase is active.
   const overlay = (() => {
+    // Always-on pause toggle in the top-right corner (z below PauseOverlay).
+    const pauseBtn = (
+      <div className="fixed top-2 right-2 z-[100]">
+        <PauseToggleButton
+          paused={!!room.paused}
+          onToggle={() =>
+            supabase.from("rooms").update({ paused: !room.paused }).eq("code", code)
+          }
+        />
+      </div>
+    );
     if (room.game_state === "timeout_continue" && continueAt) {
-      return <TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue />;
+      return <>{pauseBtn}<TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue /></>;
     }
     if (room.game_state === "game_over") {
-      return <GameOverOverlay onRestart={restart} />;
+      return <>{pauseBtn}<GameOverOverlay onRestart={restart} /></>;
     }
-    return null;
+    if (room.paused) {
+      return (
+        <PauseOverlay
+          onResume={() => supabase.from("rooms").update({ paused: false }).eq("code", code)}
+        />
+      );
+    }
+    return pauseBtn;
   })();
 
   // Boss fight + victory take over the screen.

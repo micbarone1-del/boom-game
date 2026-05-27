@@ -427,9 +427,9 @@ function PodPage() {
       <div className="fixed top-2 right-2 z-[100]">
         <PauseToggleButton
           paused={!!room.paused}
-          onToggle={() =>
-            supabase.from("rooms").update({ paused: !room.paused }).eq("code", code)
-          }
+          onToggle={() => {
+            void supabase.from("rooms").update({ paused: !room.paused }).eq("code", code).then(() => {});
+          }}
         />
       </div>
     );
@@ -442,7 +442,9 @@ function PodPage() {
     if (room.paused) {
       return (
         <PauseOverlay
-          onResume={() => supabase.from("rooms").update({ paused: false }).eq("code", code)}
+          onResume={() => {
+            void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
+          }}
         />
       );
     }

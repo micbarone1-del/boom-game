@@ -475,6 +475,16 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
   try {
     sfx.unlock();
     primeSpeech();
+    // De-duplicate identical narration fired within a short window
+    // (React StrictMode double-invokes effects, and some callers also
+    // re-mount on state ticks — both used to make the voice say the
+    // same line twice in a row).
+    const g = globalThis as any;
+    const now = Date.now();
+    if (g.__boomLastSpeak && g.__boomLastSpeak.text === text && now - g.__boomLastSpeak.t < 1500) {
+      return;
+    }
+    g.__boomLastSpeak = { text, t: now };
     // TTS engines expand "reps" → "representatives". Force phonetic
     // pronunciation. Same trick for short tokens that get over-expanded.
     const normalized = text

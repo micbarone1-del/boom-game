@@ -422,11 +422,22 @@ function PodPage() {
 
   // Render the timeout / game-over overlays on top of whatever phase is active.
   const overlay = (() => {
+    // Always-on pause toggle in the top-right corner (z below PauseOverlay).
+    const pauseBtn = (
+      <div className="fixed top-2 right-2 z-[100]">
+        <PauseToggleButton
+          paused={!!room.paused}
+          onToggle={() =>
+            supabase.from("rooms").update({ paused: !room.paused }).eq("code", code)
+          }
+        />
+      </div>
+    );
     if (room.game_state === "timeout_continue" && continueAt) {
-      return <TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue />;
+      return <>{pauseBtn}<TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue /></>;
     }
     if (room.game_state === "game_over") {
-      return <GameOverOverlay onRestart={restart} />;
+      return <>{pauseBtn}<GameOverOverlay onRestart={restart} /></>;
     }
     if (room.paused) {
       return (
@@ -435,7 +446,7 @@ function PodPage() {
         />
       );
     }
-    return null;
+    return pauseBtn;
   })();
 
   // Boss fight + victory take over the screen.

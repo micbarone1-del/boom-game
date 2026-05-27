@@ -728,26 +728,58 @@ function BossJudge({
  * with "YOU WIN!" before the parent route flips to the leaderboard.
  */
 function BossDeathOverlay() {
-  const [stage, setStage] = useState<"shake" | "explode" | "win">("shake");
+  const [stage, setStage] = useState<"shake" | "boom" | "win">("shake");
+  // Spam many small explosion bursts during the shake phase.
+  const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number; s: number }>>([]);
   useEffect(() => {
-    const t1 = setTimeout(() => setStage("explode"), 1400);
-    const t2 = setTimeout(() => setStage("win"), 2000);
+    let id = 0;
+    const spawn = window.setInterval(() => {
+      setBursts((b) => [
+        ...b.slice(-18),
+        {
+          id: id++,
+          x: 10 + Math.random() * 80,
+          y: 15 + Math.random() * 70,
+          s: 0.6 + Math.random() * 1.1,
+        },
+      ]);
+    }, 110);
+    // Layered explosion sounds during the shake.
+    const sfxTimers: number[] = [];
+    for (let i = 0; i < 14; i++) {
+      sfxTimers.push(window.setTimeout(() => sfx.play("blowUp"), 80 + i * 220));
+    }
+    // Big finale: loud explosion, then robot voice, then "YOU WIN!".
+    const t1 = window.setTimeout(() => {
+      setStage("boom");
+      sfx.play("blowUp");
+      window.setTimeout(() => sfx.play("blowUp"), 180);
+      window.setTimeout(() => sfx.play("blowUp"), 360);
+    }, 3400);
+    const t2 = window.setTimeout(() => {
+      setStage("win");
+      speak("Boss defeated. Victory!", { pitch: 1.1, rate: 0.85 });
+      sfx.play("win");
+    }, 4200);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      window.clearInterval(spawn);
+      sfxTimers.forEach((t) => window.clearTimeout(t));
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
     };
   }, []);
   return (
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden"
+      className={`absolute inset-0 z-50 flex items-center justify-center overflow-hidden ${stage !== "win" ? "anim-shake" : ""}`}
       style={{
         background:
           stage === "win"
-            ? "radial-gradient(ellipse at center, #fde047 0%, #ea580c 60%, #7c2d12 100%)"
+            ? "radial-gradient(ellipse at center, #fde047 0%, #ea580c 55%, #7c2d12 100%)"
             : "radial-gradient(ellipse at center, #7a0000 0%, #1a0000 60%, #000 100%)",
         transition: "background 400ms",
       }}
     >
+      {/* Boss heavily shaking during the spam phase */}
       {stage === "shake" && (
         <img
           src={bossMascot}
@@ -756,11 +788,32 @@ function BossDeathOverlay() {
           style={{ filter: "brightness(1.6) drop-shadow(0 0 30px #ef4444)" }}
         />
       )}
-      {stage === "explode" && (
-        <div className="text-[18rem] anim-pop" style={{ filter: "drop-shadow(0 0 60px #fff)" }}>
+      {/* Scattered small explosion bursts */}
+      {stage === "shake" && bursts.map((b) => (
+        <div
+          key={b.id}
+          className="absolute anim-pop pointer-events-none"
+          style={{
+            left: `${b.x}%`,
+            top: `${b.y}%`,
+            transform: `translate(-50%, -50%) scale(${b.s})`,
+            filter: "drop-shadow(0 0 18px #fff)",
+            fontSize: "5rem",
+          }}
+        >
+          💥
+        </div>
+      ))}
+      {/* One huge fullscreen explosion */}
+      {stage === "boom" && (
+        <div
+          className="text-[22rem] anim-pop"
+          style={{ filter: "drop-shadow(0 0 80px #fff) drop-shadow(0 0 200px #fbbf24)" }}
+        >
           💥
         </div>
       )}
+      {/* Victory card */}
       {stage === "win" && (
         <div className="flex flex-col items-center gap-4 anim-pop">
           <img

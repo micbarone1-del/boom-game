@@ -427,6 +427,13 @@ function PodPage() {
     if (room.game_state === "game_over") {
       return <GameOverOverlay onRestart={restart} />;
     }
+    if (room.paused) {
+      return (
+        <PauseOverlay
+          onResume={() => supabase.from("rooms").update({ paused: false }).eq("code", code)}
+        />
+      );
+    }
     return null;
   })();
 

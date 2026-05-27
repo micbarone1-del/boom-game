@@ -728,3 +728,56 @@ export function startArcadeRise(durationMs: number): () => void {
     }
   };
 }
+
+// ---------------------------------------------------------------------------
+// Pause-cell jingle — bouncy major-scale chirp + handclap shaker, ~3 seconds.
+// Returns a stop function so callers can cancel if the user advances early.
+// ---------------------------------------------------------------------------
+export function playPauseMusic(): () => void {
+  if (muted) return () => {};
+  const c = ac();
+  if (!c) return () => {};
+  const stops: Array<() => void> = [];
+  const start = c.currentTime + 0.05;
+  // Cheerful C-major arpeggio looped twice over ~3s.
+  const seq = [523, 659, 784, 1047, 1319, 1047, 784, 659];
+  const stepDur = 0.18;
+  for (let loop = 0; loop < 2; loop++) {
+    seq.forEach((f, i) => {
+      const t0 = start + (loop * seq.length + i) * stepDur;
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(f, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + stepDur * 0.9);
+      o.connect(g).connect(out(c));
+      o.start(t0);
+      o.stop(t0 + stepDur);
+      stops.push(() => { try { o.stop(c.currentTime); } catch {} });
+    });
+  }
+  // Light hand-clap on every other step.
+  for (let i = 0; i < 16; i++) {
+    if (i % 2 !== 1) continue;
+    const t0 = start + i * stepDur;
+    const len = Math.floor(c.sampleRate * 0.06);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let j = 0; j < len; j++) data[j] = (Math.random() * 2 - 1) * (1 - j / len);
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.18, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.07);
+    const f = c.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.value = 1800;
+    src.connect(f).connect(g).connect(out(c));
+    src.start(t0);
+    src.stop(t0 + 0.08);
+    stops.push(() => { try { src.stop(c.currentTime); } catch {} });
+  }
+  return () => stops.forEach((s) => s());
+}

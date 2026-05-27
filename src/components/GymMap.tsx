@@ -2,6 +2,7 @@ import { BOARD, BOARD_SIZE, CELL_LABEL, type CellType } from "@/lib/game";
 import type { Player, Pod } from "@/hooks/use-room";
 import { mascotForCell } from "@/components/CellMascot";
 import { Bomb, Trophy, HelpCircle, Zap, ArrowLeft, AlertTriangle, Users, Flame, Dumbbell } from "lucide-react";
+import { Pause } from "lucide-react";
 
 export const POD_COLORS = ["#fbbf24", "#fb923c", "#4ade80"];
 export const COLS = 16;
@@ -37,6 +38,7 @@ export function cellBg(type: CellType) {
     case "group": return "#3b82f6";      // blue
     case "boost": return "#22c55e";      // boost = green lightning
     case "setback": return "#a855f7";    // purple
+    case "pause": return "#06b6d4";      // cyan
   }
   return "#eee";
 }
@@ -55,6 +57,8 @@ function CellGlyph({ type }: { type: CellType }) {
       return <AlertTriangle {...props} color="#fff" />;
     case "group":
       return <Users {...props} color="#fff" />;
+    case "pause":
+      return <Pause {...props} fill="#fff" color="#fff" />;
     case "finish":
       return <Trophy {...props} color="#111" />;
     case "start":
@@ -203,6 +207,7 @@ export function GymMap({
           ["SURPRISE", "#ec4899"],
           ["CRAZY", "#22d3ee"],
           ["ALL TOGETHER", "#3b82f6"],
+          ["PAUSE", "#06b6d4"],
           ["VS BATTLE", "#fff"],
           ["BLAST +", "#22c55e"],
           ["SETBACK -", "#a855f7"],

@@ -19,8 +19,8 @@ import {
   type BoardOverrides,
   type CellType,
 } from "@/lib/game";
-import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle } from "@/lib/sfx";
-import { Bomb, Dice5, Play, Share2, Download, RotateCcw, Flame } from "lucide-react";
+import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle, playPauseMusic } from "@/lib/sfx";
+import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthSheet } from "@/components/AuthSheet";
@@ -33,7 +33,8 @@ import { BossPhase, BossVictory } from "@/components/BossPhase";
 // the main flow now delegates to WrapUp for full leaderboard parity.
 void BossVictory;
 import { cellPos, cellBg, COLS, ROWS, POD_COLORS } from "@/components/GymMap";
-import { BOARD } from "@/lib/game";
+import { BOARD, CELL_LABEL } from "@/lib/game";
+import { Zap, ArrowLeft, HelpCircle, AlertTriangle, Users, Flame, Dumbbell, Trophy, Pause, Swords } from "lucide-react";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,
@@ -49,6 +50,9 @@ type Phase =
   | { kind: "player"; playerId: string }
   | { kind: "switch"; playerId: string; judgeId: string; trap: ActiveTrap }
   | { kind: "judge"; playerId: string; judgeId: string; trap: ActiveTrap }
+  | { kind: "vs"; playerAId: string; playerBId: string; trap: ActiveTrap }
+  | { kind: "group"; playerId: string; trap: ActiveTrap }
+  | { kind: "pause"; playerId: string; finalSpace: number }
   | { kind: "resolve"; playerId: string; outcome: "success" | "fail"; trap: ActiveTrap }
   | { kind: "done"; winnerId: string };
 
@@ -137,17 +141,8 @@ function PodPage() {
 
   // --- Handlers between phases ---
 
-  const onRollComplete = async (player: Player, dice: number) => {
-    const target = Math.min(BOARD_SIZE, player.current_space + dice);
-    const cell = getEffectiveCell(target, overrides);
-    let final = target;
-    if (cell.type === "boost") {
-      final = resolveMovementLanding(Math.min(BOARD_SIZE, target + (cell.delta ?? 0)), "boost");
-    } else if (cell.type === "setback") {
-      final = resolveMovementLanding(Math.max(1, target + (cell.delta ?? 0)), "setback");
-    } else if (cell.type === "finish") {
-      final = BOARD_SIZE;
-    }
+  const onRollComplete = async (player: Player, _dice: number, finalArg: number) => {
+    const final = finalArg;
     const finalCell = getEffectiveCell(final, overrides);
 
     await supabase.from("players").update({ current_space: final }).eq("id", player.id);
@@ -166,6 +161,42 @@ function PodPage() {
           boss_started_at: new Date().toISOString(),
         })
         .eq("code", code);
+      return;
+    }
+
+    // VS collision — another pod player already on this space → VS battle.
+    const opponents = ordered.filter(
+      (p) => p.id !== player.id && !p.finished_at && p.current_space === final,
+    );
+    if (
+      opponents.length > 0 &&
+      (finalCell.type === "easy" ||
+        finalCell.type === "medium" ||
+        finalCell.type === "hard" ||
+        finalCell.type === "surprise" ||
+        finalCell.type === "crazy")
+    ) {
+      const tier =
+        finalCell.type === "hard" || finalCell.type === "crazy"
+          ? 3
+          : finalCell.type === "medium"
+            ? 2
+            : 1;
+      const exercise =
+        finalCell.type === "surprise"
+          ? pickSurpriseExercise(overrides).exercise
+          : finalCell.type === "crazy"
+            ? pickCrazyExercise().exercise
+            : finalCell.exercise ?? "Squats";
+      const reps = calcRepsForTier(tier as 1 | 2 | 3, player.fitness_level, room.difficulty_multiplier);
+      const trap: ActiveTrap = {
+        exercise,
+        reps,
+        unit: "reps",
+        finalSpace: final,
+        cellType: finalCell.type,
+      };
+      setPhase({ kind: "vs", playerAId: player.id, playerBId: opponents[0].id, trap });
       return;
     }
 
@@ -190,13 +221,11 @@ function PodPage() {
       setPhase({ kind: "switch", playerId: player.id, judgeId: nextPlayerId(player.id), trap });
       return;
     }
-    if (finalCell.type === "surprise" || finalCell.type === "crazy" || finalCell.type === "group") {
+    if (finalCell.type === "surprise" || finalCell.type === "crazy") {
       const pick =
         finalCell.type === "surprise"
           ? pickSurpriseExercise(overrides)
-          : finalCell.type === "crazy"
-            ? pickCrazyExercise()
-            : pickGroupExercise();
+          : pickCrazyExercise();
       const reps = calcRepsForTier(pick.tier, player.fitness_level, room.difficulty_multiplier);
       const isHold = /\bhold\b/i.test(pick.exercise);
       const trap: ActiveTrap = {
@@ -209,6 +238,24 @@ function PodPage() {
       setPhase({ kind: "switch", playerId: player.id, judgeId: nextPlayerId(player.id), trap });
       return;
     }
+    if (finalCell.type === "group") {
+      const pick = pickGroupExercise();
+      const reps = calcRepsForTier(pick.tier, player.fitness_level, room.difficulty_multiplier);
+      const isHold = /\bhold\b/i.test(pick.exercise);
+      const trap: ActiveTrap = {
+        exercise: pick.exercise,
+        reps,
+        unit: isHold ? "seconds" : "reps",
+        finalSpace: final,
+        cellType: "group",
+      };
+      setPhase({ kind: "group", playerId: player.id, trap });
+      return;
+    }
+    if (finalCell.type === "pause") {
+      setPhase({ kind: "pause", playerId: player.id, finalSpace: final });
+      return;
+    }
     // No exercise: finish?
     if (final >= BOARD_SIZE) {
       await finishPlayer(player.id, code);
@@ -217,6 +264,67 @@ function PodPage() {
     }
     // Pass turn
     setPhase({ kind: "player", playerId: nextPlayerId(player.id) });
+  };
+
+  // ---- VS result: winner gets 2× points, loser gets 0.5×.
+  const onVsResult = async (winnerId: string) => {
+    if (phase.kind !== "vs") return;
+    const { playerAId, playerBId, trap } = phase;
+    const loserId = winnerId === playerAId ? playerBId : playerAId;
+    const winnerReps = Math.round(trap.reps * 2);
+    const loserReps = Math.round(trap.reps * 0.5);
+    await supabase.from("workout_logs").insert([
+      {
+        room_code: code,
+        player_id: winnerId,
+        exercise_name: `VS: ${trap.exercise}`,
+        target_reps: winnerReps,
+        unit: "reps",
+        time_taken_ms: 0,
+        verified_by_judge: true,
+      },
+      {
+        room_code: code,
+        player_id: loserId,
+        exercise_name: `VS: ${trap.exercise}`,
+        target_reps: loserReps,
+        unit: "reps",
+        time_taken_ms: 0,
+        verified_by_judge: true,
+      },
+    ]);
+    await recalcPlayerScore(winnerId, code);
+    await recalcPlayerScore(loserId, code);
+    setPhase({ kind: "player", playerId: nextPlayerId(playerAId) });
+  };
+
+  // ---- Group cell: every pod member gets credit, no judge.
+  const onGroupComplete = async () => {
+    if (phase.kind !== "group") return;
+    const { trap, playerId } = phase;
+    const rows = ordered
+      .filter((p) => !p.finished_at)
+      .map((p) => ({
+        room_code: code,
+        player_id: p.id,
+        exercise_name: `ALL: ${trap.exercise}`,
+        target_reps: trap.reps,
+        unit: trap.unit,
+        time_taken_ms: 0,
+        verified_by_judge: true,
+      }));
+    if (rows.length > 0) {
+      await supabase.from("workout_logs").insert(rows);
+      await Promise.all(rows.map((r) => recalcPlayerScore(r.player_id, code)));
+    }
+    setPhase({ kind: "player", playerId: nextPlayerId(playerId) });
+  };
+
+  // ---- Pause cell: small breather, no judge, auto-advance.
+  const onPauseComplete = async () => {
+    if (phase.kind !== "pause") return;
+    const { playerId } = phase;
+    setPhase({ kind: "player", playerId: nextPlayerId(playerId) });
   };
 
   const onJudgeResult = async (outcome: "success" | "fail", clipBlob: Blob | null) => {
@@ -372,7 +480,7 @@ function PodPage() {
         <PlayerPhase
           player={player}
           players={ordered}
-          onRoll={(d) => onRollComplete(player, d)}
+          onRoll={(d, resolved) => onRollComplete(player, d, resolved)}
           code={code}
           onRestart={restart}
           startedAt={startedAt}
@@ -411,6 +519,45 @@ function PodPage() {
           trap={phase.trap}
           onComplete={onJudgeResult}
         />
+        {overlay}
+      </>
+    );
+  }
+
+  if (phase.kind === "vs") {
+    const a = ordered.find((x) => x.id === phase.playerAId)!;
+    const b = ordered.find((x) => x.id === phase.playerBId)!;
+    return (
+      <>
+        <VsPhase
+          playerA={a}
+          playerB={b}
+          trap={phase.trap}
+          onComplete={onVsResult}
+        />
+        {overlay}
+      </>
+    );
+  }
+  if (phase.kind === "group") {
+    const p = ordered.find((x) => x.id === phase.playerId)!;
+    return (
+      <>
+        <GroupPhase
+          triggerPlayer={p}
+          podPlayers={ordered}
+          trap={phase.trap}
+          onComplete={onGroupComplete}
+        />
+        {overlay}
+      </>
+    );
+  }
+  if (phase.kind === "pause") {
+    const p = ordered.find((x) => x.id === phase.playerId)!;
+    return (
+      <>
+        <PausePhase player={p} onComplete={onPauseComplete} />
         {overlay}
       </>
     );
@@ -580,7 +727,7 @@ function PlayerPhase({
 }: {
   player: Player;
   players: Player[];
-  onRoll: (dice: number) => void;
+  onRoll: (dice: number, resolved: number) => void | Promise<void>;
   code: string;
   onRestart: () => void;
   startedAt: number | null;
@@ -626,17 +773,44 @@ function PlayerPhase({
     const from = player.current_space;
     const to = Math.min(BOARD_SIZE, from + final);
     setHopping({ from, to, step: 0 });
-    // Zoom-in intro from the full map to the player token before hopping.
-    await new Promise((r) => setTimeout(r, 750));
+    // Slow zoom-in intro from the full map to the player's path.
+    await new Promise((r) => setTimeout(r, 1600));
     for (let i = 1; i <= final; i++) {
       await new Promise((r) => setTimeout(r, 220));
       setHopping({ from, to, step: i });
       sfx.play("hop");
     }
     await new Promise((r) => setTimeout(r, 350));
-    setHopping(null);
-    // Power-up celebration when the landing cell is a boost cell.
+    // Resolve boost/setback into a second hop chain before clearing the overlay.
     const landingCell = getEffectiveCell(to, overrides);
+    let resolved = to;
+    if (landingCell.type === "boost") {
+      resolved = resolveMovementLanding(
+        Math.min(BOARD_SIZE, to + (landingCell.delta ?? 0)),
+        "boost",
+      );
+    } else if (landingCell.type === "setback") {
+      resolved = resolveMovementLanding(
+        Math.max(1, to + (landingCell.delta ?? 0)),
+        "setback",
+      );
+    }
+    if (resolved !== to) {
+      // Brief cell animation pause, then second hop chain to the resolved cell.
+      sfx.play(landingCell.type === "boost" ? "blast" : "setback");
+      await new Promise((r) => setTimeout(r, 900));
+      const dir = resolved > to ? 1 : -1;
+      const steps = Math.abs(resolved - to);
+      setHopping({ from: to, to: resolved, step: 0 });
+      for (let i = 1; i <= steps; i++) {
+        await new Promise((r) => setTimeout(r, 200));
+        setHopping({ from: to, to: resolved, step: i });
+        sfx.play("hop");
+        void dir;
+      }
+      await new Promise((r) => setTimeout(r, 350));
+    }
+    setHopping(null);
     if (landingCell.type === "boost") {
       sfx.play("blast");
       speak(`${player.username}, power up!`, { volume: 1, rate: 0.85, pitch: 1.1 });
@@ -645,14 +819,14 @@ function PlayerPhase({
       setPowerUp(false);
     }
     setRolling(false);
-    onRoll(final);
+    void onRoll(final, resolved);
     void start;
   };
 
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
       {hopping && (
-        <HopOverlay player={player} from={hopping.from} to={hopping.to} step={hopping.step} />
+        <HopOverlay player={player} players={players} from={hopping.from} to={hopping.to} step={hopping.step} />
       )}
       {powerUp && <PowerUpOverlay player={player} />}
       <button
@@ -846,11 +1020,13 @@ function SwitchPhase({
 
 function HopOverlay({
   player,
+  players,
   from,
   to,
   step,
 }: {
   player: Player;
+  players: Player[];
   from: number;
   to: number;
   step: number;
@@ -860,6 +1036,19 @@ function HopOverlay({
   const progress = Math.min(1, step / totalSteps);
   const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
   const tokenLeft = ((Math.min(step, totalSteps) + 0.5) / pathSpaces.length) * 100;
+  // Other tokens (not the rolling player) shown on top of the path cells.
+  const othersBySpace = new Map<number, Player[]>();
+  for (const p of players) {
+    if (p.id === player.id) continue;
+    const arr = othersBySpace.get(p.current_space) ?? [];
+    arr.push(p);
+    othersBySpace.set(p.current_space, arr);
+  }
+  const legend: Array<[string, string]> = [
+    ["EASY", "#facc15"], ["MED", "#22c55e"], ["HARD", "#ef4444"],
+    ["BLAST", "#22c55e"], ["BACK", "#a855f7"], ["?", "#ec4899"],
+    ["!?", "#22d3ee"], ["ALL", "#3b82f6"], ["PAUSE", "#06b6d4"],
+  ];
 
   return (
     <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden anim-hop-zoom">
@@ -916,7 +1105,21 @@ function HopOverlay({
                     fontSize: "clamp(0.75rem, 3vw, 1rem)",
                   }}
                 >
-                  {space <= 0 ? "GO" : cell.space}
+                  <HopCellGlyph type={cell.type} />
+                  <span className="absolute top-0.5 left-1 text-[9px] opacity-80">{cell.space}</span>
+                  {(othersBySpace.get(space) ?? []).slice(0, 3).map((op, oi) => (
+                    <div
+                      key={op.id}
+                      className="absolute -bottom-1 rounded-full"
+                      style={{
+                        width: 14, height: 14,
+                        left: `${20 + oi * 18}%`,
+                        background: mascotColor(op.avatar_url),
+                        boxShadow: "0 0 0 2px #111",
+                      }}
+                      title={op.username}
+                    />
+                  ))}
                 </div>
               );
             })}
@@ -930,8 +1133,38 @@ function HopOverlay({
           style={{ width: `${progress * 100}%`, background: "var(--boom-yellow)" }}
         />
       </div>
+      {/* Color key legend */}
+      <div className="absolute left-0 right-0 bottom-3 px-3 flex flex-wrap gap-1 justify-center text-[9px] font-black">
+        {legend.map(([label, bg]) => (
+          <span
+            key={label}
+            className="px-1.5 py-0.5 rounded-full"
+            style={{ background: bg, color: "#111", fontFamily: "'Luckiest Guy', cursive", border: "1.5px solid #111" }}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
     </div>
   );
+}
+
+function HopCellGlyph({ type }: { type: CellType }) {
+  const p = { size: 18, strokeWidth: 3 as const, color: "#fff" };
+  switch (type) {
+    case "boost": return <Zap {...p} fill="#fff" />;
+    case "setback": return <ArrowLeft {...p} />;
+    case "surprise": return <HelpCircle {...p} />;
+    case "crazy": return <AlertTriangle {...p} />;
+    case "group": return <Users {...p} />;
+    case "pause": return <Pause {...p} fill="#fff" />;
+    case "finish": return <Trophy {...p} color="#111" />;
+    case "hard": return <Flame {...p} />;
+    case "easy": return <Dumbbell {...p} color="#111" />;
+    case "medium": return <Zap {...p} fill="#fff" />;
+    case "start": return <span className="text-xs">🚀</span>;
+  }
+  void CELL_LABEL; return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -1611,3 +1844,150 @@ function WrapUp({
 void Play;
 void describeCell;
 void getCell;
+
+// ---------------------------------------------------------------------------
+// VS Phase — same-pod collision: both players race the same exercise.
+// First to tap their rep target wins 2×; loser keeps the 0.5× already logged.
+// ---------------------------------------------------------------------------
+function VsPhase({
+  playerA,
+  playerB,
+  trap,
+  onComplete,
+}: {
+  playerA: Player;
+  playerB: Player;
+  trap: ActiveTrap;
+  onComplete: (winnerId: string) => void;
+}) {
+  const [a, setA] = useState(0);
+  const [b, setB] = useState(0);
+  const doneRef = useRef(false);
+  useEffect(() => {
+    speak(`Versus! ${playerA.username} against ${playerB.username}. ${trap.exercise}.`);
+    sfx.play("blast");
+  }, [playerA.username, playerB.username, trap.exercise]);
+  const tap = (who: "a" | "b") => {
+    if (doneRef.current) return;
+    const setter = who === "a" ? setA : setB;
+    setter((n) => {
+      const next = n + 1;
+      repPop(next / trap.reps);
+      if (next >= trap.reps) {
+        doneRef.current = true;
+        sfx.play("win");
+        speak(`${who === "a" ? playerA.username : playerB.username} wins the duel!`);
+        setTimeout(() => onComplete(who === "a" ? playerA.id : playerB.id), 900);
+      }
+      return next;
+    });
+  };
+  const Side = ({ p, count, side }: { p: Player; count: number; side: "a" | "b" }) => (
+    <button
+      onClick={() => tap(side)}
+      className="flex-1 flex flex-col items-center justify-center gap-3 active:scale-95"
+      style={{ background: side === "a" ? "var(--boom-red)" : "var(--boom-blue)" }}
+    >
+      <Avatar player={p} size={96} />
+      <div className="text-white text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #111" }}>
+        {p.username}
+      </div>
+      <div className="text-white text-6xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
+        {count}/{trap.reps}
+      </div>
+      <div className="text-white text-xs font-bold opacity-90">TAP PER REP</div>
+    </button>
+  );
+  return (
+    <main className="fixed inset-0 flex flex-col bg-black">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+        <div className="bg-white ink-border rounded-full px-6 py-2 flex items-center gap-2">
+          <Swords size={24} />
+          <span className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            {trap.exercise}
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-1">
+        <Side p={playerA} count={a} side="a" />
+        <Side p={playerB} count={b} side="b" />
+      </div>
+    </main>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Group Phase — everybody together. Phone is down; anybody taps DONE.
+// ---------------------------------------------------------------------------
+function GroupPhase({
+  triggerPlayer,
+  podPlayers,
+  trap,
+  onComplete,
+}: {
+  triggerPlayer: Player;
+  podPlayers: Player[];
+  trap: ActiveTrap;
+  onComplete: () => void;
+}) {
+  useEffect(() => {
+    speak(`Everybody together! ${trap.exercise}, ${trap.reps} ${trap.unit}.`);
+    sfx.play("gameStart");
+  }, [trap.exercise, trap.reps, trap.unit]);
+  return (
+    <main className="fixed inset-0 flex flex-col items-center justify-between p-6 gap-3" style={{ background: "var(--boom-blue)" }}>
+      <div className="text-white text-xs font-black uppercase opacity-90 mt-4">All Together · phone down</div>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <Users size={64} color="#fff" />
+        <div className="text-white text-5xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
+          EVERYBODY!
+        </div>
+        <div className="bg-white ink-border rounded-2xl px-5 py-3">
+          <div className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            {trap.exercise}
+          </div>
+          <div className="text-xl font-bold">
+            {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
+          </div>
+        </div>
+        <div className="flex gap-2 mt-2">
+          {podPlayers.map((p) => <Avatar key={p.id} player={p} size={48} />)}
+        </div>
+        <div className="text-white text-sm opacity-90">Triggered by {triggerPlayer.username}</div>
+      </div>
+      <button
+        onClick={onComplete}
+        className="w-full max-w-sm py-5 rounded-2xl ink-border bg-[var(--boom-green)] text-white text-3xl font-black active:scale-95"
+        style={{ fontFamily: "'Luckiest Guy', cursive" }}
+      >
+        WE DID IT!
+      </button>
+    </main>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pause Phase — fun music, no judge, auto-advance.
+// ---------------------------------------------------------------------------
+function PausePhase({ player, onComplete }: { player: Player; onComplete: () => void }) {
+  useEffect(() => {
+    const stop = playPauseMusic();
+    speak(`Pause! Take a breather, ${player.username}.`);
+    const t = setTimeout(onComplete, 5000);
+    return () => { stop(); clearTimeout(t); };
+  }, [player.username, onComplete]);
+  return (
+    <main className="fixed inset-0 flex flex-col items-center justify-center gap-6" style={{ background: "#06b6d4" }}>
+      <div className="anim-mascot-bounce">
+        <Pause size={120} fill="#fff" color="#fff" />
+      </div>
+      <div className="text-white text-6xl font-black text-center px-6" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "4px 4px 0 #111" }}>
+        PAUSE!
+      </div>
+      <div className="text-white text-xl font-bold">Take a breath, {player.username} 🌬️</div>
+      <button onClick={onComplete} className="px-6 py-3 rounded-full bg-white ink-border text-lg font-black active:scale-95">
+        Skip
+      </button>
+    </main>
+  );
+}

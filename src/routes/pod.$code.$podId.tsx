@@ -1042,11 +1042,14 @@ function HopOverlay({
   to: number;
   step: number;
 }) {
-  const cur = Math.min(to, from + step);
+  // Intro phases: -2 = full board overview, -1 = zoom on player token.
+  const intro = step < 0 ? (step === -2 ? "map" : "zoom") : null;
+  const safeStep = Math.max(0, step);
+  const cur = Math.min(to, from + safeStep);
   const totalSteps = Math.max(1, to - from);
-  const progress = Math.min(1, step / totalSteps);
+  const progress = Math.min(1, safeStep / totalSteps);
   const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
-  const tokenLeft = ((Math.min(step, totalSteps) + 0.5) / pathSpaces.length) * 100;
+  const tokenLeft = ((Math.min(safeStep, totalSteps) + 0.5) / pathSpaces.length) * 100;
   // Other tokens (not the rolling player) shown on top of the path cells.
   const othersBySpace = new Map<number, Player[]>();
   for (const p of players) {
@@ -1060,6 +1063,63 @@ function HopOverlay({
     ["BLAST", "#22c55e"], ["BACK", "#a855f7"], ["?", "#ec4899"],
     ["!?", "#22d3ee"], ["ALL", "#3b82f6"], ["PAUSE", "#06b6d4"],
   ];
+
+  if (intro) {
+    return (
+      <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/85 anim-fade-in overflow-hidden p-3">
+        <div className="text-white text-xs font-bold opacity-80 mb-1 uppercase tracking-wider">
+          {intro === "map" ? "The Board" : `${player.username} is up`}
+        </div>
+        <div
+          className={`relative w-full max-w-[460px] ${intro === "map" ? "anim-hop-map" : "anim-hop-zoom-token"}`}
+          style={{ transformOrigin: `${(cellPos(from).col + 0.5) / COLS * 100}% ${(cellPos(from).row + 0.5) / ROWS * 100}%` }}
+        >
+          <div
+            className="relative grid gap-1 bg-white rounded-2xl p-2 ink-border-sm"
+            style={{
+              gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
+            }}
+          >
+            {BOARD.map((cell, idx) => {
+              const { row, col } = cellPos(idx);
+              const here = players.filter((p) => p.current_space === cell.space);
+              const isPlayerHere = here.some((p) => p.id === player.id);
+              return (
+                <div
+                  key={cell.space}
+                  className={`relative aspect-square rounded-md flex items-center justify-center ${isPlayerHere ? "anim-mascot-bounce" : ""}`}
+                  style={{
+                    background: cellBg(cell.type),
+                    gridColumn: col + 1,
+                    gridRow: row + 1,
+                    border: "1.5px solid #111",
+                    boxShadow: isPlayerHere ? "0 0 0 2px #fff, 0 0 14px 4px #fde047" : undefined,
+                  }}
+                >
+                  {here.length > 0 && (
+                    <div className="flex gap-[1px]">
+                      {here.slice(0, 3).map((pl) => (
+                        <div
+                          key={pl.id}
+                          className="rounded-full"
+                          style={{
+                            width: 7, height: 7,
+                            background: mascotColor(pl.avatar_url),
+                            boxShadow: pl.id === player.id ? "0 0 0 1.5px #fff" : "0 0 0 1px #111",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden anim-hop-zoom">

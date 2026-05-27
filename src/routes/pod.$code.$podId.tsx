@@ -20,7 +20,7 @@ import {
   type CellType,
 } from "@/lib/game";
 import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle, playPauseMusic } from "@/lib/sfx";
-import { Bomb, Dice5, Play, Share2, Download, RotateCcw, Flame } from "lucide-react";
+import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthSheet } from "@/components/AuthSheet";

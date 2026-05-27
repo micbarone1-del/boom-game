@@ -480,7 +480,7 @@ function PodPage() {
         <PlayerPhase
           player={player}
           players={ordered}
-          onRoll={(d) => onRollComplete(player, d)}
+          onRoll={(d, resolved) => onRollComplete(player, d, resolved)}
           code={code}
           onRestart={restart}
           startedAt={startedAt}

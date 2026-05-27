@@ -240,7 +240,7 @@ function Lobby({ code }: { code: string }) {
         })}
       </div>
 
-      <SpotifyEmbed code={code} />
+      <SpotifyEmbed code={code} paused={!!room.paused} />
 
       <button
         onClick={start}

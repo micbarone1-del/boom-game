@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom, type Player, type Pod, type Room } from "@/hooks/use-room";
 import { generateRoomCode } from "@/lib/game";
-import { Bomb, Copy, Play } from "lucide-react";
+import { Bomb, Copy, Play, RotateCcw, Settings } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 import { FuseBar } from "@/components/FuseBar";
@@ -108,9 +108,59 @@ function Lobby({ code }: { code: string }) {
         game_ends_at: endsAt.toISOString(),
         game_state: "playing",
         continue_deadline_at: null,
+        paused: false,
       })
       .eq("code", code);
     await supabase.from("pods").update({ status: "playing" }).eq("room_code", code);
+    setStarting(false);
+  };
+
+  const resume = async () => {
+    const startedAt = new Date();
+    const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
+    await supabase
+      .from("rooms")
+      .update({
+        paused: false,
+        game_started_at: startedAt.toISOString(),
+        game_ends_at: endsAt.toISOString(),
+        game_state: "playing",
+        continue_deadline_at: null,
+      })
+      .eq("code", code);
+  };
+
+  const restartAll = async () => {
+    if (!confirm("Reset all scores and start a new game?")) return;
+    setStarting(true);
+    const startedAt = new Date();
+    const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
+    await supabase
+      .from("players")
+      .update({ current_space: 0, score: 0, finished_at: null, finish_rank: null })
+      .eq("room_code", code);
+    await supabase
+      .from("pods")
+      .update({ status: "playing", current_space: 0, score: 0, current_turn_player_id: null })
+      .eq("room_code", code);
+    await supabase
+      .from("rooms")
+      .update({
+        status: "playing",
+        trap: null,
+        locked: false,
+        game_started_at: startedAt.toISOString(),
+        game_ends_at: endsAt.toISOString(),
+        game_state: "playing",
+        continue_deadline_at: null,
+        paused: false,
+        phase: "board",
+        boss_hp: 0,
+        boss_max_hp: 0,
+        boss_started_at: null,
+        boss_defeated_at: null,
+      })
+      .eq("code", code);
     setStarting(false);
   };
 
@@ -121,7 +171,13 @@ function Lobby({ code }: { code: string }) {
   }
 
   // Once playing, show the shared map view instead of the lobby.
-  if (room.status === "playing" || room.game_state === "playing" || room.game_state === "timeout_continue" || room.game_state === "game_over") {
+  const isLive =
+    room.status === "playing" ||
+    room.game_state === "playing" ||
+    room.game_state === "timeout_continue" ||
+    room.game_state === "game_over";
+
+  if (isLive && !room.paused) {
     return <MapView room={room} players={players} pods={pods} code={code} />;
   }
 
@@ -242,23 +298,52 @@ function Lobby({ code }: { code: string }) {
 
       <SpotifyEmbed code={code} paused={!!room.paused} />
 
-      <button
-        onClick={start}
-        disabled={!canStart}
-        className="btn-boom mt-2 text-2xl py-4 disabled:opacity-50 flex items-center justify-center gap-2"
-        style={{
-          fontFamily: "'Luckiest Guy', cursive",
-          background: canStart ? "var(--boom-red)" : "#999",
-        }}
+      <a
+        href={`/gym/${code}/customize`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ink-border rounded-2xl bg-white px-4 py-3 text-base font-black flex items-center justify-center gap-2 active:scale-95"
       >
-        <Play className="inline" /> START GAME
-      </button>
-      {!canStart && pods.length === 0 && (
+        <Settings size={18} /> CUSTOMISE TRAINING & MUSIC
+      </a>
+
+      {isLive ? (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={resume}
+            className="btn-boom text-2xl py-4 flex items-center justify-center gap-2"
+            style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-green)" }}
+          >
+            <Play className="inline" /> PLAY
+          </button>
+          <button
+            onClick={restartAll}
+            disabled={starting}
+            className="btn-boom text-2xl py-4 flex items-center justify-center gap-2 disabled:opacity-50"
+            style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
+          >
+            <RotateCcw className="inline" /> RESTART
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={start}
+          disabled={!canStart}
+          className="btn-boom mt-2 text-2xl py-4 disabled:opacity-50 flex items-center justify-center gap-2"
+          style={{
+            fontFamily: "'Luckiest Guy', cursive",
+            background: canStart ? "var(--boom-red)" : "#999",
+          }}
+        >
+          <Play className="inline" /> START GAME
+        </button>
+      )}
+      {!isLive && !canStart && pods.length === 0 && (
         <p className="text-xs text-center opacity-70">
           Waiting for at least one pod with 2+ players to join…
         </p>
       )}
-      {!canStart && pods.length > 0 && (
+      {!isLive && !canStart && pods.length > 0 && (
         <p className="text-xs text-center opacity-70">
           Every pod needs at least 2 players to start.
         </p>

@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as JoinCodeRouteImport } from './routes/join.$code'
 import { Route as GymCodeRouteImport } from './routes/gym.$code'
 import { Route as PodCodePodIdRouteImport } from './routes/pod.$code.$podId'
+import { Route as GymCodeCustomizeRouteImport } from './routes/gym.$code.customize'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -46,21 +47,28 @@ const PodCodePodIdRoute = PodCodePodIdRouteImport.update({
   path: '/pod/$code/$podId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GymCodeCustomizeRoute = GymCodeCustomizeRouteImport.update({
+  id: '/customize',
+  path: '/customize',
+  getParentRoute: () => GymCodeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/boss-test': typeof BossTestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/gym/$code': typeof GymCodeRoute
+  '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/gym/$code/customize': typeof GymCodeCustomizeRoute
   '/pod/$code/$podId': typeof PodCodePodIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/boss-test': typeof BossTestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/gym/$code': typeof GymCodeRoute
+  '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/gym/$code/customize': typeof GymCodeCustomizeRoute
   '/pod/$code/$podId': typeof PodCodePodIdRoute
 }
 export interface FileRoutesById {
@@ -68,8 +76,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/boss-test': typeof BossTestRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/gym/$code': typeof GymCodeRoute
+  '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/gym/$code/customize': typeof GymCodeCustomizeRoute
   '/pod/$code/$podId': typeof PodCodePodIdRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/gym/$code'
     | '/join/$code'
+    | '/gym/$code/customize'
     | '/pod/$code/$podId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/gym/$code'
     | '/join/$code'
+    | '/gym/$code/customize'
     | '/pod/$code/$podId'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/gym/$code'
     | '/join/$code'
+    | '/gym/$code/customize'
     | '/pod/$code/$podId'
   fileRoutesById: FileRoutesById
 }
@@ -103,7 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BossTestRoute: typeof BossTestRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  GymCodeRoute: typeof GymCodeRoute
+  GymCodeRoute: typeof GymCodeRouteWithChildren
   JoinCodeRoute: typeof JoinCodeRoute
   PodCodePodIdRoute: typeof PodCodePodIdRoute
 }
@@ -152,14 +164,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PodCodePodIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gym/$code/customize': {
+      id: '/gym/$code/customize'
+      path: '/customize'
+      fullPath: '/gym/$code/customize'
+      preLoaderRoute: typeof GymCodeCustomizeRouteImport
+      parentRoute: typeof GymCodeRoute
+    }
   }
 }
+
+interface GymCodeRouteChildren {
+  GymCodeCustomizeRoute: typeof GymCodeCustomizeRoute
+}
+
+const GymCodeRouteChildren: GymCodeRouteChildren = {
+  GymCodeCustomizeRoute: GymCodeCustomizeRoute,
+}
+
+const GymCodeRouteWithChildren =
+  GymCodeRoute._addFileChildren(GymCodeRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BossTestRoute: BossTestRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  GymCodeRoute: GymCodeRoute,
+  GymCodeRoute: GymCodeRouteWithChildren,
   JoinCodeRoute: JoinCodeRoute,
   PodCodePodIdRoute: PodCodePodIdRoute,
 }

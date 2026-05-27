@@ -727,7 +727,7 @@ function PlayerPhase({
 }: {
   player: Player;
   players: Player[];
-  onRoll: (dice: number) => void;
+  onRoll: (dice: number, resolved: number) => void | Promise<void>;
   code: string;
   onRestart: () => void;
   startedAt: number | null;
@@ -773,17 +773,44 @@ function PlayerPhase({
     const from = player.current_space;
     const to = Math.min(BOARD_SIZE, from + final);
     setHopping({ from, to, step: 0 });
-    // Zoom-in intro from the full map to the player token before hopping.
-    await new Promise((r) => setTimeout(r, 750));
+    // Slow zoom-in intro from the full map to the player's path.
+    await new Promise((r) => setTimeout(r, 1600));
     for (let i = 1; i <= final; i++) {
       await new Promise((r) => setTimeout(r, 220));
       setHopping({ from, to, step: i });
       sfx.play("hop");
     }
     await new Promise((r) => setTimeout(r, 350));
-    setHopping(null);
-    // Power-up celebration when the landing cell is a boost cell.
+    // Resolve boost/setback into a second hop chain before clearing the overlay.
     const landingCell = getEffectiveCell(to, overrides);
+    let resolved = to;
+    if (landingCell.type === "boost") {
+      resolved = resolveMovementLanding(
+        Math.min(BOARD_SIZE, to + (landingCell.delta ?? 0)),
+        "boost",
+      );
+    } else if (landingCell.type === "setback") {
+      resolved = resolveMovementLanding(
+        Math.max(1, to + (landingCell.delta ?? 0)),
+        "setback",
+      );
+    }
+    if (resolved !== to) {
+      // Brief cell animation pause, then second hop chain to the resolved cell.
+      sfx.play(landingCell.type === "boost" ? "blast" : "setback");
+      await new Promise((r) => setTimeout(r, 900));
+      const dir = resolved > to ? 1 : -1;
+      const steps = Math.abs(resolved - to);
+      setHopping({ from: to, to: resolved, step: 0 });
+      for (let i = 1; i <= steps; i++) {
+        await new Promise((r) => setTimeout(r, 200));
+        setHopping({ from: to, to: resolved, step: i });
+        sfx.play("hop");
+        void dir;
+      }
+      await new Promise((r) => setTimeout(r, 350));
+    }
+    setHopping(null);
     if (landingCell.type === "boost") {
       sfx.play("blast");
       speak(`${player.username}, power up!`, { volume: 1, rate: 0.85, pitch: 1.1 });
@@ -792,14 +819,14 @@ function PlayerPhase({
       setPowerUp(false);
     }
     setRolling(false);
-    onRoll(final);
+    void onRoll(final, resolved);
     void start;
   };
 
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
       {hopping && (
-        <HopOverlay player={player} from={hopping.from} to={hopping.to} step={hopping.step} />
+        <HopOverlay player={player} players={players} from={hopping.from} to={hopping.to} step={hopping.step} />
       )}
       {powerUp && <PowerUpOverlay player={player} />}
       <button

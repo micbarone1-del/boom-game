@@ -50,6 +50,9 @@ type Phase =
   | { kind: "player"; playerId: string }
   | { kind: "switch"; playerId: string; judgeId: string; trap: ActiveTrap }
   | { kind: "judge"; playerId: string; judgeId: string; trap: ActiveTrap }
+  | { kind: "vs"; playerAId: string; playerBId: string; trap: ActiveTrap }
+  | { kind: "group"; playerId: string; trap: ActiveTrap }
+  | { kind: "pause"; playerId: string; finalSpace: number }
   | { kind: "resolve"; playerId: string; outcome: "success" | "fail"; trap: ActiveTrap }
   | { kind: "done"; winnerId: string };
 

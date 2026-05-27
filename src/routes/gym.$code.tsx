@@ -450,9 +450,9 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
         </div>
         <PauseToggleButton
           paused={!!room.paused}
-          onToggle={() =>
-            supabase.from("rooms").update({ paused: !room.paused }).eq("code", code)
-          }
+          onToggle={() => {
+            void supabase.from("rooms").update({ paused: !room.paused }).eq("code", code).then(() => {});
+          }}
         />
       </header>
 
@@ -469,7 +469,9 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
       {room.game_state === "game_over" && <GameOverOverlay />}
       {room.paused && (
         <PauseOverlay
-          onResume={() => supabase.from("rooms").update({ paused: false }).eq("code", code)}
+          onResume={() => {
+            void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
+          }}
         />
       )}
     </main>

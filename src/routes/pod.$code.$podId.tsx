@@ -141,17 +141,8 @@ function PodPage() {
 
   // --- Handlers between phases ---
 
-  const onRollComplete = async (player: Player, dice: number) => {
-    const target = Math.min(BOARD_SIZE, player.current_space + dice);
-    const cell = getEffectiveCell(target, overrides);
-    let final = target;
-    if (cell.type === "boost") {
-      final = resolveMovementLanding(Math.min(BOARD_SIZE, target + (cell.delta ?? 0)), "boost");
-    } else if (cell.type === "setback") {
-      final = resolveMovementLanding(Math.max(1, target + (cell.delta ?? 0)), "setback");
-    } else if (cell.type === "finish") {
-      final = BOARD_SIZE;
-    }
+  const onRollComplete = async (player: Player, _dice: number, finalArg: number) => {
+    const final = finalArg;
     const finalCell = getEffectiveCell(final, overrides);
 
     await supabase.from("players").update({ current_space: final }).eq("id", player.id);
@@ -170,6 +161,42 @@ function PodPage() {
           boss_started_at: new Date().toISOString(),
         })
         .eq("code", code);
+      return;
+    }
+
+    // VS collision — another pod player already on this space → VS battle.
+    const opponents = ordered.filter(
+      (p) => p.id !== player.id && !p.finished_at && p.current_space === final,
+    );
+    if (
+      opponents.length > 0 &&
+      (finalCell.type === "easy" ||
+        finalCell.type === "medium" ||
+        finalCell.type === "hard" ||
+        finalCell.type === "surprise" ||
+        finalCell.type === "crazy")
+    ) {
+      const tier =
+        finalCell.type === "hard" || finalCell.type === "crazy"
+          ? 3
+          : finalCell.type === "medium"
+            ? 2
+            : 1;
+      const exercise =
+        finalCell.type === "surprise"
+          ? pickSurpriseExercise(overrides).exercise
+          : finalCell.type === "crazy"
+            ? pickCrazyExercise().exercise
+            : finalCell.exercise ?? "Squats";
+      const reps = calcRepsForTier(tier as 1 | 2 | 3, player.fitness_level, room.difficulty_multiplier);
+      const trap: ActiveTrap = {
+        exercise,
+        reps,
+        unit: "reps",
+        finalSpace: final,
+        cellType: finalCell.type,
+      };
+      setPhase({ kind: "vs", playerAId: player.id, playerBId: opponents[0].id, trap });
       return;
     }
 
@@ -194,13 +221,11 @@ function PodPage() {
       setPhase({ kind: "switch", playerId: player.id, judgeId: nextPlayerId(player.id), trap });
       return;
     }
-    if (finalCell.type === "surprise" || finalCell.type === "crazy" || finalCell.type === "group") {
+    if (finalCell.type === "surprise" || finalCell.type === "crazy") {
       const pick =
         finalCell.type === "surprise"
           ? pickSurpriseExercise(overrides)
-          : finalCell.type === "crazy"
-            ? pickCrazyExercise()
-            : pickGroupExercise();
+          : pickCrazyExercise();
       const reps = calcRepsForTier(pick.tier, player.fitness_level, room.difficulty_multiplier);
       const isHold = /\bhold\b/i.test(pick.exercise);
       const trap: ActiveTrap = {
@@ -213,6 +238,24 @@ function PodPage() {
       setPhase({ kind: "switch", playerId: player.id, judgeId: nextPlayerId(player.id), trap });
       return;
     }
+    if (finalCell.type === "group") {
+      const pick = pickGroupExercise();
+      const reps = calcRepsForTier(pick.tier, player.fitness_level, room.difficulty_multiplier);
+      const isHold = /\bhold\b/i.test(pick.exercise);
+      const trap: ActiveTrap = {
+        exercise: pick.exercise,
+        reps,
+        unit: isHold ? "seconds" : "reps",
+        finalSpace: final,
+        cellType: "group",
+      };
+      setPhase({ kind: "group", playerId: player.id, trap });
+      return;
+    }
+    if (finalCell.type === "pause") {
+      setPhase({ kind: "pause", playerId: player.id, finalSpace: final });
+      return;
+    }
     // No exercise: finish?
     if (final >= BOARD_SIZE) {
       await finishPlayer(player.id, code);
@@ -221,6 +264,67 @@ function PodPage() {
     }
     // Pass turn
     setPhase({ kind: "player", playerId: nextPlayerId(player.id) });
+  };
+
+  // ---- VS result: winner gets 2× points, loser gets 0.5×.
+  const onVsResult = async (winnerId: string) => {
+    if (phase.kind !== "vs") return;
+    const { playerAId, playerBId, trap } = phase;
+    const loserId = winnerId === playerAId ? playerBId : playerAId;
+    const winnerReps = Math.round(trap.reps * 2);
+    const loserReps = Math.round(trap.reps * 0.5);
+    await supabase.from("workout_logs").insert([
+      {
+        room_code: code,
+        player_id: winnerId,
+        exercise_name: `VS: ${trap.exercise}`,
+        target_reps: winnerReps,
+        unit: "reps",
+        time_taken_ms: 0,
+        verified_by_judge: true,
+      },
+      {
+        room_code: code,
+        player_id: loserId,
+        exercise_name: `VS: ${trap.exercise}`,
+        target_reps: loserReps,
+        unit: "reps",
+        time_taken_ms: 0,
+        verified_by_judge: true,
+      },
+    ]);
+    await recalcPlayerScore(winnerId, code);
+    await recalcPlayerScore(loserId, code);
+    setPhase({ kind: "player", playerId: nextPlayerId(playerAId) });
+  };
+
+  // ---- Group cell: every pod member gets credit, no judge.
+  const onGroupComplete = async () => {
+    if (phase.kind !== "group") return;
+    const { trap, playerId } = phase;
+    const rows = ordered
+      .filter((p) => !p.finished_at)
+      .map((p) => ({
+        room_code: code,
+        player_id: p.id,
+        exercise_name: `ALL: ${trap.exercise}`,
+        target_reps: trap.reps,
+        unit: trap.unit,
+        time_taken_ms: 0,
+        verified_by_judge: true,
+      }));
+    if (rows.length > 0) {
+      await supabase.from("workout_logs").insert(rows);
+      await Promise.all(rows.map((r) => recalcPlayerScore(r.player_id, code)));
+    }
+    setPhase({ kind: "player", playerId: nextPlayerId(playerId) });
+  };
+
+  // ---- Pause cell: small breather, no judge, auto-advance.
+  const onPauseComplete = async () => {
+    if (phase.kind !== "pause") return;
+    const { playerId } = phase;
+    setPhase({ kind: "player", playerId: nextPlayerId(playerId) });
   };
 
   const onJudgeResult = async (outcome: "success" | "fail", clipBlob: Blob | null) => {

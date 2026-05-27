@@ -29,6 +29,9 @@ import { RecapVideo } from "@/components/RecapVideo";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { BossPhase, BossVictory } from "@/components/BossPhase";
+// BossVictory is still exported for the standalone /boss-test sandbox but
+// the main flow now delegates to WrapUp for full leaderboard parity.
+void BossVictory;
 import { cellPos, cellBg, COLS, ROWS, POD_COLORS } from "@/components/GymMap";
 import { BOARD } from "@/lib/game";
 

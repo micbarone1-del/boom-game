@@ -39,7 +39,13 @@ function CustomizePage() {
   }, [room?.board_overrides]);
 
   const editableCells = BOARD.map((c, i) => ({ ...c, index: i })).filter(
-    (c) => c.type === "exercise" || c.type === "surprise" || c.type === "crazy" || c.type === "group",
+    (c) =>
+      c.type === "easy" ||
+      c.type === "medium" ||
+      c.type === "hard" ||
+      c.type === "surprise" ||
+      c.type === "crazy" ||
+      c.type === "group",
   );
 
   const updateCell = (idx: number, patch: Partial<Override>) => {

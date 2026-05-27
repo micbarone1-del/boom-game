@@ -470,3 +470,106 @@
   }
   .anim-spark { animation: spark-burst 1.6s ease-out both; }
 }
+
+@layer utilities {
+  /* ===== Arcade polish — opt-in utilities, no existing class is changed ===== */
+
+  /* Deliberate tilts for high-energy elements (timer, active card, boss bars) */
+  .arcade-tilt-l { transform: rotate(-3deg); transform-origin: center; }
+  .arcade-tilt-r { transform: rotate(2.5deg); transform-origin: center; }
+  .arcade-tilt-l-sm { transform: rotate(-1.5deg); transform-origin: center; }
+  .arcade-tilt-r-sm { transform: rotate(1.5deg); transform-origin: center; }
+
+  /* Hard arcade drop-shadow for clickable / active containers */
+  .arcade-shadow { box-shadow: 4px 4px 0 0 #000; }
+  .arcade-shadow-lg { box-shadow: 6px 6px 0 0 #000; }
+
+  /* Stark high-contrast text combos */
+  .arcade-text-neon {
+    color: var(--boom-yellow);
+    text-shadow:
+      2px 2px 0 #000,
+      -1px -1px 0 #000,
+       1px -1px 0 #000,
+      -1px  1px 0 #000;
+    letter-spacing: 0.04em;
+  }
+  .arcade-text-stark {
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+    letter-spacing: 0.03em;
+  }
+
+  /* Timer low-time pulse: flashing red/yellow + scale */
+  @keyframes arcade-low-time {
+    0%, 100% {
+      transform: scale(1) rotate(-3deg);
+      background-color: var(--boom-red);
+      color: #fff;
+      box-shadow: 6px 6px 0 0 var(--boom-ink);
+    }
+    50% {
+      transform: scale(1.08) rotate(-1deg);
+      background-color: var(--boom-yellow);
+      color: var(--boom-ink);
+      box-shadow: 8px 8px 0 0 var(--boom-ink), 0 0 0 6px var(--boom-red);
+    }
+  }
+  .arcade-low-time { animation: arcade-low-time 0.45s ease-in-out infinite; }
+
+  /* Calm timer pulse for normal time */
+  @keyframes arcade-timer-pulse {
+    0%, 100% { transform: scale(1) rotate(-3deg); }
+    50%      { transform: scale(1.03) rotate(-2deg); }
+  }
+  .arcade-timer-pulse { animation: arcade-timer-pulse 1.4s ease-in-out infinite; }
+
+  /* Explosive entrance for modals / continue screens / VS-style reveals */
+  @keyframes arcade-vs-in {
+    0%   { transform: scale(0.2) rotate(-12deg); opacity: 0; }
+    55%  { transform: scale(1.18) rotate(4deg);  opacity: 1; }
+    78%  { transform: scale(0.95) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0deg);     opacity: 1; }
+  }
+  .arcade-vs-in { animation: arcade-vs-in 0.42s cubic-bezier(.2,1.8,.4,1) both; }
+
+  /* Bouncy slide-in for new-turn / player handoff cards */
+  @keyframes arcade-slam-in {
+    0%   { transform: translateY(-40px) scale(0.7) rotate(-6deg); opacity: 0; }
+    60%  { transform: translateY(6px)   scale(1.08) rotate(2deg); opacity: 1; }
+    80%  { transform: translateY(-2px)  scale(0.98); }
+    100% { transform: translateY(0)     scale(1) rotate(0); opacity: 1; }
+  }
+  .arcade-slam-in { animation: arcade-slam-in 0.5s cubic-bezier(.2,1.6,.3,1.1) both; }
+
+  /* Snappy press for any element marked .arcade-press */
+  .arcade-press {
+    transition: transform 0.08s cubic-bezier(.2,1.6,.4,1), box-shadow 0.08s ease;
+  }
+  .arcade-press:active {
+    transform: translate(3px, 3px) scale(0.95);
+    box-shadow: 2px 2px 0 0 #000;
+  }
+
+  /* Boss-fight health-bar tilt + thick frame */
+  .arcade-bossbar {
+    transform: rotate(-1.5deg);
+    border: 4px solid var(--boom-ink);
+    box-shadow: 4px 4px 0 0 var(--boom-ink);
+  }
+}
+
+/* ===== Arcade safety net for the POD mobile view =====
+   Prevent text from spilling out of bordered containers and ensure
+   long exercise / player names wrap cleanly without covering buttons. */
+@layer base {
+  .ink-border > *, .ink-border-sm > * {
+    min-width: 0;
+  }
+  .ink-border h1, .ink-border h2, .ink-border h3,
+  .ink-border-sm h1, .ink-border-sm h2, .ink-border-sm h3 {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+  }
+}

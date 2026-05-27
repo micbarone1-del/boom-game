@@ -1345,6 +1345,7 @@ function JudgePhase({
   const arcadeStopRef = useRef<(() => void) | null>(null);
   const holdingRef = useRef(false);
   const holdStartRef = useRef(0);
+  const [defuseFlash, setDefuseFlash] = useState(false);
 
   // Acquire camera + start recording
   useEffect(() => {
@@ -1419,6 +1420,7 @@ function JudgePhase({
     if (outcome === "success") {
       playDefuseJingle();
       speak(`Well done ${player.username}! ${trap.reps} points!`);
+      setDefuseFlash(true);
     } else {
       sfx.play("blowUp");
       speak(`${player.username} exploded! Back to start.`);

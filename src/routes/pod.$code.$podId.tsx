@@ -534,6 +534,7 @@ function PodPage() {
           playerA={a}
           playerB={b}
           trap={phase.trap}
+          podPlayers={ordered}
           onComplete={onVsResult}
         />
         {overlay}

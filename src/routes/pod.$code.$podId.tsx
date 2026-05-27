@@ -29,6 +29,9 @@ import { RecapVideo } from "@/components/RecapVideo";
 import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { BossPhase, BossVictory } from "@/components/BossPhase";
+// BossVictory is still exported for the standalone /boss-test sandbox but
+// the main flow now delegates to WrapUp for full leaderboard parity.
+void BossVictory;
 import { cellPos, cellBg, COLS, ROWS, POD_COLORS } from "@/components/GymMap";
 import { BOARD } from "@/lib/game";
 
@@ -320,7 +323,22 @@ function PodPage() {
 
   // Boss fight + victory take over the screen.
   if (room.phase === "victory") {
-    return <BossVictory room={room} players={ordered} onRestart={restart} />;
+    // Reuse the same WrapUp (leaderboard + recap videos + auth) shown at
+    // game-over, so the post-game flow is identical whether the pod
+    // defeated the boss or reached the finish line first.
+    const ranked = [...ordered].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    const winnerId = ranked[0]?.id ?? ordered[0]?.id ?? "";
+    return (
+      <>
+        <WrapUp
+          players={ordered}
+          winnerId={winnerId}
+          clips={clipsRef.current}
+          onRestart={restart}
+        />
+        {overlay}
+      </>
+    );
   }
   if (room.phase === "boss") {
     return (

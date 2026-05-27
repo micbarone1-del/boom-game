@@ -374,19 +374,21 @@ export const sfx = {
       }
       if (c.state === "running") {
         state.unlocked = true;
-        if (state.fallbackUnlocked) fallbackPlay(true);
         effects[name]();
         return;
       }
       const inUserGesture = !!navigator.userActivation?.isActive;
       if (inUserGesture) {
-        fallbackPlay(true);
+        // Only beep the WAV fallback the very first time, to confirm audio
+        // is alive. After that the WebAudio context is running and the
+        // fallback piggyback just causes random volume bumps.
+        if (!state.fallbackUnlocked) fallbackPlay(true);
         state.fallbackUnlocked = true;
         void unlockAudio();
         effects[name]();
         return;
       }
-      if (state.fallbackUnlocked) fallbackPlay(true);
+      if (!state.fallbackUnlocked) fallbackPlay(true);
       void unlockAudio().then((ready) => {
         if (!muted && ready) effects[name]();
       });
@@ -531,6 +533,10 @@ function playArcadeLoopStep() {
   lead.start(t0);
   bass.stop(t0 + stepDur + 0.03);
   lead.stop(t0 + stepDur + 0.03);
+  // 4-on-the-floor kick aligned to the arcade grid (every 2 steps ~143 BPM).
+  // Keeping it inside the same loop guarantees the kick and the bassline
+  // never drift out of sync.
+  if (state.arcadeStep % 2 === 0) playKickAt(c, t0, musicGain);
   state.arcadeStep += 1;
 }
 
@@ -665,16 +671,33 @@ function playKick() {
   o.start(t0);
   o.stop(t0 + 0.22);
 }
+/**
+ * Kept for API compatibility — the kick is now generated inside the arcade
+ * loop so the two layers are sample-aligned. These are no-ops.
+ */
 export function startTechnoLayer() {
-  if (typeof window === "undefined" || _technoTimer) return;
-  void ensureReady().then(() => playKick());
-  _technoTimer = window.setInterval(playKick, 480); // ~125 BPM 4/4
+  /* no-op: kick is now scheduled inside playArcadeLoopStep */
 }
 export function stopTechnoLayer() {
   if (typeof window !== "undefined" && _technoTimer) {
     window.clearInterval(_technoTimer);
     _technoTimer = null;
   }
+}
+
+/** Sample-accurate kick — scheduled on the same audio clock as the arcade loop. */
+function playKickAt(c: AudioContext, t0: number, dest: AudioNode) {
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(140, t0);
+  o.frequency.exponentialRampToValueAtTime(40, t0 + 0.14);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.55, t0 + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+  o.connect(g).connect(dest);
+  o.start(t0);
+  o.stop(t0 + 0.22);
 }
 
 /** A sustained rising arcade tone — call once to start, returns a stop fn. */

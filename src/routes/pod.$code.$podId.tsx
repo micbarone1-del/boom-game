@@ -1020,11 +1020,13 @@ function SwitchPhase({
 
 function HopOverlay({
   player,
+  players,
   from,
   to,
   step,
 }: {
   player: Player;
+  players: Player[];
   from: number;
   to: number;
   step: number;
@@ -1034,6 +1036,19 @@ function HopOverlay({
   const progress = Math.min(1, step / totalSteps);
   const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
   const tokenLeft = ((Math.min(step, totalSteps) + 0.5) / pathSpaces.length) * 100;
+  // Other tokens (not the rolling player) shown on top of the path cells.
+  const othersBySpace = new Map<number, Player[]>();
+  for (const p of players) {
+    if (p.id === player.id) continue;
+    const arr = othersBySpace.get(p.current_space) ?? [];
+    arr.push(p);
+    othersBySpace.set(p.current_space, arr);
+  }
+  const legend: Array<[string, string]> = [
+    ["EASY", "#facc15"], ["MED", "#22c55e"], ["HARD", "#ef4444"],
+    ["BLAST", "#22c55e"], ["BACK", "#a855f7"], ["?", "#ec4899"],
+    ["!?", "#22d3ee"], ["ALL", "#3b82f6"], ["PAUSE", "#06b6d4"],
+  ];
 
   return (
     <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden anim-hop-zoom">

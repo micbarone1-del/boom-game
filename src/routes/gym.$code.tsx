@@ -121,7 +121,13 @@ function Lobby({ code }: { code: string }) {
   }
 
   // Once playing, show the shared map view instead of the lobby.
-  if (room.status === "playing" || room.game_state === "playing" || room.game_state === "timeout_continue" || room.game_state === "game_over") {
+  const isLive =
+    room.status === "playing" ||
+    room.game_state === "playing" ||
+    room.game_state === "timeout_continue" ||
+    room.game_state === "game_over";
+
+  if (isLive && !room.paused) {
     return <MapView room={room} players={players} pods={pods} code={code} />;
   }
 

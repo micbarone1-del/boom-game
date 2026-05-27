@@ -170,6 +170,7 @@ function PodPage() {
     );
     if (
       opponents.length > 0 &&
+      ordered.length > 2 &&
       (finalCell.type === "easy" ||
         finalCell.type === "medium" ||
         finalCell.type === "hard" ||
@@ -533,6 +534,7 @@ function PodPage() {
           playerA={a}
           playerB={b}
           trap={phase.trap}
+          podPlayers={ordered}
           onComplete={onVsResult}
         />
         {overlay}
@@ -1071,7 +1073,7 @@ function HopOverlay({
           {intro === "map" ? "The Board" : `${player.username} is up`}
         </div>
         <div
-          className={`relative w-full max-w-[460px] ${intro === "map" ? "anim-hop-map" : "anim-hop-zoom-token"}`}
+          className={`relative w-full max-w-[560px] ${intro === "map" ? "anim-hop-map" : "anim-hop-zoom-token"}`}
           style={{ transformOrigin: `${(cellPos(from).col + 0.5) / COLS * 100}% ${(cellPos(from).row + 0.5) / ROWS * 100}%` }}
         >
           <div
@@ -1097,16 +1099,19 @@ function HopOverlay({
                     boxShadow: isPlayerHere ? "0 0 0 2px #fff, 0 0 14px 4px #fde047" : undefined,
                   }}
                 >
+                  <HopCellGlyph type={cell.type} />
                   {here.length > 0 && (
-                    <div className="flex gap-[1px]">
+                    <div className="absolute -bottom-0.5 left-0 right-0 flex gap-[1px] justify-center">
                       {here.slice(0, 3).map((pl) => (
                         <div
                           key={pl.id}
                           className="rounded-full"
                           style={{
-                            width: 7, height: 7,
+                            width: 11, height: 11,
                             background: mascotColor(pl.avatar_url),
-                            boxShadow: pl.id === player.id ? "0 0 0 1.5px #fff" : "0 0 0 1px #111",
+                            boxShadow: pl.id === player.id
+                              ? "0 0 0 1.5px #fff, 0 0 0 2.5px #111, 0 0 8px #fde047"
+                              : "0 0 0 1.5px #111",
                           }}
                         />
                       ))}
@@ -1929,20 +1934,51 @@ function VsPhase({
   playerA,
   playerB,
   trap,
+  podPlayers,
   onComplete,
 }: {
   playerA: Player;
   playerB: Player;
   trap: ActiveTrap;
+  podPlayers: Player[];
   onComplete: (winnerId: string) => void;
 }) {
+  const judge = podPlayers.find((p) => p.id !== playerA.id && p.id !== playerB.id) ?? null;
+  const [stage, setStage] = useState<"handoff" | "battle">(judge ? "handoff" : "battle");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [a, setA] = useState(0);
   const [b, setB] = useState(0);
   const doneRef = useRef(false);
   useEffect(() => {
+    if (stage !== "battle") return;
     speak(`Versus! ${playerA.username} against ${playerB.username}. ${trap.exercise}.`);
     sfx.play("blast");
-  }, [playerA.username, playerB.username, trap.exercise]);
+  }, [stage, playerA.username, playerB.username, trap.exercise]);
+  // Camera background — best effort; falls back to dark gradient on denial.
+  useEffect(() => {
+    if (stage !== "battle") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        });
+        if (cancelled) { s.getTracks().forEach((t) => t.stop()); return; }
+        streamRef.current = s;
+        if (videoRef.current) {
+          videoRef.current.srcObject = s;
+          await videoRef.current.play().catch(() => {});
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => {
+      cancelled = true;
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
+  }, [stage]);
   const tap = (who: "a" | "b") => {
     if (doneRef.current) return;
     const setter = who === "a" ? setA : setB;
@@ -1958,11 +1994,44 @@ function VsPhase({
       return next;
     });
   };
+  if (stage === "handoff" && judge) {
+    return (
+      <main className="fixed inset-0 flex flex-col items-center justify-center gap-5 p-6" style={{ background: "var(--boom-ink)" }}>
+        <div className="text-white text-xs font-black uppercase tracking-widest opacity-80">VS Battle</div>
+        <div className="flex items-center gap-3">
+          <Avatar player={playerA} size={64} />
+          <Swords size={36} color="#fff" />
+          <Avatar player={playerB} size={64} />
+        </div>
+        <div className="text-white text-4xl font-black text-center" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>
+          {playerA.username} vs {playerB.username}
+        </div>
+        <div className="bg-white ink-border rounded-2xl px-5 py-3 text-center">
+          <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{trap.exercise}</div>
+          <div className="text-base font-bold">First to {trap.reps} reps wins 2×</div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <div className="text-white text-sm opacity-80 uppercase">Pass phone to judge</div>
+          <div className="bg-white ink-border rounded-full px-4 py-2 flex items-center gap-2">
+            <Avatar player={judge} size={40} />
+            <span className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{judge.username}</span>
+          </div>
+        </div>
+        <button
+          onClick={() => setStage("battle")}
+          className="w-full max-w-sm py-4 rounded-2xl ink-border bg-[var(--boom-yellow)] text-2xl font-black active:scale-95"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          START BATTLE
+        </button>
+      </main>
+    );
+  }
   const Side = ({ p, count, side }: { p: Player; count: number; side: "a" | "b" }) => (
     <button
       onClick={() => tap(side)}
       className="flex-1 flex flex-col items-center justify-center gap-3 active:scale-95"
-      style={{ background: side === "a" ? "var(--boom-red)" : "var(--boom-blue)" }}
+      style={{ background: side === "a" ? "rgba(239,68,68,0.55)" : "rgba(59,130,246,0.55)" }}
     >
       <Avatar player={p} size={96} />
       <div className="text-white text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #111" }}>
@@ -1975,16 +2044,24 @@ function VsPhase({
     </button>
   );
   return (
-    <main className="fixed inset-0 flex flex-col bg-black">
+    <main className="fixed inset-0 flex flex-col bg-black overflow-hidden">
+      {/* Camera video background — judge holds the phone */}
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      />
+      <div className="absolute inset-0 bg-black/40 z-[1]" />
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
         <div className="bg-white ink-border rounded-full px-6 py-2 flex items-center gap-2">
           <Swords size={24} />
           <span className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-            {trap.exercise}
+            VS · {trap.exercise}
           </span>
         </div>
       </div>
-      <div className="flex flex-1">
+      <div className="relative flex flex-1 z-10">
         <Side p={playerA} count={a} side="a" />
         <Side p={playerB} count={b} side="b" />
       </div>

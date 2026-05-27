@@ -21,7 +21,7 @@ function parseSpotifyUrl(input: string): string | null {
 const DEFAULT_SPOTIFY_URL =
   "https://open.spotify.com/playlist/42TqVnzaMlUzg2fhDTHJEq?si=OAp8Cu7cQkGbh7wgiFP-eQ&pi=62fFMn7uShGrN";
 
-export function SpotifyEmbed({ code }: { code: string }) {
+export function SpotifyEmbed({ code, paused = false }: { code: string; paused?: boolean }) {
   const storageKey = `boom.spotify.${code}`;
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
@@ -114,7 +114,11 @@ export function SpotifyEmbed({ code }: { code: string }) {
         <div className="mt-3 rounded-xl overflow-hidden ink-border-sm">
           <iframe
             title="Spotify player"
-            src={embedUrl}
+            // Swapping the src to about:blank tears down the audio stream
+            // when the room is paused (Spotify embeds don't expose a
+            // postMessage pause API to anonymous origins). On resume the
+            // iframe reloads with the same playlist.
+            src={paused ? "about:blank" : embedUrl}
             width="100%"
             height="152"
             frameBorder={0}

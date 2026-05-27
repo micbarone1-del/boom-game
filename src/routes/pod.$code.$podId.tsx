@@ -1844,3 +1844,150 @@ function WrapUp({
 void Play;
 void describeCell;
 void getCell;
+
+// ---------------------------------------------------------------------------
+// VS Phase — same-pod collision: both players race the same exercise.
+// First to tap their rep target wins 2×; loser keeps the 0.5× already logged.
+// ---------------------------------------------------------------------------
+function VsPhase({
+  playerA,
+  playerB,
+  trap,
+  onComplete,
+}: {
+  playerA: Player;
+  playerB: Player;
+  trap: ActiveTrap;
+  onComplete: (winnerId: string) => void;
+}) {
+  const [a, setA] = useState(0);
+  const [b, setB] = useState(0);
+  const doneRef = useRef(false);
+  useEffect(() => {
+    speak(`Versus! ${playerA.username} against ${playerB.username}. ${trap.exercise}.`);
+    sfx.play("blast");
+  }, [playerA.username, playerB.username, trap.exercise]);
+  const tap = (who: "a" | "b") => {
+    if (doneRef.current) return;
+    const setter = who === "a" ? setA : setB;
+    setter((n) => {
+      const next = n + 1;
+      repPop(next / trap.reps);
+      if (next >= trap.reps) {
+        doneRef.current = true;
+        sfx.play("win");
+        speak(`${who === "a" ? playerA.username : playerB.username} wins the duel!`);
+        setTimeout(() => onComplete(who === "a" ? playerA.id : playerB.id), 900);
+      }
+      return next;
+    });
+  };
+  const Side = ({ p, count, side }: { p: Player; count: number; side: "a" | "b" }) => (
+    <button
+      onClick={() => tap(side)}
+      className="flex-1 flex flex-col items-center justify-center gap-3 active:scale-95"
+      style={{ background: side === "a" ? "var(--boom-red)" : "var(--boom-blue)" }}
+    >
+      <Avatar player={p} size={96} />
+      <div className="text-white text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #111" }}>
+        {p.username}
+      </div>
+      <div className="text-white text-6xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
+        {count}/{trap.reps}
+      </div>
+      <div className="text-white text-xs font-bold opacity-90">TAP PER REP</div>
+    </button>
+  );
+  return (
+    <main className="fixed inset-0 flex flex-col bg-black">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+        <div className="bg-white ink-border rounded-full px-6 py-2 flex items-center gap-2">
+          <Swords size={24} />
+          <span className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            {trap.exercise}
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-1">
+        <Side p={playerA} count={a} side="a" />
+        <Side p={playerB} count={b} side="b" />
+      </div>
+    </main>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Group Phase — everybody together. Phone is down; anybody taps DONE.
+// ---------------------------------------------------------------------------
+function GroupPhase({
+  triggerPlayer,
+  podPlayers,
+  trap,
+  onComplete,
+}: {
+  triggerPlayer: Player;
+  podPlayers: Player[];
+  trap: ActiveTrap;
+  onComplete: () => void;
+}) {
+  useEffect(() => {
+    speak(`Everybody together! ${trap.exercise}, ${trap.reps} ${trap.unit}.`);
+    sfx.play("gameStart");
+  }, [trap.exercise, trap.reps, trap.unit]);
+  return (
+    <main className="fixed inset-0 flex flex-col items-center justify-between p-6 gap-3" style={{ background: "var(--boom-blue)" }}>
+      <div className="text-white text-xs font-black uppercase opacity-90 mt-4">All Together · phone down</div>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <Users size={64} color="#fff" />
+        <div className="text-white text-5xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
+          EVERYBODY!
+        </div>
+        <div className="bg-white ink-border rounded-2xl px-5 py-3">
+          <div className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            {trap.exercise}
+          </div>
+          <div className="text-xl font-bold">
+            {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
+          </div>
+        </div>
+        <div className="flex gap-2 mt-2">
+          {podPlayers.map((p) => <Avatar key={p.id} player={p} size={48} />)}
+        </div>
+        <div className="text-white text-sm opacity-90">Triggered by {triggerPlayer.username}</div>
+      </div>
+      <button
+        onClick={onComplete}
+        className="w-full max-w-sm py-5 rounded-2xl ink-border bg-[var(--boom-green)] text-white text-3xl font-black active:scale-95"
+        style={{ fontFamily: "'Luckiest Guy', cursive" }}
+      >
+        WE DID IT!
+      </button>
+    </main>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pause Phase — fun music, no judge, auto-advance.
+// ---------------------------------------------------------------------------
+function PausePhase({ player, onComplete }: { player: Player; onComplete: () => void }) {
+  useEffect(() => {
+    const stop = playPauseMusic();
+    speak(`Pause! Take a breather, ${player.username}.`);
+    const t = setTimeout(onComplete, 5000);
+    return () => { stop(); clearTimeout(t); };
+  }, [player.username, onComplete]);
+  return (
+    <main className="fixed inset-0 flex flex-col items-center justify-center gap-6" style={{ background: "#06b6d4" }}>
+      <div className="anim-mascot-bounce">
+        <Pause size={120} fill="#fff" color="#fff" />
+      </div>
+      <div className="text-white text-6xl font-black text-center px-6" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "4px 4px 0 #111" }}>
+        PAUSE!
+      </div>
+      <div className="text-white text-xl font-bold">Take a breath, {player.username} 🌬️</div>
+      <button onClick={onComplete} className="px-6 py-3 rounded-full bg-white ink-border text-lg font-black active:scale-95">
+        Skip
+      </button>
+    </main>
+  );
+}

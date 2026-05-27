@@ -179,8 +179,7 @@ export function BossPhase({
       if (newHp <= 0) {
         setTimeout(() => {
           setInner({ kind: "death" });
-          sfx.play("blowUp");
-          speak("Boss defeated! Victory!", { pitch: 1.1 });
+          // Hand off to BossDeathOverlay which owns the multi-stage spectacle.
           setTimeout(() => {
             void supabase
               .from("rooms")
@@ -189,7 +188,7 @@ export function BossPhase({
                 boss_defeated_at: new Date().toISOString(),
               })
               .eq("code", code);
-          }, 3200);
+          }, 5800);
         }, 1400);
         return;
       }
@@ -198,11 +197,14 @@ export function BossPhase({
       speak(`${player.username} missed the boss.`);
       setInner({ kind: "hit", attack, damage: 0, outcome });
     }
+    // Wait long enough for the points narration ("X hits the boss for N") to
+    // finish — speak() cancels any pending utterance, so the next turn's
+    // announcement was clipping this one. ~3.4s clears most lines.
     setTimeout(() => {
       const next = turnIdx + 1;
       setTurnIdx(next);
       startTurn(active[next % Math.max(1, active.length)]);
-    }, 2000);
+    }, 3400);
   };
 
   // Boss timeout → victory screen lost (game_over)

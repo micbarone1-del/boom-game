@@ -374,19 +374,21 @@ export const sfx = {
       }
       if (c.state === "running") {
         state.unlocked = true;
-        if (state.fallbackUnlocked) fallbackPlay(true);
         effects[name]();
         return;
       }
       const inUserGesture = !!navigator.userActivation?.isActive;
       if (inUserGesture) {
-        fallbackPlay(true);
+        // Only beep the WAV fallback the very first time, to confirm audio
+        // is alive. After that the WebAudio context is running and the
+        // fallback piggyback just causes random volume bumps.
+        if (!state.fallbackUnlocked) fallbackPlay(true);
         state.fallbackUnlocked = true;
         void unlockAudio();
         effects[name]();
         return;
       }
-      if (state.fallbackUnlocked) fallbackPlay(true);
+      if (!state.fallbackUnlocked) fallbackPlay(true);
       void unlockAudio().then((ready) => {
         if (!muted && ready) effects[name]();
       });

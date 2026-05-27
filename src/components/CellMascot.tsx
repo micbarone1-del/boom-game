@@ -15,6 +15,7 @@ export const CELL_FLAVOR: Record<CellType, { label: string; color: string; img: 
   surprise:{ label: "SURPRISE!",      color: "#ec4899",            img: bombDefault },
   crazy:   { label: "GO CRAZY!",      color: "#f97316",            img: bombHard },
   group:   { label: "ALL TOGETHER!",  color: "var(--boom-blue)",   img: bombDefault },
+  pause:   { label: "PAUSE PARTY!",   color: "#22d3ee",            img: bombDefault },
   start:   { label: "LET'S GO!",      color: "var(--boom-green)",  img: bombDefault },
   finish:  { label: "WINNER!",        color: "var(--boom-yellow)", img: bombDefault },
 };

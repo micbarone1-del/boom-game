@@ -108,9 +108,59 @@ function Lobby({ code }: { code: string }) {
         game_ends_at: endsAt.toISOString(),
         game_state: "playing",
         continue_deadline_at: null,
+        paused: false,
       })
       .eq("code", code);
     await supabase.from("pods").update({ status: "playing" }).eq("room_code", code);
+    setStarting(false);
+  };
+
+  const resume = async () => {
+    const startedAt = new Date();
+    const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
+    await supabase
+      .from("rooms")
+      .update({
+        paused: false,
+        game_started_at: startedAt.toISOString(),
+        game_ends_at: endsAt.toISOString(),
+        game_state: "playing",
+        continue_deadline_at: null,
+      })
+      .eq("code", code);
+  };
+
+  const restartAll = async () => {
+    if (!confirm("Reset all scores and start a new game?")) return;
+    setStarting(true);
+    const startedAt = new Date();
+    const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
+    await supabase
+      .from("players")
+      .update({ current_space: 0, score: 0, finished_at: null, finish_rank: null })
+      .eq("room_code", code);
+    await supabase
+      .from("pods")
+      .update({ status: "playing", current_space: 0, score: 0, current_turn_player_id: null })
+      .eq("room_code", code);
+    await supabase
+      .from("rooms")
+      .update({
+        status: "playing",
+        trap: null,
+        locked: false,
+        game_started_at: startedAt.toISOString(),
+        game_ends_at: endsAt.toISOString(),
+        game_state: "playing",
+        continue_deadline_at: null,
+        paused: false,
+        phase: "board",
+        boss_hp: 0,
+        boss_max_hp: 0,
+        boss_started_at: null,
+        boss_defeated_at: null,
+      })
+      .eq("code", code);
     setStarting(false);
   };
 

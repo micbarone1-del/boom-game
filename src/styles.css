@@ -157,12 +157,30 @@
 
 @layer components {
   .ink-border {
-    border: 4px solid var(--boom-ink);
+    border: 5px solid var(--boom-ink);
     box-shadow: 6px 6px 0 0 var(--boom-ink);
+    /* Arcade safety: keep long text from spilling out of cards/modals */
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .ink-border-sm {
-    border: 3px solid var(--boom-ink);
-    box-shadow: 3px 3px 0 0 var(--boom-ink);
+    border: 4px solid var(--boom-ink);
+    box-shadow: 4px 4px 0 0 var(--boom-ink);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  /* Snappy press for any clickable ink-bordered control */
+  button.ink-border, a.ink-border,
+  button.ink-border-sm, a.ink-border-sm {
+    transition: transform 0.08s cubic-bezier(.2,1.6,.4,1), box-shadow 0.08s ease;
+  }
+  button.ink-border:active, a.ink-border:active {
+    transform: translate(3px, 3px) scale(0.97);
+    box-shadow: 2px 2px 0 0 var(--boom-ink);
+  }
+  button.ink-border-sm:active, a.ink-border-sm:active {
+    transform: translate(2px, 2px) scale(0.95);
+    box-shadow: 1px 1px 0 0 var(--boom-ink);
   }
   .comic-shadow {
     text-shadow:

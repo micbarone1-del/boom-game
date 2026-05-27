@@ -59,6 +59,17 @@ function Lobby({ code }: { code: string }) {
   const { room, players, pods, loading } = useRoom(code);
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
+  // Brief pause animation overlay shown when the room transitions to paused.
+  // After the animation, we hide it so the lobby (Play/Restart/Customise) is usable.
+  const [showPauseIntro, setShowPauseIntro] = useState(false);
+  useEffect(() => {
+    if (room?.paused) {
+      setShowPauseIntro(true);
+      const t = setTimeout(() => setShowPauseIntro(false), 1400);
+      return () => clearTimeout(t);
+    }
+    setShowPauseIntro(false);
+  }, [room?.paused]);
 
   const joinUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -375,6 +386,7 @@ function Lobby({ code }: { code: string }) {
           Every pod needs at least 2 players to start.
         </p>
       )}
+      {showPauseIntro && <PauseOverlay />}
     </main>
   );
 }

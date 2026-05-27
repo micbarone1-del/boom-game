@@ -420,6 +420,45 @@ function PodPage() {
     );
   }
 
+  if (phase.kind === "vs") {
+    const a = ordered.find((x) => x.id === phase.playerAId)!;
+    const b = ordered.find((x) => x.id === phase.playerBId)!;
+    return (
+      <>
+        <VsPhase
+          playerA={a}
+          playerB={b}
+          trap={phase.trap}
+          onComplete={onVsResult}
+        />
+        {overlay}
+      </>
+    );
+  }
+  if (phase.kind === "group") {
+    const p = ordered.find((x) => x.id === phase.playerId)!;
+    return (
+      <>
+        <GroupPhase
+          triggerPlayer={p}
+          podPlayers={ordered}
+          trap={phase.trap}
+          onComplete={onGroupComplete}
+        />
+        {overlay}
+      </>
+    );
+  }
+  if (phase.kind === "pause") {
+    const p = ordered.find((x) => x.id === phase.playerId)!;
+    return (
+      <>
+        <PausePhase player={p} onComplete={onPauseComplete} />
+        {overlay}
+      </>
+    );
+  }
+
   // resolve
   const p = ordered.find((x) => x.id === phase.playerId)!;
   return (

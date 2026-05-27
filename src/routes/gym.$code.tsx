@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom, type Player, type Pod, type Room } from "@/hooks/use-room";
 import { generateRoomCode } from "@/lib/game";
-import { Bomb, Copy, Play } from "lucide-react";
+import { Bomb, Copy, Play, RotateCcw, Settings } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 import { FuseBar } from "@/components/FuseBar";

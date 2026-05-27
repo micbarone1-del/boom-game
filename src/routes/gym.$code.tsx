@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom, type Player, type Pod, type Room } from "@/hooks/use-room";
 import { generateRoomCode } from "@/lib/game";
-import { Bomb, Copy, Play, RotateCcw, Settings } from "lucide-react";
+import { Bomb, Copy, Play, RotateCcw, Settings, Share2 } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 import { FuseBar } from "@/components/FuseBar";
@@ -90,6 +90,23 @@ function Lobby({ code }: { code: string }) {
       await navigator.clipboard.writeText(joinUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
+  const share = async () => {
+    const shareData = {
+      title: `Join BOOM! room ${code}`,
+      text: `Join my BOOM! workout — sign in to save your score on the leaderboard.`,
+      url: joinUrl,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(joinUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }
     } catch {}
   };
 
@@ -212,16 +229,26 @@ function Lobby({ code }: { code: string }) {
             {code}
           </div>
           <p className="text-xs opacity-70">
-            Each pod scans the QR or opens{" "}
-            <span className="font-black">{`${joinUrl.replace(/^https?:\/\//, "")}`}</span>
+            Each player scans the QR or opens{" "}
+            <span className="font-black">{`${joinUrl.replace(/^https?:\/\//, "")}`}</span>{" "}
+            to join a pod and <span className="font-black">sign in</span> with their profile.
           </p>
-          <button
-            type="button"
-            onClick={copy}
-            className="ink-border-sm rounded-xl px-3 py-2 text-sm font-black bg-white flex items-center gap-2 self-start"
-          >
-            <Copy size={14} /> {copied ? "Copied!" : "Copy join link"}
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={copy}
+              className="ink-border-sm rounded-xl px-3 py-2 text-sm font-black bg-white flex items-center gap-2"
+            >
+              <Copy size={14} /> {copied ? "Copied!" : "Copy link"}
+            </button>
+            <button
+              type="button"
+              onClick={share}
+              className="ink-border-sm rounded-xl px-3 py-2 text-sm font-black bg-[var(--boom-yellow)] flex items-center gap-2"
+            >
+              <Share2 size={14} /> Share login link
+            </button>
+          </div>
         </div>
       </div>
 

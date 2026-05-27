@@ -738,6 +738,7 @@ function PlayerPhase({
   const [face, setFace] = useState<number | null>(null);
   const [hopping, setHopping] = useState<{ from: number; to: number; step: number } | null>(null);
   const [powerUp, setPowerUp] = useState(false);
+  const [hopMascot, setHopMascot] = useState<CellType | null>(null);
 
   // Drive arcade BGM intensity from fuse progress.
   useEffect(() => {
@@ -772,9 +773,14 @@ function PlayerPhase({
     // Hopping animation — token jumps cell-by-cell from current space to target.
     const from = player.current_space;
     const to = Math.min(BOARD_SIZE, from + final);
+    // Intro: full board overview, then zoom onto the player's token,
+    // then the cell-by-cell hopping sequence.
+    setHopping({ from, to, step: -2 });
+    await new Promise((r) => setTimeout(r, 1300));
+    setHopping({ from, to, step: -1 });
+    await new Promise((r) => setTimeout(r, 650));
     setHopping({ from, to, step: 0 });
-    // Slow zoom-in intro from the full map to the player's path.
-    await new Promise((r) => setTimeout(r, 1600));
+    await new Promise((r) => setTimeout(r, 250));
     for (let i = 1; i <= final; i++) {
       await new Promise((r) => setTimeout(r, 220));
       setHopping({ from, to, step: i });
@@ -798,7 +804,11 @@ function PlayerPhase({
     if (resolved !== to) {
       // Brief cell animation pause, then second hop chain to the resolved cell.
       sfx.play(landingCell.type === "boost" ? "blast" : "setback");
-      await new Promise((r) => setTimeout(r, 900));
+      // Pop the cell mascot splash so the player sees what just happened
+      // before the second hop chain kicks off.
+      setHopMascot(landingCell.type);
+      await new Promise((r) => setTimeout(r, 1200));
+      setHopMascot(null);
       const dir = resolved > to ? 1 : -1;
       const steps = Math.abs(resolved - to);
       setHopping({ from: to, to: resolved, step: 0 });
@@ -828,6 +838,7 @@ function PlayerPhase({
       {hopping && (
         <HopOverlay player={player} players={players} from={hopping.from} to={hopping.to} step={hopping.step} />
       )}
+      {hopMascot && <CellMascot type={hopMascot} username={player.username} />}
       {powerUp && <PowerUpOverlay player={player} />}
       <button
         onClick={() => {

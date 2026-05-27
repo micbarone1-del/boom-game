@@ -26,7 +26,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AuthSheet } from "@/components/AuthSheet";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";
-import { mascotForCell, CELL_FLAVOR } from "@/components/CellMascot";
+import { mascotForCell, CELL_FLAVOR, CellMascot } from "@/components/CellMascot";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { BossPhase, BossVictory } from "@/components/BossPhase";
 // BossVictory is still exported for the standalone /boss-test sandbox but

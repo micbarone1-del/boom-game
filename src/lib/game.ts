@@ -105,6 +105,7 @@ export type CellType =
   | "surprise"
   | "crazy"
   | "group"
+  | "pause"
   | "finish";
 
 export type Cell = {
@@ -131,7 +132,7 @@ const RAW_BOARD: Array<[CellType, number?]> = [
   ["surprise"], // 5
   ["hard"], // 6
   ["easy"], // 7
-  ["surprise"], // 8
+  ["pause"], // 8
   ["medium"], // 9
   ["setback", -2], // 10
   ["boost", 4], // 11
@@ -155,7 +156,7 @@ const RAW_BOARD: Array<[CellType, number?]> = [
   ["easy"], // 29
   ["boost", 3], // 30
   ["hard"], // 31
-  ["surprise"], // 32
+  ["pause"], // 32
   ["medium"], // 33
   ["setback", -999], // 34  ← BACK TO START
   ["group"], // 35
@@ -167,7 +168,7 @@ const RAW_BOARD: Array<[CellType, number?]> = [
   ["medium"], // 41
   ["setback", -3], // 42
   ["hard"], // 43
-  ["surprise"], // 44
+  ["pause"], // 44
   ["boost", 3], // 45
   ["medium"], // 46
   ["group"], // 47
@@ -195,7 +196,7 @@ export const BOARD: Cell[] = RAW_BOARD.map(([type, n], i) => {
   if (type === "hard")
     return { space, type, tier: 3, exercise: EXERCISES_HARD[i % EXERCISES_HARD.length] };
   if (type === "boost" || type === "setback") return { space, type, delta: n };
-  if (type === "surprise" || type === "crazy" || type === "group") return { space, type };
+  if (type === "surprise" || type === "crazy" || type === "group" || type === "pause") return { space, type };
   return { space, type };
 });
 
@@ -340,6 +341,8 @@ export function describeCell(cell: Cell): string {
       return `🤪 Crazy exercise!`;
     case "group":
       return `👥 Everybody together!`;
+    case "pause":
+      return `⏸️ Pause — fun break!`;
   }
 }
 
@@ -353,6 +356,7 @@ export const CELL_LABEL: Record<CellType, string> = {
   surprise: "?",
   crazy: "!?",
   group: "ALL",
+  pause: "PAUSE",
   finish: "FINISH",
 };
 

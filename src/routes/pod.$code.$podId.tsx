@@ -1517,6 +1517,9 @@ function JudgePhase({
         muted
         className="absolute inset-0 w-full h-full object-cover"
       />
+      {defuseFlash && (
+        <div className="absolute inset-0 z-[70] pointer-events-none anim-defuse-flash" />
+      )}
       {/* Floating per-rep point popups */}
       <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
         {pointPops.map((p) => (

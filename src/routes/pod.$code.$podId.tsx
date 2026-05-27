@@ -19,7 +19,7 @@ import {
   type BoardOverrides,
   type CellType,
 } from "@/lib/game";
-import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle } from "@/lib/sfx";
+import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle, playPauseMusic } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw, Flame } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
@@ -33,7 +33,8 @@ import { BossPhase, BossVictory } from "@/components/BossPhase";
 // the main flow now delegates to WrapUp for full leaderboard parity.
 void BossVictory;
 import { cellPos, cellBg, COLS, ROWS, POD_COLORS } from "@/components/GymMap";
-import { BOARD } from "@/lib/game";
+import { BOARD, CELL_LABEL } from "@/lib/game";
+import { Zap, ArrowLeft, HelpCircle, AlertTriangle, Users, Flame, Dumbbell, Trophy, Pause, Swords } from "lucide-react";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,

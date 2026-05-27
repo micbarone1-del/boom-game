@@ -123,6 +123,16 @@ function PodPage() {
       .eq("code", code);
   }, [room, players, code]);
 
+  // When the shared room is paused, let the pause animation play briefly,
+  // then move the pod display to the gym lobby controls.
+  useEffect(() => {
+    if (!room?.paused) return;
+    const t = setTimeout(() => {
+      navigate({ to: "/gym/$code", params: { code }, replace: true });
+    }, 1400);
+    return () => clearTimeout(t);
+  }, [room?.paused, navigate, code]);
+
   if (loading || !room || ordered.length === 0 || !phase) {
     return <div className="min-h-screen flex items-center justify-center text-2xl">Loading pod…</div>;
   }

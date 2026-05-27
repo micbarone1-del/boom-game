@@ -298,23 +298,52 @@ function Lobby({ code }: { code: string }) {
 
       <SpotifyEmbed code={code} paused={!!room.paused} />
 
-      <button
-        onClick={start}
-        disabled={!canStart}
-        className="btn-boom mt-2 text-2xl py-4 disabled:opacity-50 flex items-center justify-center gap-2"
-        style={{
-          fontFamily: "'Luckiest Guy', cursive",
-          background: canStart ? "var(--boom-red)" : "#999",
-        }}
+      <a
+        href={`/gym/${code}/customize`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ink-border rounded-2xl bg-white px-4 py-3 text-base font-black flex items-center justify-center gap-2 active:scale-95"
       >
-        <Play className="inline" /> START GAME
-      </button>
-      {!canStart && pods.length === 0 && (
+        <Settings size={18} /> CUSTOMISE TRAINING & MUSIC
+      </a>
+
+      {isLive ? (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={resume}
+            className="btn-boom text-2xl py-4 flex items-center justify-center gap-2"
+            style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-green)" }}
+          >
+            <Play className="inline" /> PLAY
+          </button>
+          <button
+            onClick={restartAll}
+            disabled={starting}
+            className="btn-boom text-2xl py-4 flex items-center justify-center gap-2 disabled:opacity-50"
+            style={{ fontFamily: "'Luckiest Guy', cursive", background: "var(--boom-red)" }}
+          >
+            <RotateCcw className="inline" /> RESTART
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={start}
+          disabled={!canStart}
+          className="btn-boom mt-2 text-2xl py-4 disabled:opacity-50 flex items-center justify-center gap-2"
+          style={{
+            fontFamily: "'Luckiest Guy', cursive",
+            background: canStart ? "var(--boom-red)" : "#999",
+          }}
+        >
+          <Play className="inline" /> START GAME
+        </button>
+      )}
+      {!isLive && !canStart && pods.length === 0 && (
         <p className="text-xs text-center opacity-70">
           Waiting for at least one pod with 2+ players to join…
         </p>
       )}
-      {!canStart && pods.length > 0 && (
+      {!isLive && !canStart && pods.length > 0 && (
         <p className="text-xs text-center opacity-70">
           Every pod needs at least 2 players to start.
         </p>

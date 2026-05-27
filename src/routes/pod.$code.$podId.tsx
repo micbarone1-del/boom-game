@@ -1105,7 +1105,21 @@ function HopOverlay({
                     fontSize: "clamp(0.75rem, 3vw, 1rem)",
                   }}
                 >
-                  {space <= 0 ? "GO" : cell.space}
+                  <HopCellGlyph type={cell.type} />
+                  <span className="absolute top-0.5 left-1 text-[9px] opacity-80">{cell.space}</span>
+                  {(othersBySpace.get(space) ?? []).slice(0, 3).map((op, oi) => (
+                    <div
+                      key={op.id}
+                      className="absolute -bottom-1 rounded-full"
+                      style={{
+                        width: 14, height: 14,
+                        left: `${20 + oi * 18}%`,
+                        background: mascotColor(op.avatar_url),
+                        boxShadow: "0 0 0 2px #111",
+                      }}
+                      title={op.username}
+                    />
+                  ))}
                 </div>
               );
             })}
@@ -1119,8 +1133,38 @@ function HopOverlay({
           style={{ width: `${progress * 100}%`, background: "var(--boom-yellow)" }}
         />
       </div>
+      {/* Color key legend */}
+      <div className="absolute left-0 right-0 bottom-3 px-3 flex flex-wrap gap-1 justify-center text-[9px] font-black">
+        {legend.map(([label, bg]) => (
+          <span
+            key={label}
+            className="px-1.5 py-0.5 rounded-full"
+            style={{ background: bg, color: "#111", fontFamily: "'Luckiest Guy', cursive", border: "1.5px solid #111" }}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
     </div>
   );
+}
+
+function HopCellGlyph({ type }: { type: CellType }) {
+  const p = { size: 18, strokeWidth: 3 as const, color: "#fff" };
+  switch (type) {
+    case "boost": return <Zap {...p} fill="#fff" />;
+    case "setback": return <ArrowLeft {...p} />;
+    case "surprise": return <HelpCircle {...p} />;
+    case "crazy": return <AlertTriangle {...p} />;
+    case "group": return <Users {...p} />;
+    case "pause": return <Pause {...p} fill="#fff" />;
+    case "finish": return <Trophy {...p} color="#111" />;
+    case "hard": return <Flame {...p} />;
+    case "easy": return <Dumbbell {...p} color="#111" />;
+    case "medium": return <Zap {...p} fill="#fff" />;
+    case "start": return <span className="text-xs">🚀</span>;
+  }
+  void CELL_LABEL; return null;
 }
 
 // ---------------------------------------------------------------------------

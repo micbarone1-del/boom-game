@@ -861,15 +861,6 @@ function PlayerPhase({
       )}
       {hopMascot && <CellMascot type={hopMascot} username={player.username} />}
       {powerUp && <PowerUpOverlay player={player} />}
-      <button
-        onClick={() =>
-          supabase.from("rooms").update({ paused: true }).eq("code", code)
-        }
-        className="absolute top-3 right-3 z-30 rounded-full ink-border-sm bg-white px-3 py-2 flex items-center gap-1 text-xs font-black active:scale-95"
-        aria-label="Pause game"
-      >
-        <Pause size={14} fill="#111" /> Pause
-      </button>
       <div className="text-xs font-bold opacity-60 uppercase tracking-wider">Your turn</div>
       <Avatar player={player} size={140} />
       <div

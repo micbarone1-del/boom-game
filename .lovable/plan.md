@@ -1,66 +1,63 @@
-# Big update — phased plan
+# Plan
 
-This is a large batch. I want to confirm scope and ordering before touching code. I'd split it into 5 phases so each lands stable.
+Six independent changes. I'll keep them surgical and avoid touching unrelated game logic.
 
-## Phase 1 — Fixes & polish (small, ship first)
-- **Player UI**
-  - RESTART button → navigate to `/` (Home), not pod reset.
-  - Replace separate fuse + progress bars with ONE stacked bar: bottom layer = fuse burn (red→black), top layer = pod progress along board, both on the same track with a divider tick.
-  - After dice roll: extract the existing gym hop/zoom animation into a reusable `<HopSequence />` and play it on the phone (same timing). Then current SwitchPhase opens.
-  - Robot voice: replace `reps` token in TTS with explicit `"reps"` (currently being expanded to "representatives"). Fix in `sfx.ts` speak helper.
-  - **Stuck turn bug**: investigate `pod.$code.$podId.tsx` dice→hop→switch state machine — likely a missed `current_turn_player_id` advance when hop animation interrupts. Add a safety timeout that re-enters the phase if no state change in 8s.
-- **Exercises**: any exercise whose name contains "hold" → `unit = "seconds"` everywhere (presets + board generator + judge timer mode). Judge UI for hold-exercises shows a countdown hold timer instead of rep counter.
-- **Judge UI camera**: request `getUserMedia` once per session, cache MediaStream in a context (`CameraProvider`), reuse across rep counting / VS / boss.
-- **Judge SFX**:
-  - per-rep → Mario-mushroom 1-up style chime + floating "+N pts" superimposed on camera feed.
-  - defuse → longer winning jingle, +6 dB.
-- **Explosion**: when fuse expires for a player at the end of an exercise, play the gym-screen full-screen mascot explosion overlay on the pod, then send token back to space 1 (already partial — wire to the same `ExplosionOverlay` used on gym).
-- **Colors**: pass over SwitchPhase / mascot labels / fuse readouts to enforce contrast (white text + dark text-shadow on colored bg).
-- **Music**: layer a 4-on-the-floor techno kick on top of arcade BGM in `sfx.ts` (`addTechnoLayer()` with its own gain, synced to BGM rate).
+## 1. Boss fight: rolling screen + wheel of fortune
 
-## Phase 2 — Gym screen rebuild
-- Pull the published `boomworkout.fun` gym build (need to fetch + screenshot it) and reproduce the layout: big animated map, token hops, cell-reveal mascot, scoreboard, etc.
-- Overlay the new pod system on top: per-pod color, per-pod scoreboard column, per-pod active-player highlight.
-- I'll flag **clashes** between the old single-game gym build and the new multi-pod model in a short list before coding (e.g. old build assumes one active turn → new build needs 1 per pod; old build's camera-follow assumes one token → needs to either follow round-robin or stay zoomed out).
-- Replace current static `GymMap.tsx` with the rebuilt version; `PodActivityTicker` stays.
+Replace the boss-fight random exercise picker (currently `Math.random() < 0.5 ? pickCrazyExercise() : pickSurpriseExercise()`) with an explicit two-step UX in `src/components/BossPhase.tsx`:
 
-## Phase 3 — VS battles
-- Detect collision in pod reducer: if after a hop a player lands on a cell already occupied by another player from the same pod, enter `vs` phase instead of normal switch.
-- New `VsPhase` component: two tokens slide in from sides, big "VS" badge, then the SwitchPhase exercise card. Roles: incoming player = athlete, resident = judge. On completion, swap roles and replay. Winner = more reps / faster time → 2× points; loser → 0 points.
-- Gym screen mirrors with a "VS" badge over the cell.
+- New `InnerPhase` state: `{ kind: "roll"; player }` runs before `switch`.
+- Roll screen shows the current player ("Player X — spin to attack!") and a SVG wheel of fortune with all cell types from the board (easy / medium / hard / surprise / crazy / group / pause replaced by two new attack types):
+  - **Special Move** (replaces boost) — picks a hard-tier exercise, damage ×2
+  - **Super Power** (replaces penalty) — picks a crazy-tier exercise, damage ×3 AND triggers a **pod-wide attack**: every pod player completes the rep count and damage = sum of all members' reps
+- Wheel spins on tap, lands on a wedge with eased deceleration, then transitions into the existing `BossSwitch` / `BossJudge` flow.
+- Damage calculation in `onJudgeDone` updates: special = reps×2, super = reps×3 × (number of active pod members) summed.
 
-## Phase 4 — Boss fight
-- Schema: add `rooms.phase` enum (`board | boss | victory`) and `pods.boss_hp int default 100`, `pods.boss_started_at`.
-- When a pod's last player crosses FINISH → flip `pods.phase` (or pod-level state) to `boss`, reset fuse to 5 min, spawn boss UI on pod + gym.
-- Boss UI: large arcade boss sprite (need to generate one), idle sway + lunge animation. Fuse bar becomes boss HP bar (depletes as pod defuses).
-- Damage = exercise reps × power-up multiplier. Tune damage so a balanced pod wins in ~4 min.
-- Judge UI on defuse: boss hit flash + floating damage number.
-- Boss defeat → victory screen + ranking.
+## 2. Pause flow: PLAY returns to pod, in-pause join
 
-## Phase 5 — Auth, ranking, continue, progression
-- **Auth**: enable Google + Apple via Lovable managed OAuth + email/password fallback. Profiles table already exists; extend with `power_up_level int default 0`, `lifetime_points int`.
-- **Ranking screen**: existing layout + per-row "Save to profile" button (sign in if anonymous) that writes `lifetime_score += game_score`, increments `games_finished`, recomputes `power_up_level` from thresholds (e.g. 0/500/1500/3500/7500 pts).
-- **Continue screen**: already exists — make Continue free and resume from saved `current_space` (no penalty). Confirm wiring.
-- **Progression effects** applied during play:
-  - Boss damage multiplier = `1 + 0.25 * power_up_level`.
-  - On explosion: instead of space 1, send back to `max(1, current_space - (8 - power_up_level))`.
-  - Persist per-user `power_up_level` via `profiles` row keyed on `user_id` (when signed in) or `localStorage` fallback for guests.
+Two changes:
 
-## Phase 6 — Verify
-- Manual click-through: solo pod → board → VS → boss → victory → ranking → save to profile.
-- Screenshot QA gym screen at desktop + 1080p TV.
+**(a) PLAY from lobby resumes into the active pod, not the gym lobby.** In `src/routes/gym.$code.tsx` `Lobby.resume()`, after clearing `paused`, navigate the host's pod view back to `/pod/$code/$podId` if the current device has an associated pod. For the gym (host) screen, it stays on the map. The fix is: when paused, the pod page currently auto-navigates to `/gym/$code` after 1.4s — change it so it stays on the pod page and just shows the PauseOverlay until `paused` flips back, so the pod naturally resumes in place.
 
-## Clashes / open questions
-1. The published gym build was the **pre-pod** single-game layout. Reproducing it 1:1 means the multi-pod scoreboard has to be retrofitted — confirm you want me to extend (multi-pod) rather than literally clone (single).
-2. VS battle with pass-and-play (one phone per pod): the "swap roles" step needs a clear "PASS PHONE" beat — I'll add a 3-2-1 swap card.
-3. Boss fight per-pod vs shared: I'm assuming **per-pod** (each pod fights their own boss on their own 5-min clock). Confirm — alternative is one shared boss whose HP all pods chip at.
-4. "Allow camera only once" — I'll request on first Judge UI mount and cache. If the user denies, we re-prompt next exercise (browser policy).
-5. Apple Sign-In requires the project be on a custom domain Apple-verified — already on `boomworkout.fun`, so OK.
+**(b) Pause overlay shows join/create options.** Extend `src/components/PauseOverlay.tsx` to render, alongside RESUME, the same pod-management UI as the gym lobby: room QR/code, list of pods with seats, "Create pod" / "Join pod" buttons. New players can scan and join while the game is paused. Replicate the same in-game pod card list inside the lobby screen too (it's already there — just ensure parity).
 
-## Proposed execution order
-Ship Phase 1 first (1 commit, low risk), then 2, then 3+4 together (they share the per-pod state machine), then 5.
+## 3. Hopping animation reliability + cell layout
 
-Reply with:
-- Y to proceed top-to-bottom,
-- or pick a different starting phase,
-- or answer the 4 clash questions and I'll start.
+In the hop animation component (lives in pod page, near `onRollComplete`):
+
+- Ensure every roll plays the hop sequence — current bug: sometimes the state transitions skip frames. Make the hop a blocking promise that always runs `dice` frames, then resolves before `setPhase` is called.
+- The "zoomed-in mini-board" strip during the hop currently renders cells in a straight horizontal row. Refactor it to read the actual board path geometry (from `cellPos` in `GymMap`) so the zoomed view mirrors the real serpentine layout (rows reversing direction every row).
+- Cell icons inside the hop strip: force `color: #fff`, `stroke-width: 2.25`, and `width/height: 100%` so they always fill the box with consistent monochrome thickness.
+
+## 4. End-of-boss & fuse-end transitions
+
+**Boss victory:** already routes to `WrapUp` via `room.phase === "victory"`. Verify `WrapUp` actually shows the leaderboard + recap video + share + login. If currently frozen, the issue is likely that `WrapUp` is gated on a phase the BossPhase death sequence never sets. Fix: in `BossPhase.tsx` death timeout, ensure `phase: "victory"` is written and `WrapUp` mounts.
+
+**Fuse end (TIME'S OUT):** currently `TimesOutOverlay` runs, but explosion + continue flow is incomplete on the pod page when no one finishes. Wire:
+1. Fuse hits 0 → `game_state = "timeout_continue"` + `continue_deadline_at = now+10s` (already there).
+2. `ExplosionOverlay` plays for ~1.6s before the `TimesOutOverlay` continue countdown.
+3. If "CONTINUE" pressed → existing `onContinue` extends by 5 min.
+4. If timer expires → `game_state = "game_over"` → `GameOverOverlay` followed by automatic transition to `WrapUp` leaderboard (same component as boss victory). Currently it only shows `GameOverOverlay` with a restart button — add a "VIEW LEADERBOARD" button that flips `room.phase = "victory"` so `WrapUp` mounts.
+
+## 5. Switch screen text contrast
+
+In `BossSwitch` and the main pod switch phase, "Player" and "Judge" labels are styled with `color: "var(--boom-red)"` / `var(--boom-yellow)` on a white background — but the player **name** below uses `color: "var(--boom-ink)"` which is fine. The issue per the screenshot: text inside the switch / pass-the-phone screen reads as black on a dark background somewhere. Audit `src/routes/pod.$code.$podId.tsx` SwitchScreen render and `BossSwitch` — set explicit `color: var(--boom-ink)` on a white surface and `color: #fff` on dark surfaces. No layout change.
+
+---
+
+## Technical notes
+
+- Wheel: pure CSS/SVG (no new deps). Each wedge a `<path>` arc with a label rotated to the wedge center. Spin = CSS `transform: rotate()` with `transition: transform 4s cubic-bezier(0.17, 0.67, 0.21, 0.99)`, target rotation = `360 * spins + wedgeAngle`.
+- Hop geometry: import `cellPos`, `COLS`, `ROWS` from `src/components/GymMap.tsx` (already exported) and map the `dice` cells to their `{row, col}` positions so the strip can render a small-scale serpentine.
+- WrapUp gate: verify by reading the existing `WrapUp` component and the `room.phase === "victory"` branch (already present at pod.$code.$podId.tsx:465).
+- All DB writes use existing `rooms`/`workout_logs`/`players` tables; no migration needed.
+
+## Files touched
+
+- `src/components/BossPhase.tsx` (wheel + special/super damage)
+- `src/components/PauseOverlay.tsx` (in-pause join UI)
+- `src/routes/pod.$code.$podId.tsx` (stop auto-nav on pause; hop animation reliability + geometry + icon styling; fuse-end → WrapUp transition; switch screen contrast)
+- `src/routes/gym.$code.tsx` (PLAY navigates back to active pod if applicable)
+- `src/styles.css` (any new keyframes for wheel spin / explosion-to-continue transition)
+
+No schema changes.

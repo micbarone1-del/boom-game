@@ -1237,7 +1237,10 @@ function HopOverlay({
                     />
                   ))}
                   {isHere && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div
+                      key={`tok-${step}-${space}`}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none anim-hop-visible"
+                    >
                       <div className="rounded-full bg-white p-0.5 shadow-[0_0_0_2px_#111,0_0_18px_rgba(255,230,60,0.95)]">
                         <Avatar player={player} size={28} />
                       </div>

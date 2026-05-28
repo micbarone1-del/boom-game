@@ -18,6 +18,50 @@ import {
 } from "@/lib/sfx";
 import bossMascot from "@/assets/boss-mascot.png";
 
+/** Wheel-of-fortune wedge definitions for the boss roll. */
+type BossWedge = {
+  id: string;
+  label: string;
+  /** Per-rep damage multiplier. */
+  multiplier: number;
+  /** True = whole pod hits, damage summed across all members. */
+  podWide?: boolean;
+  /** Visual fill color for the wedge. */
+  color: string;
+  /** Exercise pool tier when picked. */
+  tier: 1 | 2 | 3;
+  /** Which exercise picker to use. */
+  pick: "easy" | "medium" | "hard" | "surprise" | "crazy" | "group";
+};
+
+const BOSS_WEDGES: BossWedge[] = [
+  { id: "easy", label: "EASY", multiplier: 1, color: "#facc15", tier: 1, pick: "easy" },
+  { id: "medium", label: "MEDIUM", multiplier: 1, color: "#22c55e", tier: 2, pick: "medium" },
+  { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard" },
+  { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise" },
+  { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy" },
+  { id: "group", label: "GROUP", multiplier: 1, color: "#3b82f6", tier: 2, pick: "group" },
+  { id: "special", label: "SPECIAL ×2", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard" },
+  { id: "super", label: "SUPER ×3", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy" },
+];
+
+function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: string; tier: 1 | 2 | 3 } {
+  switch (wedge.pick) {
+    case "surprise":
+      return pickSurpriseExercise(overrides);
+    case "crazy":
+      return pickCrazyExercise();
+    case "group":
+      return pickGroupExercise();
+    case "easy":
+      return { exercise: "Jumping Jacks", tier: 1 };
+    case "medium":
+      return { exercise: "Squats", tier: 2 };
+    case "hard":
+      return { exercise: "Burpees", tier: 3 };
+  }
+}
+
 /** Total HP per player joining the boss (shared HP pool). */
 const HP_PER_PLAYER = 220;
 /** Total seconds the pod has before the boss wins. */

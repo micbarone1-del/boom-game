@@ -1024,7 +1024,7 @@ function SwitchPhase({
           <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
             Player
           </div>
-          <div className="text-sm font-bold">{player.username}</div>
+          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{player.username}</div>
         </div>
         <div className="text-4xl">➡️</div>
         <div className="flex flex-col items-center gap-1 anim-fade-in">
@@ -1032,7 +1032,7 @@ function SwitchPhase({
           <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
             Judge
           </div>
-          <div className="text-sm font-bold">{judge.username}</div>
+          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
         </div>
       </div>
 
@@ -1258,19 +1258,25 @@ function HopOverlay({
 }
 
 function HopCellGlyph({ type }: { type: CellType }) {
-  const p = { size: 18, strokeWidth: 3 as const, color: "#fff" };
+  // Monochrome white icons with consistent stroke thickness that fill the cell.
+  const p = {
+    size: undefined as unknown as number,
+    strokeWidth: 2 as const,
+    color: "#fff",
+    className: "w-3/4 h-3/4",
+  };
   switch (type) {
-    case "boost": return <Zap {...p} fill="#fff" />;
+    case "boost": return <Zap {...p} />;
     case "setback": return <ArrowLeft {...p} />;
     case "surprise": return <HelpCircle {...p} />;
     case "crazy": return <AlertTriangle {...p} />;
     case "group": return <Users {...p} />;
-    case "pause": return <Pause {...p} fill="#fff" />;
-    case "finish": return <Trophy {...p} color="#111" />;
+    case "pause": return <Pause {...p} />;
+    case "finish": return <Trophy {...p} />;
     case "hard": return <Flame {...p} />;
-    case "easy": return <Dumbbell {...p} color="#111" />;
-    case "medium": return <Zap {...p} fill="#fff" />;
-    case "start": return <span className="text-xs">🚀</span>;
+    case "easy": return <Dumbbell {...p} />;
+    case "medium": return <Dumbbell {...p} />;
+    case "start": return <Play {...p} />;
   }
   void CELL_LABEL; return null;
 }

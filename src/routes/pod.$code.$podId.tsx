@@ -885,7 +885,7 @@ function PlayerPhase({
       <button
         onClick={handleRoll}
         disabled={rolling}
-        className="w-44 h-44 rounded-3xl ink-border flex items-center justify-center active:scale-95 transition-transform"
+        className="w-44 h-44 rounded-3xl ink-border arcade-press arcade-tilt-r flex items-center justify-center"
         style={{ background: "var(--boom-yellow)" }}
         aria-label="Roll the dice"
       >
@@ -969,10 +969,10 @@ function SwitchPhase({
           src={mascotImg}
           alt=""
           key={`cellmascot-${trap.cellType}`}
-          className="w-28 h-28 anim-mascot-bounce drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
+          className="w-28 h-28 anim-mascot-bounce arcade-slam-in drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
         />
         <div
-          className="ink-border rounded-2xl px-4 py-1 bg-white"
+          className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
         >
           <span
@@ -982,7 +982,7 @@ function SwitchPhase({
             {flavor.label}
           </span>
         </div>
-        <div className="text-center ink-border rounded-2xl bg-white px-4 py-2 max-w-[92%]">
+        <div className="text-center ink-border rounded-2xl bg-white px-4 py-2 max-w-[92%] arcade-slam-in">
           <div
             className="font-black leading-tight"
             style={{

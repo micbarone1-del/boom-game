@@ -5,6 +5,7 @@ import type { Player, Room } from "@/hooks/use-room";
 import {
   pickCrazyExercise,
   pickSurpriseExercise,
+  pickGroupExercise,
   calcRepsForTier,
   TRAP_TIMEOUT_MS,
   type BoardOverrides,
@@ -17,6 +18,50 @@ import {
 } from "@/lib/sfx";
 import bossMascot from "@/assets/boss-mascot.png";
 
+/** Wheel-of-fortune wedge definitions for the boss roll. */
+type BossWedge = {
+  id: string;
+  label: string;
+  /** Per-rep damage multiplier. */
+  multiplier: number;
+  /** True = whole pod hits, damage summed across all members. */
+  podWide?: boolean;
+  /** Visual fill color for the wedge. */
+  color: string;
+  /** Exercise pool tier when picked. */
+  tier: 1 | 2 | 3;
+  /** Which exercise picker to use. */
+  pick: "easy" | "medium" | "hard" | "surprise" | "crazy" | "group";
+};
+
+const BOSS_WEDGES: BossWedge[] = [
+  { id: "easy", label: "EASY", multiplier: 1, color: "#facc15", tier: 1, pick: "easy" },
+  { id: "medium", label: "MEDIUM", multiplier: 1, color: "#22c55e", tier: 2, pick: "medium" },
+  { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard" },
+  { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise" },
+  { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy" },
+  { id: "group", label: "GROUP", multiplier: 1, color: "#3b82f6", tier: 2, pick: "group" },
+  { id: "special", label: "SPECIAL ×2", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard" },
+  { id: "super", label: "SUPER ×3", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy" },
+];
+
+function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: string; tier: 1 | 2 | 3 } {
+  switch (wedge.pick) {
+    case "surprise":
+      return pickSurpriseExercise(overrides);
+    case "crazy":
+      return pickCrazyExercise();
+    case "group":
+      return pickGroupExercise();
+    case "easy":
+      return { exercise: "Jumping Jacks", tier: 1 };
+    case "medium":
+      return { exercise: "Squats", tier: 2 };
+    case "hard":
+      return { exercise: "Burpees", tier: 3 };
+  }
+}
+
 /** Total HP per player joining the boss (shared HP pool). */
 const HP_PER_PLAYER = 220;
 /** Total seconds the pod has before the boss wins. */
@@ -28,10 +73,17 @@ type Attack = {
   reps: number;
   unit: "reps" | "seconds";
   tier: 1 | 2 | 3;
+  /** Damage multiplier per rep, set by the wheel wedge. Default 2. */
+  multiplier?: number;
+  /** When true the whole pod performs the move and damage = sum across all members. */
+  podWide?: boolean;
+  /** Display label for the wedge (e.g. "SPECIAL MOVE"). */
+  wedgeLabel?: string;
 };
 
 type InnerPhase =
   | { kind: "intro" }
+  | { kind: "roll"; turnPlayer: Player }
   | { kind: "switch"; attack: Attack }
   | { kind: "judge"; attack: Attack }
   | { kind: "hit"; attack: Attack; damage: number; outcome: "success" | "fail" }
@@ -115,9 +167,14 @@ export function BossPhase({
 
   const startTurn = (turnPlayer = player) => {
     if (!turnPlayer) return;
-    // 50/50 crazy vs hard surprise pool
-    const pick =
-      Math.random() < 0.5 ? pickCrazyExercise() : pickSurpriseExercise(overrides);
+    // Player now spins the wheel of fortune to pick the move.
+    setInner({ kind: "roll", turnPlayer });
+  };
+
+  const onWheelResult = (wedge: BossWedge) => {
+    const turnPlayer = inner.kind === "roll" ? inner.turnPlayer : player;
+    if (!turnPlayer) return;
+    const pick = pickForWedge(wedge, overrides);
     const reps = calcRepsForTier(
       pick.tier,
       turnPlayer.fitness_level,
@@ -130,6 +187,9 @@ export function BossPhase({
       reps,
       unit: isHold ? "seconds" : "reps",
       tier: pick.tier,
+      multiplier: wedge.multiplier,
+      podWide: wedge.podWide,
+      wedgeLabel: wedge.label,
     };
     setInner({ kind: "switch", attack });
   };
@@ -145,7 +205,9 @@ export function BossPhase({
   ) => {
     if (inner.kind !== "judge") return;
     const attack = inner.attack;
-    const damage = Math.max(0, achievedReps * (attack.tier === 3 ? 3 : 2));
+    const baseMul = attack.multiplier ?? (attack.tier === 3 ? 3 : 2);
+    const podMul = attack.podWide ? Math.max(1, active.length) : 1;
+    const damage = Math.max(0, achievedReps * baseMul * podMul);
     if (damage > 0) {
       setHitFlash(Date.now());
       setBurst({ id: Date.now(), dmg: damage });
@@ -310,6 +372,13 @@ export function BossPhase({
         />
       )}
 
+      {inner.kind === "roll" && (
+        <BossRoll
+          player={inner.turnPlayer}
+          onResult={onWheelResult}
+        />
+      )}
+
       {inner.kind === "judge" && (
         <BossJudge
           player={player}
@@ -406,7 +475,7 @@ function BossSwitch({
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 p-4 pb-20" style={{ background: "#ffffff" }}>
       <div aria-hidden className="pointer-events-none absolute inset-2 rounded-[2rem]" style={{ border: "8px solid #111" }} />
       <div className="mt-2 text-center text-4xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
-        BOSS ATTACK
+        {attack.wedgeLabel ? `BOSS · ${attack.wedgeLabel}` : "BOSS ATTACK"}
       </div>
       <div
         className="ink-border rounded-2xl bg-white px-5 py-3 text-center max-w-[92%]"
@@ -424,6 +493,11 @@ function BossSwitch({
         <div className="font-bold" style={{ color: "var(--boom-ink)" }}>
           {attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps`}
         </div>
+        {attack.podWide && (
+          <div className="text-xs font-black mt-1" style={{ color: "var(--boom-red)" }}>
+            POD-WIDE · everyone hits together!
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-around w-full max-w-md">
         <div className="flex flex-col items-center gap-1 anim-fade-in">
@@ -906,5 +980,164 @@ export function BossVictory({
         Play Again
       </button>
     </main>
+  );
+}
+
+/**
+ * Wheel-of-fortune roll screen. Player taps SPIN, the wheel decelerates
+ * onto a random wedge, then we hand the chosen wedge back to the boss flow.
+ */
+function BossRoll({
+  player,
+  onResult,
+}: {
+  player: Player;
+  onResult: (wedge: BossWedge) => void;
+}) {
+  const [rotation, setRotation] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const [done, setDone] = useState<BossWedge | null>(null);
+  const wedgeAngle = 360 / BOSS_WEDGES.length;
+
+  const spin = () => {
+    if (spinning || done) return;
+    setSpinning(true);
+    sfx.play("countdown");
+    speak(`${player.username}, spin the wheel!`, { rate: 0.9 });
+    const target = Math.floor(Math.random() * BOSS_WEDGES.length);
+    const wedge = BOSS_WEDGES[target];
+    // Pointer is at the top (12 o'clock). Each wedge i is centered at
+    // angle (i * wedgeAngle + wedgeAngle/2) measured clockwise from 0°.
+    // Rotate the wheel so that the chosen wedge ends up under the pointer.
+    const finalDeg =
+      360 * 6 - (target * wedgeAngle + wedgeAngle / 2);
+    setRotation(finalDeg);
+    setTimeout(() => {
+      setDone(wedge);
+      sfx.play("didIt");
+      speak(wedge.label.replace("×", " times "));
+      setTimeout(() => onResult(wedge), 1400);
+    }, 4200);
+  };
+
+  return (
+    <div
+      className="absolute inset-0 z-30 flex flex-col items-center justify-between p-4 pb-20"
+      style={{ background: "radial-gradient(ellipse at center, #2a0000 0%, #0a0000 80%)" }}
+    >
+      <div className="text-center mt-4 anim-pop">
+        <div className="text-xs font-black uppercase tracking-widest text-white/80">
+          Your turn
+        </div>
+        <div
+          className="text-4xl font-black text-white"
+          style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}
+        >
+          {player.username}
+        </div>
+        <div
+          className="text-2xl font-black mt-1"
+          style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-yellow)", textShadow: "2px 2px 0 #000" }}
+        >
+          SPIN THE WHEEL!
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center" style={{ width: "min(80vw, 320px)", height: "min(80vw, 320px)" }}>
+        {/* Pointer */}
+        <div
+          className="absolute -top-3 left-1/2 -translate-x-1/2 z-20"
+          style={{
+            width: 0,
+            height: 0,
+            borderLeft: "18px solid transparent",
+            borderRight: "18px solid transparent",
+            borderTop: "28px solid #fff",
+            filter: "drop-shadow(0 2px 0 #111)",
+          }}
+        />
+        <svg
+          viewBox="-110 -110 220 220"
+          className="w-full h-full"
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transition: spinning ? "transform 4s cubic-bezier(0.17, 0.67, 0.21, 0.99)" : "none",
+            filter: "drop-shadow(0 6px 0 rgba(0,0,0,0.6))",
+          }}
+        >
+          <circle cx={0} cy={0} r={105} fill="#111" />
+          {BOSS_WEDGES.map((w, i) => {
+            const start = (i * wedgeAngle - 90) * (Math.PI / 180);
+            const end = ((i + 1) * wedgeAngle - 90) * (Math.PI / 180);
+            const r = 100;
+            const x1 = Math.cos(start) * r;
+            const y1 = Math.sin(start) * r;
+            const x2 = Math.cos(end) * r;
+            const y2 = Math.sin(end) * r;
+            const large = wedgeAngle > 180 ? 1 : 0;
+            const midAngle = (i * wedgeAngle + wedgeAngle / 2 - 90) * (Math.PI / 180);
+            const labelR = 62;
+            const lx = Math.cos(midAngle) * labelR;
+            const ly = Math.sin(midAngle) * labelR;
+            const rot = i * wedgeAngle + wedgeAngle / 2;
+            return (
+              <g key={w.id}>
+                <path
+                  d={`M 0 0 L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`}
+                  fill={w.color}
+                  stroke="#111"
+                  strokeWidth={2}
+                />
+                <text
+                  x={lx}
+                  y={ly}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  transform={`rotate(${rot} ${lx} ${ly})`}
+                  style={{
+                    fontFamily: "'Luckiest Guy', cursive",
+                    fontSize: 11,
+                    fill: "#111",
+                    fontWeight: 900,
+                  }}
+                >
+                  {w.label}
+                </text>
+              </g>
+            );
+          })}
+          <circle cx={0} cy={0} r={18} fill="#fff" stroke="#111" strokeWidth={3} />
+        </svg>
+      </div>
+
+      {!done ? (
+        <button
+          onClick={spin}
+          disabled={spinning}
+          className="ink-border rounded-2xl px-8 py-4 text-3xl font-black active:scale-95 disabled:opacity-60"
+          style={{
+            background: "var(--boom-yellow)",
+            color: "var(--boom-ink)",
+            fontFamily: "'Luckiest Guy', cursive",
+          }}
+        >
+          {spinning ? "SPINNING…" : "SPIN!"}
+        </button>
+      ) : (
+        <div
+          className="ink-border rounded-2xl px-6 py-3 text-2xl font-black anim-pop text-center"
+          style={{
+            background: done.color,
+            color: "#111",
+            fontFamily: "'Luckiest Guy', cursive",
+          }}
+        >
+          {done.label}
+          {done.podWide && (
+            <div className="text-xs font-black mt-1">POD-WIDE STRIKE!</div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

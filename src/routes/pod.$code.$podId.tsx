@@ -74,7 +74,7 @@ function mascotColor(url: string | null) {
 
 function PodPage() {
   const { code, podId } = Route.useParams();
-  const { room, players, loading } = useRoom(code);
+  const { room, players, pods, loading } = useRoom(code);
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase | null>(null);
   const clipsRef = useRef<Map<string, Blob>>(new Map());
@@ -123,15 +123,10 @@ function PodPage() {
       .eq("code", code);
   }, [room, players, code]);
 
-  // When the shared room is paused, let the pause animation play briefly,
-  // then move the pod display to the gym lobby controls.
-  useEffect(() => {
-    if (!room?.paused) return;
-    const t = setTimeout(() => {
-      navigate({ to: "/gym/$code", params: { code }, replace: true });
-    }, 1400);
-    return () => clearTimeout(t);
-  }, [room?.paused, navigate, code]);
+  // When the shared room is paused, stay on the pod screen and let the
+  // PauseOverlay render on top. Resuming the room (toggle in overlay or by
+  // the host) simply hides the overlay and gameplay continues in-place.
+  void navigate;
 
   if (loading || !room || ordered.length === 0 || !phase) {
     return <div className="min-h-screen flex items-center justify-center text-2xl">Loading pod…</div>;
@@ -447,11 +442,28 @@ function PodPage() {
       return <>{pauseBtn}<TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue /></>;
     }
     if (room.game_state === "game_over") {
-      return <>{pauseBtn}<GameOverOverlay onRestart={restart} /></>;
+      return (
+        <>
+          {pauseBtn}
+          <GameOverOverlay
+            onRestart={restart}
+            onLeaderboard={() => {
+              void supabase
+                .from("rooms")
+                .update({ phase: "victory" })
+                .eq("code", code)
+                .then(() => {});
+            }}
+          />
+        </>
+      );
     }
     if (room.paused) {
       return (
         <PauseOverlay
+          code={code}
+          players={players}
+          pods={pods}
           onResume={() => {
             void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
           }}
@@ -1012,7 +1024,7 @@ function SwitchPhase({
           <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
             Player
           </div>
-          <div className="text-sm font-bold">{player.username}</div>
+          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{player.username}</div>
         </div>
         <div className="text-4xl">➡️</div>
         <div className="flex flex-col items-center gap-1 anim-fade-in">
@@ -1020,7 +1032,7 @@ function SwitchPhase({
           <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
             Judge
           </div>
-          <div className="text-sm font-bold">{judge.username}</div>
+          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
         </div>
       </div>
 
@@ -1071,6 +1083,22 @@ function HopOverlay({
   const totalSteps = Math.max(1, to - from);
   const progress = Math.min(1, safeStep / totalSteps);
   const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
+  // Group path cells by their row on the actual serpentine board so the
+  // zoomed-in strip mirrors the real layout (rows can change direction).
+  const rowsMap = new Map<number, Array<{ space: number; col: number; idxInPath: number }>>();
+  pathSpaces.forEach((space, idxInPath) => {
+    const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
+    const { row, col } = cellPos(idx);
+    const arr = rowsMap.get(row) ?? [];
+    arr.push({ space, col, idxInPath });
+    rowsMap.set(row, arr);
+  });
+  const rowOrder = Array.from(rowsMap.keys()).sort((a, b) => a - b);
+  // Within each row, sort by the order they appear in the path so the
+  // hop direction is preserved (left→right on even rows, right→left on odd).
+  rowOrder.forEach((r) => {
+    rowsMap.get(r)!.sort((a, b) => a.idxInPath - b.idxInPath);
+  });
   const tokenLeft = ((Math.min(safeStep, totalSteps) + 0.5) / pathSpaces.length) * 100;
   // Other tokens (not the rolling player) shown on top of the path cells.
   const othersBySpace = new Map<number, Player[]>();
@@ -1162,28 +1190,20 @@ function HopOverlay({
         style={{ height: "min(44vh, 300px)", perspective: 800 }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full pb-24 pt-20">
-            <div className="absolute left-8 right-8 top-[112px] h-2 rounded-full bg-white/25" />
-            <div
-              className="absolute top-[84px] z-30 transition-[left] duration-200 ease-out"
-              style={{ left: `${tokenLeft}%`, transform: "translateX(-50%)" }}
-            >
-              <div key={`tok-${step}`} className="anim-hop-visible">
-                <div className="rounded-full bg-white p-1 shadow-[0_0_0_4px_#111,0_12px_0_rgba(0,0,0,0.35),0_0_28px_rgba(255,230,60,0.95)]">
-                  <Avatar player={player} size={72} />
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="grid gap-2"
-              style={{ gridTemplateColumns: `repeat(${pathSpaces.length}, minmax(0, 1fr))` }}
-            >
-              {pathSpaces.map((space, i) => {
-                const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
-                const cell = BOARD[idx];
-                const isHere = i === step;
-                const isDone = i <= step;
+          <div className="relative w-full pb-6 pt-4 flex flex-col gap-2">
+            {rowOrder.map((rowIdx) => {
+              const rowCells = rowsMap.get(rowIdx)!;
+              return (
+                <div
+                  key={`row-${rowIdx}`}
+                  className="grid gap-2"
+                  style={{ gridTemplateColumns: `repeat(${rowCells.length}, minmax(0, 1fr))` }}
+                >
+                  {rowCells.map(({ space, idxInPath: i }) => {
+                    const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
+                    const cell = BOARD[idx];
+                    const isHere = i === step;
+                    const isDone = i <= step;
               return (
                 <div
                     key={`${space}-${i}`}
@@ -1216,10 +1236,20 @@ function HopOverlay({
                       title={op.username}
                     />
                   ))}
+                  {isHere && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="rounded-full bg-white p-0.5 shadow-[0_0_0_2px_#111,0_0_18px_rgba(255,230,60,0.95)]">
+                        <Avatar player={player} size={28} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+                  })}
                 </div>
               );
             })}
-            </div>
+            <div className="sr-only">token at {tokenLeft.toFixed(0)}%</div>
           </div>
         </div>
       </div>
@@ -1246,19 +1276,25 @@ function HopOverlay({
 }
 
 function HopCellGlyph({ type }: { type: CellType }) {
-  const p = { size: 18, strokeWidth: 3 as const, color: "#fff" };
+  // Monochrome white icons with consistent stroke thickness that fill the cell.
+  const p = {
+    size: undefined as unknown as number,
+    strokeWidth: 2 as const,
+    color: "#fff",
+    className: "w-3/4 h-3/4",
+  };
   switch (type) {
-    case "boost": return <Zap {...p} fill="#fff" />;
+    case "boost": return <Zap {...p} />;
     case "setback": return <ArrowLeft {...p} />;
     case "surprise": return <HelpCircle {...p} />;
     case "crazy": return <AlertTriangle {...p} />;
     case "group": return <Users {...p} />;
-    case "pause": return <Pause {...p} fill="#fff" />;
-    case "finish": return <Trophy {...p} color="#111" />;
+    case "pause": return <Pause {...p} />;
+    case "finish": return <Trophy {...p} />;
     case "hard": return <Flame {...p} />;
-    case "easy": return <Dumbbell {...p} color="#111" />;
-    case "medium": return <Zap {...p} fill="#fff" />;
-    case "start": return <span className="text-xs">🚀</span>;
+    case "easy": return <Dumbbell {...p} />;
+    case "medium": return <Dumbbell {...p} />;
+    case "start": return <Play {...p} />;
   }
   void CELL_LABEL; return null;
 }

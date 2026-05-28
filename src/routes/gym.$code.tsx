@@ -386,7 +386,7 @@ function Lobby({ code }: { code: string }) {
           Every pod needs at least 2 players to start.
         </p>
       )}
-      {showPauseIntro && <PauseOverlay />}
+      {showPauseIntro && <PauseOverlay code={code} players={players} pods={pods} />}
     </main>
   );
 }
@@ -481,6 +481,9 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
       {room.game_state === "game_over" && <GameOverOverlay />}
       {room.paused && (
         <PauseOverlay
+          code={code}
+          players={players}
+          pods={pods}
           onResume={() => {
             void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
           }}

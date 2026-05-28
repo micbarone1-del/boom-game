@@ -123,15 +123,10 @@ function PodPage() {
       .eq("code", code);
   }, [room, players, code]);
 
-  // When the shared room is paused, let the pause animation play briefly,
-  // then move the pod display to the gym lobby controls.
-  useEffect(() => {
-    if (!room?.paused) return;
-    const t = setTimeout(() => {
-      navigate({ to: "/gym/$code", params: { code }, replace: true });
-    }, 1400);
-    return () => clearTimeout(t);
-  }, [room?.paused, navigate, code]);
+  // When the shared room is paused, stay on the pod screen and let the
+  // PauseOverlay render on top. Resuming the room (toggle in overlay or by
+  // the host) simply hides the overlay and gameplay continues in-place.
+  void navigate;
 
   if (loading || !room || ordered.length === 0 || !phase) {
     return <div className="min-h-screen flex items-center justify-center text-2xl">Loading pod…</div>;
@@ -447,11 +442,28 @@ function PodPage() {
       return <>{pauseBtn}<TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue /></>;
     }
     if (room.game_state === "game_over") {
-      return <>{pauseBtn}<GameOverOverlay onRestart={restart} /></>;
+      return (
+        <>
+          {pauseBtn}
+          <GameOverOverlay
+            onRestart={restart}
+            onLeaderboard={() => {
+              void supabase
+                .from("rooms")
+                .update({ phase: "victory" })
+                .eq("code", code)
+                .then(() => {});
+            }}
+          />
+        </>
+      );
     }
     if (room.paused) {
       return (
         <PauseOverlay
+          code={code}
+          players={players}
+          pods={pods}
           onResume={() => {
             void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
           }}

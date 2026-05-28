@@ -372,6 +372,13 @@ export function BossPhase({
         />
       )}
 
+      {inner.kind === "roll" && (
+        <BossRoll
+          player={inner.turnPlayer}
+          onResult={onWheelResult}
+        />
+      )}
+
       {inner.kind === "judge" && (
         <BossJudge
           player={player}
@@ -468,7 +475,7 @@ function BossSwitch({
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 p-4 pb-20" style={{ background: "#ffffff" }}>
       <div aria-hidden className="pointer-events-none absolute inset-2 rounded-[2rem]" style={{ border: "8px solid #111" }} />
       <div className="mt-2 text-center text-4xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
-        BOSS ATTACK
+        {attack.wedgeLabel ? `BOSS · ${attack.wedgeLabel}` : "BOSS ATTACK"}
       </div>
       <div
         className="ink-border rounded-2xl bg-white px-5 py-3 text-center max-w-[92%]"
@@ -486,6 +493,11 @@ function BossSwitch({
         <div className="font-bold" style={{ color: "var(--boom-ink)" }}>
           {attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps`}
         </div>
+        {attack.podWide && (
+          <div className="text-xs font-black mt-1" style={{ color: "var(--boom-red)" }}>
+            POD-WIDE · everyone hits together!
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-around w-full max-w-md">
         <div className="flex flex-col items-center gap-1 anim-fade-in">

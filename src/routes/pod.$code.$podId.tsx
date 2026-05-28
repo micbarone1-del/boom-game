@@ -1083,6 +1083,22 @@ function HopOverlay({
   const totalSteps = Math.max(1, to - from);
   const progress = Math.min(1, safeStep / totalSteps);
   const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
+  // Group path cells by their row on the actual serpentine board so the
+  // zoomed-in strip mirrors the real layout (rows can change direction).
+  const rowsMap = new Map<number, Array<{ space: number; col: number; idxInPath: number }>>();
+  pathSpaces.forEach((space, idxInPath) => {
+    const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
+    const { row, col } = cellPos(idx);
+    const arr = rowsMap.get(row) ?? [];
+    arr.push({ space, col, idxInPath });
+    rowsMap.set(row, arr);
+  });
+  const rowOrder = Array.from(rowsMap.keys()).sort((a, b) => a - b);
+  // Within each row, sort by the order they appear in the path so the
+  // hop direction is preserved (left→right on even rows, right→left on odd).
+  rowOrder.forEach((r) => {
+    rowsMap.get(r)!.sort((a, b) => a.idxInPath - b.idxInPath);
+  });
   const tokenLeft = ((Math.min(safeStep, totalSteps) + 0.5) / pathSpaces.length) * 100;
   // Other tokens (not the rolling player) shown on top of the path cells.
   const othersBySpace = new Map<number, Player[]>();

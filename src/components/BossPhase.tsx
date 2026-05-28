@@ -5,6 +5,7 @@ import type { Player, Room } from "@/hooks/use-room";
 import {
   pickCrazyExercise,
   pickSurpriseExercise,
+  pickGroupExercise,
   calcRepsForTier,
   TRAP_TIMEOUT_MS,
   type BoardOverrides,
@@ -28,10 +29,17 @@ type Attack = {
   reps: number;
   unit: "reps" | "seconds";
   tier: 1 | 2 | 3;
+  /** Damage multiplier per rep, set by the wheel wedge. Default 2. */
+  multiplier?: number;
+  /** When true the whole pod performs the move and damage = sum across all members. */
+  podWide?: boolean;
+  /** Display label for the wedge (e.g. "SPECIAL MOVE"). */
+  wedgeLabel?: string;
 };
 
 type InnerPhase =
   | { kind: "intro" }
+  | { kind: "roll"; turnPlayer: Player }
   | { kind: "switch"; attack: Attack }
   | { kind: "judge"; attack: Attack }
   | { kind: "hit"; attack: Attack; damage: number; outcome: "success" | "fail" }
@@ -115,9 +123,14 @@ export function BossPhase({
 
   const startTurn = (turnPlayer = player) => {
     if (!turnPlayer) return;
-    // 50/50 crazy vs hard surprise pool
-    const pick =
-      Math.random() < 0.5 ? pickCrazyExercise() : pickSurpriseExercise(overrides);
+    // Player now spins the wheel of fortune to pick the move.
+    setInner({ kind: "roll", turnPlayer });
+  };
+
+  const onWheelResult = (wedge: BossWedge) => {
+    const turnPlayer = inner.kind === "roll" ? inner.turnPlayer : player;
+    if (!turnPlayer) return;
+    const pick = pickForWedge(wedge, overrides);
     const reps = calcRepsForTier(
       pick.tier,
       turnPlayer.fitness_level,
@@ -130,6 +143,9 @@ export function BossPhase({
       reps,
       unit: isHold ? "seconds" : "reps",
       tier: pick.tier,
+      multiplier: wedge.multiplier,
+      podWide: wedge.podWide,
+      wedgeLabel: wedge.label,
     };
     setInner({ kind: "switch", attack });
   };
@@ -145,7 +161,9 @@ export function BossPhase({
   ) => {
     if (inner.kind !== "judge") return;
     const attack = inner.attack;
-    const damage = Math.max(0, achievedReps * (attack.tier === 3 ? 3 : 2));
+    const baseMul = attack.multiplier ?? (attack.tier === 3 ? 3 : 2);
+    const podMul = attack.podWide ? Math.max(1, active.length) : 1;
+    const damage = Math.max(0, achievedReps * baseMul * podMul);
     if (damage > 0) {
       setHitFlash(Date.now());
       setBurst({ id: Date.now(), dmg: damage });

@@ -1190,28 +1190,20 @@ function HopOverlay({
         style={{ height: "min(44vh, 300px)", perspective: 800 }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full pb-24 pt-20">
-            <div className="absolute left-8 right-8 top-[112px] h-2 rounded-full bg-white/25" />
-            <div
-              className="absolute top-[84px] z-30 transition-[left] duration-200 ease-out"
-              style={{ left: `${tokenLeft}%`, transform: "translateX(-50%)" }}
-            >
-              <div key={`tok-${step}`} className="anim-hop-visible">
-                <div className="rounded-full bg-white p-1 shadow-[0_0_0_4px_#111,0_12px_0_rgba(0,0,0,0.35),0_0_28px_rgba(255,230,60,0.95)]">
-                  <Avatar player={player} size={72} />
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="grid gap-2"
-              style={{ gridTemplateColumns: `repeat(${pathSpaces.length}, minmax(0, 1fr))` }}
-            >
-              {pathSpaces.map((space, i) => {
-                const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
-                const cell = BOARD[idx];
-                const isHere = i === step;
-                const isDone = i <= step;
+          <div className="relative w-full pb-6 pt-4 flex flex-col gap-2">
+            {rowOrder.map((rowIdx) => {
+              const rowCells = rowsMap.get(rowIdx)!;
+              return (
+                <div
+                  key={`row-${rowIdx}`}
+                  className="grid gap-2"
+                  style={{ gridTemplateColumns: `repeat(${rowCells.length}, minmax(0, 1fr))` }}
+                >
+                  {rowCells.map(({ space, idxInPath: i }) => {
+                    const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
+                    const cell = BOARD[idx];
+                    const isHere = i === step;
+                    const isDone = i <= step;
               return (
                 <div
                     key={`${space}-${i}`}
@@ -1244,10 +1236,20 @@ function HopOverlay({
                       title={op.username}
                     />
                   ))}
+                  {isHere && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="rounded-full bg-white p-0.5 shadow-[0_0_0_2px_#111,0_0_18px_rgba(255,230,60,0.95)]">
+                        <Avatar player={player} size={28} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+                  })}
                 </div>
               );
             })}
-            </div>
+            <div className="sr-only">token at {tokenLeft.toFixed(0)}%</div>
           </div>
         </div>
       </div>

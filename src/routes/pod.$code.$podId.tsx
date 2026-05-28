@@ -1586,7 +1586,7 @@ function JudgePhase({
       {/* Big readable exercise banner */}
       <div className="absolute top-16 left-0 right-0 z-20 flex justify-center px-4 pointer-events-none">
         <div
-          className="rounded-2xl ink-border px-5 py-2 text-center max-w-[92%]"
+          className="rounded-2xl ink-border px-5 py-2 text-center max-w-[92%] arcade-tilt-l arcade-vs-in"
           style={{ background: "var(--boom-yellow)" }}
         >
           <div
@@ -1648,7 +1648,7 @@ function JudgePhase({
             onPointerUp={trap.unit === "seconds" ? onHoldEnd : undefined}
             onPointerCancel={trap.unit === "seconds" ? onHoldEnd : undefined}
             onPointerLeave={trap.unit === "seconds" ? onHoldEnd : undefined}
-            className="absolute inset-6 rounded-full flex flex-col items-center justify-center active:scale-95 select-none"
+            className="absolute inset-6 rounded-full flex flex-col items-center justify-center select-none arcade-press"
             style={{
               background: "var(--boom-red)",
               color: "white",
@@ -1668,7 +1668,18 @@ function JudgePhase({
             </span>
           </button>
         </div>
-        <div className="mt-3 text-white text-sm font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
+        <div
+          className={`mt-3 px-3 py-1 rounded-lg text-base font-black tabular-nums ${
+            remaining <= 5000 ? "arcade-low-time" : "arcade-timer-pulse"
+          }`}
+          style={{
+            fontFamily: "'Luckiest Guy', cursive",
+            background: remaining <= 5000 ? "var(--boom-red)" : "var(--boom-yellow)",
+            color: remaining <= 5000 ? "#fff" : "var(--boom-ink)",
+            border: "3px solid #111",
+            boxShadow: "4px 4px 0 0 #111",
+          }}
+        >
           {Math.ceil(remaining / 1000)}s to defuse
         </div>
       </div>
@@ -1683,7 +1694,7 @@ function JudgePhase({
 function ResolveSplash({ player, outcome }: { player: Player; outcome: "success" | "fail" }) {
   return (
     <main
-      className="fixed inset-0 flex flex-col items-center justify-center gap-4 anim-explosion-flash"
+      className="fixed inset-0 flex flex-col items-center justify-center gap-4 anim-explosion-flash arcade-vs-in"
       style={{ background: outcome === "success" ? "var(--boom-green)" : "var(--boom-red)" }}
     >
       <Avatar player={player} size={140} />

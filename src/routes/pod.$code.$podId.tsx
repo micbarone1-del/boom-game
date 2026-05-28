@@ -74,7 +74,7 @@ function mascotColor(url: string | null) {
 
 function PodPage() {
   const { code, podId } = Route.useParams();
-  const { room, players, loading } = useRoom(code);
+  const { room, players, pods, loading } = useRoom(code);
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase | null>(null);
   const clipsRef = useRef<Map<string, Blob>>(new Map());

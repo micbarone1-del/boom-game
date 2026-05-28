@@ -55,7 +55,13 @@ export function TimesOutOverlay({
   );
 }
 
-export function GameOverOverlay({ onRestart }: { onRestart?: () => void }) {
+export function GameOverOverlay({
+  onRestart,
+  onLeaderboard,
+}: {
+  onRestart?: () => void;
+  onLeaderboard?: () => void;
+}) {
   useEffect(() => {
     playGameOver();
   }, []);
@@ -69,15 +75,26 @@ export function GameOverOverlay({ onRestart }: { onRestart?: () => void }) {
         GAME OVER
       </div>
       <div className="text-white opacity-80 mt-3 text-lg font-bold">Nobody finished in time.</div>
-      {onRestart && (
-        <button
-          onClick={onRestart}
-          className="btn-boom mt-6 text-2xl py-4 px-8 flex items-center gap-2"
-          style={{ background: "var(--boom-yellow)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
-        >
-          <RotateCcw /> RESTART POD
-        </button>
-      )}
+      <div className="flex gap-3 mt-6 flex-wrap justify-center px-4">
+        {onLeaderboard && (
+          <button
+            onClick={onLeaderboard}
+            className="btn-boom text-xl py-3 px-6 flex items-center gap-2"
+            style={{ background: "var(--boom-green)", color: "#fff", fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            VIEW LEADERBOARD
+          </button>
+        )}
+        {onRestart && (
+          <button
+            onClick={onRestart}
+            className="btn-boom text-xl py-3 px-6 flex items-center gap-2"
+            style={{ background: "var(--boom-yellow)", color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            <RotateCcw /> RESTART POD
+          </button>
+        )}
+      </div>
     </div>
   );
 }

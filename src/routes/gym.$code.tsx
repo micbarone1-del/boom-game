@@ -473,15 +473,17 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
     <main className="min-h-screen p-3 max-w-5xl mx-auto flex flex-col gap-3">
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <img src={bombMascot} alt="" className="w-10 h-10 anim-fuse" />
+          <img src={bombMascot} alt="" className="w-11 h-11 anim-fuse drop-shadow-[0_3px_0_rgba(0,0,0,0.25)]" />
           <div>
             <h1
-              className="text-2xl font-black leading-none"
+              className="text-3xl font-black leading-none"
               style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
             >
-              THE GYM
+              BOOM!
             </h1>
-            <div className="text-xs font-bold opacity-70">Room {code}</div>
+            <div className="text-[10px] font-black tracking-[0.18em] opacity-75" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+              ROOM {code}
+            </div>
           </div>
         </div>
         <div className="flex-1 max-w-md">
@@ -501,6 +503,14 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
       </div>
 
       <PodActivityTicker roomCode={code} pods={pods} />
+
+      {/* Corner mascot peeking from the bottom-right during gameplay */}
+      <img
+        src={bombMascot}
+        alt=""
+        aria-hidden
+        className="fixed bottom-2 right-2 w-24 h-24 md:w-32 md:h-32 pointer-events-none z-20 anim-mascot-peek anim-fuse drop-shadow-[0_6px_0_rgba(0,0,0,0.35)]"
+      />
 
       {room.game_state === "timeout_continue" && continueAt && (
         <TimesOutOverlay continueDeadlineAt={continueAt} showContinue={false} />

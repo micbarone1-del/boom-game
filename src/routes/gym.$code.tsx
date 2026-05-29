@@ -212,16 +212,19 @@ function Lobby({ code }: { code: string }) {
   return (
     <main className="min-h-screen p-4 max-w-3xl mx-auto flex flex-col gap-4">
       <header className="flex items-center gap-3 mt-2">
-        <img src={bombMascot} alt="" className="w-12 h-12 anim-fuse" />
+        <img src={bombMascot} alt="" className="w-14 h-14 anim-fuse drop-shadow-[0_4px_0_rgba(0,0,0,0.25)]" />
         <div>
           <h1
-            className="text-3xl font-black leading-none"
+            className="text-4xl font-black leading-none"
             style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
           >
-            THE GYM
+            BOOM!
           </h1>
-          <p className="text-xs font-bold opacity-70">
-            Up to 3 pods · 2–4 players each
+          <p
+            className="text-[11px] font-black tracking-[0.18em] opacity-80 mt-0.5"
+            style={{ fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            GYM SCREEN
           </p>
         </div>
       </header>
@@ -286,6 +289,19 @@ function Lobby({ code }: { code: string }) {
               >
                 {pod ? pod.name : `POD ${slot}`}
               </div>
+              {pod && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const next = window.prompt("Rename team", pod.name);
+                    if (!next || next.trim() === pod.name) return;
+                    await supabase.from("pods").update({ name: next.trim().slice(0, 24) }).eq("id", pod.id);
+                  }}
+                  className="text-[10px] font-black opacity-70 hover:opacity-100 underline self-end"
+                >
+                  rename team
+                </button>
+              )}
               {!pod ? (
                 <div className="text-xs opacity-60 text-center my-auto">
                   Waiting for a pod to join…
@@ -297,7 +313,7 @@ function Lobby({ code }: { code: string }) {
                   {podPlayers.map((p) => (
                     <li
                       key={p.id}
-                      className="flex items-center gap-2 text-sm font-bold"
+                      className="flex items-center gap-2 text-sm font-bold group"
                     >
                       <span
                         className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shrink-0"
@@ -315,7 +331,18 @@ function Lobby({ code }: { code: string }) {
                           <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : null}
                       </span>
-                      <span className="truncate">{p.username}</span>
+                      <span className="truncate flex-1">{p.username}</span>
+                      <button
+                        type="button"
+                        title="Remove player from team"
+                        onClick={async () => {
+                          if (!confirm(`Remove ${p.username} from ${pod.name}?`)) return;
+                          await supabase.from("players").update({ pod_id: null }).eq("id", p.id);
+                        }}
+                        className="opacity-40 hover:opacity-100 text-xs"
+                      >
+                        ✕
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -446,15 +473,17 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
     <main className="min-h-screen p-3 max-w-5xl mx-auto flex flex-col gap-3">
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <img src={bombMascot} alt="" className="w-10 h-10 anim-fuse" />
+          <img src={bombMascot} alt="" className="w-11 h-11 anim-fuse drop-shadow-[0_3px_0_rgba(0,0,0,0.25)]" />
           <div>
             <h1
-              className="text-2xl font-black leading-none"
+              className="text-3xl font-black leading-none"
               style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
             >
-              THE GYM
+              BOOM!
             </h1>
-            <div className="text-xs font-bold opacity-70">Room {code}</div>
+            <div className="text-[10px] font-black tracking-[0.18em] opacity-75" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+              ROOM {code}
+            </div>
           </div>
         </div>
         <div className="flex-1 max-w-md">
@@ -474,6 +503,14 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
       </div>
 
       <PodActivityTicker roomCode={code} pods={pods} />
+
+      {/* Corner mascot peeking from the bottom-right during gameplay */}
+      <img
+        src={bombMascot}
+        alt=""
+        aria-hidden
+        className="fixed bottom-2 right-2 w-24 h-24 md:w-32 md:h-32 pointer-events-none z-20 anim-mascot-peek anim-fuse drop-shadow-[0_6px_0_rgba(0,0,0,0.35)]"
+      />
 
       {room.game_state === "timeout_continue" && continueAt && (
         <TimesOutOverlay continueDeadlineAt={continueAt} showContinue={false} />

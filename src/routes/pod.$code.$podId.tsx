@@ -1036,20 +1036,30 @@ function SwitchPhase({
         </div>
       </div>
 
-      {/* Countdown — standalone, no mascot underneath */}
+      {/* Countdown — boxed red card, arcade BOOM style */}
       <div
         key={`count-${count}`}
-        className="anim-pop"
+        className="anim-pop ink-border rounded-2xl bg-white flex items-center justify-center"
         style={{
-          fontFamily: "'Luckiest Guy', cursive",
-          color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
-          fontSize: count > 0 ? "8rem" : "4.5rem",
-          lineHeight: 1,
-          textShadow: "0 6px 0 rgba(0,0,0,0.35), 3px 3px 0 #fff",
-          WebkitTextStroke: "3px #111",
+          padding: "0.6rem 2.2rem",
+          minWidth: "9rem",
+          boxShadow: count > 0
+            ? "6px 6px 0 #111, 0 0 30px 6px rgba(239,68,68,0.55)"
+            : "6px 6px 0 #111, 0 0 30px 6px rgba(34,197,94,0.55)",
+          border: `4px solid ${count > 0 ? "var(--boom-red)" : "var(--boom-green)"}`,
         }}
       >
-        {count > 0 ? count : "GO!"}
+        <span
+          style={{
+            fontFamily: "'Luckiest Guy', cursive",
+            color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
+            fontSize: count > 0 ? "6.5rem" : "3.5rem",
+            lineHeight: 1,
+            textShadow: "0 4px 0 rgba(0,0,0,0.18)",
+          }}
+        >
+          {count > 0 ? count : "GO!"}
+        </span>
       </div>
 
       <div className="text-base font-bold opacity-80 text-center px-6 pb-2">
@@ -1186,11 +1196,11 @@ function HopOverlay({
         Cell {cur}
       </div>
       <div
-        className="relative w-full max-w-[440px] px-3"
-        style={{ height: "min(44vh, 300px)", perspective: 800 }}
+        className="relative w-full max-w-[520px] px-3"
+        style={{ perspective: 800 }}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full pb-6 pt-4 flex flex-col gap-2">
+        <div className="flex items-center justify-center">
+          <div className="relative w-full bg-white rounded-3xl p-3 ink-border flex flex-col gap-2">
             {rowOrder.map((rowIdx) => {
               const rowCells = rowsMap.get(rowIdx)!;
               return (
@@ -1204,45 +1214,54 @@ function HopOverlay({
                     const cell = BOARD[idx];
                     const isHere = i === step;
                     const isDone = i <= step;
+                    const isFinalCell = i === totalSteps;
+                    const isTrapCell =
+                      cell.type === "surprise" || cell.type === "crazy" ||
+                      cell.type === "setback" || cell.type === "pause";
+                    const trapHit = isFinalCell && isHere && isTrapCell;
               return (
                 <div
                     key={`${space}-${i}`}
-                    className={`relative aspect-square min-w-0 rounded-xl flex items-center justify-center font-black ${isHere ? "anim-mascot-bounce" : ""}`}
+                    className={`relative aspect-square min-w-0 rounded-2xl flex items-center justify-center font-black ${trapHit ? "anim-trap-land" : isHere ? "anim-mascot-bounce" : ""}`}
                   style={{
                     background: space <= 0 ? "var(--boom-ink)" : cellBg(cell.type),
                     border: "3px solid #111",
                     boxShadow: isHere
-                      ? "0 0 0 4px #fff, 0 0 26px 8px var(--boom-yellow), 4px 4px 0 #111"
+                      ? trapHit
+                        ? "0 0 0 5px #fff, 0 0 38px 12px #ef4444, 4px 4px 0 #111"
+                        : "0 0 0 4px #fff, 0 0 26px 8px var(--boom-yellow), 4px 4px 0 #111"
                       : isDone
                         ? "0 0 0 2px #fff, 4px 4px 0 #111"
                         : "4px 4px 0 #111",
                     color: "#fff",
-                    opacity: isDone ? 1 : 0.65,
+                    opacity: isDone ? 1 : 0.7,
                     fontSize: "clamp(0.75rem, 3vw, 1rem)",
                   }}
                 >
                   <HopCellGlyph type={cell.type} />
-                  <span className="absolute top-0.5 left-1 text-[9px] opacity-80">{cell.space}</span>
-                  {(othersBySpace.get(space) ?? []).slice(0, 3).map((op, oi) => (
-                    <div
-                      key={op.id}
-                      className="absolute -bottom-1 rounded-full"
-                      style={{
-                        width: 14, height: 14,
-                        left: `${20 + oi * 18}%`,
-                        background: mascotColor(op.avatar_url),
-                        boxShadow: "0 0 0 2px #111",
-                      }}
-                      title={op.username}
-                    />
-                  ))}
+                  <span className="absolute top-0.5 left-1 text-[10px] font-black opacity-95" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{cell.space}</span>
+                  {/* Other players already on this cell — full avatar tokens */}
+                  {(othersBySpace.get(space) ?? []).slice(0, 3).length > 0 && (
+                    <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-0.5">
+                      {(othersBySpace.get(space) ?? []).slice(0, 3).map((op) => (
+                        <div
+                          key={op.id}
+                          className="rounded-full bg-white p-[2px]"
+                          style={{ boxShadow: "0 0 0 2px #111" }}
+                          title={op.username}
+                        >
+                          <Avatar player={op} size={22} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {isHere && (
                     <div
                       key={`tok-${step}-${space}`}
                       className="absolute inset-0 flex items-center justify-center pointer-events-none anim-hop-visible"
                     >
-                      <div className="rounded-full bg-white p-0.5 shadow-[0_0_0_2px_#111,0_0_18px_rgba(255,230,60,0.95)]">
-                        <Avatar player={player} size={28} />
+                      <div className="rounded-full bg-white p-0.5 shadow-[0_0_0_3px_#111,0_0_22px_rgba(255,230,60,0.95)]">
+                        <Avatar player={player} size={36} />
                       </div>
                     </div>
                   )}

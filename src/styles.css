@@ -300,6 +300,34 @@
   }
   .anim-hop-visible { animation: hop-visible-jump 0.34s cubic-bezier(.18,.9,.25,1.28) both; }
 
+  /* Trap landing — heavy shake + red flash when the player lands on a trap cell */
+  @keyframes trap-land-shake {
+    0%   { transform: translate(0,0) scale(1); filter: brightness(1); }
+    10%  { transform: translate(-6px, -4px) scale(1.18); filter: brightness(1.6) drop-shadow(0 0 20px #ef4444); }
+    20%  { transform: translate(7px, 3px) scale(1.15); filter: brightness(1.4) drop-shadow(0 0 24px #facc15); }
+    35%  { transform: translate(-5px, 4px) scale(1.1); filter: brightness(1.3); }
+    50%  { transform: translate(4px, -3px) scale(1.06); }
+    70%  { transform: translate(-2px, 2px) scale(1.03); }
+    100% { transform: translate(0,0) scale(1); filter: brightness(1); }
+  }
+  .anim-trap-land { animation: trap-land-shake 0.85s cubic-bezier(.2,.9,.3,1.2) both; }
+
+  @keyframes trap-screen-flash {
+    0%, 100% { background: rgba(0,0,0,0.8); }
+    15%      { background: rgba(239, 68, 68, 0.55); }
+    35%      { background: rgba(250, 204, 21, 0.45); }
+    60%      { background: rgba(0,0,0,0.8); }
+  }
+  .anim-trap-flash { animation: trap-screen-flash 0.85s ease-out both; }
+
+  /* Corner mascot — slow peek-in then idle wobble */
+  @keyframes mascot-peek {
+    0%   { transform: translateY(40%) rotate(-12deg); opacity: 0; }
+    60%  { transform: translateY(-6%) rotate(6deg);  opacity: 1; }
+    100% { transform: translateY(0)    rotate(0deg);  opacity: 1; }
+  }
+  .anim-mascot-peek { animation: mascot-peek 0.9s cubic-bezier(.2,1.4,.3,1) both; }
+
   /* Big mascot landing splash — pops in, hangs, fades */
   @keyframes mascot-splash {
     0%   { transform: translate(-50%, -30%) scale(0.2) rotate(-25deg); opacity: 0; }

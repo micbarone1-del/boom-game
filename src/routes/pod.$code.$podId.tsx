@@ -1203,7 +1203,6 @@ function HopOverlay({
           <div className="relative w-full bg-white rounded-3xl p-3 ink-border flex flex-col gap-2">
             {rowOrder.map((rowIdx) => {
               const rowCells = rowsMap.get(rowIdx)!;
-              const isFinalRow = rowIdx === rowOrder[rowOrder.length - 1];
               return (
                 <div
                   key={`row-${rowIdx}`}
@@ -1269,7 +1268,6 @@ function HopOverlay({
                 </div>
               );
                   })}
-                  {isFinalRow && null}
                 </div>
               );
             })}

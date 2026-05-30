@@ -363,6 +363,23 @@ const effects: Record<EffectName, () => void> = {
       beep({ freq: f, dur: 0.16, type: "square", gain: 0.2, delay: i * 0.12 }),
     );
   },
+
+  // Ratchet click for wheel-of-fortune ticks
+  wheelTick: () => beep({ freq: 1400, dur: 0.025, type: "square", gain: 0.14 }),
+
+  // Wheel landing chime
+  wheelStop: () => {
+    beep({ freq: 880, dur: 0.1, type: "square", gain: 0.22 });
+    beep({ freq: 1319, dur: 0.18, type: "triangle", gain: 0.22, delay: 0.08 });
+    beep({ freq: 1760, dur: 0.22, type: "triangle", gain: 0.2, delay: 0.18 });
+  },
+
+  // Punchy hit on the boss
+  bossHit: () => {
+    noise({ dur: 0.18, gain: 0.5, lowpass: 2800 });
+    beep({ freq: 220, endFreq: 60, dur: 0.22, type: "sawtooth", gain: 0.28 });
+    beep({ freq: 1320, dur: 0.05, type: "square", gain: 0.22, delay: 0.02 });
+  },
 };
 
 export const sfx = {

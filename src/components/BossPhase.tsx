@@ -222,6 +222,8 @@ export function BossPhase({
       setHitFlash(Date.now());
       setBurst({ id: Date.now(), dmg: damage });
       setTimeout(() => setBurst(null), 900);
+      sfx.play("bossHit");
+      sfx.play("blowUp");
       // Race-safe decrement.
       const newHp = Math.max(0, (room.boss_hp ?? 0) - damage);
       await supabase
@@ -243,7 +245,6 @@ export function BossPhase({
         .from("players")
         .update({ score: (cur?.score ?? 0) + damage })
         .eq("id", attack.playerId);
-      sfx.play("didIt");
       speak(`${player.username} hits the boss for ${damage}.`);
       setInner({ kind: "hit", attack, damage, outcome });
 

@@ -439,9 +439,16 @@ function PodPage() {
       </div>
     );
     if (room.game_state === "timeout_continue" && continueAt) {
-      return <>{pauseBtn}<TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue /></>;
+      // Legacy state — collapse to game_over immediately.
+      void supabase
+        .from("rooms")
+        .update({ game_state: "game_over", continue_deadline_at: null })
+        .eq("code", code)
+        .then(() => {});
     }
-    if (room.game_state === "game_over") {
+    // Once the leaderboard ("victory") is showing, never re-render the
+    // game-over overlay on top of it.
+    if (room.game_state === "game_over" && room.phase !== "victory") {
       return (
         <>
           {pauseBtn}
@@ -450,7 +457,7 @@ function PodPage() {
             onLeaderboard={() => {
               void supabase
                 .from("rooms")
-                .update({ phase: "victory" })
+                .update({ phase: "victory", game_state: "playing" })
                 .eq("code", code)
                 .then(() => {});
             }}

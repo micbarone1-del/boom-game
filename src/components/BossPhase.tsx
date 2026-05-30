@@ -1013,7 +1013,7 @@ function BossRoll({
   const spin = () => {
     if (spinning || done) return;
     setSpinning(true);
-    sfx.play("countdown");
+    sfx.play("wheelTick");
     speak(`${player.username}, spin the wheel!`, { rate: 0.9 });
     const target = Math.floor(Math.random() * BOSS_WEDGES.length);
     const wedge = BOSS_WEDGES[target];
@@ -1023,9 +1023,16 @@ function BossRoll({
     const finalDeg =
       360 * 6 - (target * wedgeAngle + wedgeAngle / 2);
     setRotation(finalDeg);
+    // Ratchet ticks during the spin — slow down to mimic deceleration.
+    const tickTimes = [
+      80, 180, 290, 410, 540, 680, 830, 990, 1160, 1340, 1530, 1730,
+      1940, 2160, 2390, 2630, 2880, 3140, 3410, 3690, 3980,
+    ];
+    const timers = tickTimes.map((t) => window.setTimeout(() => sfx.play("wheelTick"), t));
     setTimeout(() => {
+      timers.forEach((id) => clearTimeout(id));
       setDone(wedge);
-      sfx.play("didIt");
+      sfx.play("wheelStop");
       speak(wedge.label.replace("×", " times "));
       setTimeout(() => onResult(wedge), 1400);
     }, 4200);

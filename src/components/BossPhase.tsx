@@ -17,6 +17,14 @@ import {
   startArcadeRise,
 } from "@/lib/sfx";
 import bossMascot from "@/assets/boss-mascot.png";
+import bombEasy from "@/assets/bomb-easy.png";
+import bombMedium from "@/assets/bomb-medium.png";
+import bombHard from "@/assets/bomb-hard.png";
+import bombBoost from "@/assets/bomb-boost.png";
+import bombSetback from "@/assets/bomb-setback.png";
+import bombSpecial from "@/assets/bomb-special.png";
+import bombSuper from "@/assets/bomb-super.png";
+import bombMascotImg from "@/assets/bomb-mascot.png";
 
 /** Wheel-of-fortune wedge definitions for the boss roll. */
 type BossWedge = {
@@ -32,17 +40,19 @@ type BossWedge = {
   tier: 1 | 2 | 3;
   /** Which exercise picker to use. */
   pick: "easy" | "medium" | "hard" | "surprise" | "crazy" | "group";
+  /** Mascot art shown when the wedge wins. */
+  mascot: string;
 };
 
 const BOSS_WEDGES: BossWedge[] = [
-  { id: "easy", label: "EASY", multiplier: 1, color: "#facc15", tier: 1, pick: "easy" },
-  { id: "medium", label: "MEDIUM", multiplier: 1, color: "#22c55e", tier: 2, pick: "medium" },
-  { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard" },
-  { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise" },
-  { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy" },
-  { id: "group", label: "GROUP", multiplier: 1, color: "#3b82f6", tier: 2, pick: "group" },
-  { id: "special", label: "SPECIAL ×2", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard" },
-  { id: "super", label: "SUPER ×3", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy" },
+  { id: "easy", label: "EASY", multiplier: 1, color: "#facc15", tier: 1, pick: "easy", mascot: bombEasy },
+  { id: "medium", label: "MEDIUM", multiplier: 1, color: "#22c55e", tier: 2, pick: "medium", mascot: bombMedium },
+  { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard", mascot: bombHard },
+  { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise", mascot: bombMascotImg },
+  { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy", mascot: bombSetback },
+  { id: "group", label: "GROUP", multiplier: 1, color: "#3b82f6", tier: 2, pick: "group", mascot: bombBoost },
+  { id: "special", label: "SPECIAL ×2", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard", mascot: bombSpecial },
+  { id: "super", label: "SUPER ×3", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy", mascot: bombSuper },
 ];
 
 function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: string; tier: 1 | 2 | 3 } {
@@ -212,6 +222,8 @@ export function BossPhase({
       setHitFlash(Date.now());
       setBurst({ id: Date.now(), dmg: damage });
       setTimeout(() => setBurst(null), 900);
+      sfx.play("bossHit");
+      sfx.play("blowUp");
       // Race-safe decrement.
       const newHp = Math.max(0, (room.boss_hp ?? 0) - damage);
       await supabase
@@ -233,7 +245,6 @@ export function BossPhase({
         .from("players")
         .update({ score: (cur?.score ?? 0) + damage })
         .eq("id", attack.playerId);
-      sfx.play("didIt");
       speak(`${player.username} hits the boss for ${damage}.`);
       setInner({ kind: "hit", attack, damage, outcome });
 
@@ -1002,7 +1013,7 @@ function BossRoll({
   const spin = () => {
     if (spinning || done) return;
     setSpinning(true);
-    sfx.play("countdown");
+    sfx.play("wheelTick");
     speak(`${player.username}, spin the wheel!`, { rate: 0.9 });
     const target = Math.floor(Math.random() * BOSS_WEDGES.length);
     const wedge = BOSS_WEDGES[target];
@@ -1012,9 +1023,16 @@ function BossRoll({
     const finalDeg =
       360 * 6 - (target * wedgeAngle + wedgeAngle / 2);
     setRotation(finalDeg);
+    // Ratchet ticks during the spin — slow down to mimic deceleration.
+    const tickTimes = [
+      80, 180, 290, 410, 540, 680, 830, 990, 1160, 1340, 1530, 1730,
+      1940, 2160, 2390, 2630, 2880, 3140, 3410, 3690, 3980,
+    ];
+    const timers = tickTimes.map((t) => window.setTimeout(() => sfx.play("wheelTick"), t));
     setTimeout(() => {
+      timers.forEach((id) => clearTimeout(id));
       setDone(wedge);
-      sfx.play("didIt");
+      sfx.play("wheelStop");
       speak(wedge.label.replace("×", " times "));
       setTimeout(() => onResult(wedge), 1400);
     }, 4200);
@@ -1125,13 +1143,20 @@ function BossRoll({
         </button>
       ) : (
         <div
-          className="ink-border rounded-2xl px-6 py-3 text-2xl font-black anim-pop text-center"
+          className="ink-border rounded-2xl px-6 py-3 text-2xl font-black anim-pop text-center flex flex-col items-center gap-2"
           style={{
             background: done.color,
             color: "#111",
             fontFamily: "'Luckiest Guy', cursive",
           }}
         >
+          <img
+            src={done.mascot}
+            alt=""
+            width={1024}
+            height={1024}
+            className="w-28 h-28 anim-mascot-bounce drop-shadow-[0_0_14px_rgba(0,0,0,0.4)]"
+          />
           {done.label}
           {done.podWide && (
             <div className="text-xs font-black mt-1">POD-WIDE STRIKE!</div>

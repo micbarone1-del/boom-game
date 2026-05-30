@@ -439,9 +439,16 @@ function PodPage() {
       </div>
     );
     if (room.game_state === "timeout_continue" && continueAt) {
-      return <>{pauseBtn}<TimesOutOverlay continueDeadlineAt={continueAt} onContinue={onContinue} showContinue /></>;
+      // Legacy state — collapse to game_over immediately.
+      void supabase
+        .from("rooms")
+        .update({ game_state: "game_over", continue_deadline_at: null })
+        .eq("code", code)
+        .then(() => {});
     }
-    if (room.game_state === "game_over") {
+    // Once the leaderboard ("victory") is showing, never re-render the
+    // game-over overlay on top of it.
+    if (room.game_state === "game_over" && room.phase !== "victory") {
       return (
         <>
           {pauseBtn}
@@ -450,7 +457,7 @@ function PodPage() {
             onLeaderboard={() => {
               void supabase
                 .from("rooms")
-                .update({ phase: "victory" })
+                .update({ phase: "victory", game_state: "playing" })
                 .eq("code", code)
                 .then(() => {});
             }}
@@ -1092,7 +1099,21 @@ function HopOverlay({
   const cur = Math.min(to, from + safeStep);
   const totalSteps = Math.max(1, to - from);
   const progress = Math.min(1, safeStep / totalSteps);
-  const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
+  // Always show at least MIN_CELLS in the zoomed strip so a roll of 1 still
+  // looks like a proper mini-board. We pad with cells before `from` and after
+  // `to`, clamped to the board's bounds.
+  const MIN_CELLS = 4;
+  const corePath = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
+  let padStart = from;
+  let padEnd = Math.min(BOARD_SIZE, from + totalSteps);
+  while ((padEnd - padStart + 1) < MIN_CELLS) {
+    if (padEnd < BOARD_SIZE) padEnd += 1;
+    else if (padStart > 1) padStart -= 1;
+    else break;
+  }
+  const pathSpaces: number[] = [];
+  for (let s = padStart; s <= padEnd; s++) pathSpaces.push(s);
+  void corePath;
   // Group path cells by their row on the actual serpentine board so the
   // zoomed-in strip mirrors the real layout (rows can change direction).
   const rowsMap = new Map<number, Array<{ space: number; col: number; idxInPath: number }>>();
@@ -1212,13 +1233,15 @@ function HopOverlay({
                   {rowCells.map(({ space, idxInPath: i }) => {
                     const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
                     const cell = BOARD[idx];
-                    const isHere = i === step;
-                    const isDone = i <= step;
-                    const isFinalCell = i === totalSteps;
+                    const playerSpace = from + safeStep;
+                    const isHere = space === playerSpace;
+                    const isDone = space >= from && space <= playerSpace;
+                    const isFinalCell = space === to;
                     const isTrapCell =
                       cell.type === "surprise" || cell.type === "crazy" ||
                       cell.type === "setback" || cell.type === "pause";
                     const trapHit = isFinalCell && isHere && isTrapCell;
+                    void i;
               return (
                 <div
                     key={`${space}-${i}`}
@@ -2172,10 +2195,30 @@ function GroupPhase({
   trap: ActiveTrap;
   onComplete: () => void;
 }) {
+  // Auto-timer: cap "all together" at 60s so a forgotten phone-down
+  // doesn't stall the pod. Caller can still tap WE DID IT early.
+  const TOTAL = 60;
+  const [remaining, setRemaining] = useState(TOTAL);
   useEffect(() => {
     speak(`Everybody together! ${trap.exercise}, ${trap.reps} ${trap.unit}.`);
     sfx.play("gameStart");
   }, [trap.exercise, trap.reps, trap.unit]);
+  useEffect(() => {
+    const i = setInterval(() => {
+      setRemaining((r) => {
+        const next = r - 1;
+        if (next <= 5 && next > 0) sfx.play("timerTick");
+        if (next <= 0) {
+          clearInterval(i);
+          onComplete();
+          return 0;
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(i);
+  }, [onComplete]);
+  const low = remaining <= 10;
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-between p-6 gap-3" style={{ background: "var(--boom-blue)" }}>
       <div className="text-white text-xs font-black uppercase opacity-90 mt-4">All Together · phone down</div>
@@ -2191,6 +2234,17 @@ function GroupPhase({
           <div className="text-xl font-bold">
             {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
           </div>
+        </div>
+        <div
+          className={`ink-border rounded-2xl px-6 py-3 text-5xl font-black tabular-nums ${low ? "anim-mascot-bounce" : ""}`}
+          style={{
+            background: low ? "var(--boom-red)" : "var(--boom-yellow)",
+            color: low ? "#fff" : "var(--boom-ink)",
+            fontFamily: "'Luckiest Guy', cursive",
+            textShadow: low ? "2px 2px 0 #111" : "none",
+          }}
+        >
+          {remaining}s
         </div>
         <div className="flex gap-2 mt-2">
           {podPlayers.map((p) => <Avatar key={p.id} player={p} size={48} />)}

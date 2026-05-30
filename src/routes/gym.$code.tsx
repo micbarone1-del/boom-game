@@ -444,8 +444,9 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
       await supabase
         .from("rooms")
         .update({
-          game_state: "timeout_continue",
-          continue_deadline_at: new Date(Date.now() + 10_000).toISOString(),
+          // Fuse ran out → straight to GAME OVER (no continue prompt).
+          game_state: "game_over",
+          continue_deadline_at: null,
         })
         .eq("code", code)
         .eq("game_state", "playing");

@@ -23,7 +23,10 @@ type EffectName =
   | "didIt"
   | "defuse"
   | "blowUp"
-  | "win";
+  | "win"
+  | "wheelTick"
+  | "wheelStop"
+  | "bossHit";
 
 type BoomSfxGlobal = {
   ctx: AudioContext | null;

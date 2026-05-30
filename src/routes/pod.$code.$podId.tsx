@@ -1092,7 +1092,21 @@ function HopOverlay({
   const cur = Math.min(to, from + safeStep);
   const totalSteps = Math.max(1, to - from);
   const progress = Math.min(1, safeStep / totalSteps);
-  const pathSpaces = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
+  // Always show at least MIN_CELLS in the zoomed strip so a roll of 1 still
+  // looks like a proper mini-board. We pad with cells before `from` and after
+  // `to`, clamped to the board's bounds.
+  const MIN_CELLS = 4;
+  const corePath = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
+  let padStart = from;
+  let padEnd = Math.min(BOARD_SIZE, from + totalSteps);
+  while ((padEnd - padStart + 1) < MIN_CELLS) {
+    if (padEnd < BOARD_SIZE) padEnd += 1;
+    else if (padStart > 1) padStart -= 1;
+    else break;
+  }
+  const pathSpaces: number[] = [];
+  for (let s = padStart; s <= padEnd; s++) pathSpaces.push(s);
+  void corePath;
   // Group path cells by their row on the actual serpentine board so the
   // zoomed-in strip mirrors the real layout (rows can change direction).
   const rowsMap = new Map<number, Array<{ space: number; col: number; idxInPath: number }>>();

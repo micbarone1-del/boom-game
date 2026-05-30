@@ -2188,10 +2188,30 @@ function GroupPhase({
   trap: ActiveTrap;
   onComplete: () => void;
 }) {
+  // Auto-timer: cap "all together" at 60s so a forgotten phone-down
+  // doesn't stall the pod. Caller can still tap WE DID IT early.
+  const TOTAL = 60;
+  const [remaining, setRemaining] = useState(TOTAL);
   useEffect(() => {
     speak(`Everybody together! ${trap.exercise}, ${trap.reps} ${trap.unit}.`);
     sfx.play("gameStart");
   }, [trap.exercise, trap.reps, trap.unit]);
+  useEffect(() => {
+    const i = setInterval(() => {
+      setRemaining((r) => {
+        const next = r - 1;
+        if (next <= 5 && next > 0) sfx.play("timerTick");
+        if (next <= 0) {
+          clearInterval(i);
+          onComplete();
+          return 0;
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(i);
+  }, [onComplete]);
+  const low = remaining <= 10;
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-between p-6 gap-3" style={{ background: "var(--boom-blue)" }}>
       <div className="text-white text-xs font-black uppercase opacity-90 mt-4">All Together · phone down</div>
@@ -2207,6 +2227,17 @@ function GroupPhase({
           <div className="text-xl font-bold">
             {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
           </div>
+        </div>
+        <div
+          className={`ink-border rounded-2xl px-6 py-3 text-5xl font-black tabular-nums ${low ? "anim-mascot-bounce" : ""}`}
+          style={{
+            background: low ? "var(--boom-red)" : "var(--boom-yellow)",
+            color: low ? "#fff" : "var(--boom-ink)",
+            fontFamily: "'Luckiest Guy', cursive",
+            textShadow: low ? "2px 2px 0 #111" : "none",
+          }}
+        >
+          {remaining}s
         </div>
         <div className="flex gap-2 mt-2">
           {podPlayers.map((p) => <Avatar key={p.id} player={p} size={48} />)}

@@ -17,6 +17,14 @@ import {
   startArcadeRise,
 } from "@/lib/sfx";
 import bossMascot from "@/assets/boss-mascot.png";
+import bombEasy from "@/assets/bomb-easy.png";
+import bombMedium from "@/assets/bomb-medium.png";
+import bombHard from "@/assets/bomb-hard.png";
+import bombBoost from "@/assets/bomb-boost.png";
+import bombSetback from "@/assets/bomb-setback.png";
+import bombSpecial from "@/assets/bomb-special.png";
+import bombSuper from "@/assets/bomb-super.png";
+import bombMascotImg from "@/assets/bomb-mascot.png";
 
 /** Wheel-of-fortune wedge definitions for the boss roll. */
 type BossWedge = {
@@ -32,17 +40,19 @@ type BossWedge = {
   tier: 1 | 2 | 3;
   /** Which exercise picker to use. */
   pick: "easy" | "medium" | "hard" | "surprise" | "crazy" | "group";
+  /** Mascot art shown when the wedge wins. */
+  mascot: string;
 };
 
 const BOSS_WEDGES: BossWedge[] = [
-  { id: "easy", label: "EASY", multiplier: 1, color: "#facc15", tier: 1, pick: "easy" },
-  { id: "medium", label: "MEDIUM", multiplier: 1, color: "#22c55e", tier: 2, pick: "medium" },
-  { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard" },
-  { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise" },
-  { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy" },
-  { id: "group", label: "GROUP", multiplier: 1, color: "#3b82f6", tier: 2, pick: "group" },
-  { id: "special", label: "SPECIAL ×2", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard" },
-  { id: "super", label: "SUPER ×3", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy" },
+  { id: "easy", label: "EASY", multiplier: 1, color: "#facc15", tier: 1, pick: "easy", mascot: bombEasy },
+  { id: "medium", label: "MEDIUM", multiplier: 1, color: "#22c55e", tier: 2, pick: "medium", mascot: bombMedium },
+  { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard", mascot: bombHard },
+  { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise", mascot: bombMascotImg },
+  { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy", mascot: bombSetback },
+  { id: "group", label: "GROUP", multiplier: 1, color: "#3b82f6", tier: 2, pick: "group", mascot: bombBoost },
+  { id: "special", label: "SPECIAL ×2", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard", mascot: bombSpecial },
+  { id: "super", label: "SUPER ×3", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy", mascot: bombSuper },
 ];
 
 function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: string; tier: 1 | 2 | 3 } {

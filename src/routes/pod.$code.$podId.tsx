@@ -1226,13 +1226,15 @@ function HopOverlay({
                   {rowCells.map(({ space, idxInPath: i }) => {
                     const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
                     const cell = BOARD[idx];
-                    const isHere = i === step;
-                    const isDone = i <= step;
-                    const isFinalCell = i === totalSteps;
+                    const playerSpace = from + safeStep;
+                    const isHere = space === playerSpace;
+                    const isDone = space >= from && space <= playerSpace;
+                    const isFinalCell = space === to;
                     const isTrapCell =
                       cell.type === "surprise" || cell.type === "crazy" ||
                       cell.type === "setback" || cell.type === "pause";
                     const trapHit = isFinalCell && isHere && isTrapCell;
+                    void i;
               return (
                 <div
                     key={`${space}-${i}`}

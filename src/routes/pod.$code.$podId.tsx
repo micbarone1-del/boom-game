@@ -788,7 +788,7 @@ function PlayerPhase({
 }) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
-  const [hopping, setHopping] = useState<{ from: number; to: number; step: number } | null>(null);
+  const [hopping, setHopping] = useState<{ path: number[]; step: number } | null>(null);
   const [powerUp, setPowerUp] = useState(false);
   const [hopMascot, setHopMascot] = useState<CellType | null>(null);
 
@@ -822,24 +822,9 @@ function PlayerPhase({
     setFace(final);
     sfx.play("didIt");
     await new Promise((r) => setTimeout(r, 500));
-    // Hopping animation — token jumps cell-by-cell from current space to target.
+    // Build the full path: forward hops, then any boost/setback chain.
     const from = player.current_space;
     const to = Math.min(BOARD_SIZE, from + final);
-    // Intro: full board overview, then zoom onto the player's token,
-    // then the cell-by-cell hopping sequence.
-    setHopping({ from, to, step: -2 });
-    await new Promise((r) => setTimeout(r, 1300));
-    setHopping({ from, to, step: -1 });
-    await new Promise((r) => setTimeout(r, 650));
-    setHopping({ from, to, step: 0 });
-    await new Promise((r) => setTimeout(r, 250));
-    for (let i = 1; i <= final; i++) {
-      await new Promise((r) => setTimeout(r, 220));
-      setHopping({ from, to, step: i });
-      sfx.play("hop");
-    }
-    await new Promise((r) => setTimeout(r, 350));
-    // Resolve boost/setback into a second hop chain before clearing the overlay.
     const landingCell = getEffectiveCell(to, overrides);
     let resolved = to;
     if (landingCell.type === "boost") {
@@ -853,22 +838,36 @@ function PlayerPhase({
         "setback",
       );
     }
+    // Path is a sequence of spaces visited, starting at `from`.
+    const path: number[] = [from];
+    for (let s = from + 1; s <= to; s++) path.push(s);
     if (resolved !== to) {
-      // Brief cell animation pause, then second hop chain to the resolved cell.
-      sfx.play(landingCell.type === "boost" ? "blast" : "setback");
-      // Pop the cell mascot splash so the player sees what just happened
-      // before the second hop chain kicks off.
-      setHopMascot(landingCell.type);
-      await new Promise((r) => setTimeout(r, 1200));
-      setHopMascot(null);
       const dir = resolved > to ? 1 : -1;
-      const steps = Math.abs(resolved - to);
-      setHopping({ from: to, to: resolved, step: 0 });
-      for (let i = 1; i <= steps; i++) {
-        await new Promise((r) => setTimeout(r, 200));
-        setHopping({ from: to, to: resolved, step: i });
+      for (let s = to + dir; dir > 0 ? s <= resolved : s >= resolved; s += dir) {
+        path.push(s);
+      }
+    }
+    // Start the camera-pan board overlay.
+    setHopping({ path, step: 0 });
+    await new Promise((r) => setTimeout(r, 700)); // initial pan into view
+    // Forward hops to `to`.
+    for (let i = 1; i <= final; i++) {
+      await new Promise((r) => setTimeout(r, 280));
+      setHopping({ path, step: i });
+      sfx.play("hop");
+    }
+    await new Promise((r) => setTimeout(r, 350));
+    // If we hit boost/setback, splash mascot, then continue along path.
+    if (resolved !== to) {
+      sfx.play(landingCell.type === "boost" ? "blast" : "setback");
+      setHopMascot(landingCell.type);
+      await new Promise((r) => setTimeout(r, 1100));
+      setHopMascot(null);
+      const startIdx = final + 1;
+      for (let i = startIdx; i < path.length; i++) {
+        await new Promise((r) => setTimeout(r, 260));
+        setHopping({ path, step: i });
         sfx.play("hop");
-        void dir;
       }
       await new Promise((r) => setTimeout(r, 350));
     }
@@ -888,7 +887,7 @@ function PlayerPhase({
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
       {hopping && (
-        <HopOverlay player={player} players={players} from={hopping.from} to={hopping.to} step={hopping.step} />
+        <HopOverlay player={player} players={players} path={hopping.path} step={hopping.step} />
       )}
       {hopMascot && <CellMascot type={hopMascot} username={player.username} />}
       {powerUp && <PowerUpOverlay player={player} />}

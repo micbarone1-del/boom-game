@@ -1024,18 +1024,15 @@ function BossRoll({
       360 * 6 - (target * wedgeAngle + wedgeAngle / 2);
     setRotation(finalDeg);
     // Ratchet ticks during the spin — slow down to mimic deceleration.
-    const tickTimes = [
-      80, 180, 290, 410, 540, 680, 830, 990, 1160, 1340, 1530, 1730,
-      1940, 2160, 2390, 2630, 2880, 3140, 3410, 3690, 3980,
-    ];
+    const tickTimes = [60, 140, 230, 330, 440, 560, 700, 860, 1040, 1240, 1460, 1700];
     const timers = tickTimes.map((t) => window.setTimeout(() => sfx.play("wheelTick"), t));
     setTimeout(() => {
       timers.forEach((id) => clearTimeout(id));
       setDone(wedge);
       sfx.play("wheelStop");
       speak(wedge.label.replace("×", " times "));
-      setTimeout(() => onResult(wedge), 1400);
-    }, 4200);
+      setTimeout(() => onResult(wedge), 900);
+    }, 1900);
   };
 
   return (
@@ -1079,7 +1076,7 @@ function BossRoll({
           className="w-full h-full"
           style={{
             transform: `rotate(${rotation}deg)`,
-            transition: spinning ? "transform 4s cubic-bezier(0.17, 0.67, 0.21, 0.99)" : "none",
+            transition: spinning ? "transform 1.8s cubic-bezier(0.17, 0.67, 0.21, 0.99)" : "none",
             filter: "drop-shadow(0 6px 0 rgba(0,0,0,0.6))",
           }}
         >

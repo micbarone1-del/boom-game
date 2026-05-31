@@ -788,7 +788,7 @@ function PlayerPhase({
 }) {
   const [rolling, setRolling] = useState(false);
   const [face, setFace] = useState<number | null>(null);
-  const [hopping, setHopping] = useState<{ from: number; to: number; step: number } | null>(null);
+  const [hopping, setHopping] = useState<{ path: number[]; step: number } | null>(null);
   const [powerUp, setPowerUp] = useState(false);
   const [hopMascot, setHopMascot] = useState<CellType | null>(null);
 
@@ -822,24 +822,9 @@ function PlayerPhase({
     setFace(final);
     sfx.play("didIt");
     await new Promise((r) => setTimeout(r, 500));
-    // Hopping animation — token jumps cell-by-cell from current space to target.
+    // Build the full path: forward hops, then any boost/setback chain.
     const from = player.current_space;
     const to = Math.min(BOARD_SIZE, from + final);
-    // Intro: full board overview, then zoom onto the player's token,
-    // then the cell-by-cell hopping sequence.
-    setHopping({ from, to, step: -2 });
-    await new Promise((r) => setTimeout(r, 1300));
-    setHopping({ from, to, step: -1 });
-    await new Promise((r) => setTimeout(r, 650));
-    setHopping({ from, to, step: 0 });
-    await new Promise((r) => setTimeout(r, 250));
-    for (let i = 1; i <= final; i++) {
-      await new Promise((r) => setTimeout(r, 220));
-      setHopping({ from, to, step: i });
-      sfx.play("hop");
-    }
-    await new Promise((r) => setTimeout(r, 350));
-    // Resolve boost/setback into a second hop chain before clearing the overlay.
     const landingCell = getEffectiveCell(to, overrides);
     let resolved = to;
     if (landingCell.type === "boost") {
@@ -853,22 +838,36 @@ function PlayerPhase({
         "setback",
       );
     }
+    // Path is a sequence of spaces visited, starting at `from`.
+    const path: number[] = [from];
+    for (let s = from + 1; s <= to; s++) path.push(s);
     if (resolved !== to) {
-      // Brief cell animation pause, then second hop chain to the resolved cell.
-      sfx.play(landingCell.type === "boost" ? "blast" : "setback");
-      // Pop the cell mascot splash so the player sees what just happened
-      // before the second hop chain kicks off.
-      setHopMascot(landingCell.type);
-      await new Promise((r) => setTimeout(r, 1200));
-      setHopMascot(null);
       const dir = resolved > to ? 1 : -1;
-      const steps = Math.abs(resolved - to);
-      setHopping({ from: to, to: resolved, step: 0 });
-      for (let i = 1; i <= steps; i++) {
-        await new Promise((r) => setTimeout(r, 200));
-        setHopping({ from: to, to: resolved, step: i });
+      for (let s = to + dir; dir > 0 ? s <= resolved : s >= resolved; s += dir) {
+        path.push(s);
+      }
+    }
+    // Start the camera-pan board overlay.
+    setHopping({ path, step: 0 });
+    await new Promise((r) => setTimeout(r, 700)); // initial pan into view
+    // Forward hops to `to`.
+    for (let i = 1; i <= final; i++) {
+      await new Promise((r) => setTimeout(r, 280));
+      setHopping({ path, step: i });
+      sfx.play("hop");
+    }
+    await new Promise((r) => setTimeout(r, 350));
+    // If we hit boost/setback, splash mascot, then continue along path.
+    if (resolved !== to) {
+      sfx.play(landingCell.type === "boost" ? "blast" : "setback");
+      setHopMascot(landingCell.type);
+      await new Promise((r) => setTimeout(r, 1100));
+      setHopMascot(null);
+      const startIdx = final + 1;
+      for (let i = startIdx; i < path.length; i++) {
+        await new Promise((r) => setTimeout(r, 260));
+        setHopping({ path, step: i });
         sfx.play("hop");
-        void dir;
       }
       await new Promise((r) => setTimeout(r, 350));
     }
@@ -888,7 +887,7 @@ function PlayerPhase({
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
       {hopping && (
-        <HopOverlay player={player} players={players} from={hopping.from} to={hopping.to} step={hopping.step} />
+        <HopOverlay player={player} players={players} path={hopping.path} step={hopping.step} />
       )}
       {hopMascot && <CellMascot type={hopMascot} username={player.username} />}
       {powerUp && <PowerUpOverlay player={player} />}
@@ -1080,58 +1079,50 @@ function SwitchPhase({
 // Post-roll hop overlay — zoomed-in token hopping along the path
 // ---------------------------------------------------------------------------
 
+/**
+ * Camera-panning hop overlay that renders the REAL 2D serpentine board
+ * (same cells as GymMap) and pans/zooms a CSS transform to keep the moving
+ * player avatar centered. The path is a precomputed sequence of board
+ * spaces the player visits — works for forward, boost, and setback hops.
+ * Icon and avatar sizes are clamped so nothing can blow up to full screen.
+ */
 function HopOverlay({
   player,
   players,
-  from,
-  to,
+  path,
   step,
 }: {
   player: Player;
   players: Player[];
-  from: number;
-  to: number;
+  path: number[];
   step: number;
 }) {
-  // Intro phases: -2 = full board overview, -1 = zoom on player token.
-  const intro = step < 0 ? (step === -2 ? "map" : "zoom") : null;
-  const safeStep = Math.max(0, step);
-  const cur = Math.min(to, from + safeStep);
-  const totalSteps = Math.max(1, to - from);
-  const progress = Math.min(1, safeStep / totalSteps);
-  // Always show at least MIN_CELLS in the zoomed strip so a roll of 1 still
-  // looks like a proper mini-board. We pad with cells before `from` and after
-  // `to`, clamped to the board's bounds.
-  const MIN_CELLS = 4;
-  const corePath = Array.from({ length: totalSteps + 1 }, (_, i) => Math.min(BOARD_SIZE, from + i));
-  let padStart = from;
-  let padEnd = Math.min(BOARD_SIZE, from + totalSteps);
-  while ((padEnd - padStart + 1) < MIN_CELLS) {
-    if (padEnd < BOARD_SIZE) padEnd += 1;
-    else if (padStart > 1) padStart -= 1;
-    else break;
-  }
-  const pathSpaces: number[] = [];
-  for (let s = padStart; s <= padEnd; s++) pathSpaces.push(s);
-  void corePath;
-  // Group path cells by their row on the actual serpentine board so the
-  // zoomed-in strip mirrors the real layout (rows can change direction).
-  const rowsMap = new Map<number, Array<{ space: number; col: number; idxInPath: number }>>();
-  pathSpaces.forEach((space, idxInPath) => {
+  // Fixed cell size in board coords. The actual rendered size depends on
+  // the CSS scale we apply on the wrapper.
+  const CELL = 56;
+  const GAP = 6;
+  const BOARD_W = COLS * (CELL + GAP);
+  const BOARD_H = ROWS * (CELL + GAP);
+  // Camera target zoom — 4-cell-wide framing on phone screens.
+  const ZOOM = 2.2;
+  const safeStep = Math.max(0, Math.min(step, path.length - 1));
+  const currentSpace = path[safeStep] ?? path[0] ?? 1;
+  const finalSpace = path[path.length - 1] ?? currentSpace;
+
+  const cellCenter = (space: number) => {
     const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
     const { row, col } = cellPos(idx);
-    const arr = rowsMap.get(row) ?? [];
-    arr.push({ space, col, idxInPath });
-    rowsMap.set(row, arr);
-  });
-  const rowOrder = Array.from(rowsMap.keys()).sort((a, b) => a - b);
-  // Within each row, sort by the order they appear in the path so the
-  // hop direction is preserved (left→right on even rows, right→left on odd).
-  rowOrder.forEach((r) => {
-    rowsMap.get(r)!.sort((a, b) => a.idxInPath - b.idxInPath);
-  });
-  const tokenLeft = ((Math.min(safeStep, totalSteps) + 0.5) / pathSpaces.length) * 100;
-  // Other tokens (not the rolling player) shown on top of the path cells.
+    return {
+      x: col * (CELL + GAP) + CELL / 2,
+      y: row * (CELL + GAP) + CELL / 2,
+    };
+  };
+
+  // Compute pan: translate the board so the current cell sits at the
+  // viewport center (using viewport-relative units we approximate with vw/vh).
+  const center = cellCenter(currentSpace);
+
+  // Other tokens (not the rolling player) mapped by space.
   const othersBySpace = new Map<number, Player[]>();
   for (const p of players) {
     if (p.id === player.id) continue;
@@ -1139,181 +1130,196 @@ function HopOverlay({
     arr.push(p);
     othersBySpace.set(p.current_space, arr);
   }
-  const legend: Array<[string, string]> = [
-    ["EASY", "#facc15"], ["MED", "#22c55e"], ["HARD", "#ef4444"],
-    ["BLAST", "#22c55e"], ["BACK", "#a855f7"], ["?", "#ec4899"],
-    ["!?", "#22d3ee"], ["ALL", "#3b82f6"], ["PAUSE", "#06b6d4"],
-  ];
 
-  if (intro) {
-    return (
-      <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/85 anim-fade-in overflow-hidden p-3">
-        <div className="text-white text-xs font-bold opacity-80 mb-1 uppercase tracking-wider">
-          {intro === "map" ? "The Board" : `${player.username} is up`}
-        </div>
-        <div
-          className={`relative w-full max-w-[560px] ${intro === "map" ? "anim-hop-map" : "anim-hop-zoom-token"}`}
-          style={{ transformOrigin: `${(cellPos(from).col + 0.5) / COLS * 100}% ${(cellPos(from).row + 0.5) / ROWS * 100}%` }}
-        >
-          <div
-            className="relative grid gap-1 bg-white rounded-2xl p-2 ink-border-sm"
-            style={{
-              gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-            }}
-          >
-            {BOARD.map((cell, idx) => {
-              const { row, col } = cellPos(idx);
-              const here = players.filter((p) => p.current_space === cell.space);
-              const isPlayerHere = here.some((p) => p.id === player.id);
-              return (
-                <div
-                  key={cell.space}
-                  className={`relative aspect-square rounded-md flex items-center justify-center ${isPlayerHere ? "anim-mascot-bounce" : ""}`}
-                  style={{
-                    background: cellBg(cell.type),
-                    gridColumn: col + 1,
-                    gridRow: row + 1,
-                    border: "1.5px solid #111",
-                    boxShadow: isPlayerHere ? "0 0 0 2px #fff, 0 0 14px 4px #fde047" : undefined,
-                  }}
-                >
-                  <HopCellGlyph type={cell.type} />
-                  {here.length > 0 && (
-                    <div className="absolute -bottom-0.5 left-0 right-0 flex gap-[1px] justify-center">
-                      {here.slice(0, 3).map((pl) => (
-                        <div
-                          key={pl.id}
-                          className="rounded-full"
-                          style={{
-                            width: 11, height: 11,
-                            background: mascotColor(pl.avatar_url),
-                            boxShadow: pl.id === player.id
-                              ? "0 0 0 1.5px #fff, 0 0 0 2.5px #111, 0 0 8px #fde047"
-                              : "0 0 0 1.5px #111",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const trapTypes = new Set<CellType>([
+    "surprise",
+    "crazy",
+    "setback",
+    "pause",
+    "group",
+  ]);
+  const finalCellType = BOARD[Math.max(0, finalSpace - 1)]?.type;
+  const trapLanding =
+    safeStep === path.length - 1 && finalCellType && trapTypes.has(finalCellType);
 
   return (
-    <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/80 anim-fade-in overflow-hidden anim-hop-zoom">
-      <div className="text-white text-xs font-bold opacity-80 mb-1 uppercase tracking-wider">
-        Hopping…
+    <div className="fixed inset-0 z-40 bg-black/85 anim-fade-in overflow-hidden">
+      {/* Title strip */}
+      <div className="absolute top-3 left-0 right-0 z-20 text-center pointer-events-none">
+        <div className="text-white text-[10px] font-black uppercase tracking-widest opacity-80">
+          Hopping…
+        </div>
+        <div
+          className="text-white text-3xl font-black"
+          style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}
+        >
+          Cell {currentSpace}
+        </div>
       </div>
-      <div
-        className="text-white text-4xl font-black mb-3"
-        style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}
-      >
-        Cell {cur}
-      </div>
-      <div
-        className="relative w-full max-w-[520px] px-3"
-        style={{ perspective: 800 }}
-      >
-        <div className="flex items-center justify-center">
-          <div className="relative w-full bg-white rounded-3xl p-3 ink-border flex flex-col gap-2">
-            {rowOrder.map((rowIdx) => {
-              const rowCells = rowsMap.get(rowIdx)!;
-              return (
-                <div
-                  key={`row-${rowIdx}`}
-                  className="grid gap-2"
-                  style={{ gridTemplateColumns: `repeat(${rowCells.length}, minmax(0, 1fr))` }}
-                >
-                  {rowCells.map(({ space, idxInPath: i }) => {
-                    const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
-                    const cell = BOARD[idx];
-                    const playerSpace = from + safeStep;
-                    const isHere = space === playerSpace;
-                    const isDone = space >= from && space <= playerSpace;
-                    const isFinalCell = space === to;
-                    const isTrapCell =
-                      cell.type === "surprise" || cell.type === "crazy" ||
-                      cell.type === "setback" || cell.type === "pause";
-                    const trapHit = isFinalCell && isHere && isTrapCell;
-                    void i;
-              return (
-                <div
-                    key={`${space}-${i}`}
-                    className={`relative aspect-square min-w-0 rounded-2xl flex items-center justify-center font-black ${trapHit ? "anim-trap-land" : isHere ? "anim-mascot-bounce" : ""}`}
+
+      {/* Camera viewport — full screen, board scaled & translated inside */}
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+        <div
+          className="relative"
+          style={{
+            width: BOARD_W,
+            height: BOARD_H,
+            transform: `translate(${-center.x * ZOOM + (typeof window !== "undefined" ? window.innerWidth : 390) / 2}px, ${-center.y * ZOOM + (typeof window !== "undefined" ? window.innerHeight : 700) / 2}px) scale(${ZOOM})`,
+            transformOrigin: "0 0",
+            transition: "transform 280ms cubic-bezier(.4,.0,.2,1)",
+            willChange: "transform",
+          }}
+        >
+          {/* Cells */}
+          {BOARD.map((cell, idx) => {
+            const { row, col } = cellPos(idx);
+            const isCurrent = cell.space === currentSpace;
+            const isFinal = cell.space === finalSpace;
+            const trapHit = isCurrent && isFinal && trapLanding;
+            const others = othersBySpace.get(cell.space) ?? [];
+            return (
+              <div
+                key={cell.space}
+                className={`absolute rounded-xl flex items-center justify-center font-black overflow-hidden ${
+                  trapHit ? "anim-trap-land" : isCurrent ? "anim-mascot-bounce" : ""
+                }`}
+                style={{
+                  left: col * (CELL + GAP),
+                  top: row * (CELL + GAP),
+                  width: CELL,
+                  height: CELL,
+                  background: cellBg(cell.type),
+                  border: "3px solid #111",
+                  boxShadow: isCurrent
+                    ? trapHit
+                      ? "0 0 0 4px #fff, 0 0 22px 8px #ef4444, 3px 3px 0 #111"
+                      : "0 0 0 3px #fff, 0 0 18px 6px var(--boom-yellow), 3px 3px 0 #111"
+                    : "3px 3px 0 #111",
+                }}
+              >
+                <span
+                  className="absolute top-0.5 left-1 leading-none"
                   style={{
-                    background: space <= 0 ? "var(--boom-ink)" : cellBg(cell.type),
-                    border: "3px solid #111",
-                    boxShadow: isHere
-                      ? trapHit
-                        ? "0 0 0 5px #fff, 0 0 38px 12px #ef4444, 4px 4px 0 #111"
-                        : "0 0 0 4px #fff, 0 0 26px 8px var(--boom-yellow), 4px 4px 0 #111"
-                      : isDone
-                        ? "0 0 0 2px #fff, 4px 4px 0 #111"
-                        : "4px 4px 0 #111",
+                    fontFamily: "'Luckiest Guy', cursive",
                     color: "#fff",
-                    opacity: isDone ? 1 : 0.7,
-                    fontSize: "clamp(0.75rem, 3vw, 1rem)",
+                    fontSize: 10,
+                    textShadow: "1px 1px 0 #111",
+                  }}
+                >
+                  {cell.space}
+                </span>
+                <div
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 28,
+                    height: 28,
+                    maxWidth: 28,
+                    maxHeight: 28,
                   }}
                 >
                   <HopCellGlyph type={cell.type} />
-                  <span className="absolute top-0.5 left-1 text-[10px] font-black opacity-95" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{cell.space}</span>
-                  {/* Other players already on this cell — full avatar tokens */}
-                  {(othersBySpace.get(space) ?? []).slice(0, 3).length > 0 && (
-                    <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-0.5">
-                      {(othersBySpace.get(space) ?? []).slice(0, 3).map((op) => (
-                        <div
-                          key={op.id}
-                          className="rounded-full bg-white p-[2px]"
-                          style={{ boxShadow: "0 0 0 2px #111" }}
-                          title={op.username}
-                        >
-                          <Avatar player={op} size={22} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {isHere && (
-                    <div
-                      key={`tok-${step}-${space}`}
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none anim-hop-visible"
-                    >
-                      <div className="rounded-full bg-white p-0.5 shadow-[0_0_0_3px_#111,0_0_22px_rgba(255,230,60,0.95)]">
-                        <Avatar player={player} size={36} />
+                </div>
+                {/* Other players parked on this cell */}
+                {others.length > 0 && (
+                  <div className="absolute -bottom-1 left-0 right-0 flex justify-center gap-0.5">
+                    {others.slice(0, 3).map((op) => (
+                      <div
+                        key={op.id}
+                        className="rounded-full bg-white"
+                        style={{
+                          width: 14,
+                          height: 14,
+                          maxWidth: 14,
+                          maxHeight: 14,
+                          boxShadow: "0 0 0 1.5px #111",
+                          overflow: "hidden",
+                        }}
+                        title={op.username}
+                      >
+                        {avatarIsMascot(op.avatar_url) ? (
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ background: mascotColor(op.avatar_url) }}
+                          >
+                            <Bomb size={9} color="#fff" fill="#fff" />
+                          </div>
+                        ) : op.avatar_url ? (
+                          <img
+                            src={op.avatar_url}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : null}
                       </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Active player avatar — positioned over the current cell */}
+          {(() => {
+            const c = cellCenter(currentSpace);
+            const SZ = 38;
+            return (
+              <div
+                key={`hopper-${safeStep}`}
+                className="absolute pointer-events-none anim-hop-visible"
+                style={{
+                  left: c.x - SZ / 2,
+                  top: c.y - SZ / 2 - 6,
+                  width: SZ,
+                  height: SZ,
+                  maxWidth: SZ,
+                  maxHeight: SZ,
+                  transition: "left 240ms cubic-bezier(.4,.0,.2,1), top 240ms cubic-bezier(.4,.0,.2,1)",
+                }}
+              >
+                <div
+                  className="rounded-full bg-white overflow-hidden"
+                  style={{
+                    width: SZ,
+                    height: SZ,
+                    boxShadow: "0 0 0 3px #111, 0 0 14px rgba(255,230,60,0.95)",
+                  }}
+                >
+                  {avatarIsMascot(player.avatar_url) ? (
+                    <div
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ background: mascotColor(player.avatar_url) }}
+                    >
+                      <Bomb size={SZ * 0.6} color="#fff" fill="#fff" />
                     </div>
-                  )}
+                  ) : player.avatar_url ? (
+                    <img
+                      src={player.avatar_url}
+                      alt={player.username}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : null}
                 </div>
-              );
-                  })}
-                </div>
-              );
-            })}
-            <div className="sr-only">token at {tokenLeft.toFixed(0)}%</div>
-          </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
-      <div className="mt-4 w-3/4 max-w-sm h-3 rounded-full bg-white/20 overflow-hidden ink-border-sm">
-        <div
-          className="h-full transition-all duration-200"
-          style={{ width: `${progress * 100}%`, background: "var(--boom-yellow)" }}
-        />
-      </div>
-      {/* Color key legend */}
-      <div className="absolute left-0 right-0 bottom-3 px-3 flex flex-wrap gap-1 justify-center text-[9px] font-black">
-        {legend.map(([label, bg]) => (
-          <span
-            key={label}
-            className="px-1.5 py-0.5 rounded-full"
-            style={{ background: bg, color: "#111", fontFamily: "'Luckiest Guy', cursive", border: "1.5px solid #111" }}
-          >
-            {label}
-          </span>
+
+      {/* Progress dots — show how many hops left */}
+      <div className="absolute bottom-6 left-0 right-0 z-20 flex justify-center gap-1 pointer-events-none">
+        {path.map((_, i) => (
+          <div
+            key={i}
+            className="rounded-full"
+            style={{
+              width: i === safeStep ? 12 : 7,
+              height: i === safeStep ? 12 : 7,
+              background:
+                i <= safeStep ? "var(--boom-yellow)" : "rgba(255,255,255,0.35)",
+              boxShadow: "0 0 0 1.5px #111",
+              transition: "all 200ms ease",
+            }}
+          />
         ))}
       </div>
     </div>

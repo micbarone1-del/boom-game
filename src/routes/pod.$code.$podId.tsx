@@ -1027,7 +1027,7 @@ function SwitchPhase({
       <div className="flex items-center justify-around w-full max-w-md">
         <div className="flex flex-col items-center gap-1 anim-fade-in">
           <Avatar player={player} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
+          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-ink)" }}>
             Player
           </div>
           <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{player.username}</div>
@@ -1035,7 +1035,7 @@ function SwitchPhase({
         <div className="text-4xl">➡️</div>
         <div className="flex flex-col items-center gap-1 anim-fade-in">
           <Avatar player={judge} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
+          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-ink)" }}>
             Judge
           </div>
           <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>

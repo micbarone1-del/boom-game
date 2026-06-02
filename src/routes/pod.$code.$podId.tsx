@@ -1109,6 +1109,14 @@ function HopOverlay({
   const currentSpace = path[safeStep] ?? path[0] ?? 1;
   const finalSpace = path[path.length - 1] ?? currentSpace;
 
+  // Intro: briefly show the full board centered & fully zoomed-out, then
+  // pan/zoom in to the start of the path before hopping begins.
+  const [intro, setIntro] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setIntro(false), 1100);
+    return () => clearTimeout(t);
+  }, []);
+
   const cellCenter = (space: number) => {
     const idx = Math.max(0, Math.min(BOARD.length - 1, space - 1));
     const { row, col } = cellPos(idx);
@@ -1121,6 +1129,14 @@ function HopOverlay({
   // Compute pan: translate the board so the current cell sits at the
   // viewport center (using viewport-relative units we approximate with vw/vh).
   const center = cellCenter(currentSpace);
+
+  // Viewport-fit zoom for the intro full-board view.
+  const vw = typeof window !== "undefined" ? window.innerWidth : 390;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 700;
+  const fitZoom = Math.min((vw - 24) / BOARD_W, (vh - 160) / BOARD_H, 1);
+  const activeZoom = intro ? fitZoom : ZOOM;
+  const camCx = intro ? BOARD_W / 2 : center.x;
+  const camCy = intro ? BOARD_H / 2 : center.y;
 
   // Other tokens (not the rolling player) mapped by space.
   const othersBySpace = new Map<number, Player[]>();
@@ -1147,13 +1163,13 @@ function HopOverlay({
       {/* Title strip */}
       <div className="absolute top-3 left-0 right-0 z-20 text-center pointer-events-none">
         <div className="text-white text-[10px] font-black uppercase tracking-widest opacity-80">
-          Hopping…
+          {intro ? "Get ready…" : "Hopping…"}
         </div>
         <div
           className="text-white text-3xl font-black"
           style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}
         >
-          Cell {currentSpace}
+          {intro ? "FULL BOARD" : `Cell ${currentSpace}`}
         </div>
       </div>
 
@@ -1164,9 +1180,9 @@ function HopOverlay({
           style={{
             width: BOARD_W,
             height: BOARD_H,
-            transform: `translate(${-center.x * ZOOM + (typeof window !== "undefined" ? window.innerWidth : 390) / 2}px, ${-center.y * ZOOM + (typeof window !== "undefined" ? window.innerHeight : 700) / 2}px) scale(${ZOOM})`,
+            transform: `translate(${-camCx * activeZoom + vw / 2}px, ${-camCy * activeZoom + vh / 2}px) scale(${activeZoom})`,
             transformOrigin: "0 0",
-            transition: "transform 280ms cubic-bezier(.4,.0,.2,1)",
+            transition: "transform 650ms cubic-bezier(.4,.0,.2,1)",
             willChange: "transform",
           }}
         >
@@ -1198,12 +1214,15 @@ function HopOverlay({
                 }}
               >
                 <span
-                  className="absolute top-0.5 left-1 leading-none"
+                  className="absolute leading-none rounded-sm px-1"
                   style={{
                     fontFamily: "'Luckiest Guy', cursive",
                     color: "#fff",
-                    fontSize: 10,
-                    textShadow: "1px 1px 0 #111",
+                    fontSize: 11,
+                    top: 3,
+                    left: 3,
+                    background: "rgba(0,0,0,0.55)",
+                    lineHeight: "12px",
                   }}
                 >
                   {cell.space}

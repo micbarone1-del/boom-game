@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Share2, Film, Loader2 } from "lucide-react";
+import { Download, Share2, Film, Loader2, Check } from "lucide-react";
 
 export type RecapPlayer = {
   username: string;
@@ -18,6 +18,7 @@ export function RecapVideo({ player, total }: { player: RecapPlayer; total: numb
   const [blob, setBlob] = useState<Blob | null>(null);
   const [building, setBuilding] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState<string | null>(null);
 
   // Preload avatar image once.
   const avatarImgRef = useRef<HTMLImageElement | null>(null);
@@ -105,6 +106,7 @@ export function RecapVideo({ player, total }: { player: RecapPlayer; total: numb
     if (!blob) return;
     const file = new File([blob], fileName, { type: blob.type });
     const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+    // 1) Try native file share (mobile)
     if (nav.canShare && nav.canShare({ files: [file] })) {
       try {
         await navigator.share({
@@ -112,12 +114,39 @@ export function RecapVideo({ player, total }: { player: RecapPlayer; total: numb
           title: "BOOM! recap",
           text: `I scored ${player.score} on BOOM! 💥`,
         });
+        setStatus("Shared!");
+        setTimeout(() => setStatus(null), 1800);
         return;
-      } catch {
-        /* fall through */
+      } catch (e) {
+        if ((e as DOMException)?.name === "AbortError") return;
       }
     }
+    // 2) Try text/URL share (desktop, no file support)
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: "BOOM! recap",
+          text: `I scored ${player.score} on BOOM! 💥 — try it: https://boomworkout.fun`,
+          url: "https://boomworkout.fun",
+        });
+        setStatus("Shared!");
+        setTimeout(() => setStatus(null), 1800);
+        return;
+      } catch (e) {
+        if ((e as DOMException)?.name === "AbortError") return;
+      }
+    }
+    // 3) Fallback: copy link + download the file
+    try {
+      await navigator.clipboard?.writeText(
+        `I scored ${player.score} on BOOM! 💥 — https://boomworkout.fun`,
+      );
+    } catch {
+      /* ignore */
+    }
     download();
+    setStatus("Saved + link copied");
+    setTimeout(() => setStatus(null), 2200);
   };
 
   return (
@@ -151,7 +180,8 @@ export function RecapVideo({ player, total }: { player: RecapPlayer; total: numb
         </button>
       )}
       {blob && (
-        <div className="flex gap-1">
+        <div className="flex flex-col gap-1">
+          <div className="flex gap-1">
           <button
             onClick={share}
             className="flex-1 ink-border-sm rounded-lg py-2 text-xs font-black flex items-center justify-center gap-1"
@@ -165,6 +195,12 @@ export function RecapVideo({ player, total }: { player: RecapPlayer; total: numb
           >
             <Download size={12} />
           </button>
+          </div>
+          {status && (
+            <div className="text-[10px] font-black flex items-center gap-1 text-center justify-center" style={{ color: "var(--boom-green)" }}>
+              <Check size={10} /> {status}
+            </div>
+          )}
         </div>
       )}
     </div>

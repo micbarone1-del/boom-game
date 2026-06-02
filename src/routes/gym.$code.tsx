@@ -57,6 +57,7 @@ const POD_COLORS = ["var(--boom-yellow)", "var(--boom-orange)", "var(--boom-gree
 
 function Lobby({ code }: { code: string }) {
   const { room, players, pods, loading } = useRoom(code);
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
   // Brief pause animation overlay shown when the room transitions to paused.
@@ -161,24 +162,22 @@ function Lobby({ code }: { code: string }) {
   const restartAll = async () => {
     if (!confirm("Reset all scores and start a new game?")) return;
     setStarting(true);
-    const startedAt = new Date();
-    const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
     await supabase
       .from("players")
       .update({ current_space: 0, score: 0, finished_at: null, finish_rank: null })
       .eq("room_code", code);
     await supabase
       .from("pods")
-      .update({ status: "playing", current_space: 0, score: 0, current_turn_player_id: null })
+      .update({ status: "waiting", current_space: 0, score: 0, current_turn_player_id: null })
       .eq("room_code", code);
     await supabase
       .from("rooms")
       .update({
-        status: "playing",
+        status: "waiting",
         trap: null,
         locked: false,
-        game_started_at: startedAt.toISOString(),
-        game_ends_at: endsAt.toISOString(),
+        game_started_at: null,
+        game_ends_at: null,
         game_state: "playing",
         continue_deadline_at: null,
         paused: false,
@@ -190,6 +189,7 @@ function Lobby({ code }: { code: string }) {
       })
       .eq("code", code);
     setStarting(false);
+    navigate({ to: "/" });
   };
 
   if (loading || !room) {

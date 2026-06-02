@@ -57,6 +57,7 @@ const POD_COLORS = ["var(--boom-yellow)", "var(--boom-orange)", "var(--boom-gree
 
 function Lobby({ code }: { code: string }) {
   const { room, players, pods, loading } = useRoom(code);
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
   // Brief pause animation overlay shown when the room transitions to paused.

@@ -1918,8 +1918,20 @@ function WrapUp({
       try {
         await navigator.share({ files: [file], title: "BOOM! workout clip" });
         return;
-      } catch {
-        /* fall through to download */
+      } catch (e) {
+        if ((e as DOMException)?.name === "AbortError") return;
+      }
+    }
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: "BOOM! workout clip",
+          text: "Check out my BOOM! workout 💥",
+          url: "https://boomworkout.fun",
+        });
+        return;
+      } catch (e) {
+        if ((e as DOMException)?.name === "AbortError") return;
       }
     }
     downloadClip(blob, idx);

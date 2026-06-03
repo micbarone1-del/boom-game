@@ -321,6 +321,16 @@ function SlotCard({
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (!f.type.startsWith("image/")) {
+      alert("Please choose an image file.");
+      e.target.value = "";
+      return;
+    }
+    if (f.size > 1_048_576) {
+      alert("Photo is too large. Please choose an image under 1 MB.");
+      e.target.value = "";
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => onChange({ avatar: String(reader.result) });
     reader.readAsDataURL(f);

@@ -11,12 +11,14 @@ import type { Player, Pod } from "@/hooks/use-room";
  */
 export function PauseOverlay({
   onResume,
+  onSignInClick,
   label = "PAUSED",
   code,
   players,
   pods,
 }: {
   onResume?: () => void;
+  onSignInClick?: () => void;
   label?: string;
   code?: string;
   players?: Player[];
@@ -60,6 +62,15 @@ export function PauseOverlay({
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
         >
           <Play size={28} fill="#fff" /> RESUME
+        </button>
+      )}
+      {onSignInClick && (
+        <button
+          onClick={onSignInClick}
+          className="ink-border rounded-2xl bg-[var(--boom-yellow)] text-[var(--boom-ink)] px-6 py-2 text-base font-black flex items-center gap-2 active:scale-95"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <UserPlus size={18} /> Sign in to save scores
         </button>
       )}
       {code && (

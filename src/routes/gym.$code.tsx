@@ -13,6 +13,8 @@ import { PodActivityTicker } from "@/components/PodActivityTicker";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { setBgmIntensity, startArcadeMusic } from "@/lib/sfx";
 import { PauseOverlay, PauseToggleButton } from "@/components/PauseOverlay";
+import { JoinAsModal } from "@/components/JoinAsModal";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,
@@ -28,6 +30,7 @@ function GymView() {
   const { code: codeParam } = Route.useParams();
   const navigate = useNavigate();
   const [code, setCode] = useState<string | null>(codeParam === "new" ? null : codeParam);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
 
   useEffect(() => {
     if (codeParam !== "new") {
@@ -50,19 +53,34 @@ function GymView() {
     );
   }
 
-  return <Lobby code={code} />;
+  return (
+    <>
+      <Lobby code={code} onJoinOpen={() => setJoinModalOpen(true)} />
+      <JoinAsModal
+        open={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSignedIn={() => setJoinModalOpen(false)}
+        onGuestChosen={() => setJoinModalOpen(false)}
+        title="Join the game"
+        subtitle="Sign in so your score can reach the leaderboard"
+      />
+    </>
+  );
 }
+
 
 const POD_COLORS = ["var(--boom-yellow)", "var(--boom-orange)", "var(--boom-green)"];
 
-function Lobby({ code }: { code: string }) {
+function Lobby({ code, onJoinOpen }: { code: string; onJoinOpen: () => void }) {
   const { room, players, pods, loading } = useRoom(code);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
   // Brief pause animation overlay shown when the room transitions to paused.
   // After the animation, we hide it so the lobby (Play/Restart/Customise) is usable.
   const [showPauseIntro, setShowPauseIntro] = useState(false);
+
   useEffect(() => {
     if (room?.paused) {
       setShowPauseIntro(true);
@@ -206,14 +224,15 @@ function Lobby({ code }: { code: string }) {
     room.game_state === "game_over";
 
   if (isLive && !room.paused) {
-    return <MapView room={room} players={players} pods={pods} code={code} />;
+    return <MapView room={room} players={players} pods={pods} code={code} onJoinOpen={onJoinOpen} />;
   }
+
 
   return (
     <main className="min-h-screen p-4 max-w-3xl mx-auto flex flex-col gap-4">
       <header className="flex items-center gap-3 mt-2">
         <img src={bombMascot} alt="" className="w-14 h-14 anim-fuse drop-shadow-[0_4px_0_rgba(0,0,0,0.25)]" />
-        <div>
+        <div className="flex-1">
           <h1
             className="text-4xl font-black leading-none"
             style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
@@ -227,6 +246,19 @@ function Lobby({ code }: { code: string }) {
             GYM SCREEN
           </p>
         </div>
+        {!user ? (
+          <button
+            onClick={onJoinOpen}
+            className="ink-border-sm rounded-xl px-3 py-2 text-xs font-black bg-white"
+          >
+            Sign in to save scores
+          </button>
+        ) : (
+          <div className="text-[10px] font-bold opacity-70 text-right">
+            <div>signed in</div>
+            <button onClick={() => supabase.auth.signOut()} className="underline">sign out</button>
+          </div>
+        )}
       </header>
 
       {/* Join card */}
@@ -413,12 +445,20 @@ function Lobby({ code }: { code: string }) {
           Every pod needs at least 2 players to start.
         </p>
       )}
-      {showPauseIntro && <PauseOverlay code={code} players={players} pods={pods} />}
+      {showPauseIntro && (
+        <PauseOverlay
+          code={code}
+          players={players}
+          pods={pods}
+          onSignInClick={onJoinOpen}
+        />
+      )}
     </main>
   );
 }
 
-function MapView({ room, players, pods, code }: { room: Room; players: Player[]; pods: Pod[]; code: string }) {
+function MapView({ room, players, pods, code, onJoinOpen }: { room: Room; players: Player[]; pods: Pod[]; code: string; onJoinOpen: () => void }) {
+
   const startedAt = room.game_started_at ? new Date(room.game_started_at).getTime() : null;
   const endsAt = room.game_ends_at ? new Date(room.game_ends_at).getTime() : null;
   const continueAt = room.continue_deadline_at ? new Date(room.continue_deadline_at).getTime() : null;
@@ -525,6 +565,7 @@ function MapView({ room, players, pods, code }: { room: Room; players: Player[];
           onResume={() => {
             void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
           }}
+          onSignInClick={onJoinOpen}
         />
       )}
     </main>

@@ -5,7 +5,8 @@ import { useRoom } from "@/hooks/use-room";
 import { Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
-import { AuthSheet } from "@/components/AuthSheet";
+import { JoinAsModal } from "@/components/JoinAsModal";
+import { saveGuestMap, loadGuestMap } from "@/lib/guest";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,
@@ -47,8 +48,73 @@ function JoinView() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  const [authOpen, setAuthOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
+  const [guestProfile, setGuestProfile] = useState<{ username: string; avatar_url: string } | null>(null);
+
+  // If the user is signed in, pull their profile info.
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const fallbackName = user.email?.split("@")[0] ?? user.phone ?? "Player";
+      const name = data?.username ?? fallbackName;
+      const avatar = data?.avatar_url ?? `mascot:${MASCOT_COLORS[0]}`;
+      setGuestProfile({ username: name, avatar_url: avatar });
+    })();
+  }, [user]);
+
+  // When a profile (auth or remembered guest) becomes available, fill the first
+  // empty slot so returning players don't have to re-type their name.
+  useEffect(() => {
+    if (!guestProfile) return;
+    const firstEmpty = slots.findIndex((s) => !s.name.trim());
+    if (firstEmpty < 0) return;
+    setSlotField(firstEmpty, { name: guestProfile.username, avatar: guestProfile.avatar_url });
+  }, [guestProfile, slots]);
+
+  // Remember a guest identity from a previous visit on this device.
+  useEffect(() => {
+    if (user) return;
+    const remembered = loadGuestMap(code);
+    if (remembered) {
+      setGuestProfile({ username: remembered.username, avatar_url: remembered.avatar_url });
+    }
+  }, [user, code]);
+
+  const ATTACH_KEY = `boom.attach.${code}`;
+
+  // Restore the slot a user was trying to link before an OAuth redirect.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = sessionStorage.getItem(ATTACH_KEY);
+    if (saved !== null) {
+      setAttachToSlotIdx(Number(saved));
+      sessionStorage.removeItem(ATTACH_KEY);
+    }
+  }, [ATTACH_KEY]);
+
+  // When the modal returns an identity, apply it to the selected slot (or the first slot).
+  const handleIdentity = (identity: { username: string; avatar_url: string }) => {
+    const idx = attachToSlotIdx ?? 0;
+    setGuestProfile(identity);
+    setSlotField(idx, { name: identity.username, avatar: identity.avatar_url });
+    if (typeof window !== "undefined") sessionStorage.removeItem(ATTACH_KEY);
+    setAttachToSlotIdx(null);
+  };
+
+  const openJoinModal = (slotIdx?: number) => {
+    const idx = slotIdx ?? null;
+    setAttachToSlotIdx(idx);
+    if (typeof window !== "undefined" && idx !== null) {
+      sessionStorage.setItem(ATTACH_KEY, String(idx));
+    }
+    setJoinModalOpen(true);
+  };
 
   const takenSlots = useMemo(() => new Set(pods.map((p) => p.slot)), [pods]);
   const availableSlots = useMemo(
@@ -134,13 +200,21 @@ function JoinView() {
       current_space: 0,
       score: 0,
       joined_at: new Date(now + i).toISOString(),
-      user_id: attachToSlotIdx === i && user ? user.id : null,
+      user_id: user && attachToSlotIdx === i ? user.id : null,
     }));
-    const { error: pErr } = await supabase.from("players").insert(rows);
+    const { error: pErr, data: createdPlayers } = await supabase.from("players").insert(rows).select();
     if (pErr) {
       setSubmitting(false);
       setError(pErr.message);
       return;
+    }
+    // Remember the guest identity on this device so the same browser can
+    // reclaim the same slot when rejoining the same room.
+    if (!user && createdPlayers && createdPlayers.length > 0) {
+      const me = createdPlayers[attachToSlotIdx ?? 0] ?? createdPlayers[0];
+      if (me) {
+        saveGuestMap(code, me.id, me.username, me.avatar_url ?? `mascot:${MASCOT_COLORS[0]}`);
+      }
     }
     // If this is the first pod AND they came via auto (solo flow), auto-start
     // the room with the 15-min fuse so they don't need a host screen.
@@ -181,10 +255,10 @@ function JoinView() {
           </div>
         ) : (
           <button
-            onClick={() => setAuthOpen(true)}
+            onClick={() => openJoinModal()}
             className="ink-border-sm rounded-xl px-3 py-2 text-xs font-black bg-white"
           >
-            Sign in
+            Join as…
           </button>
         )}
       </header>
@@ -246,17 +320,16 @@ function JoinView() {
             <button
               type="button"
               onClick={() => {
-                if (!user) {
-                  setAttachToSlotIdx(i);
-                  setAuthOpen(true);
-                } else {
+                if (user) {
                   setAttachToSlotIdx(attachToSlotIdx === i ? null : i);
+                } else {
+                  openJoinModal(i);
                 }
               }}
               className="text-[11px] font-black self-end underline opacity-80"
               style={{ color: attachToSlotIdx === i ? "var(--boom-red)" : "var(--boom-ink)" }}
             >
-              {attachToSlotIdx === i ? "✓ this is me" : "this is me →"}
+              {user && attachToSlotIdx === i ? "✓ this is me" : "this is me →"}
             </button>
           </div>
         ))}
@@ -289,11 +362,19 @@ function JoinView() {
       <p className="text-[11px] opacity-60 text-center">
         {players.filter((p) => p.pod_id).length} players · {pods.length}/3 pods in this room
       </p>
-      <AuthSheet
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        title="Sign in to BOOM!"
-        subtitle="Track your scores on the global leaderboard"
+      <JoinAsModal
+        open={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSignedIn={() => {
+          // The user state and profile useEffect will fill the first empty slot.
+          setJoinModalOpen(false);
+        }}
+        onGuestChosen={(guest) => {
+          handleIdentity(guest);
+          setJoinModalOpen(false);
+        }}
+        title="Join the game"
+        subtitle="Choose how you want to play"
       />
     </main>
   );

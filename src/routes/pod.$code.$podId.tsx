@@ -23,7 +23,7 @@ import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity,
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
-import { AuthSheet } from "@/components/AuthSheet";
+import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";
 import { mascotForCell, CELL_FLAVOR, CellMascot } from "@/components/CellMascot";
@@ -77,6 +77,7 @@ function PodPage() {
   const { room, players, pods, loading } = useRoom(code);
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase | null>(null);
+  const [pauseJoinOpen, setPauseJoinOpen] = useState(false);
   const clipsRef = useRef<Map<string, Blob>>(new Map());
   const [, force] = useState(0);
   const tick = () => force((n) => n + 1);
@@ -467,14 +468,25 @@ function PodPage() {
     }
     if (room.paused) {
       return (
-        <PauseOverlay
-          code={code}
-          players={players}
-          pods={pods}
-          onResume={() => {
-            void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
-          }}
-        />
+        <>
+          <PauseOverlay
+            code={code}
+            players={players}
+            pods={pods}
+            onResume={() => {
+              void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
+            }}
+            onSignInClick={() => setPauseJoinOpen(true)}
+          />
+          <JoinAsModal
+            open={pauseJoinOpen}
+            onClose={() => setPauseJoinOpen(false)}
+            onSignedIn={() => setPauseJoinOpen(false)}
+            onGuestChosen={() => setPauseJoinOpen(false)}
+            title="Sign in to save scores"
+            subtitle="Your score will appear on the global leaderboard"
+          />
+        </>
       );
     }
     return pauseBtn;
@@ -1834,11 +1846,23 @@ function WrapUp({
   const clipList = Array.from(clips.entries());
   const [spoken, setSpoken] = useState(false);
   const { user } = useAuth();
-  const [authOpen, setAuthOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [connectingFor, setConnectingFor] = useState<string | null>(null);
   const [recordedFor, setRecordedFor] = useState<Set<string>>(new Set());
   const [localPlayers, setLocalPlayers] = useState<Player[]>(players);
   useEffect(() => setLocalPlayers(players), [players]);
+
+  const CONNECT_KEY = `boom.connect.${players[0]?.room_code ?? ""}`;
+
+  // Restore the player slot we were trying to link before an OAuth redirect.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = sessionStorage.getItem(CONNECT_KEY);
+    if (saved !== null) {
+      setConnectingFor(saved);
+      sessionStorage.removeItem(CONNECT_KEY);
+    }
+  }, [CONNECT_KEY]);
 
   // When a player slot is linked to the signed-in user, persist a game_results row
   // (the DB trigger bumps profile lifetime score + games_finished).
@@ -1871,7 +1895,8 @@ function WrapUp({
   const connectSlot = async (playerId: string) => {
     if (!user) {
       setConnectingFor(playerId);
-      setAuthOpen(true);
+      if (typeof window !== "undefined") sessionStorage.setItem(CONNECT_KEY, playerId);
+      setJoinModalOpen(true);
       return;
     }
     const { data, error } = await supabase
@@ -1890,10 +1915,11 @@ function WrapUp({
     if (user && connectingFor) {
       const id = connectingFor;
       setConnectingFor(null);
+      if (typeof window !== "undefined") sessionStorage.removeItem(CONNECT_KEY);
       void connectSlot(id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, connectingFor]);
 
   useEffect(() => {
     if (spoken) return;
@@ -1978,7 +2004,7 @@ function WrapUp({
         ))}
         {!user && (
           <button
-            onClick={() => setAuthOpen(true)}
+            onClick={() => setJoinModalOpen(true)}
             className="btn-boom mt-2 py-2 text-base"
             style={{ background: "var(--boom-green)", fontFamily: "'Luckiest Guy', cursive" }}
           >
@@ -2059,12 +2085,23 @@ function WrapUp({
       <Link to="/" className="text-center text-xs opacity-60 underline">
         Back to home
       </Link>
-      <AuthSheet
-        open={authOpen}
+      <JoinAsModal
+        open={joinModalOpen}
         onClose={() => {
-          setAuthOpen(false);
+          setJoinModalOpen(false);
           setConnectingFor(null);
+          if (typeof window !== "undefined") sessionStorage.removeItem(CONNECT_KEY);
         }}
+        onSignedIn={() => {
+          setJoinModalOpen(false);
+          // The connectingFor useEffect will finish the link after redirect.
+        }}
+        onGuestChosen={() => {
+          // Wrap-up only needs authenticated links, so guests are ignored here.
+          setJoinModalOpen(false);
+        }}
+        title="Save your score"
+        subtitle="Sign in so your score joins the global leaderboard"
       />
     </main>
   );

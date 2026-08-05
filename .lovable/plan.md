@@ -1,63 +1,59 @@
-# Plan
+# One-step login system for joining pods/games
 
-Six independent changes. I'll keep them surgical and avoid touching unrelated game logic.
+## Goal
+Replace the current multi-path auth flow with a single, low-friction "one step" login screen that appears when a user wants to join a pod or game. Players choose one of three quick options and are immediately linked to a profile that persists across games.
 
-## 1. Boss fight: rolling screen + wheel of fortune
+## Proposed approach
+Use the existing Lovable Cloud managed auth backend (Google, Apple, SMS/Phone) and keep a guest/nickname fallback. No new third-party service is needed, but the UX will be simplified to a single modal/screen.
 
-Replace the boss-fight random exercise picker (currently `Math.random() < 0.5 ? pickCrazyExercise() : pickSurpriseExercise()`) with an explicit two-step UX in `src/components/BossPhase.tsx`:
+## What we will build
 
-- New `InnerPhase` state: `{ kind: "roll"; player }` runs before `switch`.
-- Roll screen shows the current player ("Player X — spin to attack!") and a SVG wheel of fortune with all cell types from the board (easy / medium / hard / surprise / crazy / group / pause replaced by two new attack types):
-  - **Special Move** (replaces boost) — picks a hard-tier exercise, damage ×2
-  - **Super Power** (replaces penalty) — picks a crazy-tier exercise, damage ×3 AND triggers a **pod-wide attack**: every pod player completes the rep count and damage = sum of all members' reps
-- Wheel spins on tap, lands on a wedge with eased deceleration, then transitions into the existing `BossSwitch` / `BossJudge` flow.
-- Damage calculation in `onJudgeDone` updates: special = reps×2, super = reps×3 × (number of active pod members) summed.
+### 1. Unified "Join as…" modal
+A single screen shown in the gym lobby and available from the pause/late-join screen.
 
-## 2. Pause flow: PLAY returns to pod, in-pause join
+Options (one tap each):
+- **Play as Guest** — enter a nickname, no account.
+- **Continue with Google** — one-tap social login.
+- **Continue with Apple** — one-tap social login.
+- **Continue with Phone** — enter phone number, receive SMS code, submit.
 
-Two changes:
+After selecting any method, the user is placed into the pod and, if authenticated, their `profiles` row is linked to the `players` row for stat accumulation.
 
-**(a) PLAY from lobby resumes into the active pod, not the gym lobby.** In `src/routes/gym.$code.tsx` `Lobby.resume()`, after clearing `paused`, navigate the host's pod view back to `/pod/$code/$podId` if the current device has an associated pod. For the gym (host) screen, it stays on the map. The fix is: when paused, the pod page currently auto-navigates to `/gym/$code` after 1.4s — change it so it stays on the pod page and just shows the PauseOverlay until `paused` flips back, so the pod naturally resumes in place.
+### 2. Profile linking
+- Re-use the existing `public.profiles` table.
+- When an authenticated user joins a pod, set `players.user_id` to `auth.uid()` and copy `profiles.username` / `avatar_url` into the player card.
+- If a guest later chooses to sign in mid-game, update their `players.user_id` and merge lifetime stats into `profiles`.
 
-**(b) Pause overlay shows join/create options.** Extend `src/components/PauseOverlay.tsx` to render, alongside RESUME, the same pod-management UI as the gym lobby: room QR/code, list of pods with seats, "Create pod" / "Join pod" buttons. New players can scan and join while the game is paused. Replicate the same in-game pod card list inside the lobby screen too (it's already there — just ensure parity).
+### 3. Late joiner / in-game login
+- Add a "Sign in to save your stats" CTA inside the pause/lobby overlay and the post-game leaderboard.
+- If a guest signs in during a game, the current session and pod membership are preserved; only the profile link is updated.
 
-## 3. Hopping animation reliability + cell layout
+### 4. Third-party options review
+We will **not** add new third-party providers (Clerk, Auth0, Firebase, etc.) because:
+- Lovable Cloud already provides Google, Apple, and SMS auth.
+- Adding another provider duplicates effort and introduces extra cost/compliance.
+- If the user later wants a provider Lovable Cloud does not support, we can evaluate it then.
 
-In the hop animation component (lives in pod page, near `onRollComplete`):
+## Files likely to change
+- `src/routes/gym.$code.tsx` — add the unified join modal to the lobby and pause/late-join flow.
+- `src/routes/pod.$code.$podId.tsx` — add a "Sign in to save stats" CTA during pause and after the game.
+- `src/components/AuthSheet.tsx` (or similar) — refactor into a single-step component.
+- `src/lib/game.ts` — helper to upsert/link a `players` row from an authenticated profile.
+- `src/lib/sfx.ts` — no logic changes; may add a small confirmation sound.
+- `src/styles.css` — style the modal as a retro-arcade pop-up (thick borders, hard shadows, tilt).
 
-- Ensure every roll plays the hop sequence — current bug: sometimes the state transitions skip frames. Make the hop a blocking promise that always runs `dice` frames, then resolves before `setPhase` is called.
-- The "zoomed-in mini-board" strip during the hop currently renders cells in a straight horizontal row. Refactor it to read the actual board path geometry (from `cellPos` in `GymMap`) so the zoomed view mirrors the real serpentine layout (rows reversing direction every row).
-- Cell icons inside the hop strip: force `color: #fff`, `stroke-width: 2.25`, and `width/height: 100%` so they always fill the box with consistent monochrome thickness.
+## Database changes
+- No new tables required.
+- Existing `players.user_id` and `profiles` tables are sufficient.
+- May add a small validation trigger to prevent a single authenticated user from being in two pods in the same room, if needed.
 
-## 4. End-of-boss & fuse-end transitions
+## Success criteria
+- A user can join a pod from the lobby with one tap (Google/Apple) or two taps (SMS code + submit) or one nickname field (guest).
+- Authenticated users see their avatar/username in the pod and leaderboard.
+- Guests can sign in during a game without losing their place.
+- The flow is visually consistent with the existing retro arcade theme.
 
-**Boss victory:** already routes to `WrapUp` via `room.phase === "victory"`. Verify `WrapUp` actually shows the leaderboard + recap video + share + login. If currently frozen, the issue is likely that `WrapUp` is gated on a phase the BossPhase death sequence never sets. Fix: in `BossPhase.tsx` death timeout, ensure `phase: "victory"` is written and `WrapUp` mounts.
-
-**Fuse end (TIME'S OUT):** currently `TimesOutOverlay` runs, but explosion + continue flow is incomplete on the pod page when no one finishes. Wire:
-1. Fuse hits 0 → `game_state = "timeout_continue"` + `continue_deadline_at = now+10s` (already there).
-2. `ExplosionOverlay` plays for ~1.6s before the `TimesOutOverlay` continue countdown.
-3. If "CONTINUE" pressed → existing `onContinue` extends by 5 min.
-4. If timer expires → `game_state = "game_over"` → `GameOverOverlay` followed by automatic transition to `WrapUp` leaderboard (same component as boss victory). Currently it only shows `GameOverOverlay` with a restart button — add a "VIEW LEADERBOARD" button that flips `room.phase = "victory"` so `WrapUp` mounts.
-
-## 5. Switch screen text contrast
-
-In `BossSwitch` and the main pod switch phase, "Player" and "Judge" labels are styled with `color: "var(--boom-red)"` / `var(--boom-yellow)` on a white background — but the player **name** below uses `color: "var(--boom-ink)"` which is fine. The issue per the screenshot: text inside the switch / pass-the-phone screen reads as black on a dark background somewhere. Audit `src/routes/pod.$code.$podId.tsx` SwitchScreen render and `BossSwitch` — set explicit `color: var(--boom-ink)` on a white surface and `color: #fff` on dark surfaces. No layout change.
-
----
-
-## Technical notes
-
-- Wheel: pure CSS/SVG (no new deps). Each wedge a `<path>` arc with a label rotated to the wedge center. Spin = CSS `transform: rotate()` with `transition: transform 4s cubic-bezier(0.17, 0.67, 0.21, 0.99)`, target rotation = `360 * spins + wedgeAngle`.
-- Hop geometry: import `cellPos`, `COLS`, `ROWS` from `src/components/GymMap.tsx` (already exported) and map the `dice` cells to their `{row, col}` positions so the strip can render a small-scale serpentine.
-- WrapUp gate: verify by reading the existing `WrapUp` component and the `room.phase === "victory"` branch (already present at pod.$code.$podId.tsx:465).
-- All DB writes use existing `rooms`/`workout_logs`/`players` tables; no migration needed.
-
-## Files touched
-
-- `src/components/BossPhase.tsx` (wheel + special/super damage)
-- `src/components/PauseOverlay.tsx` (in-pause join UI)
-- `src/routes/pod.$code.$podId.tsx` (stop auto-nav on pause; hop animation reliability + geometry + icon styling; fuse-end → WrapUp transition; switch screen contrast)
-- `src/routes/gym.$code.tsx` (PLAY navigates back to active pod if applicable)
-- `src/styles.css` (any new keyframes for wheel spin / explosion-to-continue transition)
-
-No schema changes.
+## Out of scope
+- Replacing the Lovable Cloud auth backend.
+- New third-party identity providers.
+- Complex account merging or username/password auth (email is already available but not requested; we keep it as a secondary option in the modal).

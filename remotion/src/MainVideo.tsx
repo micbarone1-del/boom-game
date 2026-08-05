@@ -6,32 +6,22 @@ import { slide } from "@remotion/transitions/slide";
 import { Backdrop } from "./components/Backdrop";
 import { FinalBlast, FuseLine } from "./components/FuseLine";
 import { S1Hook } from "./scenes/S1Hook";
-import { S2Join } from "./scenes/S2Join";
-import { S3Roll } from "./scenes/S3Roll";
-import { S4Hop } from "./scenes/S4Hop";
-import { S5Trap } from "./scenes/S5Trap";
-import { S6Pass } from "./scenes/S6Pass";
-import { S7Exercise } from "./scenes/S7Exercise";
-import { S8Defuse } from "./scenes/S8Defuse";
-import { S9Cycle } from "./scenes/S9Cycle";
-import { S10Boss } from "./scenes/S10Boss";
-import { S11Board } from "./scenes/S11Board";
+import { A1Step1 } from "./scenes/A1Step1";
+import { A2Step2 } from "./scenes/A2Step2";
+import { A3Step3 } from "./scenes/A3Step3";
+import { A4Loop } from "./scenes/A4Loop";
+import { A5Plus } from "./scenes/A5Plus";
 import { S12End } from "./scenes/S12End";
 
 const T = 12;
 export const SCENES: { c: React.FC; d: number }[] = [
-  { c: S1Hook, d: 58 },
-  { c: S2Join, d: 76 },
-  { c: S3Roll, d: 76 },
-  { c: S4Hop, d: 76 },
-  { c: S5Trap, d: 72 },
-  { c: S6Pass, d: 78 },
-  { c: S7Exercise, d: 84 },
-  { c: S8Defuse, d: 80 },
-  { c: S9Cycle, d: 92 },
-  { c: S10Boss, d: 132 },
-  { c: S11Board, d: 92 },
-  { c: S12End, d: 62 },
+  { c: S1Hook, d: 52 },
+  { c: A1Step1, d: 306 },
+  { c: A2Step2, d: 150 },
+  { c: A3Step3, d: 244 },
+  { c: A4Loop, d: 132 },
+  { c: A5Plus, d: 92 },
+  { c: S12End, d: 56 },
 ];
 
 export const TOTAL = SCENES.reduce((a, s) => a + s.d, 0) - T * (SCENES.length - 1);
@@ -39,7 +29,7 @@ export const TOTAL = SCENES.reduce((a, s) => a + s.d, 0) - T * (SCENES.length - 
 /** absolute start frame of scene index i on the transition-overlapped timeline */
 const sceneStart = (i: number) => SCENES.slice(0, i).reduce((a, s) => a + s.d, 0) - T * i;
 
-export const FUSE_START = sceneStart(4); // the trap scene, where the fuse is revealed
+export const FUSE_START = sceneStart(3); // step 3 — the fuse is burning while you work out
 export const FUSE_END = TOTAL - 52;
 
 const timing = springTiming({ config: { damping: 200 }, durationInFrames: T });

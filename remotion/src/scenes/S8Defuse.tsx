@@ -3,6 +3,7 @@ import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { C } from "../theme";
 import { DISPLAY, Phone, Pow, Rays, Shock, useSpr } from "../components/kit";
 import { Kicker } from "../components/kit";
+import { Mascot } from "../components/Mascot";
 
 export const S8Defuse: React.FC = () => {
   const frame = useCurrentFrame();
@@ -46,6 +47,8 @@ export const S8Defuse: React.FC = () => {
       >
         <Phone src="07c-fail-explosion.png" height={1020} />
       </div>
+      <Mascot src="bomb-easy.png" size={170} delay={10} style={{ left: 380, top: 470 }} label="DEFUSED" labelColor={C.green} />
+      <Mascot src="bomb-mascot.png" size={200} delay={30} style={{ left: 420, top: 1520 }} label="BOOM" labelColor={C.red} />
       <div style={{ position: "absolute", left: 60, top: 560 }}>
         <Pow text="DEFUSED!" color={C.green} size={50} delay={16} rotate={-8} />
       </div>

@@ -3,6 +3,7 @@ import { AbsoluteFill } from "remotion";
 import { C } from "../theme";
 import { Pow, Rays } from "../components/kit";
 import { Stage } from "../components/Stage";
+import { Mascot } from "../components/Mascot";
 
 export const S3Roll: React.FC = () => (
   <AbsoluteFill>
@@ -18,6 +19,7 @@ export const S3Roll: React.FC = () => (
       <div style={{ position: "absolute", right: 70, top: 600 }}>
         <Pow text="ROLL!" color={C.yellow} size={58} delay={18} rotate={-8} />
       </div>
+      <Mascot src="bomb-mascot.png" size={190} delay={12} style={{ right: 40, top: 1180 }} label="ROLL ME" />
     </Stage>
   </AbsoluteFill>
 );

@@ -3,6 +3,7 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { C } from "../theme";
 import { Pow, Rays } from "../components/kit";
 import { Stage } from "../components/Stage";
+import { Mascot } from "../components/Mascot";
 
 export const S4Hop: React.FC = () => {
   const frame = useCurrentFrame();
@@ -22,6 +23,8 @@ export const S4Hop: React.FC = () => {
         <div style={{ position: "absolute", left: 70, top: 600, transform: `translateY(${-hop}px)` }}>
           <Pow text="HOP!" color={C.green} size={58} delay={16} rotate={7} />
         </div>
+        <Mascot src="bomb-boost.png" size={160} delay={14} style={{ left: 30, top: 1010 }} label="BOOST" />
+        <Mascot src="bomb-setback.png" size={160} delay={28} style={{ left: 30, top: 1290 }} label="SETBACK" labelColor={C.purple} />
       </Stage>
     </AbsoluteFill>
   );

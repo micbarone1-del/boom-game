@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { C } from "../theme";
 import { BODY, DISPLAY, Rays, Shock, useSpr } from "../components/kit";
+import { Mascot } from "../components/Mascot";
 
 export const S12End: React.FC = () => {
   const frame = useCurrentFrame();
@@ -10,6 +11,8 @@ export const S12End: React.FC = () => {
   const wob = Math.sin(frame / 10) * 1.4;
   return (
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
+      <Mascot src="bomb-mascot.png" size={300} delay={16} style={{ left: 60, bottom: 420 }} />
+      <Mascot src="bomb-super.png" size={230} delay={24} style={{ right: 70, bottom: 460 }} />
       <Rays x={540} y={900} color={C.yellow} opacity={0.3} speed={0.5} count={26} />
       <Shock delay={2} x={540} y={900} max={2200} color={C.red} />
       <div

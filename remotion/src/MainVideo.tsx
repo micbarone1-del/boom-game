@@ -4,6 +4,7 @@ import { TransitionSeries, springTiming } from "@remotion/transitions";
 import { wipe } from "@remotion/transitions/wipe";
 import { slide } from "@remotion/transitions/slide";
 import { Backdrop } from "./components/Backdrop";
+import { FinalBlast, FuseLine } from "./components/FuseLine";
 import { S1Hook } from "./scenes/S1Hook";
 import { S2Join } from "./scenes/S2Join";
 import { S3Roll } from "./scenes/S3Roll";
@@ -35,6 +36,12 @@ export const SCENES: { c: React.FC; d: number }[] = [
 
 export const TOTAL = SCENES.reduce((a, s) => a + s.d, 0) - T * (SCENES.length - 1);
 
+/** absolute start frame of scene index i on the transition-overlapped timeline */
+const sceneStart = (i: number) => SCENES.slice(0, i).reduce((a, s) => a + s.d, 0) - T * i;
+
+export const FUSE_START = sceneStart(4); // the trap scene, where the fuse is revealed
+export const FUSE_END = TOTAL - 52;
+
 const timing = springTiming({ config: { damping: 200 }, durationInFrames: T });
 
 export const MainVideo: React.FC = () => {
@@ -59,6 +66,8 @@ export const MainVideo: React.FC = () => {
     <AbsoluteFill>
       <Backdrop />
       <TransitionSeries>{children}</TransitionSeries>
+      <FuseLine start={FUSE_START} end={FUSE_END} />
+      <FinalBlast at={FUSE_END} />
     </AbsoluteFill>
   );
 };

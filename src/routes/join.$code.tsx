@@ -291,17 +291,16 @@ function JoinView() {
             <button
               type="button"
               onClick={() => {
-                if (!user) {
-                  setAttachToSlotIdx(i);
-                  setAuthOpen(true);
-                } else {
+                if (user) {
                   setAttachToSlotIdx(attachToSlotIdx === i ? null : i);
+                } else {
+                  openJoinModal(i);
                 }
               }}
               className="text-[11px] font-black self-end underline opacity-80"
               style={{ color: attachToSlotIdx === i ? "var(--boom-red)" : "var(--boom-ink)" }}
             >
-              {attachToSlotIdx === i ? "✓ this is me" : "this is me →"}
+              {user && attachToSlotIdx === i ? "✓ this is me" : "this is me →"}
             </button>
           </div>
         ))}

@@ -77,6 +77,7 @@ function PodPage() {
   const { room, players, pods, loading } = useRoom(code);
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase | null>(null);
+  const [pauseJoinOpen, setPauseJoinOpen] = useState(false);
   const clipsRef = useRef<Map<string, Blob>>(new Map());
   const [, force] = useState(0);
   const tick = () => force((n) => n + 1);

@@ -29,21 +29,25 @@ export const S7Boss: React.FC = () => {
       <AbsoluteFill style={{ alignItems: "flex-start", paddingTop: 70, paddingLeft: 110 }}>
         <Kicker step="STEP 05" title={"BEAT THE\nBOSS"} sub="Spin the wheel, land special moves, and the whole pod smashes the boss together." color={C.red} size={80} />
       </AbsoluteFill>
-      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
-        <div style={{ position: "relative", transform: `translate(${shake}px, ${-shake * 0.6}px) scale(${interpolate(enter, [0, 1], [0.7, 1]) * winScale})` }}>
-          {beats.map((b) => {
-            const o = interpolate(frame, [b.from - 5, b.from + 5, b.to - 5, b.to + 5], [0, 1, 1, 0], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            });
-            if (o <= 0.01) return null;
-            return (
-              <div key={b.src} style={{ position: b.from === 0 ? "relative" : "absolute", inset: b.from === 0 ? undefined : 0, opacity: o }}>
-                <Phone src={b.src} height={800} />
-              </div>
-            );
-          })}
-        </div>
+      <AbsoluteFill
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          transform: `translate(${shake}px, ${-shake * 0.6}px) scale(${interpolate(enter, [0, 1], [0.7, 1]) * winScale})`,
+        }}
+      >
+        {beats.map((b) => {
+          const o = interpolate(frame, [b.from - 5, b.from + 5, b.to - 5, b.to + 5], [0, 1, 1, 0], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          });
+          if (o <= 0.01) return null;
+          return (
+            <AbsoluteFill key={b.src} style={{ alignItems: "center", justifyContent: "center", opacity: o, marginTop: 40 }}>
+              <Phone src={b.src} height={760} />
+            </AbsoluteFill>
+          );
+        })}
       </AbsoluteFill>
       {frame >= 128 && (
         <div

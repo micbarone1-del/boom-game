@@ -78,7 +78,7 @@ export const PodCircle: React.FC<{
             >
               <Img
                 src={staticFile(`people/${m.src}`)}
-                style={{ width: "150%", height: "150%", objectFit: "cover", objectPosition: "top center", marginLeft: "-25%" }}
+                style={{ width: "100%", height: "108%", objectFit: "contain", objectPosition: "center bottom", marginTop: "6%" }}
               />
             </div>
             <div

@@ -349,10 +349,8 @@ function JoinView() {
         open={joinModalOpen}
         onClose={() => setJoinModalOpen(false)}
         onSignedIn={() => {
+          // The user state and profile useEffect will fill the first empty slot.
           setJoinModalOpen(false);
-          if (guestProfile && attachToSlotIdx != null) {
-            setSlotField(attachToSlotIdx, { name: guestProfile.username, avatar: guestProfile.avatar_url });
-          }
         }}
         onGuestChosen={(guest) => {
           handleIdentity(guest);

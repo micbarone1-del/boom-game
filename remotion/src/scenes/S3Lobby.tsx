@@ -28,7 +28,7 @@ export const S3Lobby: React.FC = () => {
           transform: `translateX(${interpolate(a, [0, 1], [-900, 0])}px) translateY(${float}px) rotate(-2deg)`,
         }}
       >
-        <Screen src="02-gym-lobby.png" width={1000} />
+        <Screen src="02-gym-lobby.png" width={1000} ratio={0.53} />
       </div>
       <div
         style={{
@@ -39,7 +39,7 @@ export const S3Lobby: React.FC = () => {
           opacity: b,
         }}
       >
-        <Screen src="03-customise.png" width={700} />
+        <Screen src="03-customise.png" width={700} ratio={0.56} />
       </div>
     </AbsoluteFill>
   );

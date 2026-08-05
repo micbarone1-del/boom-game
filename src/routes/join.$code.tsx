@@ -171,13 +171,21 @@ function JoinView() {
       current_space: 0,
       score: 0,
       joined_at: new Date(now + i).toISOString(),
-      user_id: attachToSlotIdx === i && user ? user.id : null,
+      user_id: user && attachToSlotIdx === i ? user.id : null,
     }));
-    const { error: pErr } = await supabase.from("players").insert(rows);
+    const { error: pErr, data: createdPlayers } = await supabase.from("players").insert(rows).select();
     if (pErr) {
       setSubmitting(false);
       setError(pErr.message);
       return;
+    }
+    // Remember the guest identity on this device so the same browser can
+    // reclaim the same slot when rejoining the same room.
+    if (!user && createdPlayers && createdPlayers.length > 0) {
+      const me = createdPlayers[attachToSlotIdx ?? 0] ?? createdPlayers[0];
+      if (me) {
+        saveGuestMap(code, me.id, me.username, me.avatar_url ?? `mascot:${MASCOT_COLORS[0]}`);
+      }
     }
     // If this is the first pod AND they came via auto (solo flow), auto-start
     // the room with the 15-min fuse so they don't need a host screen.

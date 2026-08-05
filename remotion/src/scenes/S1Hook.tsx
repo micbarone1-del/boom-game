@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { C } from "../theme";
 import { BODY, DISPLAY, Rays, Shock, useSpr } from "../components/kit";
+import { Mascot } from "../components/Mascot";
 
 export const S1Hook: React.FC = () => {
   const frame = useCurrentFrame();
@@ -11,6 +12,8 @@ export const S1Hook: React.FC = () => {
   const scale = interpolate(pop, [0, 1], [0.3, 1]);
   return (
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
+      <Mascot src="bomb-mascot.png" size={340} delay={10} style={{ left: 60, bottom: 240 }} />
+      <Mascot src="bomb-hard.png" size={230} delay={22} style={{ right: 70, bottom: 300 }} />
       <Rays x={540} y={880} color={C.red} opacity={0.22} speed={0.32} count={22} />
       <Shock delay={6} x={540} y={880} max={1800} color={C.red} />
       <Shock delay={14} x={540} y={880} max={1500} />

@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { C } from "../theme";
 import { DISPLAY, Kicker, Person, Phone, Pow, Rays, Shock, useSpr } from "../components/kit";
+import { Mascot } from "../components/Mascot";
 
 const beats = [
   { src: "17-boss-intro.png", from: 0, to: 40 },
@@ -70,6 +71,9 @@ export const S10Boss: React.FC = () => {
           <Person src="cheer.png" height={680} />
         </div>
       )}
+      <Mascot src="bomb-special.png" size={170} delay={44} out={92} style={{ left: 30, top: 470 }} label="SPECIAL x2" labelColor={C.yellow} />
+      <Mascot src="bomb-super.png" size={170} delay={58} out={92} style={{ right: 30, top: 520 }} label="SUPER x3" labelColor={C.purple} />
+      <Mascot src="boss-mascot.png" size={220} delay={6} out={44} style={{ right: 20, top: 460 }} label="THE BOSS" labelColor={C.red} />
       <div style={{ position: "absolute", left: 40, top: 620 }}>
         <Pow text="POW!" color={C.yellow} size={62} delay={70} rotate={-10} />
       </div>

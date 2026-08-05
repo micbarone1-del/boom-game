@@ -3,6 +3,7 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { C } from "../theme";
 import { Pow, Rays } from "../components/kit";
 import { Stage } from "../components/Stage";
+import { Mascot } from "../components/Mascot";
 
 export const S7Exercise: React.FC = () => {
   const frame = useCurrentFrame();
@@ -23,6 +24,7 @@ export const S7Exercise: React.FC = () => {
         <div style={{ position: "absolute", left: 0, right: 0, top: 560, display: "flex", justifyContent: "center", transform: `translateY(${-rep}px)` }}>
           <Pow text="SWEAT!" color={C.red} size={54} delay={20} rotate={-7} />
         </div>
+        <Mascot src="bomb-hard.png" size={180} delay={12} style={{ left: 30, top: 980 }} label="HARD" labelColor={C.red} />
       </Stage>
     </AbsoluteFill>
   );

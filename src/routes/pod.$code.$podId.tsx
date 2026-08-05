@@ -468,15 +468,25 @@ function PodPage() {
     }
     if (room.paused) {
       return (
-        <PauseOverlay
-          code={code}
-          players={players}
-          pods={pods}
-          onResume={() => {
-            void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
-          }}
-          onSignInClick={() => setPauseJoinOpen(true)}
-        />
+        <>
+          <PauseOverlay
+            code={code}
+            players={players}
+            pods={pods}
+            onResume={() => {
+              void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
+            }}
+            onSignInClick={() => setPauseJoinOpen(true)}
+          />
+          <JoinAsModal
+            open={pauseJoinOpen}
+            onClose={() => setPauseJoinOpen(false)}
+            onSignedIn={() => setPauseJoinOpen(false)}
+            onGuestChosen={() => setPauseJoinOpen(false)}
+            title="Sign in to save scores"
+            subtitle="Your score will appear on the global leaderboard"
+          />
+        </>
       );
     }
     return pauseBtn;

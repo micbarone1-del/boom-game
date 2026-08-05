@@ -475,6 +475,7 @@ function PodPage() {
           onResume={() => {
             void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
           }}
+          onSignInClick={() => setPauseJoinOpen(true)}
         />
       );
     }

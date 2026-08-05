@@ -20,6 +20,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as PodCodePodIdRouteImport } from './routes/pod.$code.$podId'
 import { Route as GymCodeCustomizeRouteImport } from './routes/gym.$code.customize'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -79,6 +80,11 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/gym/$code/customize': typeof GymCodeCustomizeRoute
   '/pod/$code/$podId': typeof PodCodePodIdRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/gym/$code/customize': typeof GymCodeCustomizeRoute
   '/pod/$code/$podId': typeof PodCodePodIdRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/gym/$code/customize': typeof GymCodeCustomizeRoute
   '/pod/$code/$podId': typeof PodCodePodIdRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/gym/$code'
     | '/join/$code'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/gym/$code/customize'
     | '/pod/$code/$podId'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/gym/$code'
     | '/join/$code'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/gym/$code/customize'
     | '/pod/$code/$podId'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/gym/$code'
     | '/join/$code'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/gym/$code/customize'
     | '/pod/$code/$podId'
@@ -171,6 +183,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   GymCodeRoute: typeof GymCodeRouteWithChildren
   JoinCodeRoute: typeof JoinCodeRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   PodCodePodIdRoute: typeof PodCodePodIdRoute
 }
@@ -254,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -278,6 +298,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   GymCodeRoute: GymCodeRouteWithChildren,
   JoinCodeRoute: JoinCodeRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   PodCodePodIdRoute: PodCodePodIdRoute,
 }

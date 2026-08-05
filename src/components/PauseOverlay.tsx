@@ -11,12 +11,14 @@ import type { Player, Pod } from "@/hooks/use-room";
  */
 export function PauseOverlay({
   onResume,
+  onSignInClick,
   label = "PAUSED",
   code,
   players,
   pods,
 }: {
   onResume?: () => void;
+  onSignInClick?: () => void;
   label?: string;
   code?: string;
   players?: Player[];

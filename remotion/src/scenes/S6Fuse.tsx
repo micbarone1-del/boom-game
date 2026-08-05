@@ -12,8 +12,8 @@ export const S6Fuse: React.FC = () => {
   return (
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
       <AbsoluteFill style={{ background: C.red, opacity: 0.08 + pulse * 0.12 }} />
-      <div style={{ transform: `scale(${interpolate(a, [0, 1], [1.25, 1])}) translate(${shake}px, ${-shake}px)` }}>
-        <Screen src="04-gym-live-map.png" width={1200} />
+      <div style={{ transform: `scale(${interpolate(a, [0, 1], [1.25, 1])}) translate(${shake}px, ${-shake}px)`, marginTop: 60 }}>
+        <Screen src="04-gym-live-map.png" width={1180} ratio={0.5} />
       </div>
       <Shock delay={48} max={2200} color={C.red} />
       <div
@@ -23,8 +23,8 @@ export const S6Fuse: React.FC = () => {
           top: 78,
           fontFamily: DISPLAY,
           fontSize: 92,
-          color: C.cream,
-          textShadow: `8px 8px 0 ${C.ink}`,
+          color: C.ink,
+          textShadow: `7px 7px 0 ${C.red}`,
           transform: `rotate(-3deg) scale(${1 + pulse * 0.03})`,
         }}
       >

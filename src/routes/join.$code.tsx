@@ -77,6 +77,15 @@ function JoinView() {
     setSlotField(firstEmpty, { name: guestProfile.username, avatar: guestProfile.avatar_url });
   }, [guestProfile, slots]);
 
+  // Remember a guest identity from a previous visit on this device.
+  useEffect(() => {
+    if (user) return;
+    const remembered = loadGuestMap(code);
+    if (remembered) {
+      setGuestProfile({ username: remembered.username, avatar_url: remembered.avatar_url });
+    }
+  }, [user, code]);
+
   // When the modal returns an identity, apply it to the selected slot (or the first slot).
   const handleIdentity = (identity: { username: string; avatar_url: string }) => {
     const idx = attachToSlotIdx ?? 0;

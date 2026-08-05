@@ -5,7 +5,8 @@ import { useRoom } from "@/hooks/use-room";
 import { Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
-import { AuthSheet } from "@/components/AuthSheet";
+import { JoinAsModal } from "@/components/JoinAsModal";
+import { saveGuestMap, loadGuestMap } from "@/lib/guest";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,

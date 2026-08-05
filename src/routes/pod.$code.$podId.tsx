@@ -1834,11 +1834,23 @@ function WrapUp({
   const clipList = Array.from(clips.entries());
   const [spoken, setSpoken] = useState(false);
   const { user } = useAuth();
-  const [authOpen, setAuthOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [connectingFor, setConnectingFor] = useState<string | null>(null);
   const [recordedFor, setRecordedFor] = useState<Set<string>>(new Set());
   const [localPlayers, setLocalPlayers] = useState<Player[]>(players);
   useEffect(() => setLocalPlayers(players), [players]);
+
+  const CONNECT_KEY = `boom.connect.${players[0]?.room_code ?? ""}`;
+
+  // Restore the player slot we were trying to link before an OAuth redirect.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = sessionStorage.getItem(CONNECT_KEY);
+    if (saved !== null) {
+      setConnectingFor(saved);
+      sessionStorage.removeItem(CONNECT_KEY);
+    }
+  }, [CONNECT_KEY]);
 
   // When a player slot is linked to the signed-in user, persist a game_results row
   // (the DB trigger bumps profile lifetime score + games_finished).
@@ -1871,7 +1883,8 @@ function WrapUp({
   const connectSlot = async (playerId: string) => {
     if (!user) {
       setConnectingFor(playerId);
-      setAuthOpen(true);
+      if (typeof window !== "undefined") sessionStorage.setItem(CONNECT_KEY, playerId);
+      setJoinModalOpen(true);
       return;
     }
     const { data, error } = await supabase
@@ -1890,10 +1903,11 @@ function WrapUp({
     if (user && connectingFor) {
       const id = connectingFor;
       setConnectingFor(null);
+      if (typeof window !== "undefined") sessionStorage.removeItem(CONNECT_KEY);
       void connectSlot(id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, connectingFor]);
 
   useEffect(() => {
     if (spoken) return;

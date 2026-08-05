@@ -48,8 +48,44 @@ function JoinView() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  const [authOpen, setAuthOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
+  const [guestProfile, setGuestProfile] = useState<{ username: string; avatar_url: string } | null>(null);
+
+  // If the user is signed in, pull their profile info.
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("username, avatar_url").eq("user_id", user.id).maybeSingle();
+      if (!data) return;
+      setGuestProfile({ username: data.username ?? user.email?.split("@")[0] ?? "Player", avatar_url: data.avatar_url ?? `mascot:${MASCOT_COLORS[0]}` });
+    })();
+  }, [user]);
+
+  // Pre-fill the first slot with the authenticated user's profile or a remembered guest.
+  useEffect(() => {
+    if (user) {
+      // Already handled by the profile fetch above; it sets guestProfile.
+      return;
+    }
+    const remembered = loadGuestMap(code);
+    if (remembered) {
+      setGuestProfile({ username: remembered.username, avatar_url: remembered.avatar_url });
+    }
+  }, [user, code]);
+
+  // When the modal returns an identity, apply it to the selected slot (or the first slot).
+  const handleIdentity = (identity: { username: string; avatar_url: string }) => {
+    const idx = attachToSlotIdx ?? 0;
+    setGuestProfile(identity);
+    setSlotField(idx, { name: identity.username, avatar: identity.avatar_url });
+    setAttachToSlotIdx(null);
+  };
+
+  const openJoinModal = (slotIdx?: number) => {
+    setAttachToSlotIdx(slotIdx ?? null);
+    setJoinModalOpen(true);
+  };
 
   const takenSlots = useMemo(() => new Set(pods.map((p) => p.slot)), [pods]);
   const availableSlots = useMemo(

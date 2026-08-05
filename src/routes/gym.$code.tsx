@@ -438,6 +438,14 @@ function Lobby({ code }: { code: string }) {
           onSignInClick={() => setJoinModalOpen(true)}
         />
       )}
+      <JoinAsModal
+        open={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSignedIn={() => setJoinModalOpen(false)}
+        onGuestChosen={() => setJoinModalOpen(false)}
+        title="Join the game"
+        subtitle="Sign in so your score can reach the leaderboard"
+      />
     </main>
   );
 }

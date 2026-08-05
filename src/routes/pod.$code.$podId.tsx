@@ -2073,12 +2073,23 @@ function WrapUp({
       <Link to="/" className="text-center text-xs opacity-60 underline">
         Back to home
       </Link>
-      <AuthSheet
-        open={authOpen}
+      <JoinAsModal
+        open={joinModalOpen}
         onClose={() => {
-          setAuthOpen(false);
+          setJoinModalOpen(false);
           setConnectingFor(null);
+          if (typeof window !== "undefined") sessionStorage.removeItem(CONNECT_KEY);
         }}
+        onSignedIn={() => {
+          setJoinModalOpen(false);
+          // The connectingFor useEffect will finish the link after redirect.
+        }}
+        onGuestChosen={() => {
+          // Wrap-up only needs authenticated links, so guests are ignored here.
+          setJoinModalOpen(false);
+        }}
+        title="Save your score"
+        subtitle="Sign in so your score joins the global leaderboard"
       />
     </main>
   );

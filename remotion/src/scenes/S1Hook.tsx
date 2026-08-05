@@ -11,14 +11,14 @@ export const S1Hook: React.FC = () => {
   const scale = interpolate(pop, [0, 1], [0.3, 1]);
   return (
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
-      <Rays x={960} y={520} color={C.red} opacity={0.22} speed={0.32} count={22} />
-      <Shock delay={6} y={520} max={1700} color={C.red} />
-      <Shock delay={14} y={520} max={1500} />
+      <Rays x={540} y={880} color={C.red} opacity={0.22} speed={0.32} count={22} />
+      <Shock delay={6} x={540} y={880} max={1800} color={C.red} />
+      <Shock delay={14} x={540} y={880} max={1500} />
       <div style={{ transform: `scale(${scale}) rotate(${wobble}deg)`, textAlign: "center" }}>
         <div
           style={{
             fontFamily: DISPLAY,
-            fontSize: 300,
+            fontSize: 220,
             lineHeight: 0.85,
             color: C.yellow,
             textShadow: `12px 12px 0 ${C.ink}, -4px -4px 0 ${C.ink}, 4px -4px 0 ${C.ink}, -4px 4px 0 ${C.ink}`,
@@ -35,7 +35,7 @@ export const S1Hook: React.FC = () => {
           transform: `translateY(${interpolate(sub, [0, 1], [40, 0])}px) rotate(-1deg)`,
           fontFamily: BODY,
           fontWeight: 800,
-          fontSize: 40,
+          fontSize: 36,
           color: C.ink,
           background: C.cream,
           padding: "12px 30px",
@@ -43,9 +43,13 @@ export const S1Hook: React.FC = () => {
           borderRadius: 18,
           boxShadow: `10px 10px 0 ${C.ink}`,
           letterSpacing: 1,
+          textAlign: "center",
+          whiteSpace: "pre-line",
+          lineHeight: 1.25,
         }}
       >
-        The party workout game — from login to leaderboard
+        The party workout game
+from login to leaderboard
       </div>
     </AbsoluteFill>
   );

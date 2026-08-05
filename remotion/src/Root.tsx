@@ -8,5 +8,5 @@ loadDisplay("normal", { weights: ["400"], subsets: ["latin"] });
 loadBody("normal", { weights: ["700", "800", "900"], subsets: ["latin"] });
 
 export const RemotionRoot: React.FC = () => (
-  <Composition id="main" component={MainVideo} durationInFrames={TOTAL} fps={30} width={1920} height={1080} />
+  <Composition id="main" component={MainVideo} durationInFrames={TOTAL} fps={30} width={1080} height={1920} />
 );

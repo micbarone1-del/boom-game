@@ -64,6 +64,15 @@ export function PauseOverlay({
           <Play size={28} fill="#fff" /> RESUME
         </button>
       )}
+      {onSignInClick && (
+        <button
+          onClick={onSignInClick}
+          className="ink-border rounded-2xl bg-[var(--boom-yellow)] text-[var(--boom-ink)] px-6 py-2 text-base font-black flex items-center gap-2 active:scale-95"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <UserPlus size={18} /> Sign in to save scores
+        </button>
+      )}
       {code && (
         <div className="ink-border rounded-2xl bg-white p-3 w-full max-w-md flex flex-col gap-2">
           <div className="text-xs font-black opacity-70 uppercase tracking-wider flex items-center gap-1">

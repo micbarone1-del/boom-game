@@ -224,8 +224,9 @@ function Lobby({ code, onJoinOpen }: { code: string; onJoinOpen: () => void }) {
     room.game_state === "game_over";
 
   if (isLive && !room.paused) {
-    return <MapView room={room} players={players} pods={pods} code={code} />;
+    return <MapView room={room} players={players} pods={pods} code={code} onJoinOpen={onJoinOpen} />;
   }
+
 
   return (
     <main className="min-h-screen p-4 max-w-3xl mx-auto flex flex-col gap-4">

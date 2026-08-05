@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://whnwsimhrdjebtobkfzm.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "boom",
+      "version": "0.1.0",
+      "title": "Boom!"
+    },
+    "tools": [
+      {
+        "name": "get_my_profile",
+        "title": "Get my BOOM! profile",
+        "description": "Get the signed-in player's BOOM! profile: username, fitness level, lifetime score and number of games finished.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_game_history",
+        "title": "Get my game history",
+        "description": "List the signed-in player's most recent BOOM! game results, newest first, with room code, score and finish rank.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991,
+              "description": "How many recent games to return (1-50, default 10)."
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_workout_log",
+        "title": "Get my workout log",
+        "description": "List the exercises the signed-in player performed in BOOM! games, newest first, with reps, unit and whether the judge verified the form.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991,
+              "description": "How many exercise entries to return (1-100, default 20)."
+            },
+            "room_code": {
+              "type": "string",
+              "description": "Optional room code to filter to a single game."
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_leaderboard",
+        "title": "Get the global leaderboard",
+        "description": "Get the BOOM! global leaderboard: top players ranked by lifetime score, with games finished.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991,
+              "description": "How many players to return (1-50, default 10)."
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_room_status",
+        "title": "Get game room status",
+        "description": "Look up a BOOM! game room by its 4-6 character room code and return its live status: phase, boss HP, pods and players with their scores.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "room_code": {
+              "type": "string",
+              "description": "The room code shown on the gym screen, e.g. 'AB12'."
+            }
+          },
+          "required": [
+            "room_code"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

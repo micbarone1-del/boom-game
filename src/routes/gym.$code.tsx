@@ -456,7 +456,8 @@ function Lobby({ code, onJoinOpen }: { code: string; onJoinOpen: () => void }) {
   );
 }
 
-function MapView({ room, players, pods, code }: { room: Room; players: Player[]; pods: Pod[]; code: string }) {
+function MapView({ room, players, pods, code, onJoinOpen }: { room: Room; players: Player[]; pods: Pod[]; code: string; onJoinOpen: () => void }) {
+
   const startedAt = room.game_started_at ? new Date(room.game_started_at).getTime() : null;
   const endsAt = room.game_ends_at ? new Date(room.game_ends_at).getTime() : null;
   const continueAt = room.continue_deadline_at ? new Date(room.continue_deadline_at).getTime() : null;

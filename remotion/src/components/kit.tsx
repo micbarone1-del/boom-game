@@ -62,16 +62,17 @@ export const Phone: React.FC<{
 };
 
 /** Big-screen (desktop) mock, 16:10 captures. */
-export const Screen: React.FC<{ src: string; width: number; style?: React.CSSProperties; scale?: number }> = ({
-  src,
-  width,
-  style,
-  scale = 1,
-}) => (
-  <Ink radius={20} shadow={20} bg={C.ink} style={{ width, height: width * (800 / 1280), ...style }}>
+export const Screen: React.FC<{
+  src: string;
+  width: number;
+  style?: React.CSSProperties;
+  /** height / width of the visible crop (defaults to the full 16:10 capture) */
+  ratio?: number;
+}> = ({ src, width, style, ratio = 800 / 1280 }) => (
+  <Ink radius={20} shadow={20} bg={C.ink} style={{ width, height: width * ratio, ...style }}>
     <Img
       src={staticFile(`shots/${src}`)}
-      style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${scale})` }}
+      style={{ width: "100%", height: "auto", display: "block" }}
     />
   </Ink>
 );
@@ -123,14 +124,15 @@ export const Kicker: React.FC<{
       ) : null}
       <div
         style={{
-          clipPath: `inset(0 ${(1 - s) * 100}% -30% 0)`,
+          clipPath: `inset(-20% ${(1 - s) * 100}% -30% 0)`,
           fontFamily: DISPLAY,
           fontSize: size,
           lineHeight: 0.95,
-          color: C.cream,
-          textShadow: `7px 7px 0 ${C.ink}`,
+          color: C.ink,
+          textShadow: `6px 6px 0 ${color}, 10px 10px 0 rgba(18,16,14,0.25)`,
           textAlign: align,
           maxWidth: 720,
+          whiteSpace: "pre-line",
         }}
       >
         {title}

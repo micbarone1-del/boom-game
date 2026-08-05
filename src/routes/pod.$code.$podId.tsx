@@ -1992,7 +1992,7 @@ function WrapUp({
         ))}
         {!user && (
           <button
-            onClick={() => setAuthOpen(true)}
+            onClick={() => setJoinModalOpen(true)}
             className="btn-boom mt-2 py-2 text-base"
             style={{ background: "var(--boom-green)", fontFamily: "'Luckiest Guy', cursive" }}
           >

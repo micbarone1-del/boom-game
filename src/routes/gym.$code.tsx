@@ -30,6 +30,7 @@ function GymView() {
   const { code: codeParam } = Route.useParams();
   const navigate = useNavigate();
   const [code, setCode] = useState<string | null>(codeParam === "new" ? null : codeParam);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
 
   useEffect(() => {
     if (codeParam !== "new") {
@@ -52,8 +53,21 @@ function GymView() {
     );
   }
 
-  return <Lobby code={code} />;
+  return (
+    <>
+      <Lobby code={code} onJoinOpen={() => setJoinModalOpen(true)} />
+      <JoinAsModal
+        open={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSignedIn={() => setJoinModalOpen(false)}
+        onGuestChosen={() => setJoinModalOpen(false)}
+        title="Join the game"
+        subtitle="Sign in so your score can reach the leaderboard"
+      />
+    </>
+  );
 }
+
 
 const POD_COLORS = ["var(--boom-yellow)", "var(--boom-orange)", "var(--boom-green)"];
 

@@ -32,7 +32,7 @@ export const S5Judge: React.FC = () => {
           <div style={{ position: "absolute", top: 30, left: 200 }}>
             <Pow text="YOUR TURN!" color={C.purple} size={44} delay={12} rotate={-6} style={{ color: "#fff" }} />
           </div>
-          <div style={{ position: "absolute", bottom: 0, right: -40, transform: "rotate(5deg)" }}>
+          <div style={{ position: "absolute", bottom: 40, right: -40, transform: "rotate(5deg)" }}>
             <Phone src="10-switch-handoff.png" height={260} />
           </div>
         </div>
@@ -47,7 +47,7 @@ export const S5Judge: React.FC = () => {
           <div style={{ position: "absolute", top: 10, right: -30 }}>
             <Pow text="JUDGE" color={C.green} size={44} delay={34} rotate={7} />
           </div>
-          <div style={{ position: "absolute", bottom: -10, right: -70, transform: "rotate(-4deg)" }}>
+          <div style={{ position: "absolute", bottom: 40, right: -70, transform: "rotate(-4deg)" }}>
             <Phone src="11-judge-camera.png" height={280} />
           </div>
         </div>

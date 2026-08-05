@@ -46,7 +46,7 @@ export const S4Roll: React.FC = () => {
               <div style={{ position: "absolute", top: -10, left: i === 2 ? -70 : "auto", right: i === 2 ? "auto" : -60 }}>
                 <Pow text={b.word} color={b.color} size={54} delay={b.from + 6} rotate={i % 2 ? 6 : -8} />
               </div>
-              <div style={{ position: "absolute", bottom: -6, right: -50, transform: "rotate(6deg)" }}>
+              <div style={{ position: "absolute", bottom: 30, right: -50, transform: "rotate(6deg)" }}>
                 <Phone src={b.shot} height={230} />
               </div>
             </div>

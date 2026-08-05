@@ -23,7 +23,6 @@ import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity,
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
-import { AuthSheet } from "@/components/AuthSheet";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";

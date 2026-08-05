@@ -449,17 +449,9 @@ function Lobby({ code, onJoinOpen }: { code: string; onJoinOpen: () => void }) {
           code={code}
           players={players}
           pods={pods}
-          onSignInClick={() => setJoinModalOpen(true)}
+          onSignInClick={onJoinOpen}
         />
       )}
-      <JoinAsModal
-        open={joinModalOpen}
-        onClose={() => setJoinModalOpen(false)}
-        onSignedIn={() => setJoinModalOpen(false)}
-        onGuestChosen={() => setJoinModalOpen(false)}
-        title="Join the game"
-        subtitle="Sign in so your score can reach the leaderboard"
-      />
     </main>
   );
 }

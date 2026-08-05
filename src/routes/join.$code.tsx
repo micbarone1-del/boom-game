@@ -56,23 +56,26 @@ function JoinView() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase.from("profiles").select("username, avatar_url").eq("user_id", user.id).maybeSingle();
-      if (!data) return;
-      setGuestProfile({ username: data.username ?? user.email?.split("@")[0] ?? "Player", avatar_url: data.avatar_url ?? `mascot:${MASCOT_COLORS[0]}` });
+      const { data } = await supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const fallbackName = user.email?.split("@")[0] ?? user.phone ?? "Player";
+      const name = data?.username ?? fallbackName;
+      const avatar = data?.avatar_url ?? `mascot:${MASCOT_COLORS[0]}`;
+      setGuestProfile({ username: name, avatar_url: avatar });
     })();
   }, [user]);
 
-  // Pre-fill the first slot with the authenticated user's profile or a remembered guest.
+  // When a profile (auth or remembered guest) becomes available, fill the first
+  // empty slot so returning players don't have to re-type their name.
   useEffect(() => {
-    if (user) {
-      // Already handled by the profile fetch above; it sets guestProfile.
-      return;
-    }
-    const remembered = loadGuestMap(code);
-    if (remembered) {
-      setGuestProfile({ username: remembered.username, avatar_url: remembered.avatar_url });
-    }
-  }, [user, code]);
+    if (!guestProfile) return;
+    const firstEmpty = slots.findIndex((s) => !s.name.trim());
+    if (firstEmpty < 0) return;
+    setSlotField(firstEmpty, { name: guestProfile.username, avatar: guestProfile.avatar_url });
+  }, [guestProfile, slots]);
 
   // When the modal returns an identity, apply it to the selected slot (or the first slot).
   const handleIdentity = (identity: { username: string; avatar_url: string }) => {

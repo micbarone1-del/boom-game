@@ -84,7 +84,7 @@ export const Kicker: React.FC<{
   sub?: string;
   delay?: number;
   color?: string;
-  align?: "left" | "right";
+  align?: "left" | "right" | "center";
   size?: number;
   style?: React.CSSProperties;
 }> = ({ step, title, sub, delay = 0, color = C.yellow, align = "left", size = 92, style }) => {
@@ -97,7 +97,7 @@ export const Kicker: React.FC<{
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: align === "left" ? "flex-start" : "flex-end",
+        alignItems: align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center",
         gap: 14,
         transform: `translateY(${drift}px)`,
         ...style,
@@ -131,7 +131,7 @@ export const Kicker: React.FC<{
           color: C.ink,
           textShadow: `6px 6px 0 ${color}, 10px 10px 0 rgba(18,16,14,0.25)`,
           textAlign: align,
-          maxWidth: 720,
+          maxWidth: 940,
           whiteSpace: "pre-line",
         }}
       >
@@ -174,9 +174,9 @@ export const Rays: React.FC<{ x: number; y: number; color?: string; count?: numb
   return (
     <svg
       style={{ position: "absolute", inset: 0, opacity }}
-      viewBox="0 0 1920 1080"
-      width={1920}
-      height={1080}
+      viewBox="0 0 1080 1920"
+      width={1080}
+      height={1920}
     >
       <g transform={`rotate(${frame * speed} ${x} ${y})`}>
         {new Array(count).fill(0).map((_, i) => {

@@ -19,8 +19,8 @@ export const Backdrop: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          width: 900,
-          height: 900,
+          width: 1100,
+          height: 1100,
           borderRadius: "50%",
           background: C.yellow,
           opacity: 0.5,
@@ -32,8 +32,8 @@ export const Backdrop: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          width: 760,
-          height: 760,
+          width: 980,
+          height: 980,
           borderRadius: "50%",
           background: C.red,
           opacity: 0.28,

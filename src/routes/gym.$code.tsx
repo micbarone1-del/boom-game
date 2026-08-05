@@ -13,6 +13,8 @@ import { PodActivityTicker } from "@/components/PodActivityTicker";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { setBgmIntensity, startArcadeMusic } from "@/lib/sfx";
 import { PauseOverlay, PauseToggleButton } from "@/components/PauseOverlay";
+import { JoinAsModal } from "@/components/JoinAsModal";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/gym/$code")({
   component: GymView,

@@ -86,16 +86,33 @@ function JoinView() {
     }
   }, [user, code]);
 
+  const ATTACH_KEY = `boom.attach.${code}`;
+
+  // Restore the slot a user was trying to link before an OAuth redirect.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = sessionStorage.getItem(ATTACH_KEY);
+    if (saved !== null) {
+      setAttachToSlotIdx(Number(saved));
+      sessionStorage.removeItem(ATTACH_KEY);
+    }
+  }, [ATTACH_KEY]);
+
   // When the modal returns an identity, apply it to the selected slot (or the first slot).
   const handleIdentity = (identity: { username: string; avatar_url: string }) => {
     const idx = attachToSlotIdx ?? 0;
     setGuestProfile(identity);
     setSlotField(idx, { name: identity.username, avatar: identity.avatar_url });
+    if (typeof window !== "undefined") sessionStorage.removeItem(ATTACH_KEY);
     setAttachToSlotIdx(null);
   };
 
   const openJoinModal = (slotIdx?: number) => {
-    setAttachToSlotIdx(slotIdx ?? null);
+    const idx = slotIdx ?? null;
+    setAttachToSlotIdx(idx);
+    if (typeof window !== "undefined" && idx !== null) {
+      sessionStorage.setItem(ATTACH_KEY, String(idx));
+    }
     setJoinModalOpen(true);
   };
 

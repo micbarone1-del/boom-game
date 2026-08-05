@@ -565,6 +565,7 @@ function MapView({ room, players, pods, code, onJoinOpen }: { room: Room; player
           onResume={() => {
             void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
           }}
+          onSignInClick={onJoinOpen}
         />
       )}
     </main>

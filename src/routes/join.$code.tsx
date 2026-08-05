@@ -226,10 +226,10 @@ function JoinView() {
           </div>
         ) : (
           <button
-            onClick={() => setAuthOpen(true)}
+            onClick={() => openJoinModal()}
             className="ink-border-sm rounded-xl px-3 py-2 text-xs font-black bg-white"
           >
-            Sign in
+            Join as…
           </button>
         )}
       </header>

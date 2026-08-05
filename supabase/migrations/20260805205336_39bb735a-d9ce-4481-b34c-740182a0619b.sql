@@ -1,0 +1,3 @@
+update rooms set status='playing', phase='board', paused=false, trap=null, last_dice=null, game_started_at=now(), game_ends_at=now()+interval '20 minutes', continue_deadline_at=null where code='SHOT1';
+update players set current_space=0, status='playing' where room_code='SHOT1' and username='Ale';
+update pods set current_turn_player_id='16eda386-9f28-4a9c-8dfa-a58845ea1c71' where id='21e27a25-9d88-4dfa-b765-a59d41a4fcd9';

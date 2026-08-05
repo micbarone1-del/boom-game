@@ -15,7 +15,7 @@ export const S2Join: React.FC = () => (
       shot="06-join-phone.png"
       left={{ src: "join.png", blob: "#BFE8FF", height: 720, delay: 10 }}
     >
-      <div style={{ position: "absolute", right: 90, top: 700 }}>
+      <div style={{ position: "absolute", right: 90, top: 600 }}>
         <Pow text="I'M IN!" color={C.blue} size={54} delay={22} rotate={8} />
       </div>
     </Stage>

@@ -20,7 +20,7 @@ export const S7Exercise: React.FC = () => {
         left={{ src: "exercise.png", blob: "#FFD873", height: 740, delay: 8 }}
         right={{ src: "judge.png", blob: "#BFE8FF", height: 620, delay: 18 }}
       >
-        <div style={{ position: "absolute", left: 0, right: 0, top: 700, display: "flex", justifyContent: "center", transform: `translateY(${-rep}px)` }}>
+        <div style={{ position: "absolute", left: 0, right: 0, top: 560, display: "flex", justifyContent: "center", transform: `translateY(${-rep}px)` }}>
           <Pow text="SWEAT!" color={C.red} size={54} delay={20} rotate={-7} />
         </div>
       </Stage>

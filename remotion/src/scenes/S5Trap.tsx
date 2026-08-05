@@ -20,7 +20,7 @@ export const S5Trap: React.FC = () => {
         phoneRotate={-3}
         left={{ src: "exercise.png", blob: "#FFB3B3", height: 700, delay: 14 }}
       >
-        <div style={{ position: "absolute", right: 60, top: 720 }}>
+        <div style={{ position: "absolute", right: 60, top: 580 }}>
           <Pow text="UH OH!" color={C.red} size={56} delay={18} rotate={9} />
         </div>
       </Stage>

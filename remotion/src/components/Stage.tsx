@@ -15,7 +15,7 @@ export const Stage: React.FC<{
   right?: { src: string; blob?: string; height?: number; flip?: boolean; delay?: number };
   children?: React.ReactNode;
   phaseShot?: { src: string; from: number }[];
-}> = ({ step, title, sub, color, shot, phoneHeight = 980, phoneRotate = -2, left, right, children }) => {
+}> = ({ step, title, sub, color, shot, phoneHeight = 1340, phoneRotate = -2, left, right, children }) => {
   const frame = useCurrentFrame();
   const p = useSpr(4, { damping: 18, stiffness: 110 });
   const l = useSpr(left?.delay ?? 12, { damping: 15, stiffness: 120 });
@@ -23,7 +23,7 @@ export const Stage: React.FC<{
   const float = Math.sin(frame / 25) * 10;
   return (
     <AbsoluteFill>
-      <AbsoluteFill style={{ alignItems: "center", paddingTop: 96 }}>
+      <AbsoluteFill style={{ alignItems: "center", paddingTop: 70 }}>
         <Kicker step={step} title={title} sub={sub} color={color} align="center" size={76} style={{ padding: "0 70px" }} />
       </AbsoluteFill>
       <div
@@ -31,7 +31,7 @@ export const Stage: React.FC<{
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: -110,
+          bottom: -60,
           display: "flex",
           justifyContent: "center",
           transform: `translateY(${interpolate(p, [0, 1], [1200, float])}px) rotate(${phoneRotate}deg) scale(${interpolate(

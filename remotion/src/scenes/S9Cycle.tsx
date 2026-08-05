@@ -12,9 +12,9 @@ const MEMBERS = [
 ];
 
 const CX = 540;
-const CY = 1240;
-const R = 340;
-const AV = 250;
+const CY = 1180;
+const R = 360;
+const AV = 280;
 
 export const S9Cycle: React.FC = () => {
   const frame = useCurrentFrame();
@@ -24,7 +24,7 @@ export const S9Cycle: React.FC = () => {
   const active = Math.floor(frame / 16) % MEMBERS.length;
   return (
     <AbsoluteFill>
-      <AbsoluteFill style={{ alignItems: "center", paddingTop: 96 }}>
+      <AbsoluteFill style={{ alignItems: "center", paddingTop: 70 }}>
         <Kicker
           step="STEP 08"
           title={"NOW THE\nJUDGE ROLLS"}

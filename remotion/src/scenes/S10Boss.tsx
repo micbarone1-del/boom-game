@@ -25,7 +25,7 @@ export const S10Boss: React.FC = () => {
       <Rays x={540} y={1000} color={frame >= 112 ? C.yellow : C.red} opacity={frame >= 112 ? 0.3 : 0.18} speed={0.4} count={26} />
       {frame >= 92 && [0, 6, 12, 18].map((d) => <Shock key={d} delay={92 + d} x={380 + d * 30} y={900 + (d % 3) * 180} max={800} color={C.red} />)}
       {frame >= 112 && <Shock delay={112} x={540} y={1000} max={2200} color={C.yellow} />}
-      <AbsoluteFill style={{ alignItems: "center", paddingTop: 96 }}>
+      <AbsoluteFill style={{ alignItems: "center", paddingTop: 70 }}>
         <Kicker
           step="STEP 09"
           title="BEAT THE BOSS"
@@ -41,13 +41,13 @@ export const S10Boss: React.FC = () => {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: -110,
+          bottom: -60,
           display: "flex",
           justifyContent: "center",
           transform: `translate(${shake}px, ${-shake * 0.5}px) scale(${interpolate(enter, [0, 1], [0.8, 1])})`,
         }}
       >
-        <div style={{ position: "relative", width: 470, height: 1010 }}>
+        <div style={{ position: "relative", width: 620, height: 1340 }}>
           {beats.map((b) => {
             const o = interpolate(frame, [b.from - 5, b.from + 5, b.to - 5, b.to + 5], [0, 1, 1, 0], {
               extrapolateLeft: "clamp",
@@ -56,7 +56,7 @@ export const S10Boss: React.FC = () => {
             if (o <= 0.01) return null;
             return (
               <div key={b.src} style={{ position: "absolute", inset: 0, opacity: o }}>
-                <Phone src={b.src} height={1010} />
+                <Phone src={b.src} height={1340} />
               </div>
             );
           })}
@@ -70,7 +70,7 @@ export const S10Boss: React.FC = () => {
           <Person src="cheer.png" height={680} />
         </div>
       )}
-      <div style={{ position: "absolute", left: 60, top: 780 }}>
+      <div style={{ position: "absolute", left: 40, top: 620 }}>
         <Pow text="POW!" color={C.yellow} size={62} delay={70} rotate={-10} />
       </div>
       {frame >= 116 && (
@@ -79,7 +79,7 @@ export const S10Boss: React.FC = () => {
             position: "absolute",
             left: 0,
             right: 0,
-            top: 720,
+            top: 560,
             textAlign: "center",
             fontFamily: DISPLAY,
             fontSize: 120,

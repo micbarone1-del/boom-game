@@ -19,7 +19,7 @@ export const S4Hop: React.FC = () => {
         phoneRotate={2}
         right={{ src: "hop.png", blob: "#A9E7FA", height: 720, flip: true, delay: 10 }}
       >
-        <div style={{ position: "absolute", left: 70, top: 740, transform: `translateY(${-hop}px)` }}>
+        <div style={{ position: "absolute", left: 70, top: 600, transform: `translateY(${-hop}px)` }}>
           <Pow text="HOP!" color={C.green} size={58} delay={16} rotate={7} />
         </div>
       </Stage>

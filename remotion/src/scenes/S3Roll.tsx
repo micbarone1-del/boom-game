@@ -15,7 +15,7 @@ export const S3Roll: React.FC = () => (
       shot="07-pod-roll.png"
       left={{ src: "roll.png", blob: "#FFD873", height: 740, delay: 8 }}
     >
-      <div style={{ position: "absolute", right: 70, top: 760 }}>
+      <div style={{ position: "absolute", right: 70, top: 600 }}>
         <Pow text="ROLL!" color={C.yellow} size={58} delay={18} rotate={-8} />
       </div>
     </Stage>

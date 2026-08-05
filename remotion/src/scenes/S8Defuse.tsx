@@ -14,7 +14,7 @@ export const S8Defuse: React.FC = () => {
       <AbsoluteFill style={{ background: C.red, opacity: 0.06 + pulse * 0.1 }} />
       <Rays x={540} y={1000} color={C.red} opacity={0.2} speed={0.3} count={26} />
       <Shock delay={34} x={700} y={1150} max={1600} color={C.red} />
-      <AbsoluteFill style={{ alignItems: "center", paddingTop: 96 }}>
+      <AbsoluteFill style={{ alignItems: "center", paddingTop: 70 }}>
         <Kicker
           step="STEP 07"
           title={"DEFUSE\nOR EXPLODE"}
@@ -28,28 +28,28 @@ export const S8Defuse: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          left: 40,
-          bottom: -80,
+          left: 10,
+          bottom: -40,
           transform: `translateY(${interpolate(a, [0, 1], [1100, 0])}px) rotate(-4deg)`,
         }}
       >
-        <Phone src="15-power-up.png" height={860} />
+        <Phone src="15-power-up.png" height={1060} />
       </div>
       <div
         style={{
           position: "absolute",
-          right: 40,
-          bottom: -160,
+          right: 10,
+          bottom: -110,
           transform: `translateY(${interpolate(b, [0, 1], [1100, 0])}px) rotate(5deg)`,
           opacity: b,
         }}
       >
-        <Phone src="07c-fail-explosion.png" height={800} />
+        <Phone src="07c-fail-explosion.png" height={1020} />
       </div>
-      <div style={{ position: "absolute", left: 90, top: 830 }}>
+      <div style={{ position: "absolute", left: 60, top: 560 }}>
         <Pow text="DEFUSED!" color={C.green} size={50} delay={16} rotate={-8} />
       </div>
-      <div style={{ position: "absolute", right: 70, top: 900 }}>
+      <div style={{ position: "absolute", right: 50, top: 640 }}>
         <div style={{ fontFamily: DISPLAY, fontSize: 96, color: C.red, textShadow: `8px 8px 0 ${C.ink}`, transform: `rotate(9deg) scale(${b})` }}>
           BOOM!
         </div>

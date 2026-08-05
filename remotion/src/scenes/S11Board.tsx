@@ -13,7 +13,7 @@ export const S11Board: React.FC = () => {
   return (
     <AbsoluteFill>
       <Rays x={540} y={900} color={C.green} opacity={0.15} speed={-0.2} />
-      <AbsoluteFill style={{ alignItems: "center", paddingTop: 96 }}>
+      <AbsoluteFill style={{ alignItems: "center", paddingTop: 70 }}>
         <Kicker
           step="STEP 10"
           title={"LEADERBOARD\n& RECAPS"}
@@ -24,19 +24,19 @@ export const S11Board: React.FC = () => {
           style={{ padding: "0 70px" }}
         />
       </AbsoluteFill>
-      <div style={{ position: "absolute", left: 30, bottom: -80, transform: `translateY(${interpolate(a, [0, 1], [1200, float])}px) rotate(-4deg)` }}>
-        <Phone src="22-wrapup-leaderboard.png" height={900} pan={pan} aspect={0.46} />
+      <div style={{ position: "absolute", left: 0, bottom: -30, transform: `translateY(${interpolate(a, [0, 1], [1200, float])}px) rotate(-4deg)` }}>
+        <Phone src="22-wrapup-leaderboard.png" height={1150} pan={pan} aspect={0.46} />
       </div>
       <div
         style={{
           position: "absolute",
-          right: 20,
-          bottom: -150,
+          right: 0,
+          bottom: -90,
           transform: `translateY(${interpolate(b, [0, 1], [1200, -float])}px) rotate(5deg)`,
           opacity: b,
         }}
       >
-        <Phone src="23-recap-video-sharing.png" height={860} aspect={796 / 1632} />
+        <Phone src="23-recap-video-sharing.png" height={1100} aspect={796 / 1632} />
       </div>
       <div
         style={{

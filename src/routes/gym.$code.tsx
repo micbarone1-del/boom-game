@@ -247,7 +247,7 @@ function Lobby({ code, onJoinOpen }: { code: string; onJoinOpen: () => void }) {
         </div>
         {!user ? (
           <button
-            onClick={() => setJoinModalOpen(true)}
+            onClick={onJoinOpen}
             className="ink-border-sm rounded-xl px-3 py-2 text-xs font-black bg-white"
           >
             Sign in to save scores

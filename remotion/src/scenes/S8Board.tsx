@@ -7,6 +7,7 @@ export const S8Board: React.FC = () => {
   const frame = useCurrentFrame();
   const a = useSpr(3, { damping: 16, stiffness: 120 });
   const b = useSpr(28, { damping: 13, stiffness: 140 });
+  const crew = useSpr(10, { damping: 14 });
   const pan = interpolate(frame, [12, 100], [0, 0.42], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const float = Math.sin(frame / 23) * 8;
   return (
@@ -20,7 +21,7 @@ export const S8Board: React.FC = () => {
           bottom: -30,
           display: "flex",
           justifyContent: "center",
-          transform: `translateY(${interpolate(useSpr(10, { damping: 14 }), [0, 1], [600, float * 0.6])}px)`,
+          transform: `translateY(${interpolate(crew, [0, 1], [600, float * 0.6])}px)`,
           opacity: 0.98,
         }}
       >

@@ -1,24 +1,39 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { C } from "../theme";
-import { Kicker, Phone, Rays, useSpr } from "../components/kit";
+import { Kicker, Person, Phone, Rays, useSpr } from "../components/kit";
 
 export const S8Board: React.FC = () => {
   const frame = useCurrentFrame();
   const a = useSpr(3, { damping: 16, stiffness: 120 });
   const b = useSpr(28, { damping: 13, stiffness: 140 });
+  const crew = useSpr(10, { damping: 14 });
   const pan = interpolate(frame, [12, 100], [0, 0.42], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const float = Math.sin(frame / 23) * 8;
   return (
     <AbsoluteFill>
       <Rays x={960} y={540} color={C.green} opacity={0.16} speed={-0.2} />
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: -30,
+          display: "flex",
+          justifyContent: "center",
+          transform: `translateY(${interpolate(crew, [0, 1], [600, float * 0.6])}px)`,
+          opacity: 0.98,
+        }}
+      >
+        <Person src="cheer.png" height={780} />
+      </div>
       <AbsoluteFill style={{ flexDirection: "row", alignItems: "center", padding: "0 110px", gap: 50 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 34 }}>
           <div style={{ transform: `translateY(${interpolate(a, [0, 1], [700, float])}px) rotate(-3deg)` }}>
-            <Phone src="22-wrapup-leaderboard.png" height={780} pan={pan} aspect={0.46} />
+            <Phone src="22-wrapup-leaderboard.png" height={620} pan={pan} aspect={0.46} />
           </div>
           <div style={{ transform: `translateY(${interpolate(b, [0, 1], [760, -float])}px) rotate(4deg)`, opacity: b }}>
-            <Phone src="23-recap-video-sharing.png" height={700} aspect={796 / 1632} />
+            <Phone src="23-recap-video-sharing.png" height={560} aspect={796 / 1632} />
           </div>
         </div>
         <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>

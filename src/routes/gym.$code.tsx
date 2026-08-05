@@ -217,7 +217,7 @@ function Lobby({ code }: { code: string }) {
     <main className="min-h-screen p-4 max-w-3xl mx-auto flex flex-col gap-4">
       <header className="flex items-center gap-3 mt-2">
         <img src={bombMascot} alt="" className="w-14 h-14 anim-fuse drop-shadow-[0_4px_0_rgba(0,0,0,0.25)]" />
-        <div>
+        <div className="flex-1">
           <h1
             className="text-4xl font-black leading-none"
             style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
@@ -231,6 +231,19 @@ function Lobby({ code }: { code: string }) {
             GYM SCREEN
           </p>
         </div>
+        {!user ? (
+          <button
+            onClick={() => setJoinModalOpen(true)}
+            className="ink-border-sm rounded-xl px-3 py-2 text-xs font-black bg-white"
+          >
+            Sign in to save scores
+          </button>
+        ) : (
+          <div className="text-[10px] font-bold opacity-70 text-right">
+            <div>signed in</div>
+            <button onClick={() => supabase.auth.signOut()} className="underline">sign out</button>
+          </div>
+        )}
       </header>
 
       {/* Join card */}

@@ -28,8 +28,8 @@ export const S6Pass: React.FC = () => {
       <div style={{ position: "absolute", right: 60, top: 700 }}>
         <Pow text="GOT IT!" color={C.green} size={44} delay={34} rotate={8} />
       </div>
-      <Mascot src="bomb-mascot.png" size={190} delay={10} style={{ right: 40, bottom: 60 }} label="TICK TICK" labelColor={C.red} />
-      {frame > 40 ? <Mascot src="bomb-medium.png" size={150} delay={44} style={{ left: 40, bottom: 80 }} /> : null}
+      <Mascot src="bomb-mascot.png" size={190} delay={10} style={{ right: 30, bottom: 250 }} label="TICK TICK" labelColor={C.red} />
+      {frame > 40 ? <Mascot src="bomb-medium.png" size={150} delay={44} style={{ left: 30, bottom: 260 }} /> : null}
     </AbsoluteFill>
   );
 };

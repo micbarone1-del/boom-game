@@ -22,7 +22,7 @@ export const S9Cycle: React.FC = () => (
     <PodCircle centerTitle="THE POD" centerSub="NEVER STOPS" color={C.green} step={16} startDelay={4} />
     <Mascot src="bomb-easy.png" size={140} delay={12} style={{ left: 40, top: 620 }} label="EASY" labelColor={C.green} />
     <Mascot src="bomb-hard.png" size={140} delay={26} style={{ right: 40, top: 660 }} label="HARD" labelColor={C.red} />
-    <Mascot src="bomb-rest.png" size={140} delay={40} style={{ left: 70, bottom: 80 }} label="REST" labelColor={C.blue} />
-    <Mascot src="bomb-boost.png" size={140} delay={54} style={{ right: 70, bottom: 80 }} label="BOOST" labelColor={C.yellow} />
+    <Mascot src="bomb-rest.png" size={140} delay={40} style={{ left: 40, bottom: 250 }} label="REST" labelColor={C.blue} />
+    <Mascot src="bomb-boost.png" size={140} delay={54} style={{ right: 40, bottom: 250 }} label="BOOST" labelColor={C.yellow} />
   </AbsoluteFill>
 );

@@ -333,11 +333,21 @@ function JoinView() {
       <p className="text-[11px] opacity-60 text-center">
         {players.filter((p) => p.pod_id).length} players · {pods.length}/3 pods in this room
       </p>
-      <AuthSheet
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        title="Sign in to BOOM!"
-        subtitle="Track your scores on the global leaderboard"
+      <JoinAsModal
+        open={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSignedIn={() => {
+          setJoinModalOpen(false);
+          if (guestProfile && attachToSlotIdx != null) {
+            setSlotField(attachToSlotIdx, { name: guestProfile.username, avatar: guestProfile.avatar_url });
+          }
+        }}
+        onGuestChosen={(guest) => {
+          handleIdentity(guest);
+          setJoinModalOpen(false);
+        }}
+        title="Join the game"
+        subtitle="Choose how you want to play"
       />
     </main>
   );

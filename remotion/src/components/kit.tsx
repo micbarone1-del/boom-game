@@ -199,6 +199,79 @@ export const Rays: React.FC<{ x: number; y: number; color?: string; count?: numb
 };
 
 /** Expanding ink ring shockwave. */
+export const Person: React.FC<{
+  src: string;
+  height: number;
+  /** colored blob behind the person */
+  blob?: string;
+  blobScale?: number;
+  flip?: boolean;
+  style?: React.CSSProperties;
+}> = ({ src, height, blob, blobScale = 0.86, flip, style }) => (
+  <div style={{ position: "relative", height, display: "flex", alignItems: "flex-end", ...style }}>
+    {blob ? (
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: height * blobScale,
+          height: height * blobScale,
+          marginLeft: (-height * blobScale) / 2,
+          marginTop: (-height * blobScale) / 2,
+          borderRadius: "50%",
+          background: blob,
+          border: `7px solid ${C.ink}`,
+          boxShadow: `14px 14px 0 ${C.ink}`,
+        }}
+      />
+    ) : null}
+    <Img
+      src={staticFile(`people/${src}`)}
+      style={{
+        position: "relative",
+        height,
+        width: "auto",
+        objectFit: "contain",
+        transform: flip ? "scaleX(-1)" : undefined,
+        filter: `drop-shadow(0 18px 26px rgba(18,16,14,0.35))`,
+      }}
+    />
+  </div>
+);
+
+/** Comic action word bubble. */
+export const Pow: React.FC<{
+  text: string;
+  color?: string;
+  size?: number;
+  delay?: number;
+  style?: React.CSSProperties;
+  rotate?: number;
+}> = ({ text, color = C.yellow, size = 62, delay = 0, style, rotate = -7 }) => {
+  const s = useSpr(delay, { damping: 9, stiffness: 200 });
+  if (s <= 0.001) return null;
+  return (
+    <div
+      style={{
+        fontFamily: DISPLAY,
+        fontSize: size,
+        color: C.ink,
+        background: color,
+        padding: "12px 26px 6px",
+        border: `6px solid ${C.ink}`,
+        borderRadius: 20,
+        boxShadow: `10px 10px 0 ${C.ink}`,
+        transform: `rotate(${rotate}deg) scale(${interpolate(s, [0, 1], [0.3, 1])})`,
+        whiteSpace: "nowrap",
+        ...style,
+      }}
+    >
+      {text}
+    </div>
+  );
+};
+
 export const Shock: React.FC<{ delay?: number; x?: number; y?: number; color?: string; max?: number }> = ({
   delay = 0,
   x = 960,

@@ -29,8 +29,8 @@ export const A3Step3: React.FC = () => {
       <div style={{ position: "absolute", right: -110, bottom: -60, transform: `translateX(${(1 - r) * 800}px)` }}>
         <Person src="judge.png" height={620} blob="#D9C6FF" blobScale={0.74} flip />
       </div>
-      <RealClip name="gym2" total={120} width={330} height={470} rotate={-5} delay={22} label="REAL REPS" style={{ left: 26, top: 620 }} />
-      <RealClip name="gym3" total={120} width={380} height={300} rotate={4} delay={70} label="NO SKIPPING" labelColor={C.green} style={{ right: 30, top: 560 }} />
+      <RealClip name="gym2" total={120} width={300} height={430} rotate={-5} delay={22} label="REAL REPS" style={{ left: 18, top: 1010 }} />
+      <RealClip name="gym3" total={120} width={360} height={280} rotate={4} delay={70} label="NO SKIPPING" labelColor={C.green} style={{ right: 22, top: 580 }} />
       <div style={{ position: "absolute", left: 70, top: 700 }}>
         <Pow text="8 REPS!" color={C.red} size={50} delay={20} rotate={-8} style={{ color: "#fff" }} />
       </div>

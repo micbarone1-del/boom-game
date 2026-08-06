@@ -11,6 +11,7 @@ import { A2Step2 } from "./scenes/A2Step2";
 import { A3Step3 } from "./scenes/A3Step3";
 import { A4Loop } from "./scenes/A4Loop";
 import { A5Plus } from "./scenes/A5Plus";
+import { A6Board } from "./scenes/A6Board";
 import { S12End } from "./scenes/S12End";
 
 const T = 12;
@@ -21,6 +22,7 @@ export const SCENES: { c: React.FC; d: number }[] = [
   { c: A3Step3, d: 244 },
   { c: A4Loop, d: 132 },
   { c: A5Plus, d: 92 },
+  { c: A6Board, d: 130 },
   { c: S12End, d: 56 },
 ];
 

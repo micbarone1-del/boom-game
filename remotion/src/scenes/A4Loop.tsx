@@ -3,6 +3,7 @@ import { AbsoluteFill } from "remotion";
 import { C } from "../theme";
 import { BODY, DISPLAY, Kicker, Rays, useSpr } from "../components/kit";
 import { PodCircle } from "../components/PodCircle";
+import { RealClip } from "../components/RealClip";
 import { Mascot } from "../components/Mascot";
 
 const STEPS = [
@@ -70,6 +71,8 @@ export const A4Loop: React.FC = () => (
       </div>
     </AbsoluteFill>
     <PodCircle cy={1400} r={330} av={230} centerTitle="THE POD" centerSub="NEVER STOPS" color={C.green} step={14} startDelay={2} />
+    <RealClip name="gym4" total={120} width={260} height={360} rotate={-6} delay={16} label="EVERYONE" style={{ left: 20, top: 690 }} />
+    <RealClip name="gym1" total={120} width={260} height={360} rotate={6} delay={30} label="ANY LEVEL" labelColor={C.blue} style={{ right: 20, top: 700 }} />
     <Mascot src="bomb-super.png" size={130} delay={30} style={{ left: 26, bottom: 220 }} />
     <Mascot src="bomb-special.png" size={130} delay={44} style={{ right: 26, bottom: 230 }} />
   </AbsoluteFill>

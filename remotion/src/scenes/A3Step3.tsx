@@ -3,6 +3,7 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { C } from "../theme";
 import { Kicker, Person, Pow, Rays, useSpr } from "../components/kit";
 import { PhoneClip } from "../components/PhoneClip";
+import { RealClip } from "../components/RealClip";
 import { Mascot } from "../components/Mascot";
 
 export const A3Step3: React.FC = () => {
@@ -26,8 +27,10 @@ export const A3Step3: React.FC = () => {
         <PhoneClip clips={[{ src: "judge", dur: 240, total: 255 }]} height={1320} rotate={2} />
       </div>
       <div style={{ position: "absolute", right: -110, bottom: -60, transform: `translateX(${(1 - r) * 800}px)` }}>
-        <Person src="judge.png" height={700} blob="#D9C6FF" blobScale={0.74} flip />
+        <Person src="judge.png" height={620} blob="#D9C6FF" blobScale={0.74} flip />
       </div>
+      <RealClip name="gym2" total={120} width={300} height={430} rotate={-5} delay={22} label="REAL REPS" style={{ left: 18, top: 1010 }} />
+      <RealClip name="gym3" total={120} width={360} height={280} rotate={4} delay={70} label="NO SKIPPING" labelColor={C.green} style={{ right: 22, top: 580 }} />
       <div style={{ position: "absolute", left: 70, top: 700 }}>
         <Pow text="8 REPS!" color={C.red} size={50} delay={20} rotate={-8} style={{ color: "#fff" }} />
       </div>

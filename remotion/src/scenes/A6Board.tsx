@@ -3,6 +3,7 @@ import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { C } from "../theme";
 import { BODY, DISPLAY, Kicker, Phone, Rays, useSpr } from "../components/kit";
 import { Mascot } from "../components/Mascot";
+import { RealClip } from "../components/RealClip";
 
 const Tag: React.FC<{ text: string; color: string; delay: number; style?: React.CSSProperties }> = ({
   text,
@@ -73,6 +74,17 @@ export const A6Board: React.FC = () => {
         <Phone src="23-recap-video-sharing.png" height={1010} aspect={796 / 1632} />
       </div>
       <Tag text="RANKED" color={C.green} delay={14} style={{ left: 50, top: 660 }} />
+      <RealClip
+        name="gym1"
+        total={120}
+        width={420}
+        height={330}
+        rotate={-2}
+        delay={10}
+        label="YOUR REAL CLIPS"
+        labelColor={C.red}
+        style={{ left: 330, top: 470 }}
+      />
       <Tag text="SHARE IT" color={C.blue} delay={26} style={{ right: 50, top: 730 }} />
       <div
         style={{

@@ -55,9 +55,9 @@ export const A6Board: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          left: 30,
-          bottom: -140,
-          transform: `translateY(${interpolate(a, [0, 1], [1100, Math.sin(frame / 25) * 8])}px) rotate(-5deg)`,
+          left: 24,
+          bottom: 40,
+          transform: `translateY(${interpolate(a, [0, 1], [1200, Math.sin(frame / 25) * 8])}px) rotate(-4deg)`,
         }}
       >
         <Phone src="22-wrapup-leaderboard.png" height={1080} aspect={0.46} />
@@ -65,26 +65,15 @@ export const A6Board: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          right: 20,
-          bottom: -80,
-          transform: `translateY(${interpolate(b, [0, 1], [1100, -Math.sin(frame / 25) * 8])}px) rotate(5deg)`,
+          right: 18,
+          bottom: 70,
+          transform: `translateY(${interpolate(b, [0, 1], [1200, -Math.sin(frame / 25) * 8])}px) rotate(5deg)`,
         }}
       >
-        <Phone src="23-recap-video-sharing.png" height={1000} aspect={796 / 1632} />
+        <Phone src="23-recap-video-sharing.png" height={1010} aspect={796 / 1632} />
       </div>
-      <div
-        style={{
-          position: "absolute",
-          left: 300,
-          bottom: -420,
-          transform: `translateY(${interpolate(c, [0, 1], [1100, 0])}px) rotate(2deg)`,
-          opacity: c,
-        }}
-      >
-        <Phone src="24-global-leaderboard.png" height={900} aspect={0.5} />
-      </div>
-      <Tag text="RANKED" color={C.green} delay={14} style={{ left: 60, top: 700 }} />
-      <Tag text="SHARE IT" color={C.blue} delay={26} style={{ right: 60, top: 780 }} />
+      <Tag text="RANKED" color={C.green} delay={14} style={{ left: 50, top: 660 }} />
+      <Tag text="SHARE IT" color={C.blue} delay={26} style={{ right: 50, top: 730 }} />
       <div
         style={{
           position: "absolute",

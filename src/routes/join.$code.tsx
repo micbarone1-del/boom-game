@@ -331,57 +331,85 @@ function JoinView() {
         )}
       </header>
 
-      {/* Slot picker */}
+      {/* Pod tabs */}
       <div className="ink-border rounded-2xl p-3 bg-white">
         <div className="text-xs font-bold opacity-60 uppercase tracking-wider mb-2">
           Pick your pod
         </div>
-        {availableSlots.length === 0 ? (
-          <p className="text-sm font-bold text-[var(--boom-red)]">
-            All 3 pods are taken — wait for the host to start.
+        {openSlots.length === 0 ? (
+          <p className="text-sm font-bold text-[var(--boom-red)] mb-2">
+            All 3 pods are full — wait for the host to start.
           </p>
-        ) : (
-          <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3].map((slot) => {
-              const taken = takenSlots.has(slot);
-              const active = chosenSlot === slot;
-              return (
-                <button
-                  key={slot}
-                  disabled={taken}
-                  onClick={() => setChosenSlot(slot)}
-                  className="ink-border-sm rounded-xl py-3 font-black text-sm disabled:opacity-40"
-                  style={{
-                    background: active ? POD_BG[slot - 1] : "white",
-                    fontFamily: "'Luckiest Guy', cursive",
-                  }}
-                >
-                  POD {slot}
-                  {taken && <div className="text-[10px] opacity-70">taken</div>}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        ) : null}
+        <div className="grid grid-cols-3 gap-2">
+          {podSlots.map(({ slot, pod, count, full }) => {
+            const active = chosenSlot === slot;
+            return (
+              <button
+                key={slot}
+                disabled={full}
+                onClick={() => !full && setChosenSlot(slot)}
+                aria-disabled={full}
+                className={`ink-border-sm rounded-xl py-3 font-black text-sm transition-transform ${
+                  full ? "opacity-40 cursor-not-allowed grayscale" : "arcade-press"
+                }`}
+                style={{
+                  background: full ? "#d4d4d4" : active ? POD_BG[slot - 1] : "white",
+                  fontFamily: "'Luckiest Guy', cursive",
+                  color: "var(--boom-ink)",
+                }}
+              >
+                POD {slot}
+                <div className="text-[10px] opacity-70">
+                  {full ? "FULL" : pod ? `${count}/${POD_CAP}` : "empty"}
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-        <input
-          type="text"
-          value={podName}
-          onChange={(e) => setPodName(e.target.value)}
-          placeholder="Pod name (e.g. The Dynamite Trio)"
-          className="mt-3 w-full ink-border-sm rounded-xl px-3 py-2 text-base font-bold bg-white"
-        />
+        {joiningExisting ? (
+          <div className="mt-3 text-sm font-black">
+            Joining <span style={{ color: "var(--boom-red)" }}>{podName}</span> ·{" "}
+            {remainingSeats} seat{remainingSeats === 1 ? "" : "s"} left
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={podName}
+            onChange={(e) => setPodName(e.target.value)}
+            placeholder="Pod name (e.g. The Dynamite Trio)"
+            className="mt-3 w-full ink-border-sm rounded-xl px-3 py-2 text-base font-bold bg-white"
+          />
+        )}
       </div>
+
+      {/* Live roster of who is already in the chosen pod */}
+      {joiningExisting && currentPodSlot?.pod && (
+        <div className="ink-border rounded-2xl p-3 bg-white flex flex-wrap gap-2">
+          {players
+            .filter((p) => p.pod_id === currentPodSlot.pod!.id)
+            .map((p) => (
+              <span
+                key={p.id}
+                className="ink-border-sm rounded-full px-3 py-1 text-xs font-black"
+                style={{ background: POD_BG[(chosenSlot ?? 1) - 1] }}
+              >
+                {p.username}
+              </span>
+            ))}
+        </div>
+      )}
 
       {/* Players */}
       <div className="flex flex-col gap-3">
-        {slots.map((slot, i) => (
+        {activeSlots.map((slot, i) => (
           <div key={i} className="flex flex-col gap-1">
             <SlotCard
               label={`Player ${String.fromCharCode(65 + i)}`}
               slot={slot}
               mascotColor={MASCOT_COLORS[i % MASCOT_COLORS.length]}
-              canRemove={slots.length > 2}
+              canRemove={!joiningExisting && slots.length > 2}
               onRemove={() => removePlayer(i)}
               onChange={(patch) => setSlotField(i, patch)}
             />
@@ -401,7 +429,7 @@ function JoinView() {
             </button>
           </div>
         ))}
-        {slots.length < 4 && (
+        {!joiningExisting && slots.length < 4 && (
           <button
             type="button"
             onClick={addPlayer}

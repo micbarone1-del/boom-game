@@ -48,7 +48,7 @@ function JoinView() {
   const [slots, setSlots] = useState<Slot[]>(() => [emptySlot(0), emptySlot(1)]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
   const [guestProfile, setGuestProfile] = useState<
@@ -153,14 +153,14 @@ function JoinView() {
   // remembered guest on this device).
   const deepLinkKey = `boom.deeplink.${code}`;
   useEffect(() => {
-    if (!join || loading || !room) return;
+    if (!join || loading || authLoading || !room) return;
     if (typeof window === "undefined") return;
     if (sessionStorage.getItem(deepLinkKey)) return;
     sessionStorage.setItem(deepLinkKey, "1");
     if (user || guestProfile) return;
     setAttachToSlotIdx(0);
     setJoinModalOpen(true);
-  }, [join, loading, room, user, guestProfile, deepLinkKey]);
+  }, [join, loading, authLoading, room, user, guestProfile, deepLinkKey]);
 
   if (loading) {
     return (

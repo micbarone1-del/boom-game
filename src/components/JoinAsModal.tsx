@@ -112,6 +112,8 @@ export function JoinAsModal({
     setBusy(true);
     setError(null);
     const result = await lovable.auth.signInWithOAuth(provider, {
+      // Keep the captured room (and any other search params) in the return URL
+      // so the player lands back on the exact pod-join screen after consent.
       redirect_uri: window.location.href,
     });
     if (result.error) {
@@ -192,7 +194,7 @@ export function JoinAsModal({
       setError("Enter a nickname to play as guest.");
       return;
     }
-    onGuestChosen?.({ username: name, avatar_url: guestAvatar });
+    onGuestChosen?.({ username: name, avatar_url: guestAvatar, fitness: guestFitness });
     onClose();
   };
 

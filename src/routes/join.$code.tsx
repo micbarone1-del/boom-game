@@ -224,34 +224,42 @@ function JoinView() {
     setSlots((arr) => arr.filter((_, idx) => idx !== i));
   };
 
+  const activeSlots = joiningExisting ? slots.slice(0, 1) : slots;
+  const remainingSeats = currentPodSlot ? POD_CAP - currentPodSlot.count : POD_CAP;
+
   const canSubmit =
     chosenSlot !== null &&
+    !currentPodSlot?.full &&
     podName.trim().length > 0 &&
-    slots.length >= 2 &&
-    slots.length <= 4 &&
-    slots.every((s) => s.name.trim().length > 0) &&
+    activeSlots.length >= (joiningExisting ? 1 : 2) &&
+    activeSlots.length <= remainingSeats &&
+    activeSlots.every((s) => s.name.trim().length > 0) &&
     !submitting;
 
   const submit = async () => {
     if (!canSubmit || chosenSlot === null) return;
     setSubmitting(true);
     setError(null);
-    const { data: pod, error: podErr } = await supabase
-      .from("pods")
-      .insert({
-        room_code: code,
-        slot: chosenSlot,
-        name: podName.trim(),
-      })
-      .select()
-      .single();
-    if (podErr || !pod) {
-      setSubmitting(false);
-      setError(podErr?.message ?? "Could not create pod (slot may have just been taken).");
-      return;
+    let pod = currentPodSlot?.pod ?? null;
+    if (!pod) {
+      const { data: created, error: podErr } = await supabase
+        .from("pods")
+        .insert({
+          room_code: code,
+          slot: chosenSlot,
+          name: podName.trim(),
+        })
+        .select()
+        .single();
+      if (podErr || !created) {
+        setSubmitting(false);
+        setError(podErr?.message ?? "Could not create pod (slot may have just been taken).");
+        return;
+      }
+      pod = created;
     }
     const now = Date.now();
-    const rows = slots.map((s, i) => ({
+    const rows = activeSlots.map((s, i) => ({
       room_code: code,
       pod_id: pod.id,
       username: s.name.trim(),

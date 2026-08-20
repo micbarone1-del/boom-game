@@ -2013,17 +2013,16 @@ function WrapUp({
         )}
       </div>
 
-      {/* Shareable recap videos */}
-      <div className="ink-border rounded-2xl p-4 bg-white flex flex-col gap-2">
-        <div className="text-lg font-black mb-1" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-          Share your recap
-        </div>
-        <div className="grid grid-cols-2 gap-2">
+      {/* Shareable recap videos — 2x2 sticker grid */}
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+        <div className="text-xl arcade-heading text-white mb-1">Share your recap</div>
+        <div className="grid grid-cols-2 gap-3">
           {[...localPlayers]
             .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
             .map((p, i) => (
               <RecapVideo
                 key={p.id}
+                tone={i}
                 player={{
                   username: p.username,
                   avatar_url: p.avatar_url,

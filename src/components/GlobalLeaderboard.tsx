@@ -60,25 +60,32 @@ export function GlobalLeaderboard({
   }, [limit]);
 
   return (
-    <div className="ink-border rounded-2xl p-4 bg-white flex flex-col gap-2">
+    <div className="arcade-card p-4 bg-white flex flex-col gap-2">
       <div className="flex items-center gap-2 mb-1">
-        <Trophy size={18} style={{ color: "var(--boom-yellow)" }} />
-        <div className="text-lg font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-          Global Leaderboard
-        </div>
+        <Trophy size={20} style={{ color: "var(--boom-yellow)" }} />
+        <div className="text-xl arcade-heading text-white">Global Leaderboard</div>
       </div>
       {loading && <div className="text-xs opacity-60">Loading…</div>}
       {!loading && rows.length === 0 && (
         <div className="text-xs opacity-60">No scores yet — be the first!</div>
       )}
+      <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1 pb-1">
       {rows.map((r, i) => {
         const me = highlightUserId === r.user_id;
         return (
           <div
             key={r.user_id}
-            className="flex items-center gap-3 py-1.5 rounded-lg px-2"
-            style={{ background: me ? "var(--boom-yellow)" : undefined }}
+            className="arcade-card-sm w-full flex items-center gap-3 py-2 px-3"
+            style={{ background: me ? "var(--boom-yellow)" : "#fff" }}
           >
+            <Trophy
+              size={18}
+              style={{
+                color:
+                  i === 0 ? "#f5b301" : i === 1 ? "#9ca3af" : i === 2 ? "#c2703c" : "#111",
+                opacity: i > 2 ? 0.35 : 1,
+              }}
+            />
             <div
               className="text-xl font-black w-6 text-center"
               style={{ fontFamily: "'Luckiest Guy', cursive" }}
@@ -90,12 +97,16 @@ export function GlobalLeaderboard({
               <div className="font-bold truncate">{r.username}</div>
               <div className="text-[10px] opacity-60">{r.games} game{r.games === 1 ? "" : "s"}</div>
             </div>
-            <div className="font-black" style={{ color: "var(--boom-red)" }}>
+            <div
+              className="font-black text-2xl tabular-nums"
+              style={{ color: "var(--boom-red)", fontFamily: "'Luckiest Guy', cursive" }}
+            >
               {r.total_score}
             </div>
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -106,8 +117,8 @@ function Swatch({ url, name }: { url: string | null; name: string }) {
   const color = isMascot ? url!.slice(7) : "#ec4899";
   return (
     <div
-      className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-white font-black"
-      style={{ background: color, boxShadow: "0 0 0 2px #111" }}
+      className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-black shrink-0"
+      style={{ background: color, boxShadow: "0 0 0 3px #000" }}
     >
       {isImg ? (
         <img src={url!} alt={name} className="w-full h-full object-cover" />

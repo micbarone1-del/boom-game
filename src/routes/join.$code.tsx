@@ -31,6 +31,7 @@ const LEVELS = [
   { label: "Advanced", value: 9 },
 ] as const;
 const POD_BG = ["var(--boom-yellow)", "var(--boom-orange)", "var(--boom-green)"];
+const POD_CAP = 4;
 
 type Slot = { name: string; avatar: string | null; fitness: number };
 
@@ -133,20 +134,48 @@ function JoinView() {
     setJoinModalOpen(true);
   };
 
-  const takenSlots = useMemo(() => new Set(pods.map((p) => p.slot)), [pods]);
-  const availableSlots = useMemo(
-    () => [1, 2, 3].filter((s) => !takenSlots.has(s)),
-    [takenSlots],
+  // Pod occupancy per slot (1..3): existing pod + its current player count.
+  const podSlots = useMemo(
+    () =>
+      [1, 2, 3].map((slot) => {
+        const pod = pods.find((p) => p.slot === slot) ?? null;
+        const count = pod ? players.filter((p) => p.pod_id === pod.id).length : 0;
+        return { slot, pod, count, full: !!pod && count >= POD_CAP };
+      }),
+    [pods, players],
   );
+  const openSlots = useMemo(
+    () => podSlots.filter((s) => !s.full).map((s) => s.slot),
+    [podSlots],
+  );
+  const currentPodSlot = useMemo(
+    () => podSlots.find((s) => s.slot === chosenSlot) ?? null,
+    [podSlots, chosenSlot],
+  );
+  const joiningExisting = !!currentPodSlot?.pod;
 
-  // Auto-pick first free slot when arriving via Start Playing.
+  // Auto-distribution: drop the player into the first pod with a free seat,
+  // cascading POD 1 → POD 2 → POD 3.
   useEffect(() => {
-    if ((!auto && !join) || loading || !room) return;
-    if (chosenSlot === null && availableSlots.length > 0) {
-      setChosenSlot(availableSlots[0]);
-      setPodName((prev) => prev || `Pod ${availableSlots[0]}`);
+    if (loading || !room) return;
+    if (chosenSlot === null && openSlots.length > 0) {
+      setChosenSlot(openSlots[0]);
     }
-  }, [auto, join, loading, room, chosenSlot, availableSlots]);
+  }, [loading, room, chosenSlot, openSlots]);
+
+  // If the pod we're sitting on fills up (someone else took the last seat),
+  // cascade to the next pod with room.
+  useEffect(() => {
+    if (chosenSlot === null) return;
+    if (currentPodSlot?.full && openSlots.length > 0) setChosenSlot(openSlots[0]);
+  }, [chosenSlot, currentPodSlot, openSlots]);
+
+  // Keep the pod-name field in sync with the selected tab.
+  useEffect(() => {
+    if (chosenSlot === null) return;
+    if (currentPodSlot?.pod) setPodName(currentPodSlot.pod.name);
+    else setPodName((prev) => (prev && !prev.startsWith("Pod ") ? prev : `Pod ${chosenSlot}`));
+  }, [chosenSlot, currentPodSlot]);
 
   // QR deep link (/join?room=CODE): open the "Join the game" modal straight
   // away, unless we already have an identity (returning from OAuth, or a
@@ -195,34 +224,42 @@ function JoinView() {
     setSlots((arr) => arr.filter((_, idx) => idx !== i));
   };
 
+  const activeSlots = joiningExisting ? slots.slice(0, 1) : slots;
+  const remainingSeats = currentPodSlot ? POD_CAP - currentPodSlot.count : POD_CAP;
+
   const canSubmit =
     chosenSlot !== null &&
+    !currentPodSlot?.full &&
     podName.trim().length > 0 &&
-    slots.length >= 2 &&
-    slots.length <= 4 &&
-    slots.every((s) => s.name.trim().length > 0) &&
+    activeSlots.length >= (joiningExisting ? 1 : 2) &&
+    activeSlots.length <= remainingSeats &&
+    activeSlots.every((s) => s.name.trim().length > 0) &&
     !submitting;
 
   const submit = async () => {
     if (!canSubmit || chosenSlot === null) return;
     setSubmitting(true);
     setError(null);
-    const { data: pod, error: podErr } = await supabase
-      .from("pods")
-      .insert({
-        room_code: code,
-        slot: chosenSlot,
-        name: podName.trim(),
-      })
-      .select()
-      .single();
-    if (podErr || !pod) {
-      setSubmitting(false);
-      setError(podErr?.message ?? "Could not create pod (slot may have just been taken).");
-      return;
+    let pod = currentPodSlot?.pod ?? null;
+    if (!pod) {
+      const { data: created, error: podErr } = await supabase
+        .from("pods")
+        .insert({
+          room_code: code,
+          slot: chosenSlot,
+          name: podName.trim(),
+        })
+        .select()
+        .single();
+      if (podErr || !created) {
+        setSubmitting(false);
+        setError(podErr?.message ?? "Could not create pod (slot may have just been taken).");
+        return;
+      }
+      pod = created;
     }
     const now = Date.now();
-    const rows = slots.map((s, i) => ({
+    const rows = activeSlots.map((s, i) => ({
       room_code: code,
       pod_id: pod.id,
       username: s.name.trim(),
@@ -294,57 +331,85 @@ function JoinView() {
         )}
       </header>
 
-      {/* Slot picker */}
+      {/* Pod tabs */}
       <div className="ink-border rounded-2xl p-3 bg-white">
         <div className="text-xs font-bold opacity-60 uppercase tracking-wider mb-2">
           Pick your pod
         </div>
-        {availableSlots.length === 0 ? (
-          <p className="text-sm font-bold text-[var(--boom-red)]">
-            All 3 pods are taken — wait for the host to start.
+        {openSlots.length === 0 ? (
+          <p className="text-sm font-bold text-[var(--boom-red)] mb-2">
+            All 3 pods are full — wait for the host to start.
           </p>
-        ) : (
-          <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3].map((slot) => {
-              const taken = takenSlots.has(slot);
-              const active = chosenSlot === slot;
-              return (
-                <button
-                  key={slot}
-                  disabled={taken}
-                  onClick={() => setChosenSlot(slot)}
-                  className="ink-border-sm rounded-xl py-3 font-black text-sm disabled:opacity-40"
-                  style={{
-                    background: active ? POD_BG[slot - 1] : "white",
-                    fontFamily: "'Luckiest Guy', cursive",
-                  }}
-                >
-                  POD {slot}
-                  {taken && <div className="text-[10px] opacity-70">taken</div>}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        ) : null}
+        <div className="grid grid-cols-3 gap-2">
+          {podSlots.map(({ slot, pod, count, full }) => {
+            const active = chosenSlot === slot;
+            return (
+              <button
+                key={slot}
+                disabled={full}
+                onClick={() => !full && setChosenSlot(slot)}
+                aria-disabled={full}
+                className={`ink-border-sm rounded-xl py-3 font-black text-sm transition-transform ${
+                  full ? "opacity-40 cursor-not-allowed grayscale" : "arcade-press"
+                }`}
+                style={{
+                  background: full ? "#d4d4d4" : active ? POD_BG[slot - 1] : "white",
+                  fontFamily: "'Luckiest Guy', cursive",
+                  color: "var(--boom-ink)",
+                }}
+              >
+                POD {slot}
+                <div className="text-[10px] opacity-70">
+                  {full ? "FULL" : pod ? `${count}/${POD_CAP}` : "empty"}
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-        <input
-          type="text"
-          value={podName}
-          onChange={(e) => setPodName(e.target.value)}
-          placeholder="Pod name (e.g. The Dynamite Trio)"
-          className="mt-3 w-full ink-border-sm rounded-xl px-3 py-2 text-base font-bold bg-white"
-        />
+        {joiningExisting ? (
+          <div className="mt-3 text-sm font-black">
+            Joining <span style={{ color: "var(--boom-red)" }}>{podName}</span> ·{" "}
+            {remainingSeats} seat{remainingSeats === 1 ? "" : "s"} left
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={podName}
+            onChange={(e) => setPodName(e.target.value)}
+            placeholder="Pod name (e.g. The Dynamite Trio)"
+            className="mt-3 w-full ink-border-sm rounded-xl px-3 py-2 text-base font-bold bg-white"
+          />
+        )}
       </div>
+
+      {/* Live roster of who is already in the chosen pod */}
+      {joiningExisting && currentPodSlot?.pod && (
+        <div className="ink-border rounded-2xl p-3 bg-white flex flex-wrap gap-2">
+          {players
+            .filter((p) => p.pod_id === currentPodSlot.pod!.id)
+            .map((p) => (
+              <span
+                key={p.id}
+                className="ink-border-sm rounded-full px-3 py-1 text-xs font-black"
+                style={{ background: POD_BG[(chosenSlot ?? 1) - 1] }}
+              >
+                {p.username}
+              </span>
+            ))}
+        </div>
+      )}
 
       {/* Players */}
       <div className="flex flex-col gap-3">
-        {slots.map((slot, i) => (
+        {activeSlots.map((slot, i) => (
           <div key={i} className="flex flex-col gap-1">
             <SlotCard
               label={`Player ${String.fromCharCode(65 + i)}`}
               slot={slot}
               mascotColor={MASCOT_COLORS[i % MASCOT_COLORS.length]}
-              canRemove={slots.length > 2}
+              canRemove={!joiningExisting && slots.length > 2}
               onRemove={() => removePlayer(i)}
               onChange={(patch) => setSlotField(i, patch)}
             />
@@ -364,7 +429,7 @@ function JoinView() {
             </button>
           </div>
         ))}
-        {slots.length < 4 && (
+        {!joiningExisting && slots.length < 4 && (
           <button
             type="button"
             onClick={addPlayer}

@@ -134,20 +134,48 @@ function JoinView() {
     setJoinModalOpen(true);
   };
 
-  const takenSlots = useMemo(() => new Set(pods.map((p) => p.slot)), [pods]);
-  const availableSlots = useMemo(
-    () => [1, 2, 3].filter((s) => !takenSlots.has(s)),
-    [takenSlots],
+  // Pod occupancy per slot (1..3): existing pod + its current player count.
+  const podSlots = useMemo(
+    () =>
+      [1, 2, 3].map((slot) => {
+        const pod = pods.find((p) => p.slot === slot) ?? null;
+        const count = pod ? players.filter((p) => p.pod_id === pod.id).length : 0;
+        return { slot, pod, count, full: !!pod && count >= POD_CAP };
+      }),
+    [pods, players],
   );
+  const openSlots = useMemo(
+    () => podSlots.filter((s) => !s.full).map((s) => s.slot),
+    [podSlots],
+  );
+  const currentPodSlot = useMemo(
+    () => podSlots.find((s) => s.slot === chosenSlot) ?? null,
+    [podSlots, chosenSlot],
+  );
+  const joiningExisting = !!currentPodSlot?.pod;
 
-  // Auto-pick first free slot when arriving via Start Playing.
+  // Auto-distribution: drop the player into the first pod with a free seat,
+  // cascading POD 1 → POD 2 → POD 3.
   useEffect(() => {
-    if ((!auto && !join) || loading || !room) return;
-    if (chosenSlot === null && availableSlots.length > 0) {
-      setChosenSlot(availableSlots[0]);
-      setPodName((prev) => prev || `Pod ${availableSlots[0]}`);
+    if (loading || !room) return;
+    if (chosenSlot === null && openSlots.length > 0) {
+      setChosenSlot(openSlots[0]);
     }
-  }, [auto, join, loading, room, chosenSlot, availableSlots]);
+  }, [loading, room, chosenSlot, openSlots]);
+
+  // If the pod we're sitting on fills up (someone else took the last seat),
+  // cascade to the next pod with room.
+  useEffect(() => {
+    if (chosenSlot === null) return;
+    if (currentPodSlot?.full && openSlots.length > 0) setChosenSlot(openSlots[0]);
+  }, [chosenSlot, currentPodSlot, openSlots]);
+
+  // Keep the pod-name field in sync with the selected tab.
+  useEffect(() => {
+    if (chosenSlot === null) return;
+    if (currentPodSlot?.pod) setPodName(currentPodSlot.pod.name);
+    else setPodName((prev) => (prev && !prev.startsWith("Pod ") ? prev : `Pod ${chosenSlot}`));
+  }, [chosenSlot, currentPodSlot]);
 
   // QR deep link (/join?room=CODE): open the "Join the game" modal straight
   // away, unless we already have an identity (returning from OAuth, or a

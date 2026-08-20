@@ -373,6 +373,29 @@ export function JoinAsModal({
               ))}
             </div>
 
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+                Fitness level
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                {LEVELS.map((l) => (
+                  <button
+                    key={l.value}
+                    type="button"
+                    onClick={() => setGuestFitness(l.value)}
+                    className="ink-border-sm rounded-xl py-2 text-xs font-black uppercase"
+                    style={{
+                      background:
+                        guestFitness === l.value ? "var(--boom-yellow)" : "white",
+                      color: "var(--boom-ink)",
+                    }}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               type="button"
               disabled={busy || !guestName.trim()}

@@ -310,24 +310,18 @@ export function BossPhase({
   const shaking = Date.now() - hitFlash < 600;
 
   return (
-    <main
-      className="fixed inset-0 overflow-hidden flex flex-col"
-      style={{
-        background:
-          "radial-gradient(ellipse at top, #7a0000 0%, #1a0000 60%, #000 100%)",
-      }}
-    >
+    <main className="fixed inset-0 overflow-hidden flex flex-col boss-arena">
       {/* Boss sprite — sways side to side + bobs, hides while judging (it overlays the camera instead) */}
       {inner.kind !== "judge" && inner.kind !== "death" && (
         <div className="absolute inset-0 flex items-center justify-center pb-32 pt-6 pointer-events-none">
-          <div className="boss-sway">
+          <div className={`boss-sway ${shaking ? "anim-boss-hit" : ""}`}>
             <img
               src={bossMascot}
               alt="Boss"
               width={768}
               height={768}
               loading="lazy"
-              className={`w-64 h-64 object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
+              className={`w-64 h-64 object-contain ${shaking ? "" : "anim-mascot-bounce"}`}
               style={{
                 filter: flashing
                   ? "brightness(2.4) drop-shadow(0 0 24px #fff)"
@@ -335,17 +329,29 @@ export function BossPhase({
               }}
             />
             {burst && (
-              <div
-                key={burst.id}
-                className="absolute inset-0 flex items-center justify-center pointer-events-none anim-pop"
-                aria-hidden
-              >
+              <div key={burst.id} className="absolute inset-0 pointer-events-none" aria-hidden>
+                {/* Impact explosion right at the point of contact */}
                 <div
-                  className="text-7xl"
-                  style={{ filter: "drop-shadow(0 0 20px #fff)" }}
+                  className="absolute left-1/2 top-1/2 text-7xl anim-impact"
+                  style={{ filter: "drop-shadow(0 0 22px #ffd60a)" }}
                 >
                   💥
                 </div>
+                <div
+                  className="absolute left-[62%] top-[38%] text-4xl anim-impact"
+                  style={{ animationDelay: "0.1s", filter: "drop-shadow(0 0 14px #fff)" }}
+                >
+                  ✨
+                </div>
+                {/* Damage number bursting out of the boss centre */}
+                {burst.dmg > 0 && (
+                  <div
+                    className="absolute left-1/2 top-1/2 whitespace-nowrap arcade-heading arcade-heading-xl text-6xl anim-dmg-pop"
+                    style={{ color: "var(--boom-yellow)" }}
+                  >
+                    -{burst.dmg}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -855,14 +861,10 @@ function BossDeathOverlay() {
   }, []);
   return (
     <div
-      className={`absolute inset-0 z-50 flex items-center justify-center overflow-hidden ${stage !== "win" ? "anim-shake" : ""}`}
-      style={{
-        background:
-          stage === "win"
-            ? "radial-gradient(ellipse at center, #fde047 0%, #ea580c 55%, #7c2d12 100%)"
-            : "radial-gradient(ellipse at center, #7a0000 0%, #1a0000 60%, #000 100%)",
-        transition: "background 400ms",
-      }}
+      className={`absolute inset-0 z-50 flex items-center justify-center overflow-hidden ${
+        stage === "win" ? "boss-arena-win anim-win-quake" : "boss-arena anim-shake"
+      }`}
+      style={{ transition: "background 400ms" }}
     >
       {/* Boss heavily shaking during the spam phase */}
       {stage === "shake" && (
@@ -877,13 +879,12 @@ function BossDeathOverlay() {
       {stage === "shake" && bursts.map((b) => (
         <div
           key={b.id}
-          className="absolute anim-pop pointer-events-none"
+          className="absolute anim-chain-boom pointer-events-none"
           style={{
             left: `${b.x}%`,
             top: `${b.y}%`,
-            transform: `translate(-50%, -50%) scale(${b.s})`,
             filter: "drop-shadow(0 0 18px #fff)",
-            fontSize: "5rem",
+            fontSize: `${3.5 * b.s}rem`,
           }}
         >
           💥
@@ -900,6 +901,22 @@ function BossDeathOverlay() {
       )}
       {/* Victory card */}
       {stage === "win" && (
+        <>
+          {[
+            { x: 14, y: 22, d: 0 },
+            { x: 82, y: 28, d: 0.15 },
+            { x: 26, y: 74, d: 0.3 },
+            { x: 74, y: 80, d: 0.45 },
+            { x: 50, y: 12, d: 0.6 },
+          ].map((b) => (
+            <div
+              key={`${b.x}-${b.y}`}
+              className="absolute anim-chain-boom pointer-events-none text-7xl"
+              style={{ left: `${b.x}%`, top: `${b.y}%`, animationDelay: `${b.d}s` }}
+            >
+              💥
+            </div>
+          ))}
         <div className="flex flex-col items-center gap-4 anim-pop">
           <img
             src={bossMascot}
@@ -907,17 +924,11 @@ function BossDeathOverlay() {
             className="w-80 h-80 object-contain"
             style={{ filter: "grayscale(1) brightness(0.5) drop-shadow(0 0 20px #000)" }}
           />
-          <div
-            className="text-7xl font-black text-white text-center"
-            style={{
-              fontFamily: "'Luckiest Guy', cursive",
-              textShadow: "5px 5px 0 #000, 0 0 30px #fbbf24",
-              WebkitTextStroke: "2px #111",
-            }}
-          >
+          <div className="arcade-heading arcade-heading-xl text-[4.5rem] leading-none text-white text-center">
             YOU WIN!
           </div>
         </div>
+        </>
       )}
     </div>
   );

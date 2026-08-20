@@ -1966,19 +1966,19 @@ function WrapUp({
   return (
     <main className="min-h-screen p-4 max-w-md mx-auto flex flex-col gap-4">
       {/* Winner explosion banner */}
-      <div className="relative ink-border rounded-3xl p-6 flex flex-col items-center gap-3 anim-explosion-flash" style={{ background: "var(--boom-yellow)" }}>
+      <div className="relative arcade-card rounded-3xl p-6 flex flex-col items-center gap-3 anim-explosion-flash" style={{ background: "var(--boom-yellow)" }}>
         <div className="text-sm font-black opacity-70 uppercase">Champion</div>
         <Avatar player={winner} size={120} />
-        <div className="text-4xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
+        <div className="text-4xl arcade-heading text-center" style={{ color: "var(--boom-red)" }}>
           {winner.username} WINS!
         </div>
       </div>
 
       {/* Ranking */}
-      <div className="ink-border rounded-2xl p-4 bg-white flex flex-col gap-2">
-        <div className="text-lg font-black mb-1" style={{ fontFamily: "'Luckiest Guy', cursive" }}>Final Ranking</div>
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+        <div className="text-xl arcade-heading text-white mb-1">Final Ranking</div>
         {[...localPlayers].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p, i) => (
-          <div key={p.id} className="flex items-center gap-3 py-2">
+          <div key={p.id} className="arcade-card-sm bg-white flex items-center gap-3 py-2 px-3">
             <div className="text-2xl font-black w-8" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
               {i + 1}
             </div>
@@ -1997,7 +1997,7 @@ function WrapUp({
                 </button>
               )}
             </div>
-            <div className="font-black" style={{ color: "var(--boom-red)" }}>
+            <div className="font-black text-2xl tabular-nums" style={{ color: "var(--boom-red)", fontFamily: "'Luckiest Guy', cursive" }}>
               {p.score ?? 0}
             </div>
           </div>
@@ -2013,17 +2013,16 @@ function WrapUp({
         )}
       </div>
 
-      {/* Shareable recap videos */}
-      <div className="ink-border rounded-2xl p-4 bg-white flex flex-col gap-2">
-        <div className="text-lg font-black mb-1" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
-          Share your recap
-        </div>
-        <div className="grid grid-cols-2 gap-2">
+      {/* Shareable recap videos — 2x2 sticker grid */}
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+        <div className="text-xl arcade-heading text-white mb-1">Share your recap</div>
+        <div className="grid grid-cols-2 gap-3">
           {[...localPlayers]
             .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
             .map((p, i) => (
               <RecapVideo
                 key={p.id}
+                tone={i}
                 player={{
                   username: p.username,
                   avatar_url: p.avatar_url,
@@ -2040,8 +2039,8 @@ function WrapUp({
       <GlobalLeaderboard highlightUserId={user?.id ?? null} />
 
       {/* Clips */}
-      <div className="ink-border rounded-2xl p-4 bg-white flex flex-col gap-2">
-        <div className="text-lg font-black mb-1" style={{ fontFamily: "'Luckiest Guy', cursive" }}>Judge Highlights</div>
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+        <div className="text-xl arcade-heading text-white mb-1">Judge Highlights</div>
         {clipList.length === 0 ? (
           <div className="text-sm opacity-60">No clips captured this round.</div>
         ) : (

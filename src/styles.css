@@ -587,6 +587,105 @@
   }
 }
 
+@layer utilities {
+  /* ===== Sticker UI: global retro-arcade primitives ===== */
+
+  /* Card / modal / interactive surface: thick black outline + hard shadow */
+  .arcade-card {
+    border: 4px solid #000;
+    border-radius: 16px;
+    box-shadow: 4px 4px 0 0 #000;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .arcade-card-sm {
+    border: 3px solid #000;
+    border-radius: 12px;
+    box-shadow: 3px 3px 0 0 #000;
+  }
+  .arcade-card-press {
+    transition: transform 0.08s cubic-bezier(.2,1.6,.4,1), box-shadow 0.08s ease;
+  }
+  .arcade-card-press:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 0 #000;
+  }
+
+  /* Chunky headings / scores with a solid black stroke for readability */
+  .arcade-heading {
+    font-family: "Luckiest Guy", "Bangers", system-ui, sans-serif;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    -webkit-text-stroke: 2px #000;
+    paint-order: stroke fill;
+    text-shadow: 3px 3px 0 #000;
+  }
+  .arcade-heading-xl {
+    -webkit-text-stroke: 4px #000;
+    text-shadow: 6px 6px 0 #000;
+  }
+
+  /* ===== Boss arena ===== */
+  .boss-arena {
+    background: radial-gradient(ellipse at 50% 35%, #8b0000 0%, #2a0000 55%, #000 100%);
+  }
+  .boss-arena-win {
+    background: radial-gradient(ellipse at 50% 45%, #fff3b0 0%, #ffb703 35%, #f97316 65%, #7c2d12 100%);
+  }
+
+  /* Damage number: pops out of the boss centre and floats up */
+  @keyframes dmg-pop {
+    0%   { transform: translate(-50%, -50%) scale(0.2) rotate(-12deg); opacity: 0; }
+    18%  { transform: translate(-50%, -60%) scale(1.6) rotate(6deg);   opacity: 1; }
+    35%  { transform: translate(-50%, -70%) scale(1.15) rotate(-3deg); opacity: 1; }
+    100% { transform: translate(-50%, -170%) scale(1) rotate(0deg);    opacity: 0; }
+  }
+  .anim-dmg-pop { animation: dmg-pop 1s cubic-bezier(.2,1.4,.35,1) both; }
+
+  /* Rapid boss hit shake (short + violent) */
+  @keyframes boss-hit-shake {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    12% { transform: translate(-9px, 3px) rotate(-4deg); }
+    26% { transform: translate(8px, -4px) rotate(4deg); }
+    42% { transform: translate(-7px, -2px) rotate(-3deg); }
+    58% { transform: translate(6px, 3px) rotate(2deg); }
+    76% { transform: translate(-3px, -1px) rotate(-1deg); }
+  }
+  .anim-boss-hit { animation: boss-hit-shake 0.45s ease-out both; }
+
+  /* Small impact burst at the point of contact */
+  @keyframes impact-burst {
+    0%   { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+    20%  { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
+    60%  { transform: translate(-50%, -50%) scale(1.05); opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+  }
+  .anim-impact { animation: impact-burst 0.6s ease-out both; }
+
+  /* Long, intense victory screen shake */
+  @keyframes win-quake {
+    0%, 100% { transform: translate(0,0); }
+    10% { transform: translate(-14px, 8px); }
+    20% { transform: translate(13px, -9px); }
+    30% { transform: translate(-11px, -7px); }
+    40% { transform: translate(12px, 6px); }
+    50% { transform: translate(-9px, 9px); }
+    60% { transform: translate(9px, -6px); }
+    70% { transform: translate(-7px, -5px); }
+    80% { transform: translate(6px, 4px); }
+    90% { transform: translate(-4px, 3px); }
+  }
+  .anim-win-quake { animation: win-quake 1.6s cubic-bezier(.3,.7,.4,1) both; }
+
+  /* Chained explosion pop for the victory burst field */
+  @keyframes chain-boom {
+    0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+    25%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+  }
+  .anim-chain-boom { animation: chain-boom 0.9s ease-out both; }
+}
+
 /* ===== Arcade safety net for the POD mobile view =====
    Prevent text from spilling out of bordered containers and ensure
    long exercise / player names wrap cleanly without covering buttons. */

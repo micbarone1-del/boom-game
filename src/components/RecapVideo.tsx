@@ -13,7 +13,19 @@ export type RecapPlayer = {
  * MediaRecorder, and exposes Share/Download buttons. WebM output — most
  * mobile share sheets accept it; falls back to download.
  */
-export function RecapVideo({ player, total }: { player: RecapPlayer; total: number }) {
+/** Bright sticker-card backgrounds, cycled per recap card. */
+const TONES = ["#FF8A3D", "#7FD4FF", "#FFD84D", "#5FE08A"];
+
+export function RecapVideo({
+  player,
+  total,
+  tone,
+}: {
+  player: RecapPlayer;
+  total: number;
+  /** index used to pick a bright card colour */
+  tone?: number;
+}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [building, setBuilding] = useState(false);
@@ -149,23 +161,31 @@ export function RecapVideo({ player, total }: { player: RecapPlayer; total: numb
     setTimeout(() => setStatus(null), 2200);
   };
 
+  const bg = TONES[(tone ?? player.rank - 1) % TONES.length];
+
   return (
-    <div className="ink-border-sm rounded-xl p-2 bg-white flex flex-col gap-2">
+    <div className="arcade-card p-2.5 flex flex-col gap-2" style={{ background: bg }}>
       <div className="flex items-center gap-2">
         <Film size={14} />
-        <div className="text-xs font-black flex-1 truncate">{player.username}'s recap</div>
-        <div className="text-xs font-bold opacity-70">#{player.rank} · {player.score}</div>
+        <div className="text-xs font-black flex-1 truncate">{player.username}</div>
+        <div className="text-xs font-black opacity-80">#{player.rank}</div>
+      </div>
+      <div
+        className="arcade-heading text-4xl leading-none text-white text-center tabular-nums"
+        aria-label={`${player.score} points`}
+      >
+        {player.score}
       </div>
       <canvas
         ref={canvasRef}
-        className="w-full rounded-lg bg-black"
+        className="w-full rounded-xl bg-black border-[3px] border-black"
         style={{ aspectRatio: "9 / 16" }}
       />
       {!blob && (
         <button
           onClick={build}
           disabled={building}
-          className="ink-border-sm rounded-lg py-2 text-xs font-black flex items-center justify-center gap-1"
+          className="arcade-card-sm arcade-card-press py-2 text-xs font-black flex items-center justify-center gap-1"
           style={{ background: building ? "#eee" : "var(--boom-yellow)" }}
         >
           {building ? (
@@ -184,14 +204,14 @@ export function RecapVideo({ player, total }: { player: RecapPlayer; total: numb
           <div className="flex gap-1">
           <button
             onClick={share}
-            className="flex-1 ink-border-sm rounded-lg py-2 text-xs font-black flex items-center justify-center gap-1"
+            className="flex-1 arcade-card-sm arcade-card-press py-2 text-xs font-black flex items-center justify-center gap-1"
             style={{ background: "var(--boom-yellow)" }}
           >
             <Share2 size={12} /> Share
           </button>
           <button
             onClick={download}
-            className="ink-border-sm rounded-lg py-2 px-3 text-xs font-black"
+            className="arcade-card-sm arcade-card-press py-2 px-3 text-xs font-black bg-white"
           >
             <Download size={12} />
           </button>

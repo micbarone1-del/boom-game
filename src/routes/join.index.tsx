@@ -15,7 +15,7 @@ export const Route = createFileRoute("/join/")({
       throw redirect({
         to: "/join/$code",
         params: { code: search.room.toUpperCase() },
-        search: { join: 1 as const },
+        search: { join: 1 as const, auto: undefined },
       });
     }
   },

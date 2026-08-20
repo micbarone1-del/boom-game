@@ -141,12 +141,26 @@ function JoinView() {
 
   // Auto-pick first free slot when arriving via Start Playing.
   useEffect(() => {
-    if (!auto || loading || !room) return;
+    if ((!auto && !join) || loading || !room) return;
     if (chosenSlot === null && availableSlots.length > 0) {
       setChosenSlot(availableSlots[0]);
       setPodName((prev) => prev || `Pod ${availableSlots[0]}`);
     }
-  }, [auto, loading, room, chosenSlot, availableSlots]);
+  }, [auto, join, loading, room, chosenSlot, availableSlots]);
+
+  // QR deep link (/join?room=CODE): open the "Join the game" modal straight
+  // away, unless we already have an identity (returning from OAuth, or a
+  // remembered guest on this device).
+  const deepLinkKey = `boom.deeplink.${code}`;
+  useEffect(() => {
+    if (!join || loading || !room) return;
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem(deepLinkKey)) return;
+    sessionStorage.setItem(deepLinkKey, "1");
+    if (user || guestProfile) return;
+    setAttachToSlotIdx(0);
+    setJoinModalOpen(true);
+  }, [join, loading, room, user, guestProfile, deepLinkKey]);
 
   if (loading) {
     return (

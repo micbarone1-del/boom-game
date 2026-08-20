@@ -12,6 +12,7 @@ export const Route = createFileRoute("/join/$code")({
   component: JoinView,
   validateSearch: (s: Record<string, unknown>) => ({
     auto: s.auto === 1 || s.auto === "1" ? 1 : undefined,
+    join: s.join === 1 || s.join === "1" ? 1 : undefined,
   }),
   head: ({ params }) => ({
     meta: [
@@ -39,7 +40,7 @@ function emptySlot(i: number): Slot {
 
 function JoinView() {
   const { code } = Route.useParams();
-  const { auto } = Route.useSearch();
+  const { auto, join } = Route.useSearch();
   const navigate = useNavigate();
   const { room, players, pods, loading } = useRoom(code);
   const [chosenSlot, setChosenSlot] = useState<number | null>(null);
@@ -47,10 +48,12 @@ function JoinView() {
   const [slots, setSlots] = useState<Slot[]>(() => [emptySlot(0), emptySlot(1)]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
-  const [guestProfile, setGuestProfile] = useState<{ username: string; avatar_url: string } | null>(null);
+  const [guestProfile, setGuestProfile] = useState<
+    { username: string; avatar_url: string; fitness?: number } | null
+  >(null);
 
   // If the user is signed in, pull their profile info.
   useEffect(() => {
@@ -58,13 +61,13 @@ function JoinView() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("username, avatar_url")
+        .select("username, avatar_url, fitness_level")
         .eq("user_id", user.id)
         .maybeSingle();
       const fallbackName = user.email?.split("@")[0] ?? user.phone ?? "Player";
       const name = data?.username ?? fallbackName;
       const avatar = data?.avatar_url ?? `mascot:${MASCOT_COLORS[0]}`;
-      setGuestProfile({ username: name, avatar_url: avatar });
+      setGuestProfile({ username: name, avatar_url: avatar, fitness: data?.fitness_level ?? 6 });
     })();
   }, [user]);
 
@@ -74,7 +77,13 @@ function JoinView() {
     if (!guestProfile) return;
     const firstEmpty = slots.findIndex((s) => !s.name.trim());
     if (firstEmpty < 0) return;
-    setSlotField(firstEmpty, { name: guestProfile.username, avatar: guestProfile.avatar_url });
+    setSlotField(firstEmpty, {
+      name: guestProfile.username,
+      avatar: guestProfile.avatar_url,
+      ...(guestProfile.fitness ? { fitness: guestProfile.fitness } : {}),
+    });
+    // The returning/authenticated player owns this card.
+    setAttachToSlotIdx((cur) => (cur === null ? firstEmpty : cur));
   }, [guestProfile, slots]);
 
   // Remember a guest identity from a previous visit on this device.
@@ -99,10 +108,18 @@ function JoinView() {
   }, [ATTACH_KEY]);
 
   // When the modal returns an identity, apply it to the selected slot (or the first slot).
-  const handleIdentity = (identity: { username: string; avatar_url: string }) => {
+  const handleIdentity = (identity: {
+    username: string;
+    avatar_url: string;
+    fitness?: number;
+  }) => {
     const idx = attachToSlotIdx ?? 0;
     setGuestProfile(identity);
-    setSlotField(idx, { name: identity.username, avatar: identity.avatar_url });
+    setSlotField(idx, {
+      name: identity.username,
+      avatar: identity.avatar_url,
+      ...(identity.fitness ? { fitness: identity.fitness } : {}),
+    });
     if (typeof window !== "undefined") sessionStorage.removeItem(ATTACH_KEY);
     setAttachToSlotIdx(null);
   };
@@ -124,12 +141,26 @@ function JoinView() {
 
   // Auto-pick first free slot when arriving via Start Playing.
   useEffect(() => {
-    if (!auto || loading || !room) return;
+    if ((!auto && !join) || loading || !room) return;
     if (chosenSlot === null && availableSlots.length > 0) {
       setChosenSlot(availableSlots[0]);
       setPodName((prev) => prev || `Pod ${availableSlots[0]}`);
     }
-  }, [auto, loading, room, chosenSlot, availableSlots]);
+  }, [auto, join, loading, room, chosenSlot, availableSlots]);
+
+  // QR deep link (/join?room=CODE): open the "Join the game" modal straight
+  // away, unless we already have an identity (returning from OAuth, or a
+  // remembered guest on this device).
+  const deepLinkKey = `boom.deeplink.${code}`;
+  useEffect(() => {
+    if (!join || loading || authLoading || !room) return;
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem(deepLinkKey)) return;
+    sessionStorage.setItem(deepLinkKey, "1");
+    if (user || guestProfile) return;
+    setAttachToSlotIdx(0);
+    setJoinModalOpen(true);
+  }, [join, loading, authLoading, room, user, guestProfile, deepLinkKey]);
 
   if (loading) {
     return (

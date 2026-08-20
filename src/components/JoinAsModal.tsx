@@ -16,7 +16,14 @@ const MASCOT_COLORS = [
 export type GuestProfile = {
   username: string;
   avatar_url: string;
+  fitness: number;
 };
+
+const LEVELS = [
+  { label: "Base", value: 3 },
+  { label: "Intermediate", value: 6 },
+  { label: "Advanced", value: 9 },
+] as const;
 
 export type JoinMethod = "guest" | "google" | "apple" | "phone" | "email";
 
@@ -60,6 +67,7 @@ export function JoinAsModal({
   // Guest fields
   const [guestName, setGuestName] = useState("");
   const [guestAvatar, setGuestAvatar] = useState<string>(`mascot:${MASCOT_COLORS[0]}`);
+  const [guestFitness, setGuestFitness] = useState<number>(6);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Phone fields
@@ -104,6 +112,8 @@ export function JoinAsModal({
     setBusy(true);
     setError(null);
     const result = await lovable.auth.signInWithOAuth(provider, {
+      // Keep the captured room (and any other search params) in the return URL
+      // so the player lands back on the exact pod-join screen after consent.
       redirect_uri: window.location.href,
     });
     if (result.error) {
@@ -184,7 +194,7 @@ export function JoinAsModal({
       setError("Enter a nickname to play as guest.");
       return;
     }
-    onGuestChosen?.({ username: name, avatar_url: guestAvatar });
+    onGuestChosen?.({ username: name, avatar_url: guestAvatar, fitness: guestFitness });
     onClose();
   };
 
@@ -361,6 +371,29 @@ export function JoinAsModal({
                   aria-label={`Mascot color ${c}`}
                 />
               ))}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-bold opacity-60 uppercase tracking-wider">
+                Fitness level
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                {LEVELS.map((l) => (
+                  <button
+                    key={l.value}
+                    type="button"
+                    onClick={() => setGuestFitness(l.value)}
+                    className="ink-border-sm rounded-xl py-2 text-xs font-black uppercase"
+                    style={{
+                      background:
+                        guestFitness === l.value ? "var(--boom-yellow)" : "white",
+                      color: "var(--boom-ink)",
+                    }}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <button

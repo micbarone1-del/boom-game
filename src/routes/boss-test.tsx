@@ -5,6 +5,9 @@ import { generateRoomCode, BOARD_SIZE } from "@/lib/game";
 
 export const Route = createFileRoute("/boss-test")({
   component: BossTestPage,
+  validateSearch: (s: Record<string, unknown>) => ({
+    hp: s['hp'] ? Number(s['hp']) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Boss test — BOOM!" },
@@ -20,6 +23,7 @@ export const Route = createFileRoute("/boss-test")({
  */
 function BossTestPage() {
   const navigate = useNavigate();
+  const { hp } = Route.useSearch();
   const [status, setStatus] = useState("Booting boss test…");
   const ran = useRef(false);
 
@@ -32,7 +36,7 @@ function BossTestPage() {
         setStatus("Creating room…");
         const now = new Date();
         const ends = new Date(now.getTime() + 15 * 60 * 1000);
-        const maxHp = 2 * 220;
+        const maxHp = hp && hp > 0 ? hp : 2 * 220;
         const { error: rErr } = await supabase.from("rooms").insert({
           code,
           status: "playing",
@@ -83,7 +87,7 @@ function BossTestPage() {
         );
       }
     })();
-  }, [navigate]);
+  }, [navigate, hp]);
 
   return (
     <main className="min-h-screen flex items-center justify-center text-xl font-black p-6 text-center">

@@ -31,6 +31,7 @@ const LEVELS = [
   { label: "Advanced", value: 9 },
 ] as const;
 const POD_BG = ["var(--boom-yellow)", "var(--boom-orange)", "var(--boom-green)"];
+const POD_CAP = 4;
 
 type Slot = { name: string; avatar: string | null; fitness: number };
 

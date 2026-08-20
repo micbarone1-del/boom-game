@@ -16,7 +16,14 @@ const MASCOT_COLORS = [
 export type GuestProfile = {
   username: string;
   avatar_url: string;
+  fitness: number;
 };
+
+const LEVELS = [
+  { label: "Base", value: 3 },
+  { label: "Intermediate", value: 6 },
+  { label: "Advanced", value: 9 },
+] as const;
 
 export type JoinMethod = "guest" | "google" | "apple" | "phone" | "email";
 
@@ -60,6 +67,7 @@ export function JoinAsModal({
   // Guest fields
   const [guestName, setGuestName] = useState("");
   const [guestAvatar, setGuestAvatar] = useState<string>(`mascot:${MASCOT_COLORS[0]}`);
+  const [guestFitness, setGuestFitness] = useState<number>(6);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Phone fields

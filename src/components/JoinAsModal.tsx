@@ -52,6 +52,7 @@ export function JoinAsModal({
   const [view, setView] = useState<
     "choose" | "guest" | "phone" | "phone-verify" | "email-in" | "email-up"
   >("choose");
+  const [showMore, setShowMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -75,6 +76,7 @@ export function JoinAsModal({
       setError(null);
       setInfo(null);
       setBusy(false);
+      setShowMore(false);
     }
   }, [open]);
 
@@ -224,21 +226,11 @@ export function JoinAsModal({
 
         {view === "choose" && (
           <div className="flex flex-col gap-2.5">
-            {allowGuest && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setView("guest")}
-                className="ink-border-sm rounded-2xl py-3.5 font-black text-base bg-white flex items-center justify-center gap-2"
-              >
-                <User size={18} /> Play as guest
-              </button>
-            )}
             <button
               type="button"
               disabled={busy}
               onClick={() => oauth("google")}
-              className="ink-border-sm rounded-2xl py-3.5 font-black text-base bg-white flex items-center justify-center gap-2"
+              className="ink-border rounded-2xl py-4 font-black text-lg bg-white flex items-center justify-center gap-2 arcade-press"
             >
               <GoogleG /> Continue with Google
             </button>
@@ -246,31 +238,57 @@ export function JoinAsModal({
               type="button"
               disabled={busy}
               onClick={() => oauth("apple")}
-              className="ink-border-sm rounded-2xl py-3.5 font-black text-base text-white flex items-center justify-center gap-2"
+              className="ink-border rounded-2xl py-4 font-black text-lg text-white flex items-center justify-center gap-2 arcade-press"
               style={{ background: "#000" }}
             >
               <AppleIcon /> Continue with Apple
             </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setView("phone")}
-              className="ink-border-sm rounded-2xl py-3.5 font-black text-base bg-white flex items-center justify-center gap-2"
-            >
-              <Smartphone size={18} /> Continue with Phone
-            </button>
-            <div className="flex items-center gap-2 my-1 opacity-60 text-[10px] font-bold uppercase">
-              <span className="flex-1 h-px bg-black/20" /> or{" "}
-              <span className="flex-1 h-px bg-black/20" />
-            </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setView("email-in")}
-              className="ink-border-sm rounded-2xl py-3 font-black bg-white flex items-center justify-center gap-2"
-            >
-              <Mail size={16} /> Email & password
-            </button>
+
+            {allowGuest && (
+              <>
+                <div className="flex items-center gap-2 my-0.5 opacity-60 text-[10px] font-bold uppercase">
+                  <span className="flex-1 h-px bg-black/20" /> or{" "}
+                  <span className="flex-1 h-px bg-black/20" />
+                </div>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setView("guest")}
+                  className="ink-border-sm rounded-2xl py-3 font-black bg-white flex items-center justify-center gap-2"
+                >
+                  <User size={18} /> Just a nickname
+                </button>
+              </>
+            )}
+
+            {!showMore ? (
+              <button
+                type="button"
+                onClick={() => setShowMore(true)}
+                className="text-xs font-black opacity-70 underline mt-1"
+              >
+                More sign-in options
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2 mt-1">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setView("phone")}
+                  className="ink-border-sm rounded-2xl py-2.5 font-black text-sm bg-white flex items-center justify-center gap-2"
+                >
+                  <Smartphone size={16} /> Phone number
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setView("email-in")}
+                  className="ink-border-sm rounded-2xl py-2.5 font-black text-sm bg-white flex items-center justify-center gap-2"
+                >
+                  <Mail size={16} /> Email & password
+                </button>
+              </div>
+            )}
             <p className="text-[10px] text-center opacity-60 font-bold">
               Sign in to save your scores on the global leaderboard.
             </p>

@@ -62,7 +62,7 @@ function Index() {
     e.preventDefault();
     const c = joinCode.trim().toUpperCase();
     if (!c) return;
-    navigate({ to: "/join/$code", params: { code: c }, search: { auto: undefined } });
+    navigate({ to: "/join/$code", params: { code: c }, search: { auto: undefined, join: undefined } });
   };
   const startSolo = async () => {
     if (creating) return;

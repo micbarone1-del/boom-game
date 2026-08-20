@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as BossTestRouteImport } from './routes/boss-test'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JoinIndexRouteImport } from './routes/join.index'
 import { Route as JoinCodeRouteImport } from './routes/join.$code'
 import { Route as GymCodeRouteImport } from './routes/gym.$code'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -40,6 +41,11 @@ const BossTestRoute = BossTestRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinIndexRoute = JoinIndexRouteImport.update({
+  id: '/join/',
+  path: '/join/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JoinCodeRoute = JoinCodeRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/join/': typeof JoinIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/gym/$code/customize': typeof GymCodeCustomizeRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/join': typeof JoinIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/gym/$code/customize': typeof GymCodeCustomizeRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/gym/$code': typeof GymCodeRouteWithChildren
   '/join/$code': typeof JoinCodeRoute
+  '/join/': typeof JoinIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/gym/$code/customize': typeof GymCodeCustomizeRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/gym/$code'
     | '/join/$code'
+    | '/join/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/gym/$code/customize'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/gym/$code'
     | '/join/$code'
+    | '/join'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/gym/$code/customize'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/gym/$code'
     | '/join/$code'
+    | '/join/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/gym/$code/customize'
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   GymCodeRoute: typeof GymCodeRouteWithChildren
   JoinCodeRoute: typeof JoinCodeRoute
+  JoinIndexRoute: typeof JoinIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   PodCodePodIdRoute: typeof PodCodePodIdRoute
@@ -216,6 +229,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join/': {
+      id: '/join/'
+      path: '/join'
+      fullPath: '/join/'
+      preLoaderRoute: typeof JoinIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/join/$code': {
@@ -298,6 +318,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   GymCodeRoute: GymCodeRouteWithChildren,
   JoinCodeRoute: JoinCodeRoute,
+  JoinIndexRoute: JoinIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   PodCodePodIdRoute: PodCodePodIdRoute,

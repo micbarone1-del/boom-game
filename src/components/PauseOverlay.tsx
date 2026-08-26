@@ -1,7 +1,8 @@
-import { Pause, Play, UserPlus, Bomb } from "lucide-react";
-import { useMemo } from "react";
+import { Pause, Play, UserPlus, Bomb, Flag, GraduationCap } from "lucide-react";
+import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Player, Pod } from "@/hooks/use-room";
+import { ftueDisabled, setFtueDisabled, resetFtue } from "@/components/Ftue";
 
 /**
  * Fullscreen "PAUSED" overlay shown to every connected client (host TV +
@@ -11,6 +12,7 @@ import type { Player, Pod } from "@/hooks/use-room";
  */
 export function PauseOverlay({
   onResume,
+  onGiveUp,
   onSignInClick,
   label = "PAUSED",
   code,
@@ -18,12 +20,14 @@ export function PauseOverlay({
   pods,
 }: {
   onResume?: () => void;
+  onGiveUp?: () => void;
   onSignInClick?: () => void;
   label?: string;
   code?: string;
   players?: Player[];
   pods?: Pod[];
 }) {
+  const [tipsOff, setTipsOff] = useState(() => ftueDisabled());
   const joinUrl = useMemo(() => {
     if (!code || typeof window === "undefined") return "";
     return `${window.location.origin}/join/${code}`;

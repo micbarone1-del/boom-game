@@ -1491,6 +1491,16 @@ function JudgePhase({
   const holdingRef = useRef(false);
   const holdStartRef = useRef(0);
   const [defuseFlash, setDefuseFlash] = useState(false);
+  const ftue = useFtue(player.id, "judge");
+  // Time spent reading the FTUE tip doesn't count against the defuse timer.
+  const ftueOffsetRef = useRef(0);
+  const ftueOpenedAtRef = useRef<number | null>(null);
+  if (ftue.showing && ftueOpenedAtRef.current === null) ftueOpenedAtRef.current = Date.now();
+  if (!ftue.showing && ftueOpenedAtRef.current !== null) {
+    ftueOffsetRef.current += Date.now() - ftueOpenedAtRef.current;
+    ftueOpenedAtRef.current = null;
+  }
+
 
   // Acquire camera + start recording
   useEffect(() => {

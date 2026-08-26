@@ -2444,13 +2444,39 @@ function GroupPhase({
 // ---------------------------------------------------------------------------
 // Pause Phase — fun music, no judge, auto-advance.
 // ---------------------------------------------------------------------------
-function PausePhase({ player, onComplete }: { player: Player; onComplete: () => void }) {
+function PausePhase({
+  player,
+  onComplete,
+  paused = false,
+}: {
+  player: Player;
+  onComplete: () => void;
+  paused?: boolean;
+}) {
+  const TOTAL = 10;
+  const [remaining, setRemaining] = useState(TOTAL);
   useEffect(() => {
     const stop = playPauseMusic();
     speak(`Pause! Take a breather, ${player.username}.`);
-    const t = setTimeout(onComplete, 5000);
-    return () => { stop(); clearTimeout(t); };
-  }, [player.username, onComplete]);
+    return () => stop();
+  }, [player.username]);
+  useEffect(() => {
+    if (paused) return;
+    const i = setInterval(() => {
+      setRemaining((r) => {
+        const next = r - 1;
+        if (next <= 3 && next > 0) sfx.play("timerTick");
+        if (next <= 0) {
+          clearInterval(i);
+          onComplete();
+          return 0;
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(i);
+  }, [onComplete, paused]);
+  const low = remaining <= 3;
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center gap-6" style={{ background: "#06b6d4" }}>
       <div className="anim-mascot-bounce">
@@ -2460,6 +2486,16 @@ function PausePhase({ player, onComplete }: { player: Player; onComplete: () => 
         PAUSE!
       </div>
       <div className="text-white text-xl font-bold">Take a breath, {player.username} 🌬️</div>
+      <div
+        className={`ink-border rounded-2xl px-8 py-3 text-6xl font-black tabular-nums ${low ? "anim-mascot-bounce" : "anim-ui-bob"}`}
+        style={{
+          background: low ? "var(--boom-red)" : "var(--boom-yellow)",
+          color: low ? "#fff" : "var(--boom-ink)",
+          fontFamily: "'Luckiest Guy', cursive",
+        }}
+      >
+        {remaining}s
+      </div>
       <button onClick={onComplete} className="px-6 py-3 rounded-full bg-white ink-border text-lg font-black active:scale-95 anim-ui-float">
         Skip
       </button>

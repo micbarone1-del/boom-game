@@ -863,7 +863,9 @@ function stepDurationMs(cfg: PhaseCfg): number {
 }
 
 function playArcadeLoopStep() {
-  if (muted || audioSuspended || musicDucked) return;
+  // NOTE: ducking is handled by the music bus gain — never bail out here or
+  // a stuck duck flag would kill the soundtrack permanently.
+  if (muted || audioSuspended) return;
   const c = ac();
   if (!c) return;
   const cfg = PHASES[musicPhase];

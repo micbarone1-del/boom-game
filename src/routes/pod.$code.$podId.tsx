@@ -2002,7 +2002,18 @@ function WrapUp({
 }) {
   const winner = players.find((p) => p.id === winnerId)!;
   const ranked = [...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  const clipList = Array.from(clips.entries());
+  // Snapshot the clips + their object URLs ONCE, so re-renders (score polling,
+  // auth updates) don't recreate the URLs and blank out the <video> previews.
+  const clipList = useMemo(
+    () =>
+      Array.from(clips.entries()).map(([key, blob]) => {
+        const [playerId, exercise] = key.split("|");
+        return { key, blob, playerId, exercise: exercise || "Exercise", url: URL.createObjectURL(blob) };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  useEffect(() => () => clipList.forEach((c) => URL.revokeObjectURL(c.url)), [clipList]);
   const [spoken, setSpoken] = useState(false);
   const { user } = useAuth();
   const [joinModalOpen, setJoinModalOpen] = useState(false);

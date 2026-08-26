@@ -603,9 +603,9 @@ let musicIntensity = 0;
 let driveShaper: WaveShaperNode | null = null;
 let driveAmountApplied = -1;
 
-function makeCurve(amount: number): Float32Array {
+function makeCurve(amount: number): Float32Array<ArrayBuffer> {
   const n = 1024;
-  const curve = new Float32Array(n);
+  const curve = new Float32Array(new ArrayBuffer(n * 4));
   const k = Math.max(1, amount);
   for (let i = 0; i < n; i++) {
     const x = (i * 2) / n - 1;

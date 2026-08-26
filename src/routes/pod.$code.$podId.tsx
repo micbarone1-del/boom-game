@@ -508,7 +508,10 @@ function PodPage() {
               void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
             }}
             onGiveUp={() => {
-              void navigate({ to: "/join/$code", params: { code }, search: { auto: undefined, join: undefined } });
+              void (async () => {
+                await supabase.from("rooms").update({ paused: false }).eq("code", code);
+                await navigate({ to: "/join/$code", params: { code }, replace: true });
+              })();
             }}
             onSignInClick={() => setPauseJoinOpen(true)}
           />

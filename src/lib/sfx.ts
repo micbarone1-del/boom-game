@@ -53,6 +53,8 @@ type BoomSfxGlobal = {
   arcadeTimer: number | null;
   arcadeGain: GainNode | null;
   arcadeStep: number;
+  musicWanted: boolean;
+  lastMusicStepAt: number;
 };
 
 // Persist across HMR module reloads — otherwise we'd create a new
@@ -67,6 +69,8 @@ const state = (_g.__boomSfx ||= {
   arcadeTimer: null as number | null,
   arcadeGain: null as GainNode | null,
   arcadeStep: 0,
+  musicWanted: false,
+  lastMusicStepAt: 0,
 }) as BoomSfxGlobal;
 // Master volume — kept low so the robotic voice (SpeechSynthesis volume is
 // capped at 1.0 and OS-controlled) feels relatively maximum compared to the
@@ -464,47 +468,55 @@ const effects: Record<EffectName, () => void> = {
 
   // --- Per-trap jingles: every cell type gets its own musical signature ---
   jingleEasy: () => {
+    const shift = Math.random() < 0.5 ? 1 : 1.122;
     [523, 659, 784].forEach((f, i) =>
-      beep({ freq: f, dur: 0.14, type: "square", gain: 0.2, delay: i * 0.09 }),
+      beep({ freq: f * shift, dur: 0.14, type: "square", gain: 0.2, delay: i * 0.09 }),
     );
   },
   jingleMedium: () => {
-    [440, 554, 659, 880].forEach((f, i) =>
+    const notes = Math.random() < 0.5 ? [440, 554, 659, 880] : [440, 659, 554, 988];
+    notes.forEach((f, i) =>
       beep({ freq: f, dur: 0.13, type: "sawtooth", gain: 0.18, delay: i * 0.08 }),
     );
   },
   jingleHard: () => {
-    [110, 110, 146.83].forEach((f, i) =>
+    const root = Math.random() < 0.5 ? 110 : 123.47;
+    [root, root, root * 4 / 3].forEach((f, i) =>
       beep({ freq: f, dur: 0.22, type: "sawtooth", gain: 0.26, delay: i * 0.13 }),
     );
     noise({ dur: 0.25, gain: 0.16, lowpass: 1400, delay: 0.26 });
   },
   jingleBoost: () => {
-    [659, 880, 1046, 1318, 1568].forEach((f, i) =>
+    const notes = Math.random() < 0.5 ? [659, 880, 1046, 1318, 1568] : [784, 988, 1175, 1568, 1976];
+    notes.forEach((f, i) =>
       beep({ freq: f, dur: 0.1, type: "triangle", gain: 0.22, delay: i * 0.06 }),
     );
     beep({ freq: 1046, endFreq: 2093, dur: 0.3, type: "square", gain: 0.14, delay: 0.32 });
   },
   jingleSetback: () => {
-    [523, 440, 349, 261].forEach((f, i) =>
+    const notes = Math.random() < 0.5 ? [523, 440, 349, 261] : [587, 466, 392, 233];
+    notes.forEach((f, i) =>
       beep({ freq: f, dur: 0.18, type: "sawtooth", gain: 0.22, delay: i * 0.11 }),
     );
     beep({ freq: 196, endFreq: 90, dur: 0.4, type: "triangle", gain: 0.2, delay: 0.46 });
   },
   jingleSurprise: () => {
-    [880, 1318, 987, 1568].forEach((f, i) =>
+    const notes = Math.random() < 0.5 ? [880, 1318, 987, 1568] : [1046, 784, 1396, 1760];
+    notes.forEach((f, i) =>
       beep({ freq: f, dur: 0.09, type: "square", gain: 0.2, delay: i * 0.07 }),
     );
     beep({ freq: 660, endFreq: 1760, dur: 0.22, type: "triangle", gain: 0.16, delay: 0.3 });
   },
   jingleCrazy: () => {
-    [740, 415, 987, 554, 1244].forEach((f, i) =>
+    const notes = Math.random() < 0.5 ? [740, 415, 987, 554, 1244] : [831, 466, 1108, 622, 1396];
+    notes.forEach((f, i) =>
       beep({ freq: f, dur: 0.08, type: "sawtooth", gain: 0.2, delay: i * 0.06 }),
     );
     noise({ dur: 0.18, gain: 0.14, lowpass: 5200, delay: 0.32 });
   },
   jingleGroup: () => {
-    [392, 494, 587].forEach((f) =>
+    const chord = Math.random() < 0.5 ? [392, 494, 587] : [440, 554, 659];
+    chord.forEach((f) =>
       beep({ freq: f, dur: 0.35, type: "triangle", gain: 0.16 }),
     );
     [784, 988].forEach((f, i) =>
@@ -512,7 +524,8 @@ const effects: Record<EffectName, () => void> = {
     );
   },
   jinglePause: () => {
-    [587, 784, 698, 523].forEach((f, i) =>
+    const notes = Math.random() < 0.5 ? [587, 784, 698, 523] : [659, 880, 784, 587];
+    notes.forEach((f, i) =>
       beep({ freq: f, dur: 0.2, type: "sine", gain: 0.2, delay: i * 0.14 }),
     );
   },
@@ -868,6 +881,8 @@ function playArcadeLoopStep() {
   if (muted || audioSuspended) return;
   const c = ac();
   if (!c) return;
+  if (c.state !== "running") return;
+  state.lastMusicStepAt = Date.now();
   const cfg = PHASES[musicPhase];
   const bus = musicBus(c, cfg);
   const t0 = safeStart(c);
@@ -909,13 +924,9 @@ function rescheduleLoop() {
   state.arcadeTimer = window.setInterval(playArcadeLoopStep, stepDurationMs(PHASES[musicPhase]));
 }
 
-// Set once the game asks for music; the watchdog uses it to bring the
-// soundtrack back if the browser suspended the context or a timer was lost.
-let musicWanted = false;
-
 export function startArcadeMusic() {
   if (muted || typeof window === "undefined") return;
-  musicWanted = true;
+  state.musicWanted = true;
   if (audioSuspended) return;
   void ensureReady().then(() => playArcadeLoopStep());
   if (state.arcadeTimer) return;
@@ -932,7 +943,12 @@ if (typeof window !== "undefined" && !(globalThis as any).__boomAudioWatchdog) {
     const c = state.ctx;
     if (c && c.state === "suspended") void c.resume().catch(() => {});
     if (!window.speechSynthesis?.speaking && musicDucked) duckMusic(false);
-    if (musicWanted && !state.arcadeTimer) {
+    const loopStalled = !!state.arcadeTimer && Date.now() - state.lastMusicStepAt > 3500;
+    if (loopStalled) {
+      window.clearInterval(state.arcadeTimer as number);
+      state.arcadeTimer = null;
+    }
+    if (state.musicWanted && !state.arcadeTimer) {
       state.arcadeTimer = window.setInterval(
         playArcadeLoopStep,
         stepDurationMs(PHASES[musicPhase]),
@@ -943,7 +959,7 @@ if (typeof window !== "undefined" && !(globalThis as any).__boomAudioWatchdog) {
     if (document.visibilityState !== "visible" || muted || audioSuspended) return;
     const c = state.ctx;
     if (c && c.state === "suspended") void c.resume().catch(() => {});
-    if (musicWanted && !state.arcadeTimer) startArcadeMusic();
+    if (state.musicWanted && !state.arcadeTimer) startArcadeMusic();
   });
 }
 
@@ -1010,7 +1026,7 @@ export function setAudioSuspended(suspended: boolean) {
     if (c && c.state === "suspended") void c.resume().catch(() => {});
     duckMusic(false);
     // Bring the soundtrack back — the pause tore the sequencer timer down.
-    if (musicWanted && !state.arcadeTimer) startArcadeMusic();
+    if (state.musicWanted && !state.arcadeTimer) startArcadeMusic();
   }
 }
 

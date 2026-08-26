@@ -138,10 +138,9 @@ function Index() {
           <source src="/media/attract.webm" type="video/webm" />
         </video>
 
-        {/* Tap anywhere to start */}
+        {/* Tap anywhere to reveal the player start/join screen. */}
         <button
-          onClick={startSolo}
-          disabled={creating}
+          onClick={() => setAttract(false)}
           className="absolute inset-0 w-full h-full flex flex-col items-center justify-between py-8 px-4"
           aria-label="Press to start"
           style={{ background: "linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.15) 40%, rgba(0,0,0,.7))" }}
@@ -178,7 +177,7 @@ function Index() {
               textShadow: "3px 3px 0 #000, 0 0 18px rgba(255,0,0,.8)",
             }}
           >
-            {creating ? "IGNITING…" : "PRESS TO START"}
+            PRESS TO START
           </span>
 
           <span className="text-xs font-black" style={{ color: "rgba(255,255,255,.8)" }}>

@@ -86,18 +86,22 @@ function Index() {
   };
   if (attract) {
     return (
-      <main className="fixed inset-0 overflow-hidden bg-black">
-        {/* Full-screen attract reel */}
+      <main
+        className="fixed inset-0 overflow-hidden"
+        style={{ background: "radial-gradient(circle at 50% 35%, #2b1200, #000)" }}
+      >
+        {/* Full-screen attract reel — decorative, never blocks the start button */}
         <video
           ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
-          preload="auto"
+          preload="metadata"
           aria-label="BOOM! gameplay attract reel"
           className="absolute inset-0 w-full h-full object-cover"
         >
+
           <source src="/media/attract.mp4" type="video/mp4" />
           <source src="/media/attract.webm" type="video/webm" />
         </video>

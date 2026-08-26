@@ -1557,15 +1557,18 @@ function JudgePhase({
     return () => clearInterval(i);
   }, [trap.unit]);
 
-  const elapsed = Date.now() - started;
+  const pausedFor = ftue.showing && ftueOpenedAtRef.current ? Date.now() - ftueOpenedAtRef.current : 0;
+  const elapsed = Date.now() - started - ftueOffsetRef.current - pausedFor;
   const remaining = Math.max(0, TRAP_TIMEOUT_MS - elapsed);
   const ringProgress = remaining / TRAP_TIMEOUT_MS;
 
   // Timeout = fail
   useEffect(() => {
     if (completedRef.current) return;
+    if (ftue.showing) return;
     if (remaining <= 0) finish("fail");
-  }, [remaining]);
+  }, [remaining, ftue.showing]);
+
 
   const finish = (outcome: "success" | "fail") => {
     if (completedRef.current) return;

@@ -1059,31 +1059,9 @@ function SwitchPhase({
         </div>
       </div>
 
-      {/* Countdown — boxed red card, arcade BOOM style */}
-      <div
-        key={`count-${count}`}
-        className="anim-pop ink-border rounded-2xl bg-white flex items-center justify-center"
-        style={{
-          padding: "0.6rem 2.2rem",
-          minWidth: "9rem",
-          boxShadow: count > 0
-            ? "6px 6px 0 #111, 0 0 30px 6px rgba(239,68,68,0.55)"
-            : "6px 6px 0 #111, 0 0 30px 6px rgba(34,197,94,0.55)",
-          border: `4px solid ${count > 0 ? "var(--boom-red)" : "var(--boom-green)"}`,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'Luckiest Guy', cursive",
-            color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
-            fontSize: count > 0 ? "6.5rem" : "3.5rem",
-            lineHeight: 1,
-            textShadow: "0 4px 0 rgba(0,0,0,0.18)",
-          }}
-        >
-          {count > 0 ? count : "GO!"}
-        </span>
-      </div>
+      {/* Countdown — single clean tick, never overlapping */}
+      <CountdownNumber value={count} />
+
 
       <div className="text-base font-bold opacity-80 text-center px-6 pb-2">
         Pass the phone to {judge.username}

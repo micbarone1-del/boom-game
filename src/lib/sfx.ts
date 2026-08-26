@@ -1008,6 +1008,9 @@ export function setAudioSuspended(suspended: boolean) {
     if (c && c.state === "running") void c.suspend().catch(() => {});
   } else {
     if (c && c.state === "suspended") void c.resume().catch(() => {});
+    duckMusic(false);
+    // Bring the soundtrack back — the pause tore the sequencer timer down.
+    if (musicWanted && !state.arcadeTimer) startArcadeMusic();
   }
 }
 

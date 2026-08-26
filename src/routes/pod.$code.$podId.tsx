@@ -472,16 +472,20 @@ function PodPage() {
         />
       </div>
     );
+    // Fuse ran out (main game or boss) → continue countdown, never straight
+    // to the leaderboard. The leaderboard is only for pods that beat the boss.
     if (room.game_state === "timeout_continue" && continueAt) {
-      // Legacy state — collapse to game_over immediately.
-      void supabase
-        .from("rooms")
-        .update({ game_state: "game_over", continue_deadline_at: null })
-        .eq("code", code)
-        .then(() => {});
+      return (
+        <>
+          {pauseBtn}
+          <TimesOutOverlay
+            continueDeadlineAt={continueAt}
+            showContinue
+            onContinue={onContinue}
+          />
+        </>
+      );
     }
-    // Once the leaderboard ("victory") is showing, never re-render the
-    // game-over overlay on top of it.
     if (room.game_state === "game_over" && room.phase !== "victory") {
       return (
         <>

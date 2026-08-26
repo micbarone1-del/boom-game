@@ -450,6 +450,8 @@ function PodPage() {
         game_state: "playing",
         game_ends_at: newEnds.toISOString(),
         continue_deadline_at: null,
+        // Restart the boss clock too when the continue happens mid boss fight.
+        ...(room.phase === "boss" ? { boss_started_at: new Date().toISOString() } : {}),
       })
       .eq("code", code);
   };

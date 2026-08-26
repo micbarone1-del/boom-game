@@ -612,8 +612,12 @@ function PodPage() {
           players={ordered}
           winnerId={phase.winnerId}
           clips={clipsRef.current}
-          onRestart={restart}
+          onRestart={() => {
+            void restart();
+            window.location.assign(`/join/${code}`);
+          }}
         />
+
         {overlay}
       </>
     );

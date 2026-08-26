@@ -45,15 +45,16 @@ export function CellMascot({ type, username }: { type: CellType; username?: stri
       style={{ top: "50%", left: "50%" }}
     >
       <div
-        className="ink-border rounded-3xl px-6 py-5 flex flex-col items-center gap-2 relative"
-        style={{ background: f.color, color: "white", minWidth: 260 }}
+        className="ink-border rounded-3xl px-6 pb-5 pt-24 flex flex-col items-center gap-2 relative"
+        style={{ background: f.color, color: "white", minWidth: 260, overflow: "visible" }}
       >
+        {/* Mascot bursts out of the top of the frame instead of being clipped */}
         <img
           src={f.img}
           alt=""
           width={1024}
           height={1024}
-          className={`w-40 h-40 ${f.sad ? "" : "anim-mascot-bounce"} drop-shadow-[0_0_20px_rgba(0,0,0,0.4)]`}
+          className={`absolute left-1/2 -translate-x-1/2 -top-24 w-48 h-48 object-contain pointer-events-none ${f.sad ? "" : "anim-mascot-bounce"} drop-shadow-[0_0_20px_rgba(0,0,0,0.55)]`}
         />
         <div
           className="text-3xl font-black comic-shadow"

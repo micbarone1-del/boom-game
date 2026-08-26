@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Bomb, Music, LogIn, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { sfx, startArcadeMusic, setMusicPhase } from "@/lib/sfx";
 import { generateRoomCode } from "@/lib/game";
 import bombMascot from "@/assets/bomb-mascot.png";
 
@@ -79,6 +80,23 @@ function Index() {
       window.clearTimeout(t);
     };
   }, [attract]);
+  // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
+  // policies mean it can only start once the visitor touches the screen.
+  useEffect(() => {
+    if (!attract) return;
+    setMusicPhase("attract");
+    const kick = () => {
+      void sfx.unlock().then(() => startArcadeMusic());
+    };
+    kick();
+    window.addEventListener("pointerdown", kick, { once: true });
+    window.addEventListener("keydown", kick, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", kick);
+      window.removeEventListener("keydown", kick);
+    };
+  }, [attract]);
+
   const tryJoin = (e: React.FormEvent) => {
 
     e.preventDefault();
@@ -95,8 +113,8 @@ function Index() {
       setCreating(false);
       return;
     }
-    // Land in the player lobby (gym) — pods are created from there.
-    navigate({ to: "/gym/$code", params: { code } });
+    // Land in the player lobby — pods are created and joined from there.
+    navigate({ to: "/join/$code", params: { code }, search: { auto: undefined, join: undefined } });
   };
   if (attract) {
     return (

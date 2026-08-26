@@ -165,7 +165,9 @@ export function GlobalLeaderboard({
         );
       })}
       </div>
+      )}
     </div>
+
   );
 }
 

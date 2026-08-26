@@ -533,20 +533,7 @@ function BossSwitch({
           <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
         </div>
       </div>
-      <div
-        key={`bc-${count}`}
-        className="anim-pop"
-        style={{
-          fontFamily: "'Luckiest Guy', cursive",
-          color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
-          fontSize: count > 0 ? "7rem" : "4rem",
-          lineHeight: 1,
-          textShadow: "0 6px 0 rgba(0,0,0,0.35), 3px 3px 0 #fff",
-          WebkitTextStroke: "3px #111",
-        }}
-      >
-        {count > 0 ? count : "GO!"}
-      </div>
+      <CountdownNumber value={count} />
       <div className="text-sm font-bold opacity-90 text-center px-6" style={{ color: "var(--boom-ink)" }}>
         Pass the phone to {judge.username}
       </div>
@@ -1140,11 +1127,11 @@ function BossRoll({
         <button
           onClick={spin}
           disabled={spinning}
-          className="ink-border rounded-2xl px-8 py-4 text-3xl font-black active:scale-95 disabled:opacity-60"
+          className="btn-massive w-[80vw] max-w-md"
           style={{
             background: "var(--boom-yellow)",
             color: "var(--boom-ink)",
-            fontFamily: "'Luckiest Guy', cursive",
+            textShadow: "2px 2px 0 rgba(0,0,0,0.25)",
           }}
         >
           {spinning ? "SPINNING…" : "SPIN!"}

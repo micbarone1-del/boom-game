@@ -287,14 +287,18 @@ export function BossPhase({
     }, 3400);
   };
 
-  // Boss timeout → victory screen lost (game_over)
+  // Boss timeout → continue countdown (never straight to the leaderboard).
   useEffect(() => {
     if (remaining > 0) return;
     void (async () => {
       await supabase
         .from("rooms")
-        .update({ phase: "victory", game_state: "game_over" })
-        .eq("code", code);
+        .update({
+          game_state: "timeout_continue",
+          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
+        })
+        .eq("code", code)
+        .eq("game_state", "playing");
     })();
   }, [remaining, code]);
 

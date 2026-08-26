@@ -53,9 +53,9 @@ const BOSS_WEDGES: BossWedge[] = [
   { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard", mascot: bombHard },
   { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise", mascot: bombMascotImg },
   { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy", mascot: bombSetback },
-  { id: "group", label: "GROUP", multiplier: 1, color: "#3b82f6", tier: 2, pick: "group", mascot: bombBoost },
-  { id: "special", label: "SPECIAL ×2", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard", mascot: bombSpecial },
-  { id: "super", label: "SUPER ×3", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy", mascot: bombSuper },
+  { id: "group", label: "GROUP", multiplier: 1, podWide: true, color: "#3b82f6", tier: 2, pick: "group", mascot: bombBoost },
+  { id: "special", label: "SPECIAL", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard", mascot: bombSpecial },
+  { id: "super", label: "SUPER", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy", mascot: bombSuper },
 ];
 
 function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: string; tier: 1 | 2 | 3 } {

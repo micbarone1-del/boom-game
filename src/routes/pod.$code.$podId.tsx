@@ -808,6 +808,8 @@ function PlayerPhase({
   const [hopping, setHopping] = useState<{ path: number[]; step: number } | null>(null);
   const [powerUp, setPowerUp] = useState(false);
   const [hopMascot, setHopMascot] = useState<CellType | null>(null);
+  const ftue = useFtue(player.id, "roll");
+
 
   // Drive arcade BGM intensity from fuse progress.
   useEffect(() => {

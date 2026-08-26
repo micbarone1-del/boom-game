@@ -26,7 +26,9 @@ type EffectName =
   | "win"
   | "wheelTick"
   | "wheelStop"
-  | "bossHit";
+  | "bossHit"
+  | "hopStep"
+  | "trapPop";
 
 type BoomSfxGlobal = {
   ctx: AudioContext | null;
@@ -379,6 +381,19 @@ const effects: Record<EffectName, () => void> = {
     noise({ dur: 0.18, gain: 0.5, lowpass: 2800 });
     beep({ freq: 220, endFreq: 60, dur: 0.22, type: "sawtooth", gain: 0.28 });
     beep({ freq: 1320, dur: 0.05, type: "square", gain: 0.22, delay: 0.02 });
+  },
+
+  // Springy "boing" for every hop of the token along the board
+  hopStep: () => {
+    beep({ freq: 380, endFreq: 900, dur: 0.09, type: "square", gain: 0.16 });
+    beep({ freq: 1200, dur: 0.04, type: "triangle", gain: 0.1, delay: 0.08 });
+  },
+
+  // Cartoon "pop!" when a trap / cell mascot springs onto the screen
+  trapPop: () => {
+    beep({ freq: 180, endFreq: 1200, dur: 0.12, type: "sawtooth", gain: 0.22 });
+    noise({ dur: 0.12, gain: 0.2, lowpass: 3200, delay: 0.02 });
+    beep({ freq: 1568, dur: 0.09, type: "square", gain: 0.18, delay: 0.12 });
   },
 };
 

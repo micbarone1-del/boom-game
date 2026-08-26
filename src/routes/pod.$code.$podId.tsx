@@ -1656,7 +1656,9 @@ function JudgePhase({
 
   return (
     <main className="fixed inset-0 bg-black overflow-hidden">
+      {ftue.modal}
       <video
+
         ref={videoRef}
         playsInline
         muted

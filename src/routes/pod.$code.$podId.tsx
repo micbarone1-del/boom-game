@@ -480,6 +480,9 @@ function PodPage() {
             onResume={() => {
               void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
             }}
+            onGiveUp={() => {
+              void navigate({ to: "/gym/$code", params: { code } });
+            }}
             onSignInClick={() => setPauseJoinOpen(true)}
           />
           <JoinAsModal
@@ -568,6 +571,7 @@ function PodPage() {
           player={p}
           judge={j}
           trap={phase.trap}
+          paused={!!room.paused}
           onDone={() =>
             setPhase({ kind: "judge", playerId: phase.playerId, judgeId: phase.judgeId, trap: phase.trap })
           }
@@ -584,6 +588,7 @@ function PodPage() {
         <JudgePhase
           player={p}
           trap={phase.trap}
+          paused={!!room.paused}
           onComplete={onJudgeResult}
         />
         {overlay}
@@ -936,12 +941,16 @@ function PlayerPhase({
           <Dice5 size={150} strokeWidth={2.4} style={{ color: "var(--boom-ink)" }} />
         ) : (
           <span
-            className="font-black"
+            className="font-black tabular-nums"
             style={{
-              fontFamily: "'Luckiest Guy', cursive",
+              fontFamily:
+                "ui-rounded, 'SF Pro Rounded', system-ui, 'Segoe UI', sans-serif",
+              fontWeight: 900,
               color: "var(--boom-ink)",
-              fontSize: "clamp(6rem, 30vw, 11rem)",
-              lineHeight: 1,
+              fontSize: "clamp(5rem, 26vw, 9rem)",
+              lineHeight: 1.25,
+              display: "block",
+              padding: "0.1em 0",
             }}
           >
             {face}
@@ -972,11 +981,13 @@ function SwitchPhase({
   player,
   judge,
   trap,
+  paused = false,
   onDone,
 }: {
   player: Player;
   judge: Player;
   trap: ActiveTrap;
+  paused?: boolean;
   onDone: () => void;
 }) {
   const [count, setCount] = useState(3);
@@ -986,7 +997,7 @@ function SwitchPhase({
   const ftue = useFtue(player.id, "switch");
 
   useEffect(() => {
-    if (ftue.showing) return;
+    if (ftue.showing || paused) return;
     if (spokeRef.current) return;
     spokeRef.current = true;
     const unit = trap.unit === "seconds" ? `${trap.reps} seconds` : `${trap.reps} reps`;
@@ -994,7 +1005,7 @@ function SwitchPhase({
   }, [player.username, judge.username, trap, ftue.showing]);
 
   useEffect(() => {
-    if (ftue.showing) return;
+    if (ftue.showing || paused) return;
     if (count <= 0) {
       onDone();
       return;
@@ -1002,7 +1013,7 @@ function SwitchPhase({
     sfx.play("countdown");
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [count, onDone, ftue.showing]);
+  }, [count, onDone, ftue.showing, paused]);
 
   return (
     <main
@@ -1023,7 +1034,7 @@ function SwitchPhase({
           src={mascotImg}
           alt=""
           key={`cellmascot-${trap.cellType}`}
-          className="w-28 h-28 anim-mascot-bounce arcade-slam-in drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
+          className="w-44 h-44 max-w-[45vw] max-h-[45vw] object-contain anim-mascot-bounce arcade-slam-in drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
         />
         <div
           className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in"
@@ -1060,21 +1071,37 @@ function SwitchPhase({
       </div>
 
       {/* Player → Judge handoff */}
-      <div className="flex items-center justify-around w-full max-w-md">
-        <div className="flex flex-col items-center gap-1 anim-fade-in">
-          <Avatar player={player} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-ink)" }}>
+      <div className="flex items-center justify-between gap-2 w-full max-w-md">
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
+          <Avatar player={player} size={112} />
+          <div
+            className="text-base font-black uppercase tracking-wide"
+            style={{ color: "var(--boom-ink)" }}
+          >
             Player
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{player.username}</div>
+          <div
+            className="w-full text-center font-black leading-tight truncate"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1.1rem, 5vw, 1.6rem)" }}
+          >
+            {player.username}
+          </div>
         </div>
-        <div className="text-4xl">➡️</div>
-        <div className="flex flex-col items-center gap-1 anim-fade-in">
-          <Avatar player={judge} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-ink)" }}>
+        <div className="text-5xl shrink-0">➡️</div>
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
+          <Avatar player={judge} size={112} />
+          <div
+            className="text-base font-black uppercase tracking-wide"
+            style={{ color: "var(--boom-ink)" }}
+          >
             Judge
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
+          <div
+            className="w-full text-center font-black leading-tight truncate"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1.1rem, 5vw, 1.6rem)" }}
+          >
+            {judge.username}
+          </div>
         </div>
       </div>
 
@@ -1082,7 +1109,10 @@ function SwitchPhase({
       <CountdownNumber value={count} />
 
 
-      <div className="text-base font-bold opacity-80 text-center px-6 pb-2">
+      <div
+        className="font-black text-center px-6 pb-2"
+        style={{ color: "var(--boom-ink)", fontSize: "clamp(1.15rem, 5vw, 1.6rem)" }}
+      >
         Pass the phone to {judge.username}
       </div>
     </main>
@@ -1470,10 +1500,12 @@ function PowerUpOverlay({ player }: { player: Player }) {
 function JudgePhase({
   player,
   trap,
+  paused = false,
   onComplete,
 }: {
   player: Player;
   trap: ActiveTrap;
+  paused?: boolean;
   onComplete: (outcome: "success" | "fail", clip: Blob | null) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -1495,8 +1527,11 @@ function JudgePhase({
   // Time spent reading the FTUE tip doesn't count against the defuse timer.
   const ftueOffsetRef = useRef(0);
   const ftueOpenedAtRef = useRef<number | null>(null);
-  if (ftue.showing && ftueOpenedAtRef.current === null) ftueOpenedAtRef.current = Date.now();
-  if (!ftue.showing && ftueOpenedAtRef.current !== null) {
+  // Frozen = a tutorial tip is up OR the room is paused. Neither counts
+  // against the defuse countdown.
+  const frozen = ftue.showing || paused;
+  if (frozen && ftueOpenedAtRef.current === null) ftueOpenedAtRef.current = Date.now();
+  if (!frozen && ftueOpenedAtRef.current !== null) {
     ftueOffsetRef.current += Date.now() - ftueOpenedAtRef.current;
     ftueOpenedAtRef.current = null;
   }
@@ -1549,15 +1584,16 @@ function JudgePhase({
   // Tick to redraw the ring + accumulate hold time
   useEffect(() => {
     const i = setInterval(() => {
+      if (frozen) return;
       if (holdingRef.current && trap.unit === "seconds") {
         setHoldMs((m) => m + 50);
       }
       force((n) => n + 1);
     }, 50);
     return () => clearInterval(i);
-  }, [trap.unit]);
+  }, [trap.unit, frozen]);
 
-  const pausedFor = ftue.showing && ftueOpenedAtRef.current ? Date.now() - ftueOpenedAtRef.current : 0;
+  const pausedFor = frozen && ftueOpenedAtRef.current ? Date.now() - ftueOpenedAtRef.current : 0;
   const elapsed = Date.now() - started - ftueOffsetRef.current - pausedFor;
   const remaining = Math.max(0, TRAP_TIMEOUT_MS - elapsed);
   const ringProgress = remaining / TRAP_TIMEOUT_MS;
@@ -1565,9 +1601,9 @@ function JudgePhase({
   // Timeout = fail
   useEffect(() => {
     if (completedRef.current) return;
-    if (ftue.showing) return;
+    if (frozen) return;
     if (remaining <= 0) finish("fail");
-  }, [remaining, ftue.showing]);
+  }, [remaining, frozen]);
 
 
   const finish = (outcome: "success" | "fail") => {

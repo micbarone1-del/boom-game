@@ -32,12 +32,15 @@ export function CountdownNumber({
     >
       <span
         key={done ? "go" : `n-${value}`}
-        className="anim-count-tick absolute inset-0 flex items-center justify-center text-center tabular-nums"
+        className="anim-count-tick absolute inset-0 flex items-center justify-center text-center tabular-nums font-black"
         style={{
-          fontFamily: "'Luckiest Guy', cursive",
+          fontFamily: done
+            ? "'Luckiest Guy', cursive"
+            : "ui-rounded, 'SF Pro Rounded', system-ui, 'Segoe UI', sans-serif",
+          fontWeight: 900,
           color: tone,
-          fontSize: done ? "2.6rem" : "5.5rem",
-          lineHeight: 1,
+          fontSize: done ? "2.6rem" : "4.6rem",
+          lineHeight: 1.25,
           letterSpacing: 0,
         }}
       >

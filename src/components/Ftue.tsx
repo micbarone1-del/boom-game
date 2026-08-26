@@ -34,6 +34,40 @@ function storeKey(profile: string, key: FtueKey) {
   return `boom.ftue.${profile}.${key}`;
 }
 
+const DISABLED_KEY = "boom.ftue.disabled";
+
+/** Global kill-switch for all tutorial pop-ups (all profiles). */
+export function ftueDisabled() {
+  if (typeof window === "undefined") return true;
+  try {
+    return window.localStorage.getItem(DISABLED_KEY) === "1";
+  } catch {
+    return true;
+  }
+}
+
+export function setFtueDisabled(off: boolean) {
+  try {
+    window.localStorage.setItem(DISABLED_KEY, off ? "1" : "0");
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Clears every "seen" flag so tips show again from the next screen on. */
+export function resetFtue() {
+  try {
+    const del: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith("boom.ftue.") && k !== DISABLED_KEY) del.push(k);
+    }
+    del.forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    /* private mode */
+  }
+}
+
 function seen(profile: string, key: FtueKey) {
   if (typeof window === "undefined") return true;
   try {
@@ -53,6 +87,7 @@ export function useFtue(profile: string | null | undefined, key: FtueKey) {
 
   useEffect(() => {
     if (!profile) return;
+    if (ftueDisabled()) return;
     if (seen(id, key)) return;
     setOpen(true);
   }, [profile, id, key]);
@@ -99,6 +134,16 @@ export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: (
         </p>
         <button onClick={onDismiss} className="btn-massive w-full" style={{ background: "var(--boom-green)" }}>
           GOT IT!
+        </button>
+        <button
+          onClick={() => {
+            setFtueDisabled(true);
+            onDismiss();
+          }}
+          className="ink-border-sm rounded-xl bg-white px-4 py-2 text-base font-black uppercase active:scale-95"
+          style={{ color: "var(--boom-ink)" }}
+        >
+          Turn tips off
         </button>
       </div>
     </div>

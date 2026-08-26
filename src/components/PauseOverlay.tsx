@@ -1,7 +1,8 @@
-import { Pause, Play, UserPlus, Bomb } from "lucide-react";
-import { useMemo } from "react";
+import { Pause, Play, UserPlus, Bomb, Flag, GraduationCap } from "lucide-react";
+import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Player, Pod } from "@/hooks/use-room";
+import { ftueDisabled, setFtueDisabled, resetFtue } from "@/components/Ftue";
 
 /**
  * Fullscreen "PAUSED" overlay shown to every connected client (host TV +
@@ -11,6 +12,7 @@ import type { Player, Pod } from "@/hooks/use-room";
  */
 export function PauseOverlay({
   onResume,
+  onGiveUp,
   onSignInClick,
   label = "PAUSED",
   code,
@@ -18,12 +20,14 @@ export function PauseOverlay({
   pods,
 }: {
   onResume?: () => void;
+  onGiveUp?: () => void;
   onSignInClick?: () => void;
   label?: string;
   code?: string;
   players?: Player[];
   pods?: Pod[];
 }) {
+  const [tipsOff, setTipsOff] = useState(() => ftueDisabled());
   const joinUrl = useMemo(() => {
     if (!code || typeof window === "undefined") return "";
     return `${window.location.origin}/join/${code}`;
@@ -64,6 +68,26 @@ export function PauseOverlay({
           <Play size={28} fill="#fff" /> RESUME
         </button>
       )}
+      {onGiveUp && (
+        <button
+          onClick={onGiveUp}
+          className="ink-border rounded-2xl bg-[var(--boom-red)] text-white px-6 py-3 text-2xl font-black flex items-center gap-2 active:scale-95"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <Flag size={26} fill="#fff" /> GIVE UP
+        </button>
+      )}
+      <button
+        onClick={() => {
+          const next = !tipsOff;
+          setFtueDisabled(next);
+          if (!next) resetFtue();
+          setTipsOff(next);
+        }}
+        className="ink-border-sm rounded-xl bg-white text-[var(--boom-ink)] px-4 py-2 text-sm font-black flex items-center gap-2 active:scale-95"
+      >
+        <GraduationCap size={18} /> {tipsOff ? "TIPS: OFF — TURN ON" : "TIPS: ON — TURN OFF"}
+      </button>
       {onSignInClick && (
         <button
           onClick={onSignInClick}

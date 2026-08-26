@@ -10,6 +10,13 @@ type Row = {
   games: number;
 };
 
+type PastGame = {
+  key: string;
+  room_code: string;
+  played_at: string;
+  entries: { username: string; score: number; avatar_url: string | null }[];
+};
+
 /**
  * Global all-time leaderboard. Aggregates `game_results` client-side
  * (top 50 rows) to compute total score per user.

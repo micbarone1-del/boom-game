@@ -1282,7 +1282,7 @@ function HopOverlay({
             return (
               <div
                 key={cell.space}
-                className={`absolute rounded-xl flex items-center justify-center font-black overflow-hidden ${
+                className={`absolute rounded-xl flex items-center justify-center font-black ${
                   trapHit ? "anim-trap-land" : isCurrent ? "anim-mascot-bounce" : ""
                 }`}
                 style={{

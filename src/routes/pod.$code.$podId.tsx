@@ -481,7 +481,7 @@ function PodPage() {
               void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
             }}
             onGiveUp={() => {
-              void navigate({ to: "/join/$code", params: { code } });
+              void navigate({ to: "/join/$code", params: { code }, search: {} });
             }}
             onSignInClick={() => setPauseJoinOpen(true)}
           />

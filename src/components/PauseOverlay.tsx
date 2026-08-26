@@ -1,8 +1,7 @@
 import { Pause, Play, UserPlus, Bomb, Flag } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Player, Pod } from "@/hooks/use-room";
-import { ftueDisabled, setFtueDisabled, resetFtue } from "@/components/Ftue";
 
 /**
  * Fullscreen "PAUSED" overlay shown to every connected client (host TV +
@@ -77,17 +76,6 @@ export function PauseOverlay({
           <Flag size={26} fill="#fff" /> GIVE UP
         </button>
       )}
-      <button
-        onClick={() => {
-          const next = !tipsOff;
-          setFtueDisabled(next);
-          if (!next) resetFtue();
-          setTipsOff(next);
-        }}
-        className="ink-border-sm rounded-xl bg-white text-[var(--boom-ink)] px-4 py-2 text-sm font-black flex items-center gap-2 active:scale-95"
-      >
-        <GraduationCap size={18} /> {tipsOff ? "TIPS: OFF — TURN ON" : "TIPS: ON — TURN OFF"}
-      </button>
       {onSignInClick && (
         <button
           onClick={onSignInClick}

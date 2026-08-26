@@ -905,15 +905,16 @@ function PlayerPhase({
 
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
+      {ftue.modal}
       {hopping && (
         <HopOverlay player={player} players={players} path={hopping.path} step={hopping.step} />
       )}
       {hopMascot && <CellMascot type={hopMascot} username={player.username} />}
       {powerUp && <PowerUpOverlay player={player} />}
-      <div className="text-xs font-bold opacity-60 uppercase tracking-wider">Your turn</div>
-      <Avatar player={player} size={140} />
+      <div className="text-sm font-bold opacity-70 uppercase tracking-widest">Your turn</div>
+      <Avatar player={player} size={150} />
       <div
-        className="text-4xl font-black"
+        className="text-5xl font-black"
         style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}
       >
         {player.username}
@@ -921,23 +922,33 @@ function PlayerPhase({
 
       <button
         onClick={handleRoll}
-        disabled={rolling}
-        className="w-44 h-44 rounded-3xl ink-border arcade-press arcade-tilt-r flex items-center justify-center"
-        style={{ background: "var(--boom-yellow)" }}
+        disabled={rolling || ftue.showing}
+        className="w-[64vw] max-w-[19rem] aspect-square rounded-[2rem] arcade-press arcade-tilt-r flex items-center justify-center"
+        style={{
+          background: "var(--boom-yellow)",
+          border: "5px solid #000",
+          boxShadow: "8px 8px 0 0 #000",
+        }}
         aria-label="Roll the dice"
       >
         {face === null ? (
-          <Dice5 size={120} style={{ color: "var(--boom-ink)" }} />
+          <Dice5 size={150} strokeWidth={2.4} style={{ color: "var(--boom-ink)" }} />
         ) : (
           <span
-            className="text-8xl font-black"
-            style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}
+            className="font-black"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: "var(--boom-ink)",
+              fontSize: "clamp(6rem, 30vw, 11rem)",
+              lineHeight: 1,
+            }}
           >
             {face}
           </span>
         )}
       </button>
-      <div className="text-sm opacity-60">Tap to roll</div>
+      <div className="text-lg font-black opacity-70">TAP TO ROLL</div>
+
 
       <ProgressBar
         players={players}

@@ -4,7 +4,6 @@ import { Bomb, Music, LogIn, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRoomCode } from "@/lib/game";
 import bombMascot from "@/assets/bomb-mascot.png";
-import { TutorialCarousel } from "@/components/TutorialCarousel";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -161,8 +160,29 @@ function Index() {
         </Link>
       </div>
 
-      <div className="w-full max-w-md flex-1 min-h-0">
-        <TutorialCarousel compact />
+      {/* Attract mode — looping gameplay reel framed like an arcade cabinet screen */}
+      <div className="w-full max-w-md flex-1 min-h-0 flex items-center justify-center pb-2">
+        <div
+          className="w-full overflow-hidden bg-black"
+          style={{
+            border: "4px solid #000000",
+            boxShadow: "6px 6px 0px #000000",
+            borderRadius: "12px",
+          }}
+        >
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            aria-label="BOOM! gameplay attract reel"
+            className="block w-full h-auto max-h-[46vh] object-cover"
+          >
+            <source src="/media/attract.mp4" type="video/mp4" />
+            <source src="/media/attract.webm" type="video/webm" />
+          </video>
+        </div>
       </div>
     </main>
   );

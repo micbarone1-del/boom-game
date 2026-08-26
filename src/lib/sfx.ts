@@ -26,7 +26,9 @@ type EffectName =
   | "win"
   | "wheelTick"
   | "wheelStop"
-  | "bossHit";
+  | "bossHit"
+  | "hopStep"
+  | "trapPop";
 
 type BoomSfxGlobal = {
   ctx: AudioContext | null;
@@ -380,6 +382,19 @@ const effects: Record<EffectName, () => void> = {
     beep({ freq: 220, endFreq: 60, dur: 0.22, type: "sawtooth", gain: 0.28 });
     beep({ freq: 1320, dur: 0.05, type: "square", gain: 0.22, delay: 0.02 });
   },
+
+  // Springy "boing" for every hop of the token along the board
+  hopStep: () => {
+    beep({ freq: 380, endFreq: 900, dur: 0.09, type: "square", gain: 0.16 });
+    beep({ freq: 1200, dur: 0.04, type: "triangle", gain: 0.1, delay: 0.08 });
+  },
+
+  // Cartoon "pop!" when a trap / cell mascot springs onto the screen
+  trapPop: () => {
+    beep({ freq: 180, endFreq: 1200, dur: 0.12, type: "sawtooth", gain: 0.22 });
+    noise({ dur: 0.12, gain: 0.2, lowpass: 3200, delay: 0.02 });
+    beep({ freq: 1568, dur: 0.09, type: "square", gain: 0.18, delay: 0.12 });
+  },
 };
 
 export const sfx = {
@@ -528,75 +543,294 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
   }
 }
 
+// ---------------------------------------------------------------------------
+// BGM: heavy distorted retro-arcade rock/dance engine.
+// One 16-step sequencer drives distorted power-chord stabs, a driving kick,
+// snare backbeat, off-beat hats and a chip lead. The active "phase" swaps
+// the riff/tempo/timbre, and intensity (fuse progress) pushes tempo + drive.
+// ---------------------------------------------------------------------------
+
+export type MusicPhase = "lobby" | "play" | "judge" | "boss" | "victory";
+
+type PhaseCfg = {
+  bpm: number;
+  roots: number[]; // one root per bar-quarter (semitone-based Hz)
+  lead: number[]; // 16-step lead pattern (semitone offsets, -1 = rest)
+  drive: number; // distortion amount
+  gain: number;
+};
+
+const PHASES: Record<MusicPhase, PhaseCfg> = {
+  lobby: {
+    bpm: 118,
+    roots: [98, 98, 110, 87.31],
+    lead: [0, -1, 7, -1, 5, -1, 3, -1, 0, -1, 7, -1, 10, -1, 7, -1],
+    drive: 12,
+    gain: 0.1,
+  },
+  play: {
+    bpm: 132,
+    roots: [110, 110, 146.83, 130.81],
+    lead: [0, 7, -1, 5, 3, -1, 7, 10, 0, 7, -1, 5, 12, 10, 7, 5],
+    drive: 26,
+    gain: 0.13,
+  },
+  judge: {
+    bpm: 146,
+    roots: [98, 98, 116.54, 130.81],
+    lead: [0, 0, 7, 7, 10, 10, 12, 12, 0, 0, 7, 7, 14, 12, 10, 7],
+    drive: 40,
+    gain: 0.14,
+  },
+  boss: {
+    bpm: 156,
+    roots: [73.42, 73.42, 87.31, 82.41],
+    lead: [0, 1, 0, -1, 7, 6, 7, -1, 0, 1, 0, -1, 10, 9, 7, 6],
+    drive: 60,
+    gain: 0.16,
+  },
+  victory: {
+    bpm: 128,
+    roots: [130.81, 164.81, 174.61, 196],
+    lead: [0, 4, 7, 12, 7, 4, 0, 4, 7, 12, 16, 12, 7, 4, 0, -1],
+    drive: 18,
+    gain: 0.13,
+  },
+};
+
+let musicPhase: MusicPhase = "play";
+let musicIntensity = 0;
+let driveShaper: WaveShaperNode | null = null;
+let driveAmountApplied = -1;
+
+function makeCurve(amount: number): Float32Array<ArrayBuffer> {
+  const n = 1024;
+  const curve = new Float32Array(new ArrayBuffer(n * 4));
+  const k = Math.max(1, amount);
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1;
+    curve[i] = ((1 + k) * x) / (1 + k * Math.abs(x));
+  }
+  return curve;
+}
+
+function musicBus(c: AudioContext, cfg: PhaseCfg): AudioNode {
+  let g = state.arcadeGain;
+  if (!g || g.context !== c) {
+    g = c.createGain();
+    g.gain.value = cfg.gain;
+    const shaper = c.createWaveShaper();
+    shaper.curve = makeCurve(cfg.drive);
+    driveShaper = shaper;
+    driveAmountApplied = cfg.drive;
+    const tone = c.createBiquadFilter();
+    tone.type = "lowpass";
+    tone.frequency.value = 5200;
+    g.connect(shaper).connect(tone).connect(out(c));
+    state.arcadeGain = g;
+  }
+  const drive = cfg.drive * (1 + musicIntensity * 0.8);
+  if (driveShaper && Math.abs(drive - driveAmountApplied) > 2) {
+    driveShaper.curve = makeCurve(drive);
+    driveAmountApplied = drive;
+  }
+  return g;
+}
+
+function powerChord(c: AudioContext, t0: number, root: number, dur: number, dest: AudioNode) {
+  // Root + fifth + octave, slightly detuned = classic distorted power chord.
+  
+  const ratios = [1, 1.4983, 2];
+  ratios.forEach((r, i) => {
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = i === 2 ? "square" : "sawtooth";
+    o.frequency.setValueAtTime(root * r * (i === 1 ? 1.004 : 1), t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.2 / (i + 1), t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(dest);
+    o.start(t0);
+    o.stop(t0 + dur + 0.02);
+  });
+}
+
+function snareAt(c: AudioContext, t0: number, dest: AudioNode) {
+  const len = Math.floor(c.sampleRate * 0.14);
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const f = c.createBiquadFilter();
+  f.type = "bandpass";
+  f.frequency.value = 1900;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.3, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+  src.connect(f).connect(g).connect(dest);
+  src.start(t0);
+  src.stop(t0 + 0.16);
+}
+
+function hatAt(c: AudioContext, t0: number, dest: AudioNode) {
+  const len = Math.floor(c.sampleRate * 0.05);
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const f = c.createBiquadFilter();
+  f.type = "highpass";
+  f.frequency.value = 7000;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.12, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.05);
+  src.connect(f).connect(g).connect(dest);
+  src.start(t0);
+  src.stop(t0 + 0.07);
+}
+
+function stepDurationMs(cfg: PhaseCfg): number {
+  const bpm = cfg.bpm * (1 + musicIntensity * 0.35);
+  return Math.max(70, (60000 / bpm) / 4); // 16th notes
+}
+
 function playArcadeLoopStep() {
   if (muted) return;
   const c = ac();
   if (!c) return;
-  const root = [110, 130.81, 146.83, 164.81][state.arcadeStep % 4];
-  const melody = [2, 4, 7, 11, 14, 11, 7, 4][state.arcadeStep % 8];
+  const cfg = PHASES[musicPhase];
+  const bus = musicBus(c, cfg);
   const t0 = safeStart(c);
-  const stepDur = 0.18;
-  let musicGain = state.arcadeGain;
-  if (!musicGain || musicGain.context !== c) {
-    musicGain = c.createGain();
-    musicGain.gain.value = 0.1;
-    musicGain.connect(out(c));
-    state.arcadeGain = musicGain;
+  const i = state.arcadeStep % 16;
+  const root = cfg.roots[Math.floor(i / 4) % cfg.roots.length];
+  const stepSec = stepDurationMs(cfg) / 1000;
+
+  // Distorted chord stabs on the 1 and the off-beat "and" of 3.
+  if (i === 0 || i === 6 || i === 10) {
+    powerChord(c, t0, root, stepSec * (i === 0 ? 3 : 1.6), bus);
   }
-  const bass = c.createOscillator();
-  const lead = c.createOscillator();
-  const bassGain = c.createGain();
-  const leadGain = c.createGain();
-  bass.type = "square";
-  lead.type = "sawtooth";
-  bass.frequency.setValueAtTime(root, t0);
-  lead.frequency.setValueAtTime(root * Math.pow(2, melody / 12) * 2, t0);
-  bassGain.gain.setValueAtTime(0.0001, t0);
-  bassGain.gain.exponentialRampToValueAtTime(0.16, t0 + 0.01);
-  bassGain.gain.exponentialRampToValueAtTime(0.0001, t0 + stepDur);
-  leadGain.gain.setValueAtTime(0.0001, t0);
-  leadGain.gain.exponentialRampToValueAtTime(0.07, t0 + 0.01);
-  leadGain.gain.exponentialRampToValueAtTime(0.0001, t0 + stepDur * 0.75);
-  bass.connect(bassGain).connect(musicGain);
-  lead.connect(leadGain).connect(musicGain);
-  bass.start(t0);
-  lead.start(t0);
-  bass.stop(t0 + stepDur + 0.03);
-  lead.stop(t0 + stepDur + 0.03);
-  // 4-on-the-floor kick aligned to the arcade grid (every 2 steps ~143 BPM).
-  // Keeping it inside the same loop guarantees the kick and the bassline
-  // never drift out of sync.
-  if (state.arcadeStep % 2 === 0) playKickAt(c, t0, musicGain);
+  // Driving four-on-the-floor kick.
+  if (i % 4 === 0) playKickAt(c, t0, bus);
+  // Backbeat snare.
+  if (i === 4 || i === 12) snareAt(c, t0, bus);
+  // Off-beat hats (dance feel).
+  if (i % 2 === 1) hatAt(c, t0, bus);
+  // Chip lead riff.
+  const semi = cfg.lead[i];
+  if (semi >= 0) {
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = "square";
+    o.frequency.setValueAtTime(root * 4 * Math.pow(2, semi / 12), t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.075, t0 + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + stepSec * 0.9);
+    o.connect(g).connect(bus);
+    o.start(t0);
+    o.stop(t0 + stepSec + 0.02);
+  }
   state.arcadeStep += 1;
+}
+
+function rescheduleLoop() {
+  if (typeof window === "undefined") return;
+  if (!state.arcadeTimer) return;
+  window.clearInterval(state.arcadeTimer);
+  state.arcadeTimer = window.setInterval(playArcadeLoopStep, stepDurationMs(PHASES[musicPhase]));
 }
 
 export function startArcadeMusic() {
   if (muted || typeof window === "undefined") return;
   void ensureReady().then(() => playArcadeLoopStep());
   if (state.arcadeTimer) return;
-  state.arcadeTimer = window.setInterval(playArcadeLoopStep, 210);
+  state.arcadeTimer = window.setInterval(playArcadeLoopStep, stepDurationMs(PHASES[musicPhase]));
 }
 
-/**
- * Ramp the arcade BGM intensity from 0..1 (calm → frantic). Increases
- * tempo (interval) and gain so the fuse timer feels more urgent.
- */
-export function setBgmIntensity(progress: number) {
-  if (typeof window === "undefined") return;
-  const p = Math.max(0, Math.min(1, progress));
-  const interval = Math.round(210 - p * 110); // 210ms → 100ms
-  if (state.arcadeTimer) {
-    window.clearInterval(state.arcadeTimer);
-    state.arcadeTimer = window.setInterval(playArcadeLoopStep, interval);
-  }
+/** Swap the track to the one matching the current game phase. */
+export function setMusicPhase(phase: MusicPhase) {
+  if (phase === musicPhase) return;
+  musicPhase = phase;
+  state.arcadeStep = 0;
+  const cfg = PHASES[phase];
   const g = state.arcadeGain;
   const c = ac();
   if (g && c) {
     try {
       const t = c.currentTime + 0.02;
       g.gain.cancelScheduledValues(t);
-      g.gain.linearRampToValueAtTime(0.1 + p * 0.5, t + 0.3);
+      g.gain.linearRampToValueAtTime(cfg.gain + musicIntensity * 0.35, t + 0.25);
     } catch {}
+  }
+  rescheduleLoop();
+}
+
+export function getMusicPhase(): MusicPhase {
+  return musicPhase;
+}
+
+/**
+ * Ramp the BGM intensity from 0..1 (calm → frantic): faster tempo, more
+ * distortion drive and more level, so the fuse timer feels urgent.
+ */
+export function setBgmIntensity(progress: number) {
+  if (typeof window === "undefined") return;
+  const p = Math.max(0, Math.min(1, progress));
+  if (Math.abs(p - musicIntensity) < 0.02) return;
+  musicIntensity = p;
+  rescheduleLoop();
+  const g = state.arcadeGain;
+  const c = ac();
+  if (g && c) {
+    try {
+      const t = c.currentTime + 0.02;
+      g.gain.cancelScheduledValues(t);
+      g.gain.linearRampToValueAtTime(PHASES[musicPhase].gain + p * 0.35, t + 0.3);
+    } catch {}
+  }
+}
+
+/**
+ * Freeze / unfreeze ALL audio (music, scheduled SFX tails, robotic voice).
+ * Used by the pause overlay so a paused game is truly silent and the
+ * exercise soundtrack resumes exactly where it stopped.
+ */
+export function setAudioSuspended(suspended: boolean) {
+  if (typeof window === "undefined") return;
+  const c = state.ctx;
+  if (suspended) {
+    if (state.arcadeTimer) {
+      window.clearInterval(state.arcadeTimer);
+      state.arcadeTimer = null;
+    }
+    try { window.speechSynthesis?.cancel(); } catch {}
+    if (c && c.state === "running") void c.suspend().catch(() => {});
+  } else {
+    if (c && c.state === "suspended") void c.resume().catch(() => {});
+  }
+}
+
+/**
+ * Haptic feedback. Uses the Vibration API where available (Android/Chrome);
+ * silently no-ops on iOS Safari.
+ */
+export type HapticKind = "tap" | "light" | "hop" | "success" | "fail" | "boom" | "warn";
+const HAPTICS: Record<HapticKind, number | number[]> = {
+  tap: 15,
+  light: 8,
+  hop: [0, 12, 40, 12],
+  success: [0, 25, 45, 25, 45, 60],
+  fail: [0, 90, 60, 140],
+  boom: [0, 200, 80, 300],
+  warn: [0, 30, 60, 30],
+};
+export function haptic(kind: HapticKind = "tap") {
+  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+  try {
+    navigator.vibrate(HAPTICS[kind]);
+  } catch {
+    /* ignore */
   }
 }
 

@@ -1640,7 +1640,7 @@ function JudgePhase({
     if (holdingRef.current) repPop(Math.min(1, holdMs / (trap.reps * 1000)));
   }, [holdMs, trap]);
 
-  const ringSize = 220;
+  const ringSize = 280;
   const stroke = 14;
   const r = (ringSize - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -1783,23 +1783,27 @@ function JudgePhase({
             onPointerUp={trap.unit === "seconds" ? onHoldEnd : undefined}
             onPointerCancel={trap.unit === "seconds" ? onHoldEnd : undefined}
             onPointerLeave={trap.unit === "seconds" ? onHoldEnd : undefined}
-            className="absolute inset-6 rounded-full flex flex-col items-center justify-center select-none arcade-press"
+            className="absolute inset-5 rounded-full flex flex-col items-center justify-center gap-1 select-none arcade-press"
             style={{
               background: "var(--boom-red)",
               color: "white",
-              boxShadow: "0 0 0 4px #111, 0 8px 24px rgba(0,0,0,0.5)",
+              border: "4px solid #000",
+              boxShadow: "6px 6px 0 0 #000, 0 8px 24px rgba(0,0,0,0.5)",
             }}
           >
-            <span className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            <span
+              className="font-black"
+              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2.2rem, 10vw, 3.2rem)", lineHeight: 1, textShadow: "3px 3px 0 #000" }}
+            >
               DEFUSE
             </span>
-            <span className="text-base font-bold">
+            <span className="text-2xl font-black tabular-nums">
               {trap.unit === "reps"
                 ? `${reps} / ${trap.reps}`
                 : `${(holdMs / 1000).toFixed(1)}s / ${trap.reps}s`}
             </span>
-            <span className="text-xs opacity-80">
-              {trap.unit === "reps" ? "tap per rep" : "hold"}
+            <span className="text-sm font-bold opacity-90">
+              {trap.unit === "reps" ? "TAP PER REP" : "HOLD"}
             </span>
           </button>
         </div>

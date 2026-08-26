@@ -1074,7 +1074,7 @@ function SwitchPhase({
           className="w-44 h-44 max-w-[45vw] max-h-[45vw] object-contain anim-mascot-bounce arcade-slam-in drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
         />
         <div
-          className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in"
+          className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in anim-ui-float"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
         >
           <span
@@ -1084,7 +1084,7 @@ function SwitchPhase({
             {flavor.label}
           </span>
         </div>
-        <div className="text-center ink-border rounded-2xl bg-white px-4 py-2 max-w-[92%] arcade-slam-in">
+        <div className="text-center ink-border rounded-2xl bg-white px-4 py-2 max-w-[92%] arcade-slam-in anim-ui-float">
           <div
             className="font-black leading-tight"
             style={{
@@ -2077,7 +2077,7 @@ function WrapUp({
       </div>
 
       {/* Ranking */}
-      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2 anim-ui-float">
         <div className="text-xl arcade-heading text-white mb-1">Final Ranking</div>
         {[...localPlayers].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p, i) => (
           <div key={p.id} className="arcade-card-sm bg-white flex items-center gap-3 py-2 px-3">
@@ -2116,7 +2116,7 @@ function WrapUp({
       </div>
 
       {/* Shareable recap videos — 2x2 sticker grid */}
-      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2 anim-ui-float">
         <div className="text-xl arcade-heading text-white mb-1">Share your recap</div>
         <div className="grid grid-cols-2 gap-3">
           {[...localPlayers]
@@ -2141,7 +2141,7 @@ function WrapUp({
       <GlobalLeaderboard highlightUserId={user?.id ?? null} />
 
       {/* Clips */}
-      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2 anim-ui-float">
         <div className="text-xl arcade-heading text-white mb-1">Judge Highlights</div>
         {clipList.length === 0 ? (
           <div className="text-sm opacity-60">No clips captured this round.</div>
@@ -2300,14 +2300,14 @@ function VsPhase({
         </div>
         <div className="flex flex-col items-center gap-2">
           <div className="text-white text-sm opacity-80 uppercase">Pass phone to judge</div>
-          <div className="bg-white ink-border rounded-full px-4 py-2 flex items-center gap-2">
+          <div className="bg-white ink-border rounded-full px-4 py-2 flex items-center gap-2 anim-ui-float">
             <Avatar player={judge} size={40} />
             <span className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{judge.username}</span>
           </div>
         </div>
         <button
           onClick={() => setStage("battle")}
-          className="w-full max-w-sm py-4 rounded-2xl ink-border bg-[var(--boom-yellow)] text-2xl font-black active:scale-95"
+          className="w-full max-w-sm py-4 rounded-2xl ink-border bg-[var(--boom-yellow)] text-2xl font-black active:scale-95 anim-ui-float"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
         >
           START BATTLE
@@ -2432,7 +2432,7 @@ function GroupPhase({
       </div>
       <button
         onClick={onComplete}
-        className="w-full max-w-sm py-5 rounded-2xl ink-border bg-[var(--boom-green)] text-white text-3xl font-black active:scale-95"
+        className="w-full max-w-sm py-5 rounded-2xl ink-border bg-[var(--boom-green)] text-white text-3xl font-black active:scale-95 anim-ui-float"
         style={{ fontFamily: "'Luckiest Guy', cursive" }}
       >
         WE DID IT!
@@ -2460,7 +2460,7 @@ function PausePhase({ player, onComplete }: { player: Player; onComplete: () => 
         PAUSE!
       </div>
       <div className="text-white text-xl font-bold">Take a breath, {player.username} 🌬️</div>
-      <button onClick={onComplete} className="px-6 py-3 rounded-full bg-white ink-border text-lg font-black active:scale-95">
+      <button onClick={onComplete} className="px-6 py-3 rounded-full bg-white ink-border text-lg font-black active:scale-95 anim-ui-float">
         Skip
       </button>
     </main>

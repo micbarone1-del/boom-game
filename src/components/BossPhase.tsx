@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bomb, Flame, Skull } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { CountdownNumber } from "@/components/CountdownNumber";
+import { BombAvatar } from "@/components/BombAvatar";
+
 import type { Player, Room } from "@/hooks/use-room";
 import {
   pickCrazyExercise,

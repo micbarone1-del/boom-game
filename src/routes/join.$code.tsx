@@ -8,6 +8,7 @@ import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { saveGuestMap, loadGuestMap } from "@/lib/guest";
+import { fileToAvatarDataUrl } from "@/lib/image";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,
@@ -508,7 +509,7 @@ function SlotCard({
   const isMascot = slot.avatar?.startsWith("mascot:");
   const mascotHex = isMascot ? slot.avatar!.slice(7) : mascotColor;
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     if (!f.type.startsWith("image/")) {
@@ -516,15 +517,16 @@ function SlotCard({
       e.target.value = "";
       return;
     }
-    if (f.size > 1_048_576) {
-      alert("Photo is too large. Please choose an image under 1 MB.");
-      e.target.value = "";
-      return;
+    try {
+      // Any size is fine — we downscale + recompress on device.
+      const dataUrl = await fileToAvatarDataUrl(f);
+      onChange({ avatar: dataUrl });
+    } catch {
+      alert("Could not read that photo. Try another one.");
     }
-    const reader = new FileReader();
-    reader.onload = () => onChange({ avatar: String(reader.result) });
-    reader.readAsDataURL(f);
+    e.target.value = "";
   };
+
 
   return (
     <div
@@ -567,7 +569,7 @@ function SlotCard({
           ref={fileRef}
           type="file"
           accept="image/*"
-          capture="environment"
+          capture="user"
           hidden
           onChange={handleFile}
         />

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bomb, Music, LogIn, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRoomCode } from "@/lib/game";
@@ -57,7 +57,17 @@ function Index() {
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
   const [creating, setCreating] = useState(false);
+  const [attract, setAttract] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // Some in-app/preview browsers ignore the autoplay attribute — nudge playback.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    void v.play().catch(() => {});
+  }, [attract]);
   const tryJoin = (e: React.FormEvent) => {
+
     e.preventDefault();
     const c = joinCode.trim().toUpperCase();
     if (!c) return;
@@ -74,15 +84,101 @@ function Index() {
     }
     navigate({ to: "/join/$code", params: { code }, search: { auto: 1 } as never });
   };
+  if (attract) {
+    return (
+      <main className="fixed inset-0 overflow-hidden bg-black">
+        {/* Full-screen attract reel */}
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-label="BOOM! gameplay attract reel"
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/media/attract.mp4" type="video/mp4" />
+          <source src="/media/attract.webm" type="video/webm" />
+        </video>
+
+        {/* Tap anywhere to start */}
+        <button
+          onClick={startSolo}
+          disabled={creating}
+          className="absolute inset-0 w-full h-full flex flex-col items-center justify-between py-8 px-4"
+          aria-label="Press to start"
+          style={{ background: "linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.15) 40%, rgba(0,0,0,.7))" }}
+        >
+          <div className="text-center">
+            <img
+              src={bombMascot}
+              alt="BOOM mascot — excited cartoon bomb with a lit fuse"
+              width={1024}
+              height={1024}
+              fetchPriority="high"
+              decoding="async"
+              className="mx-auto w-20 md:w-28 anim-fuse"
+            />
+            <h1
+              className="comic-shadow"
+              style={{
+                fontFamily: "'Luckiest Guy', cursive",
+                fontSize: "clamp(3rem, 14vw, 6rem)",
+                color: "var(--boom-red)",
+                lineHeight: 1,
+              }}
+            >
+              BOOM!
+            </h1>
+          </div>
+
+          <span
+            className="anim-press-start"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              fontSize: "clamp(1.75rem, 8vw, 3rem)",
+              color: "white",
+              textShadow: "3px 3px 0 #000, 0 0 18px rgba(255,0,0,.8)",
+            }}
+          >
+            {creating ? "IGNITING…" : "PRESS TO START"}
+          </span>
+
+          <span className="text-xs font-black" style={{ color: "rgba(255,255,255,.8)" }}>
+            Up to 3 pods · hot-potato workout chaos
+          </span>
+        </button>
+
+        {/* Escape hatches — don't trigger the full-screen start button */}
+        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-4 z-10">
+          <button
+            onClick={() => setAttract(false)}
+            className="ink-border-sm rounded-xl px-3 py-1.5 bg-white text-xs font-black flex items-center gap-1"
+          >
+            <LogIn size={12} /> Join with code
+          </button>
+          <Link
+            to="/gym/$code"
+            params={{ code: "new" }}
+            className="text-xs font-black underline flex items-center gap-1"
+            style={{ color: "white", textShadow: "1px 1px 0 #000" }}
+          >
+            <Music size={12} /> Host the gym
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="h-[100svh] overflow-hidden flex flex-col items-center px-4 py-3 gap-3">
+    <main className="h-[100svh] overflow-hidden flex flex-col items-center justify-center px-4 py-3 gap-3">
       <div className="text-center">
         <img
           src={bombMascot}
           alt="BOOM mascot — excited cartoon bomb with a lit fuse"
           width={1024}
           height={1024}
-          fetchPriority="high"
           decoding="async"
           className="mx-auto w-20 md:w-32 anim-fuse"
         />
@@ -111,7 +207,6 @@ function Index() {
         >
           <Play size={36} color="white" fill="white" />
           <span>{creating ? "IGNITING…" : "START PLAYING"}</span>
-
         </button>
         <form
           onSubmit={tryJoin}
@@ -150,6 +245,13 @@ function Index() {
             </button>
           </div>
         </form>
+        <button
+          onClick={() => setAttract(true)}
+          className="text-center text-xs font-black underline opacity-80"
+          style={{ color: "var(--boom-ink)" }}
+        >
+          ← Back to attract mode
+        </button>
         <Link
           to="/gym/$code"
           params={{ code: "new" }}
@@ -159,31 +261,7 @@ function Index() {
           <Music size={12} /> Have a big screen? Host the gym →
         </Link>
       </div>
-
-      {/* Attract mode — looping gameplay reel framed like an arcade cabinet screen */}
-      <div className="w-full max-w-md flex-1 min-h-0 flex items-center justify-center pb-2">
-        <div
-          className="w-full overflow-hidden bg-black"
-          style={{
-            border: "4px solid #000000",
-            boxShadow: "6px 6px 0px #000000",
-            borderRadius: "12px",
-          }}
-        >
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            aria-label="BOOM! gameplay attract reel"
-            className="block w-full h-auto max-h-[46vh] object-cover"
-          >
-            <source src="/media/attract.mp4" type="video/mp4" />
-            <source src="/media/attract.webm" type="video/webm" />
-          </video>
-        </div>
-      </div>
     </main>
   );
 }
+

@@ -133,6 +133,30 @@ function PodPage() {
   // the host) simply hides the overlay and gameplay continues in-place.
   void navigate;
 
+  // --- Audio: freeze everything while paused, and swap the BGM per phase ---
+  // These MUST stay above the early "Loading pod…" return so hook order is stable.
+  const roomPaused = !!room?.paused;
+  const roomPhase = room?.phase ?? null;
+  const phaseKind = phase?.kind ?? null;
+  useEffect(() => {
+    setAudioSuspended(roomPaused);
+    if (roomPaused) haptic("warn");
+    return () => setAudioSuspended(false);
+  }, [roomPaused]);
+
+  useEffect(() => {
+    if (!roomPhase && !phaseKind) return;
+    if (roomPhase === "boss") return setMusicPhase("boss");
+    if (roomPhase === "victory") return setMusicPhase("victory");
+    if (phaseKind === "judge" || phaseKind === "vs" || phaseKind === "group") {
+      return setMusicPhase("judge");
+    }
+    if (phaseKind === "done") return setMusicPhase("victory");
+    setMusicPhase("play");
+  }, [roomPhase, phaseKind]);
+
+
+
   if (loading || !room || ordered.length === 0 || !phase) {
     return <div className="min-h-screen flex items-center justify-center text-2xl">Loading pod…</div>;
   }
@@ -430,22 +454,8 @@ function PodPage() {
       .eq("code", code);
   };
 
-  // --- Audio: freeze everything while paused, and swap the BGM per phase ---
-  useEffect(() => {
-    setAudioSuspended(!!room.paused);
-    if (room.paused) haptic("warn");
-    return () => setAudioSuspended(false);
-  }, [room.paused]);
 
-  useEffect(() => {
-    if (room.phase === "boss") return setMusicPhase("boss");
-    if (room.phase === "victory") return setMusicPhase("victory");
-    if (phase.kind === "judge" || phase.kind === "vs" || phase.kind === "group") {
-      return setMusicPhase("judge");
-    }
-    if (phase.kind === "done") return setMusicPhase("victory");
-    setMusicPhase("play");
-  }, [room.phase, phase.kind]);
+
 
   // Render the timeout / game-over overlays on top of whatever phase is active.
   const overlay = (() => {

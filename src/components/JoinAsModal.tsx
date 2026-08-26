@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { X, Mail, Smartphone, User, Camera, Bomb, Check } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { fileToAvatarDataUrl } from "@/lib/image";
+
 
 const MASCOT_COLORS = [
   "#ec4899",
@@ -90,7 +92,7 @@ export function JoinAsModal({
 
   if (!open) return null;
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     if (!f.type.startsWith("image/")) {
@@ -98,15 +100,16 @@ export function JoinAsModal({
       e.target.value = "";
       return;
     }
-    if (f.size > 1_048_576) {
-      setError("Photo is too large. Please choose an image under 1 MB.");
-      e.target.value = "";
-      return;
+    try {
+      // Any size is fine — downscaled + recompressed on device.
+      setGuestAvatar(await fileToAvatarDataUrl(f));
+      setError(null);
+    } catch {
+      setError("Could not read that photo. Try another one.");
     }
-    const reader = new FileReader();
-    reader.onload = () => setGuestAvatar(String(reader.result));
-    reader.readAsDataURL(f);
+    e.target.value = "";
   };
+
 
   const oauth = async (provider: "google" | "apple") => {
     setBusy(true);
@@ -330,7 +333,7 @@ export function JoinAsModal({
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
+                capture="user"
                 hidden
                 onChange={handleFile}
               />

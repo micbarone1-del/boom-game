@@ -941,12 +941,16 @@ function PlayerPhase({
           <Dice5 size={150} strokeWidth={2.4} style={{ color: "var(--boom-ink)" }} />
         ) : (
           <span
-            className="font-black"
+            className="font-black tabular-nums"
             style={{
-              fontFamily: "'Luckiest Guy', cursive",
+              fontFamily:
+                "ui-rounded, 'SF Pro Rounded', system-ui, 'Segoe UI', sans-serif",
+              fontWeight: 900,
               color: "var(--boom-ink)",
-              fontSize: "clamp(6rem, 30vw, 11rem)",
-              lineHeight: 1,
+              fontSize: "clamp(5rem, 26vw, 9rem)",
+              lineHeight: 1.25,
+              display: "block",
+              padding: "0.1em 0",
             }}
           >
             {face}
@@ -1092,7 +1096,12 @@ function SwitchPhase({
           >
             Judge
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
+          <div
+            className="w-full text-center font-black leading-tight truncate"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1.1rem, 5vw, 1.6rem)" }}
+          >
+            {judge.username}
+          </div>
         </div>
       </div>
 
@@ -1100,7 +1109,10 @@ function SwitchPhase({
       <CountdownNumber value={count} />
 
 
-      <div className="text-base font-bold opacity-80 text-center px-6 pb-2">
+      <div
+        className="font-black text-center px-6 pb-2"
+        style={{ color: "var(--boom-ink)", fontSize: "clamp(1.15rem, 5vw, 1.6rem)" }}
+      >
         Pass the phone to {judge.username}
       </div>
     </main>

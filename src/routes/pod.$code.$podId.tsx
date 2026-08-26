@@ -367,7 +367,8 @@ function PodPage() {
     if (phase.kind !== "judge") return;
     const { playerId, trap } = phase;
     const player = ordered.find((p) => p.id === playerId)!;
-    if (clipBlob) clipsRef.current.set(`${playerId}-${Date.now()}`, clipBlob);
+    // Key encodes player + exercise so the recap montage can label each clip.
+    if (clipBlob) clipsRef.current.set(`${playerId}|${trap.exercise}|${Date.now()}`, clipBlob);
 
     if (outcome === "success") {
       await supabase.from("workout_logs").insert({

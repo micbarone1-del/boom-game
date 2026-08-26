@@ -842,7 +842,7 @@ function BossDeathOverlay() {
       setStage("win");
       speak("Boss defeated. Victory!", { pitch: 1.1, rate: 0.85 });
       haptic("success");
-      sfx.play("win");
+      sfx.play("winJingle");
     }, 4200);
     return () => {
       window.clearInterval(spawn);

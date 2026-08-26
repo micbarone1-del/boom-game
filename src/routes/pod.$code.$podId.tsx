@@ -864,7 +864,7 @@ function PlayerPhase({
     speak(`${player.username}, roll the dice.`, { volume: 1, rate: 0.8, pitch: 0.8 });
     setRolling(true);
     setFace(null);
-    sfx.play("hop");
+    sfx.play("rollJingle");
     // dice shake
     const start = Date.now();
     const interval = setInterval(() => {
@@ -1047,7 +1047,7 @@ function SwitchPhase({
       onDone();
       return;
     }
-    sfx.play("countdown");
+    sfx.play("switchBig");
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [count, onDone, ftue.showing, paused]);
@@ -1660,7 +1660,7 @@ function JudgePhase({
       setDefuseFlash(true);
     } else {
       haptic("boom");
-      sfx.play("blowUp");
+      sfx.play("explodeJingle");
       speak(`${player.username} exploded! Back to start.`);
     }
     // Stop recorder & collect blob
@@ -2026,7 +2026,7 @@ function WrapUp({
   useEffect(() => {
     if (spoken) return;
     setSpoken(true);
-    sfx.play("win");
+    sfx.play("winJingle");
     speak(`${winner.username} wins!`);
   }, [spoken, winner.username]);
 

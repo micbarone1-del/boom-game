@@ -31,6 +31,9 @@ export function CellMascot({ type, username }: { type: CellType; username?: stri
   useEffect(() => {
     if (type === "finish") return;
     sfx.play("trapPop");
+    if (type !== "boost" && type !== "start") {
+      window.setTimeout(() => sfx.play("trapFound"), 140);
+    }
     haptic(type === "setback" ? "fail" : "success");
   }, [type]);
   // Finish has its own dedicated explosion overlay — skip the cell splash.

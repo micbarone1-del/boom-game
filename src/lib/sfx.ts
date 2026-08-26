@@ -1072,7 +1072,7 @@ export function playGameOver() {
 }
 
 export function stopArcadeMusic() {
-  musicWanted = false;
+  state.musicWanted = false;
   if (typeof window !== "undefined" && state.arcadeTimer) {
     window.clearInterval(state.arcadeTimer);
   }

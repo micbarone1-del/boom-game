@@ -57,7 +57,17 @@ function Index() {
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
   const [creating, setCreating] = useState(false);
+  const [attract, setAttract] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // Some in-app/preview browsers ignore the autoplay attribute — nudge playback.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    void v.play().catch(() => {});
+  }, [attract]);
   const tryJoin = (e: React.FormEvent) => {
+
     e.preventDefault();
     const c = joinCode.trim().toUpperCase();
     if (!c) return;

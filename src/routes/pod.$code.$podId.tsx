@@ -583,8 +583,13 @@ function PodPage() {
           players={ordered}
           winnerId={winnerId}
           clips={clipsRef.current}
-          onRestart={restart}
+          onRestart={() => {
+            void restart();
+            // Play Again always starts over from the player lobby.
+            window.location.assign(`/join/${code}`);
+          }}
         />
+
         {overlay}
       </>
     );

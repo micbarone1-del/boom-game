@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { BombAvatar } from "@/components/BombAvatar";
 import { useRoom } from "@/hooks/use-room";
 import { Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
@@ -409,6 +410,7 @@ function JoinView() {
               label={`Player ${String.fromCharCode(65 + i)}`}
               slot={slot}
               mascotColor={MASCOT_COLORS[i % MASCOT_COLORS.length]}
+              stamped={stampedSlot === i}
               canRemove={!joiningExisting && slots.length > 2}
               onRemove={() => removePlayer(i)}
               onChange={(patch) => setSlotField(i, patch)}
@@ -447,11 +449,8 @@ function JoinView() {
       <button
         onClick={submit}
         disabled={!canSubmit}
-        className="btn-boom text-2xl py-4 disabled:opacity-50"
-        style={{
-          fontFamily: "'Luckiest Guy', cursive",
-          background: canSubmit ? "var(--boom-red)" : "#999",
-        }}
+        className="btn-massive"
+        style={{ background: canSubmit ? "var(--boom-red)" : "#999" }}
       >
         <Bomb className="inline mr-2" /> READY!
       </button>
@@ -483,6 +482,7 @@ function SlotCard({
   canRemove,
   onRemove,
   onChange,
+  stamped = false,
 }: {
   label: string;
   slot: Slot;
@@ -490,6 +490,7 @@ function SlotCard({
   canRemove: boolean;
   onRemove: () => void;
   onChange: (patch: Partial<Slot>) => void;
+  stamped?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const isMascot = slot.avatar?.startsWith("mascot:");
@@ -514,7 +515,13 @@ function SlotCard({
   };
 
   return (
-    <div className="ink-border rounded-2xl p-3 bg-white flex flex-col gap-3 relative">
+    <div
+      key={stamped ? `stamped-${slot.name}` : "idle"}
+      className={`ink-border rounded-2xl p-3 bg-white flex flex-col gap-3 relative ${
+        stamped ? "anim-stamp-in" : ""
+      }`}
+    >
+      {stamped && <StampBurst />}
       {canRemove && (
         <button
           type="button"
@@ -536,7 +543,7 @@ function SlotCard({
           aria-label="Choose photo or mascot"
         >
           {isMascot ? (
-            <Bomb size={36} color="white" fill="white" />
+            <BombAvatar color={mascotHex} size={64} />
           ) : (
             <img src={slot.avatar!} alt="" className="w-full h-full object-cover" />
           )}

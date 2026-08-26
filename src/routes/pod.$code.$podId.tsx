@@ -951,7 +951,6 @@ function PlayerPhase({
         style={{
           fontSize: "clamp(1.25rem, 6vw, 2rem)",
           color: "var(--boom-ink)",
-          textShadow: "2px 2px 0 #fff, 4px 4px 0 #000",
         }}
       >
         Your turn

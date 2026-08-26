@@ -480,6 +480,9 @@ function PodPage() {
             onResume={() => {
               void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
             }}
+            onGiveUp={() => {
+              void navigate({ to: "/gym/$code", params: { code } });
+            }}
             onSignInClick={() => setPauseJoinOpen(true)}
           />
           <JoinAsModal

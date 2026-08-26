@@ -107,20 +107,12 @@ function Index() {
         <button
           onClick={startSolo}
           disabled={creating}
-          className="ink-border rounded-2xl px-5 py-3 flex items-center justify-center gap-2 hover:-translate-y-1 transition-transform disabled:opacity-50"
+          className="btn-massive disabled:opacity-50"
           style={{ background: "var(--boom-red)" }}
         >
-          <Play size={24} color="white" fill="white" />
-          <span
-            className="text-xl font-black"
-            style={{
-              color: "white",
-              fontFamily: "'Luckiest Guy', cursive",
-              textShadow: "2px 2px 0 #000, 0 0 8px rgba(0,0,0,.6)",
-            }}
-          >
-            {creating ? "IGNITING…" : "START PLAYING"}
-          </span>
+          <Play size={36} color="white" fill="white" />
+          <span>{creating ? "IGNITING…" : "START PLAYING"}</span>
+
         </button>
         <form
           onSubmit={tryJoin}

@@ -700,3 +700,124 @@
     hyphens: auto;
   }
 }
+
+@layer utilities {
+  /* ===== V2: countdown, massive buttons, live bomb avatars, join stamp ===== */
+
+  /* Generic pop (was referenced but never defined) */
+  @keyframes boom-pop-in {
+    0%   { transform: scale(0.3); opacity: 0; }
+    60%  { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .anim-pop { animation: boom-pop-in 0.35s cubic-bezier(.2,1.6,.4,1) both; }
+
+  /* Countdown tick: single element swaps cleanly, never overlaps */
+  @keyframes count-tick {
+    0%   { transform: scale(1.9); opacity: 0; }
+    35%  { transform: scale(1);   opacity: 1; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  .anim-count-tick { animation: count-tick 0.4s cubic-bezier(.2,1.5,.4,1) both; }
+
+  /* Massive, sweaty-thumb-friendly primary button */
+  .btn-massive {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 4.5rem;
+    padding: 1.1rem 1.5rem;
+    border: 4px solid #000;
+    border-radius: 18px;
+    box-shadow: 6px 6px 0 0 #000;
+    background: var(--boom-red);
+    color: #fff;
+    font-family: "Luckiest Guy", "Bangers", system-ui, sans-serif;
+    font-size: clamp(1.6rem, 7vw, 2.4rem);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0 #000;
+    transition: transform 0.08s cubic-bezier(.2,1.6,.4,1), box-shadow 0.08s ease;
+  }
+  .btn-massive:active {
+    transform: translate(4px, 4px) scale(0.97);
+    box-shadow: 2px 2px 0 0 #000;
+  }
+  .btn-massive:disabled { opacity: 0.55; }
+
+  /* ===== Bomb character idle animations ===== */
+  @keyframes bomb-sway {
+    0%, 100% { transform: rotate(-5deg) translateY(0); }
+    50%      { transform: rotate(5deg) translateY(-3px); }
+  }
+  .anim-bomb-sway { animation: bomb-sway 2.2s ease-in-out infinite; }
+
+  @keyframes bomb-fume {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    45%      { transform: scale(1.06) rotate(-2deg); }
+    55%      { transform: scale(1.06) rotate(2deg); }
+  }
+  .anim-bomb-fume { animation: bomb-fume 0.7s ease-in-out infinite; }
+
+  @keyframes bomb-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.05); }
+  }
+  .anim-bomb-breathe { animation: bomb-breathe 2.6s ease-in-out infinite; }
+  .anim-bomb-breathe-slow { animation: bomb-breathe 4s ease-in-out infinite; }
+
+  @keyframes bomb-bob {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50%      { transform: translateY(-6px) rotate(3deg); }
+  }
+  .anim-bomb-bob { animation: bomb-bob 1.6s ease-in-out infinite; }
+
+  @keyframes bomb-jitter {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    25%      { transform: translate(-2px,1px) rotate(-3deg); }
+    50%      { transform: translate(2px,-1px) rotate(3deg); }
+    75%      { transform: translate(-1px,-2px) rotate(-2deg); }
+  }
+  .anim-bomb-jitter { animation: bomb-jitter 0.9s steps(4, end) infinite; }
+
+  @keyframes bomb-spark {
+    0%, 100% { transform: scale(1) translate(0,0); opacity: 1; }
+    35%      { transform: scale(1.4) translate(2px,-2px); opacity: 0.85; }
+    70%      { transform: scale(0.8) translate(-2px,1px); opacity: 1; }
+  }
+  .anim-bomb-spark { animation: bomb-spark 0.45s ease-in-out infinite; }
+
+  /* ===== Join lobby "stamp" landing ===== */
+  @keyframes stamp-in {
+    0%   { transform: scale(1.5) rotate(-4deg); opacity: 0; }
+    45%  { transform: scale(0.96) rotate(1deg); opacity: 1; }
+    70%  { transform: scale(1.04) rotate(-1deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .anim-stamp-in { animation: stamp-in 0.42s cubic-bezier(.2,1.8,.35,1) both; }
+
+  @keyframes stamp-quake {
+    0%, 100% { transform: translate(0,0); }
+    20% { transform: translate(-6px, 3px); }
+    40% { transform: translate(6px, -3px); }
+    60% { transform: translate(-4px, -2px); }
+    80% { transform: translate(4px, 2px); }
+  }
+  .anim-stamp-quake { animation: stamp-quake 0.35s ease-out 1; }
+
+  @keyframes stamp-particle {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+  }
+  .anim-stamp-particle { animation: stamp-particle 0.7s ease-out both; }
+
+  @keyframes stamp-spark {
+    0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(0.1); opacity: 0; }
+  }
+  .anim-stamp-spark { animation: stamp-spark 0.6s ease-out both; }
+}
+

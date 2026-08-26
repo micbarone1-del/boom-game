@@ -27,6 +27,10 @@ import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";
 import { mascotForCell, CELL_FLAVOR, CellMascot } from "@/components/CellMascot";
+import { BombAvatar } from "@/components/BombAvatar";
+import { CountdownNumber } from "@/components/CountdownNumber";
+import { useFtue } from "@/components/Ftue";
+
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { PauseOverlay, PauseToggleButton } from "@/components/PauseOverlay";
 import { BossPhase, BossVictory } from "@/components/BossPhase";
@@ -767,7 +771,8 @@ function Avatar({ player, size = 120 }: { player: Player; size?: number }) {
       }}
     >
       {avatarIsMascot(player.avatar_url) ? (
-        <Bomb size={size * 0.6} color="white" fill="white" />
+        <BombAvatar color={color} size={size} />
+
       ) : (
         <img src={player.avatar_url!} alt="" className="w-full h-full object-cover" />
       )}
@@ -803,6 +808,8 @@ function PlayerPhase({
   const [hopping, setHopping] = useState<{ path: number[]; step: number } | null>(null);
   const [powerUp, setPowerUp] = useState(false);
   const [hopMascot, setHopMascot] = useState<CellType | null>(null);
+  const ftue = useFtue(player.id, "roll");
+
 
   // Drive arcade BGM intensity from fuse progress.
   useEffect(() => {
@@ -815,8 +822,9 @@ function PlayerPhase({
   }, [startedAt, endsAt]);
 
   const handleRoll = async () => {
-    if (rolling) return;
+    if (rolling || ftue.showing) return;
     void sfx.unlock();
+
     startArcadeMusic();
     startTechnoLayer();
     speak(`${player.username}, roll the dice.`, { volume: 1, rate: 0.8, pitch: 0.8 });
@@ -898,15 +906,16 @@ function PlayerPhase({
 
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center p-6 gap-6 bg-[var(--background)]">
+      {ftue.modal}
       {hopping && (
         <HopOverlay player={player} players={players} path={hopping.path} step={hopping.step} />
       )}
       {hopMascot && <CellMascot type={hopMascot} username={player.username} />}
       {powerUp && <PowerUpOverlay player={player} />}
-      <div className="text-xs font-bold opacity-60 uppercase tracking-wider">Your turn</div>
-      <Avatar player={player} size={140} />
+      <div className="text-sm font-bold opacity-70 uppercase tracking-widest">Your turn</div>
+      <Avatar player={player} size={150} />
       <div
-        className="text-4xl font-black"
+        className="text-5xl font-black"
         style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}
       >
         {player.username}
@@ -914,23 +923,33 @@ function PlayerPhase({
 
       <button
         onClick={handleRoll}
-        disabled={rolling}
-        className="w-44 h-44 rounded-3xl ink-border arcade-press arcade-tilt-r flex items-center justify-center"
-        style={{ background: "var(--boom-yellow)" }}
+        disabled={rolling || ftue.showing}
+        className="w-[64vw] max-w-[19rem] aspect-square rounded-[2rem] arcade-press arcade-tilt-r flex items-center justify-center"
+        style={{
+          background: "var(--boom-yellow)",
+          border: "5px solid #000",
+          boxShadow: "8px 8px 0 0 #000",
+        }}
         aria-label="Roll the dice"
       >
         {face === null ? (
-          <Dice5 size={120} style={{ color: "var(--boom-ink)" }} />
+          <Dice5 size={150} strokeWidth={2.4} style={{ color: "var(--boom-ink)" }} />
         ) : (
           <span
-            className="text-8xl font-black"
-            style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}
+            className="font-black"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: "var(--boom-ink)",
+              fontSize: "clamp(6rem, 30vw, 11rem)",
+              lineHeight: 1,
+            }}
           >
             {face}
           </span>
         )}
       </button>
-      <div className="text-sm opacity-60">Tap to roll</div>
+      <div className="text-lg font-black opacity-70">TAP TO ROLL</div>
+
 
       <ProgressBar
         players={players}
@@ -964,15 +983,18 @@ function SwitchPhase({
   const spokeRef = useRef(false);
   const mascotImg = mascotForCell(trap.cellType);
   const flavor = CELL_FLAVOR[trap.cellType];
+  const ftue = useFtue(player.id, "switch");
 
   useEffect(() => {
+    if (ftue.showing) return;
     if (spokeRef.current) return;
     spokeRef.current = true;
     const unit = trap.unit === "seconds" ? `${trap.reps} seconds` : `${trap.reps} reps`;
     speak(`Player ${player.username}. ${trap.exercise}, ${unit}. Judge: ${judge.username}.`);
-  }, [player.username, judge.username, trap]);
+  }, [player.username, judge.username, trap, ftue.showing]);
 
   useEffect(() => {
+    if (ftue.showing) return;
     if (count <= 0) {
       onDone();
       return;
@@ -980,13 +1002,15 @@ function SwitchPhase({
     sfx.play("countdown");
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [count, onDone]);
+  }, [count, onDone, ftue.showing]);
 
   return (
     <main
       className="fixed inset-0 flex flex-col items-center justify-between p-4 gap-3"
       style={{ background: "#ffffff" }}
     >
+      {ftue.modal}
+
       {/* Thick rounded black frame so text reads clearly */}
       <div
         aria-hidden
@@ -1054,31 +1078,9 @@ function SwitchPhase({
         </div>
       </div>
 
-      {/* Countdown — boxed red card, arcade BOOM style */}
-      <div
-        key={`count-${count}`}
-        className="anim-pop ink-border rounded-2xl bg-white flex items-center justify-center"
-        style={{
-          padding: "0.6rem 2.2rem",
-          minWidth: "9rem",
-          boxShadow: count > 0
-            ? "6px 6px 0 #111, 0 0 30px 6px rgba(239,68,68,0.55)"
-            : "6px 6px 0 #111, 0 0 30px 6px rgba(34,197,94,0.55)",
-          border: `4px solid ${count > 0 ? "var(--boom-red)" : "var(--boom-green)"}`,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'Luckiest Guy', cursive",
-            color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
-            fontSize: count > 0 ? "6.5rem" : "3.5rem",
-            lineHeight: 1,
-            textShadow: "0 4px 0 rgba(0,0,0,0.18)",
-          }}
-        >
-          {count > 0 ? count : "GO!"}
-        </span>
-      </div>
+      {/* Countdown — single clean tick, never overlapping */}
+      <CountdownNumber value={count} />
+
 
       <div className="text-base font-bold opacity-80 text-center px-6 pb-2">
         Pass the phone to {judge.username}
@@ -1489,6 +1491,16 @@ function JudgePhase({
   const holdingRef = useRef(false);
   const holdStartRef = useRef(0);
   const [defuseFlash, setDefuseFlash] = useState(false);
+  const ftue = useFtue(player.id, "judge");
+  // Time spent reading the FTUE tip doesn't count against the defuse timer.
+  const ftueOffsetRef = useRef(0);
+  const ftueOpenedAtRef = useRef<number | null>(null);
+  if (ftue.showing && ftueOpenedAtRef.current === null) ftueOpenedAtRef.current = Date.now();
+  if (!ftue.showing && ftueOpenedAtRef.current !== null) {
+    ftueOffsetRef.current += Date.now() - ftueOpenedAtRef.current;
+    ftueOpenedAtRef.current = null;
+  }
+
 
   // Acquire camera + start recording
   useEffect(() => {
@@ -1545,15 +1557,18 @@ function JudgePhase({
     return () => clearInterval(i);
   }, [trap.unit]);
 
-  const elapsed = Date.now() - started;
+  const pausedFor = ftue.showing && ftueOpenedAtRef.current ? Date.now() - ftueOpenedAtRef.current : 0;
+  const elapsed = Date.now() - started - ftueOffsetRef.current - pausedFor;
   const remaining = Math.max(0, TRAP_TIMEOUT_MS - elapsed);
   const ringProgress = remaining / TRAP_TIMEOUT_MS;
 
   // Timeout = fail
   useEffect(() => {
     if (completedRef.current) return;
+    if (ftue.showing) return;
     if (remaining <= 0) finish("fail");
-  }, [remaining]);
+  }, [remaining, ftue.showing]);
+
 
   const finish = (outcome: "success" | "fail") => {
     if (completedRef.current) return;
@@ -1625,7 +1640,7 @@ function JudgePhase({
     if (holdingRef.current) repPop(Math.min(1, holdMs / (trap.reps * 1000)));
   }, [holdMs, trap]);
 
-  const ringSize = 220;
+  const ringSize = 280;
   const stroke = 14;
   const r = (ringSize - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -1654,7 +1669,9 @@ function JudgePhase({
 
   return (
     <main className="fixed inset-0 bg-black overflow-hidden">
+      {ftue.modal}
       <video
+
         ref={videoRef}
         playsInline
         muted
@@ -1766,23 +1783,27 @@ function JudgePhase({
             onPointerUp={trap.unit === "seconds" ? onHoldEnd : undefined}
             onPointerCancel={trap.unit === "seconds" ? onHoldEnd : undefined}
             onPointerLeave={trap.unit === "seconds" ? onHoldEnd : undefined}
-            className="absolute inset-6 rounded-full flex flex-col items-center justify-center select-none arcade-press"
+            className="absolute inset-5 rounded-full flex flex-col items-center justify-center gap-1 select-none arcade-press"
             style={{
               background: "var(--boom-red)",
               color: "white",
-              boxShadow: "0 0 0 4px #111, 0 8px 24px rgba(0,0,0,0.5)",
+              border: "4px solid #000",
+              boxShadow: "6px 6px 0 0 #000, 0 8px 24px rgba(0,0,0,0.5)",
             }}
           >
-            <span className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+            <span
+              className="font-black"
+              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2.2rem, 10vw, 3.2rem)", lineHeight: 1, textShadow: "3px 3px 0 #000" }}
+            >
               DEFUSE
             </span>
-            <span className="text-base font-bold">
+            <span className="text-2xl font-black tabular-nums">
               {trap.unit === "reps"
                 ? `${reps} / ${trap.reps}`
                 : `${(holdMs / 1000).toFixed(1)}s / ${trap.reps}s`}
             </span>
-            <span className="text-xs opacity-80">
-              {trap.unit === "reps" ? "tap per rep" : "hold"}
+            <span className="text-sm font-bold opacity-90">
+              {trap.unit === "reps" ? "TAP PER REP" : "HOLD"}
             </span>
           </button>
         </div>

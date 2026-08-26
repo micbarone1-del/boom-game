@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { BombAvatar } from "@/components/BombAvatar";
 import { useRoom } from "@/hooks/use-room";
 import { Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
@@ -52,6 +53,16 @@ function JoinView() {
   const { user, loading: authLoading } = useAuth();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
+  const [stampedSlot, setStampedSlot] = useState<number | null>(null);
+  // Fire the arcade "stamp" landing animation on a freshly populated slot.
+  const stampSlot = (idx: number) => {
+    setStampedSlot(idx);
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.add("anim-stamp-quake");
+      setTimeout(() => document.documentElement.classList.remove("anim-stamp-quake"), 400);
+    }
+    setTimeout(() => setStampedSlot((cur) => (cur === idx ? null : cur)), 900);
+  };
   const [guestProfile, setGuestProfile] = useState<
     { username: string; avatar_url: string; fitness?: number } | null
   >(null);
@@ -85,6 +96,7 @@ function JoinView() {
     });
     // The returning/authenticated player owns this card.
     setAttachToSlotIdx((cur) => (cur === null ? firstEmpty : cur));
+    stampSlot(firstEmpty);
   }, [guestProfile, slots]);
 
   // Remember a guest identity from a previous visit on this device.
@@ -123,6 +135,7 @@ function JoinView() {
     });
     if (typeof window !== "undefined") sessionStorage.removeItem(ATTACH_KEY);
     setAttachToSlotIdx(null);
+    stampSlot(idx);
   };
 
   const openJoinModal = (slotIdx?: number) => {
@@ -409,6 +422,7 @@ function JoinView() {
               label={`Player ${String.fromCharCode(65 + i)}`}
               slot={slot}
               mascotColor={MASCOT_COLORS[i % MASCOT_COLORS.length]}
+              stamped={stampedSlot === i}
               canRemove={!joiningExisting && slots.length > 2}
               onRemove={() => removePlayer(i)}
               onChange={(patch) => setSlotField(i, patch)}
@@ -447,11 +461,8 @@ function JoinView() {
       <button
         onClick={submit}
         disabled={!canSubmit}
-        className="btn-boom text-2xl py-4 disabled:opacity-50"
-        style={{
-          fontFamily: "'Luckiest Guy', cursive",
-          background: canSubmit ? "var(--boom-red)" : "#999",
-        }}
+        className="btn-massive"
+        style={{ background: canSubmit ? "var(--boom-red)" : "#999" }}
       >
         <Bomb className="inline mr-2" /> READY!
       </button>
@@ -483,6 +494,7 @@ function SlotCard({
   canRemove,
   onRemove,
   onChange,
+  stamped = false,
 }: {
   label: string;
   slot: Slot;
@@ -490,6 +502,7 @@ function SlotCard({
   canRemove: boolean;
   onRemove: () => void;
   onChange: (patch: Partial<Slot>) => void;
+  stamped?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const isMascot = slot.avatar?.startsWith("mascot:");
@@ -514,7 +527,13 @@ function SlotCard({
   };
 
   return (
-    <div className="ink-border rounded-2xl p-3 bg-white flex flex-col gap-3 relative">
+    <div
+      key={stamped ? `stamped-${slot.name}` : "idle"}
+      className={`ink-border rounded-2xl p-3 bg-white flex flex-col gap-3 relative ${
+        stamped ? "anim-stamp-in" : ""
+      }`}
+    >
+      {stamped && <StampBurst />}
       {canRemove && (
         <button
           type="button"
@@ -536,7 +555,7 @@ function SlotCard({
           aria-label="Choose photo or mascot"
         >
           {isMascot ? (
-            <Bomb size={36} color="white" fill="white" />
+            <BombAvatar color={mascotHex} size={64} />
           ) : (
             <img src={slot.avatar!} alt="" className="w-full h-full object-cover" />
           )}
@@ -616,6 +635,28 @@ function SlotCard({
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+/** Small particle burst played when a player card stamps into the lobby. */
+function StampBurst() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-visible z-20">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <span
+          key={i}
+          className="absolute left-1/2 top-1/2 block rounded-full anim-stamp-spark"
+          style={{
+            width: 10,
+            height: 10,
+            background: i % 2 ? "var(--boom-yellow)" : "var(--boom-red)",
+            boxShadow: "0 0 0 2px #000",
+            ["--sx" as string]: `${Math.cos((i / 10) * Math.PI * 2) * 90}px`,
+            ["--sy" as string]: `${Math.sin((i / 10) * Math.PI * 2) * 60}px`,
+            animationDelay: `${i * 12}ms`,
+          }}
+        />
+      ))}
     </div>
   );
 }

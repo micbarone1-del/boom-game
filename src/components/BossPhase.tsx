@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bomb, Flame, Skull } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { CountdownNumber } from "@/components/CountdownNumber";
+import { BombAvatar } from "@/components/BombAvatar";
+
 import type { Player, Room } from "@/hooks/use-room";
 import {
   pickCrazyExercise,
@@ -118,7 +121,7 @@ function BossAvatar({ player, size = 72 }: { player: Player; size?: number }) {
       {player.avatar_url && !player.avatar_url.startsWith("mascot:") ? (
         <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
       ) : (
-        <Bomb size={size * 0.6} color="white" fill="white" />
+        <BombAvatar color={color} size={size} />
       )}
     </div>
   );
@@ -533,20 +536,7 @@ function BossSwitch({
           <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
         </div>
       </div>
-      <div
-        key={`bc-${count}`}
-        className="anim-pop"
-        style={{
-          fontFamily: "'Luckiest Guy', cursive",
-          color: count > 0 ? "var(--boom-red)" : "var(--boom-green)",
-          fontSize: count > 0 ? "7rem" : "4rem",
-          lineHeight: 1,
-          textShadow: "0 6px 0 rgba(0,0,0,0.35), 3px 3px 0 #fff",
-          WebkitTextStroke: "3px #111",
-        }}
-      >
-        {count > 0 ? count : "GO!"}
-      </div>
+      <CountdownNumber value={count} />
       <div className="text-sm font-bold opacity-90 text-center px-6" style={{ color: "var(--boom-ink)" }}>
         Pass the phone to {judge.username}
       </div>
@@ -1140,11 +1130,11 @@ function BossRoll({
         <button
           onClick={spin}
           disabled={spinning}
-          className="ink-border rounded-2xl px-8 py-4 text-3xl font-black active:scale-95 disabled:opacity-60"
+          className="btn-massive w-[80vw] max-w-md"
           style={{
             background: "var(--boom-yellow)",
             color: "var(--boom-ink)",
-            fontFamily: "'Luckiest Guy', cursive",
+            textShadow: "2px 2px 0 rgba(0,0,0,0.25)",
           }}
         >
           {spinning ? "SPINNING…" : "SPIN!"}

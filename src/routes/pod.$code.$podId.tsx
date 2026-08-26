@@ -2200,6 +2200,10 @@ function WrapUp({
                   rank: i + 1,
                 }}
                 total={localPlayers.length}
+                clips={(clipList.some((c) => c.playerId === p.id)
+                  ? clipList.filter((c) => c.playerId === p.id)
+                  : clipList
+                ).map((c) => ({ blob: c.blob, label: c.exercise }))}
               />
             ))}
         </div>
@@ -2215,14 +2219,11 @@ function WrapUp({
           <div className="text-sm opacity-60">No clips captured this round.</div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            {clipList.map(([key, blob], idx) => (
+            {clipList.map(({ key, blob, url, exercise }, idx) => (
               <div key={key} className="ink-border-sm rounded-xl p-2 flex flex-col gap-1">
-                <video
-                  src={URL.createObjectURL(blob)}
-                  controls
-                  playsInline
-                  className="w-full rounded-lg bg-black"
-                />
+                <video src={url} controls playsInline className="w-full rounded-lg bg-black" />
+                <div className="text-[10px] font-black truncate">{exercise}</div>
+
                 <div className="flex gap-1">
                   <button
                     onClick={() => shareClip(blob, idx)}

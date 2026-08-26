@@ -63,6 +63,10 @@ const state = (_g.__boomSfx ||= {
 // synthesized SFX. Lowering MASTER lets speech cut through.
 const MASTER_VOLUME = 0.55;
 let muted = false;
+// Hard freeze flag — while true NOTHING may make noise (music, SFX, voice)
+// and nothing may resume the AudioContext. Set by setAudioSuspended().
+let audioSuspended = false;
+export function isAudioSuspended() { return audioSuspended; }
 let fallbackBeep: HTMLAudioElement | null = null;
 // Bumped key (v4) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
@@ -104,7 +108,7 @@ function fallbackAudio(): HTMLAudioElement | null {
 }
 
 function fallbackPlay(audible: boolean) {
-  if (muted) return;
+  if (muted || audioSuspended) return;
   const a = fallbackAudio();
   if (!a) return;
   try {
@@ -183,6 +187,7 @@ function unlockAudio(): Promise<boolean> {
     return state.unlocked || state.fallbackUnlocked;
   };
   if (c.state === "running") return Promise.resolve(mark());
+  if (audioSuspended) return Promise.resolve(false);
   return c.resume().then(mark).catch(() => {
     state.unlocked = false;
     return false;
@@ -201,6 +206,7 @@ function out(c: AudioContext): AudioNode {
 }
 
 async function ensureReady(): Promise<boolean> {
+  if (audioSuspended) return false;
   fallbackPlay(false);
   state.fallbackUnlocked = true;
   primeSpeech();
@@ -449,7 +455,7 @@ const effects: Record<EffectName, () => void> = {
 
 export const sfx = {
   play(name: EffectName) {
-    if (muted) return;
+    if (muted || audioSuspended) return;
     try {
       const c = ac();
       if (!c) {
@@ -543,6 +549,27 @@ function primeSpeech() {
   }
 }
 
+// --- Speech ducking -------------------------------------------------------
+// Browsers (and iOS especially) drop the whole output level when
+// SpeechSynthesis and WebAudio play at once. Rather than fight it, mute the
+// music bed while the robot voice talks and bring it straight back after.
+let musicDucked = false;
+let _duckTimer: number | null = null;
+function duckMusic(on: boolean) {
+  musicDucked = on;
+  const g = state.arcadeGain;
+  const c = state.ctx;
+  if (!g || !c) return;
+  try {
+    const t = c.currentTime + 0.01;
+    g.gain.cancelScheduledValues(t);
+    g.gain.linearRampToValueAtTime(
+      on ? 0.0001 : PHASES[musicPhase].gain + musicIntensity * 0.35,
+      t + (on ? 0.08 : 0.35),
+    );
+  } catch { /* ignore */ }
+}
+
 function pickRoboticVoice(): SpeechSynthesisVoice | undefined {
   if (_voices.length === 0) loadVoices();
   // Prefer voices that tend to sound more synthetic/robotic.
@@ -555,7 +582,7 @@ function pickRoboticVoice(): SpeechSynthesisVoice | undefined {
 }
 
 export function speak(text: string, opts: { pitch?: number; rate?: number; volume?: number } = {}) {
-  if (muted) return;
+  if (muted || audioSuspended) return;
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   try {
     sfx.unlock();
@@ -584,9 +611,20 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
     // Cancel any pending utterance so the new line doesn't queue up behind
     // a stale phase's narration (the #1 cause of "voice comes and goes").
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    duckMusic(true);
+    if (_duckTimer) { window.clearTimeout(_duckTimer); _duckTimer = null; }
+    const unduck = () => {
+      if (_duckTimer) window.clearTimeout(_duckTimer);
+      _duckTimer = window.setTimeout(() => duckMusic(false), 250);
+    };
+    u.onend = unduck;
+    u.onerror = unduck;
+    // Safety net: never leave the music ducked if onend never fires.
+    const words = normalized.trim().split(/\s+/).length;
+    _duckTimer = window.setTimeout(() => duckMusic(false), 1200 + words * 420);
     // Small delay lets Safari finish the cancel before speak fires.
     window.setTimeout(() => {
-      try { window.speechSynthesis.speak(u); } catch { /* ignore */ }
+      try { window.speechSynthesis.speak(u); } catch { unduck(); }
     }, 60);
   } catch {
     /* ignore */
@@ -600,7 +638,7 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
 // the riff/tempo/timbre, and intensity (fuse progress) pushes tempo + drive.
 // ---------------------------------------------------------------------------
 
-export type MusicPhase = "lobby" | "play" | "judge" | "boss" | "victory";
+export type MusicPhase = "attract" | "lobby" | "play" | "judge" | "boss" | "victory";
 
 type PhaseCfg = {
   bpm: number;
@@ -611,6 +649,14 @@ type PhaseCfg = {
 };
 
 const PHASES: Record<MusicPhase, PhaseCfg> = {
+  // Attract mode: driving retro techno — fast 4/4, hypnotic minor riff.
+  attract: {
+    bpm: 138,
+    roots: [110, 110, 130.81, 98],
+    lead: [0, 12, 7, 12, 3, 12, 7, 12, 0, 12, 10, 12, 5, 12, 7, 12],
+    drive: 22,
+    gain: 0.13,
+  },
   lobby: {
     bpm: 118,
     roots: [98, 98, 110, 87.31],
@@ -747,7 +793,7 @@ function stepDurationMs(cfg: PhaseCfg): number {
 }
 
 function playArcadeLoopStep() {
-  if (muted) return;
+  if (muted || audioSuspended || musicDucked) return;
   const c = ac();
   if (!c) return;
   const cfg = PHASES[musicPhase];
@@ -792,7 +838,7 @@ function rescheduleLoop() {
 }
 
 export function startArcadeMusic() {
-  if (muted || typeof window === "undefined") return;
+  if (muted || audioSuspended || typeof window === "undefined") return;
   void ensureReady().then(() => playArcadeLoopStep());
   if (state.arcadeTimer) return;
   state.arcadeTimer = window.setInterval(playArcadeLoopStep, stepDurationMs(PHASES[musicPhase]));
@@ -848,6 +894,7 @@ export function setBgmIntensity(progress: number) {
  */
 export function setAudioSuspended(suspended: boolean) {
   if (typeof window === "undefined") return;
+  audioSuspended = suspended;
   const c = state.ctx;
   if (suspended) {
     if (state.arcadeTimer) {
@@ -1017,7 +1064,7 @@ function playKickAt(c: AudioContext, t0: number, dest: AudioNode) {
 /** A sustained rising arcade tone — call once to start, returns a stop fn. */
 export function startArcadeRise(durationMs: number): () => void {
   const c = ac();
-  if (!c || muted) return () => {};
+  if (!c || muted || audioSuspended) return () => {};
   const t0 = c.currentTime + 0.01;
   const tEnd = t0 + durationMs / 1000;
   const o = c.createOscillator();
@@ -1048,7 +1095,7 @@ export function startArcadeRise(durationMs: number): () => void {
 // Returns a stop function so callers can cancel if the user advances early.
 // ---------------------------------------------------------------------------
 export function playPauseMusic(): () => void {
-  if (muted) return () => {};
+  if (muted || audioSuspended) return () => {};
   const c = ac();
   if (!c) return () => {};
   const stops: Array<() => void> = [];

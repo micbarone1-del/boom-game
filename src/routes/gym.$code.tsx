@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoom, type Player, type Pod, type Room } from "@/hooks/use-room";
 import { generateRoomCode } from "@/lib/game";
-import { Bomb, Copy, Play, RotateCcw, Settings, Share2 } from "lucide-react";
+import { Bomb, Copy, Play, RotateCcw, Settings, Share2, Smartphone } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { SpotifyEmbed } from "@/components/SpotifyEmbed";
 import { FuseBar } from "@/components/FuseBar";
@@ -260,6 +260,17 @@ function Lobby({ code, onJoinOpen }: { code: string; onJoinOpen: () => void }) {
           </div>
         )}
       </header>
+
+      <Link
+        to="/join/$code"
+        params={{ code }}
+        search={{ auto: undefined, join: undefined }}
+        className="ink-border rounded-2xl px-4 py-3 text-lg font-black flex items-center justify-center gap-2 active:scale-95"
+        style={{ background: "var(--boom-yellow)", fontFamily: "'Luckiest Guy', cursive" }}
+      >
+        <Smartphone size={22} /> GO TO PLAYER LOBBY
+      </Link>
+
 
       {/* Join card */}
       <div className="ink-border rounded-2xl bg-white p-4 flex flex-col sm:flex-row gap-4 items-center">

@@ -1326,17 +1326,17 @@ function HopOverlay({
                 </div>
                 {/* Other players parked on this cell */}
                 {others.length > 0 && (
-                  <div className="absolute -bottom-1 left-0 right-0 flex justify-center gap-0.5">
+                <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-1">
                     {others.slice(0, 3).map((op) => (
                       <div
                         key={op.id}
                         className="rounded-full bg-white"
                         style={{
-                          width: 14,
-                          height: 14,
-                          maxWidth: 14,
-                          maxHeight: 14,
-                          boxShadow: "0 0 0 1.5px #111",
+                          width: 26,
+                          height: 26,
+                          maxWidth: 26,
+                          maxHeight: 26,
+                          boxShadow: "0 0 0 2.5px #111",
                           overflow: "hidden",
                         }}
                         title={op.username}
@@ -1346,7 +1346,7 @@ function HopOverlay({
                             className="w-full h-full flex items-center justify-center"
                             style={{ background: mascotColor(op.avatar_url) }}
                           >
-                            <Bomb size={9} color="#fff" fill="#fff" />
+                            <Bomb size={17} color="#fff" fill="#fff" />
                           </div>
                         ) : op.avatar_url ? (
                           <img

@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { X, Mail, Smartphone, User, Camera, Bomb, Check } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { fileToAvatarDataUrl } from "@/lib/image";
+
 
 const MASCOT_COLORS = [
   "#ec4899",

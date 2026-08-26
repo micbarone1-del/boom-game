@@ -33,7 +33,17 @@ type EffectName =
   | "trapFound"
   | "winJingle"
   | "explodeJingle"
-  | "switchBig";
+  | "switchBig"
+  | "jingleEasy"
+  | "jingleMedium"
+  | "jingleHard"
+  | "jingleBoost"
+  | "jingleSetback"
+  | "jingleSurprise"
+  | "jingleCrazy"
+  | "jingleGroup"
+  | "jinglePause"
+  | "jingleStart";
 
 type BoomSfxGlobal = {
   ctx: AudioContext | null;

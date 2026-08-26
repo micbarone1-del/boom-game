@@ -19,7 +19,7 @@ import {
   type BoardOverrides,
   type CellType,
 } from "@/lib/game";
-import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle, playPauseMusic } from "@/lib/sfx";
+import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle, playPauseMusic, setMusicPhase, setAudioSuspended, haptic } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
@@ -620,6 +620,7 @@ function PodPage() {
           triggerPlayer={p}
           podPlayers={ordered}
           trap={phase.trap}
+          paused={!!room.paused}
           onComplete={onGroupComplete}
         />
         {overlay}
@@ -829,6 +830,7 @@ function PlayerPhase({
   const handleRoll = async () => {
     if (rolling || ftue.showing) return;
     void sfx.unlock();
+    haptic("tap");
 
     startArcadeMusic();
     startTechnoLayer();
@@ -947,7 +949,7 @@ function PlayerPhase({
         aria-label="Roll the dice"
       >
         {face === null ? (
-          <Dice5 size={150} strokeWidth={2.4} style={{ color: "var(--boom-ink)" }} />
+          <Dice5 size={150} strokeWidth={2.4} className="anim-ui-float" style={{ color: "var(--boom-ink)" }} />
         ) : (
           <span
             className="font-black tabular-nums"
@@ -966,7 +968,7 @@ function PlayerPhase({
           </span>
         )}
       </button>
-      <div className="text-lg font-black opacity-70">TAP TO ROLL</div>
+      <div className="text-lg font-black opacity-70 anim-ui-bob">TAP TO ROLL</div>
 
 
       <ProgressBar
@@ -1766,7 +1768,7 @@ function JudgePhase({
       {/* Big readable exercise banner */}
       <div className="absolute top-16 left-0 right-0 z-20 flex justify-center px-4 pointer-events-none">
         <div
-          className="rounded-2xl ink-border px-5 py-2 text-center max-w-[92%] arcade-tilt-l arcade-vs-in"
+          className="rounded-2xl ink-border px-5 py-2 text-center max-w-[92%] anim-ui-float"
           style={{ background: "var(--boom-yellow)" }}
         >
           <div
@@ -1837,7 +1839,7 @@ function JudgePhase({
             }}
           >
             <span
-              className="font-black"
+              className="font-black anim-ui-wiggle"
               style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2.2rem, 10vw, 3.2rem)", lineHeight: 1, textShadow: "3px 3px 0 #000" }}
             >
               DEFUSE
@@ -1854,7 +1856,7 @@ function JudgePhase({
         </div>
         <div
           className={`mt-3 px-3 py-1 rounded-lg text-base font-black tabular-nums ${
-            remaining <= 5000 ? "arcade-low-time" : "arcade-timer-pulse"
+            remaining <= 5000 ? "arcade-low-time" : "anim-ui-float"
           }`}
           style={{
             fontFamily: "'Luckiest Guy', cursive",
@@ -2257,7 +2259,7 @@ function VsPhase({
         <div className="text-white text-4xl font-black text-center" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>
           {playerA.username} vs {playerB.username}
         </div>
-        <div className="bg-white ink-border rounded-2xl px-5 py-3 text-center">
+        <div className="bg-white ink-border rounded-2xl px-5 py-3 text-center anim-ui-float">
           <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{trap.exercise}</div>
           <div className="text-base font-bold">First to {trap.reps} reps wins 2×</div>
         </div>
@@ -2305,7 +2307,7 @@ function VsPhase({
       />
       <div className="absolute inset-0 bg-black/40 z-[1]" />
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-        <div className="bg-white ink-border rounded-full px-6 py-2 flex items-center gap-2">
+        <div className="bg-white ink-border rounded-full px-6 py-2 flex items-center gap-2 anim-ui-float">
           <Swords size={24} />
           <span className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
             VS · {trap.exercise}
@@ -2327,11 +2329,13 @@ function GroupPhase({
   triggerPlayer,
   podPlayers,
   trap,
+  paused = false,
   onComplete,
 }: {
   triggerPlayer: Player;
   podPlayers: Player[];
   trap: ActiveTrap;
+  paused?: boolean;
   onComplete: () => void;
 }) {
   // Auto-timer: cap "all together" at 60s so a forgotten phone-down
@@ -2343,6 +2347,7 @@ function GroupPhase({
     sfx.play("gameStart");
   }, [trap.exercise, trap.reps, trap.unit]);
   useEffect(() => {
+    if (paused) return;
     const i = setInterval(() => {
       setRemaining((r) => {
         const next = r - 1;
@@ -2356,7 +2361,7 @@ function GroupPhase({
       });
     }, 1000);
     return () => clearInterval(i);
-  }, [onComplete]);
+  }, [onComplete, paused]);
   const low = remaining <= 10;
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-between p-6 gap-3" style={{ background: "var(--boom-blue)" }}>
@@ -2366,7 +2371,7 @@ function GroupPhase({
         <div className="text-white text-5xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
           EVERYBODY!
         </div>
-        <div className="bg-white ink-border rounded-2xl px-5 py-3">
+        <div className="bg-white ink-border rounded-2xl px-5 py-3 anim-ui-float">
           <div className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
             {trap.exercise}
           </div>
@@ -2375,7 +2380,7 @@ function GroupPhase({
           </div>
         </div>
         <div
-          className={`ink-border rounded-2xl px-6 py-3 text-5xl font-black tabular-nums ${low ? "anim-mascot-bounce" : ""}`}
+          className={`ink-border rounded-2xl px-6 py-3 text-5xl font-black tabular-nums ${low ? "anim-mascot-bounce" : "anim-ui-bob"}`}
           style={{
             background: low ? "var(--boom-red)" : "var(--boom-yellow)",
             color: low ? "#fff" : "var(--boom-ink)",

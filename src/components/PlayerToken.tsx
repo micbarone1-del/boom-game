@@ -67,10 +67,11 @@ export function PlayerToken({
           {mascot ? (
             <div
               className="w-full h-full flex items-center justify-center"
-              style={{ background: color, color: "white" }}
+              style={{ background: color }}
             >
-              <Bomb size={Math.round(size * 0.7)} fill="currentColor" strokeWidth={2.6} />
+              <BombAvatar color={color} size={size} />
             </div>
+
           ) : avatar ? (
             <img src={avatar} alt={username} className="w-full h-full object-cover" />
           ) : (

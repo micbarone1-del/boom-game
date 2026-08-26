@@ -822,8 +822,9 @@ function PlayerPhase({
   }, [startedAt, endsAt]);
 
   const handleRoll = async () => {
-    if (rolling) return;
+    if (rolling || ftue.showing) return;
     void sfx.unlock();
+
     startArcadeMusic();
     startTechnoLayer();
     speak(`${player.username}, roll the dice.`, { volume: 1, rate: 0.8, pitch: 0.8 });

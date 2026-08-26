@@ -76,15 +76,17 @@ export function CellMascot({ type, username }: { type: CellType; username?: stri
       >
         {/* Mascot bursts way out of the top of the frame instead of being clipped */}
         <div
-          className={`absolute left-1/2 -translate-x-1/2 -top-36 w-64 h-64 max-w-[70vw] max-h-[70vw] pointer-events-none z-10 ${MASCOT_ENTRANCE[type]}`}
+          className="absolute left-1/2 -translate-x-1/2 -top-36 w-64 h-64 max-w-[70vw] max-h-[70vw] pointer-events-none z-10"
         >
-          <img
-            src={f.img}
-            alt=""
-            width={1024}
-            height={1024}
-            className={`w-full h-full object-contain ${f.sad ? "anim-mascot-sad-idle" : "anim-mascot-bounce"} drop-shadow-[0_10px_0_rgba(0,0,0,0.35)] drop-shadow-[0_0_24px_rgba(0,0,0,0.55)]`}
-          />
+          <div className={`w-full h-full ${MASCOT_ENTRANCE[type]}`}>
+            <img
+              src={f.img}
+              alt=""
+              width={1024}
+              height={1024}
+              className={`w-full h-full object-contain ${f.sad ? "anim-mascot-sad-idle" : "anim-mascot-bounce"} drop-shadow-[0_10px_0_rgba(0,0,0,0.35)] drop-shadow-[0_0_24px_rgba(0,0,0,0.55)]`}
+            />
+          </div>
         </div>
 
         <div

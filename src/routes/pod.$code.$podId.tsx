@@ -27,6 +27,10 @@ import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";
 import { mascotForCell, CELL_FLAVOR, CellMascot } from "@/components/CellMascot";
+import { BombAvatar } from "@/components/BombAvatar";
+import { CountdownNumber } from "@/components/CountdownNumber";
+import { useFtue } from "@/components/Ftue";
+
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
 import { PauseOverlay, PauseToggleButton } from "@/components/PauseOverlay";
 import { BossPhase, BossVictory } from "@/components/BossPhase";

@@ -330,7 +330,7 @@ export function JoinAsModal({
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
+                capture="user"
                 hidden
                 onChange={handleFile}
               />

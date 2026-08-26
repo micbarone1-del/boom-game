@@ -8,6 +8,7 @@ import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { saveGuestMap, loadGuestMap } from "@/lib/guest";
+import { fileToAvatarDataUrl } from "@/lib/image";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,
@@ -568,7 +569,7 @@ function SlotCard({
           ref={fileRef}
           type="file"
           accept="image/*"
-          capture="environment"
+          capture="user"
           hidden
           onChange={handleFile}
         />

@@ -4,7 +4,9 @@ import bombMedium from "@/assets/bomb-medium.png";
 import bombHard from "@/assets/bomb-hard.png";
 import bombBoost from "@/assets/bomb-boost.png";
 import bombSetback from "@/assets/bomb-setback.png";
+import { useEffect } from "react";
 import type { CellType } from "@/lib/game";
+import { sfx, haptic } from "@/lib/sfx";
 
 export const CELL_FLAVOR: Record<CellType, { label: string; color: string; img: string; sad?: boolean }> = {
   easy:    { label: "EASY PEASY!",    color: "var(--boom-yellow)", img: bombEasy },
@@ -25,6 +27,12 @@ export function mascotForCell(type: CellType): string {
 }
 
 export function CellMascot({ type, username }: { type: CellType; username?: string }) {
+  // Cartoon "pop!" + a short buzz whenever the trap mascot springs on screen.
+  useEffect(() => {
+    if (type === "finish") return;
+    sfx.play("trapPop");
+    haptic(type === "setback" ? "fail" : "success");
+  }, [type]);
   // Finish has its own dedicated explosion overlay — skip the cell splash.
   if (type === "finish") return null;
   const f = CELL_FLAVOR[type];

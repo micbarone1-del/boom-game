@@ -1178,6 +1178,11 @@ function HopOverlay({
   // Camera target zoom — 4-cell-wide framing on phone screens.
   const ZOOM = 2.2;
   const safeStep = Math.max(0, Math.min(step, path.length - 1));
+  // One boing + buzz per hop.
+  useEffect(() => {
+    sfx.play("hopStep");
+    haptic("hop");
+  }, [safeStep]);
   const currentSpace = path[safeStep] ?? path[0] ?? 1;
   const finalSpace = path[path.length - 1] ?? currentSpace;
 

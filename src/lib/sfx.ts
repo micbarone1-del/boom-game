@@ -909,11 +909,42 @@ function rescheduleLoop() {
   state.arcadeTimer = window.setInterval(playArcadeLoopStep, stepDurationMs(PHASES[musicPhase]));
 }
 
+// Set once the game asks for music; the watchdog uses it to bring the
+// soundtrack back if the browser suspended the context or a timer was lost.
+let musicWanted = false;
+
 export function startArcadeMusic() {
-  if (muted || audioSuspended || typeof window === "undefined") return;
+  if (muted || typeof window === "undefined") return;
+  musicWanted = true;
+  if (audioSuspended) return;
   void ensureReady().then(() => playArcadeLoopStep());
   if (state.arcadeTimer) return;
   state.arcadeTimer = window.setInterval(playArcadeLoopStep, stepDurationMs(PHASES[musicPhase]));
+}
+
+// --- Audio watchdog --------------------------------------------------------
+// Browsers routinely suspend the AudioContext (tab blur, phone call, iOS
+// interruptions) and the loop interval can be throttled away. Every 2s we
+// re-resume the context, restore a lost music timer, and clear a stuck duck.
+if (typeof window !== "undefined" && !(globalThis as any).__boomAudioWatchdog) {
+  (globalThis as any).__boomAudioWatchdog = window.setInterval(() => {
+    if (muted || audioSuspended) return;
+    const c = state.ctx;
+    if (c && c.state === "suspended") void c.resume().catch(() => {});
+    if (!window.speechSynthesis?.speaking && musicDucked) duckMusic(false);
+    if (musicWanted && !state.arcadeTimer) {
+      state.arcadeTimer = window.setInterval(
+        playArcadeLoopStep,
+        stepDurationMs(PHASES[musicPhase]),
+      );
+    }
+  }, 2000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" || muted || audioSuspended) return;
+    const c = state.ctx;
+    if (c && c.state === "suspended") void c.resume().catch(() => {});
+    if (musicWanted && !state.arcadeTimer) startArcadeMusic();
+  });
 }
 
 /** Swap the track to the one matching the current game phase. */

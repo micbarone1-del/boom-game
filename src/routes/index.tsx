@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bomb, Music, LogIn, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { generateRoomCode } from "@/lib/game";

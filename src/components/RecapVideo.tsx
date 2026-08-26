@@ -16,15 +16,20 @@ export type RecapPlayer = {
 /** Bright sticker-card backgrounds, cycled per recap card. */
 const TONES = ["#FF8A3D", "#7FD4FF", "#FFD84D", "#5FE08A"];
 
+export type RecapClip = { blob: Blob; label?: string };
+
 export function RecapVideo({
   player,
   total,
   tone,
+  clips = [],
 }: {
   player: RecapPlayer;
   total: number;
   /** index used to pick a bright card colour */
   tone?: number;
+  /** Exercise clips recorded during the game — montaged into the recap. */
+  clips?: RecapClip[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -48,6 +53,7 @@ export function RecapVideo({
     if (building) return;
     setBuilding(true);
     setProgress(0);
+    const urls: string[] = [];
     try {
       const W = 540;
       const H = 960;
@@ -57,7 +63,6 @@ export function RecapVideo({
       canvasRef.current = canvas;
       const ctx = canvas.getContext("2d")!;
       const fps = 30;
-      const durationMs = 6000;
       const stream = (canvas as HTMLCanvasElement).captureStream(fps);
       const types = [
         "video/webm;codecs=vp9",
@@ -74,32 +79,86 @@ export function RecapVideo({
       });
       rec.start();
 
-      const start = performance.now();
       const isMascot = player.avatar_url?.startsWith("mascot:");
       const mascotColor = isMascot ? player.avatar_url!.slice(7) : "#ec4899";
 
-      await new Promise<void>((resolve) => {
-        const tick = () => {
-          const t = Math.min(1, (performance.now() - start) / durationMs);
-          setProgress(t);
-          drawFrame(ctx, W, H, t, player, total, mascotColor, avatarImgRef.current);
-          if (t >= 1) {
-            resolve();
-            return;
-          }
+      // Take at most 6 clips so the recap stays short and shareable.
+      const montage = clips.slice(0, 6);
+      const introMs = 2200;
+      const clipMs = 2600;
+      const outroMs = 2600;
+      const totalMs = introMs + montage.length * clipMs + outroMs;
+      let elapsedBefore = 0;
+
+      const animate = (durationMs: number, map: (p: number) => number) =>
+        new Promise<void>((resolve) => {
+          const start = performance.now();
+          const tick = () => {
+            const p = Math.min(1, (performance.now() - start) / durationMs);
+            setProgress(Math.min(1, (elapsedBefore + p * durationMs) / totalMs));
+            drawFrame(ctx, W, H, map(p), player, total, mascotColor, avatarImgRef.current);
+            if (p >= 1) {
+              elapsedBefore += durationMs;
+              resolve();
+              return;
+            }
+            requestAnimationFrame(tick);
+          };
           requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      });
+        });
+
+      // 1) Intro title card.
+      await animate(introMs, (p) => p * 0.45);
+
+      // 2) Exercise montage — real clips recorded by the judges.
+      for (let i = 0; i < montage.length; i++) {
+        const url = URL.createObjectURL(montage[i].blob);
+        urls.push(url);
+        const vid = document.createElement("video");
+        vid.src = url;
+        vid.muted = true;
+        vid.playsInline = true;
+        try {
+          await new Promise<void>((res, rej) => {
+            vid.onloadeddata = () => res();
+            vid.onerror = () => rej(new Error("clip load failed"));
+            setTimeout(() => res(), 2500);
+          });
+          await vid.play().catch(() => {});
+        } catch {
+          continue;
+        }
+        await new Promise<void>((resolve) => {
+          const start = performance.now();
+          const tick = () => {
+            const p = Math.min(1, (performance.now() - start) / clipMs);
+            setProgress(Math.min(1, (elapsedBefore + p * clipMs) / totalMs));
+            drawClipFrame(ctx, W, H, vid, montage[i].label ?? `MOVE ${i + 1}`, i + 1, montage.length, p);
+            if (p >= 1) {
+              elapsedBefore += clipMs;
+              resolve();
+              return;
+            }
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+        vid.pause();
+      }
+
+      // 3) Outro score card.
+      await animate(outroMs, (p) => 0.45 + p * 0.55);
 
       rec.stop();
       await stopped;
       const out = new Blob(chunks, { type: mime || "video/webm" });
       setBlob(out);
     } finally {
+      urls.forEach((u) => URL.revokeObjectURL(u));
       setBuilding(false);
     }
   };
+
 
   const ext = blob?.type.includes("mp4") ? "mp4" : "webm";
   const fileName = `boom-recap-${player.username.toLowerCase().replace(/\s+/g, "-")}.${ext}`;
@@ -225,6 +284,53 @@ export function RecapVideo({
       )}
     </div>
   );
+}
+
+/** Draws one montage frame: a workout clip, cover-fitted, with sticker overlay. */
+function drawClipFrame(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  vid: HTMLVideoElement,
+  label: string,
+  idx: number,
+  count: number,
+  p: number,
+) {
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+  const vw = vid.videoWidth || 720;
+  const vh = vid.videoHeight || 1280;
+  const scale = Math.max(W / vw, H / vh);
+  const dw = vw * scale;
+  const dh = vh * scale;
+  try {
+    ctx.drawImage(vid, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  } catch {
+    /* frame not ready */
+  }
+  // Bottom scrim + exercise label sticker.
+  const g = ctx.createLinearGradient(0, H * 0.6, 0, H);
+  g.addColorStop(0, "rgba(0,0,0,0)");
+  g.addColorStop(1, "rgba(0,0,0,0.75)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, H * 0.6, W, H * 0.4);
+
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = "900 52px 'Luckiest Guy', system-ui";
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 10;
+  ctx.fillStyle = "#fff";
+  const y = H - 120 + (1 - Math.min(1, p / 0.15)) * 40;
+  ctx.strokeText(label.toUpperCase(), W / 2, y);
+  ctx.fillText(label.toUpperCase(), W / 2, y);
+  ctx.font = "900 30px 'Luckiest Guy', system-ui";
+  ctx.lineWidth = 6;
+  ctx.strokeText(`MOVE ${idx} / ${count}`, W / 2, y + 46);
+  ctx.fillStyle = "#ffd84d";
+  ctx.fillText(`MOVE ${idx} / ${count}`, W / 2, y + 46);
+  ctx.restore();
 }
 
 function drawFrame(

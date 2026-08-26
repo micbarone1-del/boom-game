@@ -367,7 +367,8 @@ function PodPage() {
     if (phase.kind !== "judge") return;
     const { playerId, trap } = phase;
     const player = ordered.find((p) => p.id === playerId)!;
-    if (clipBlob) clipsRef.current.set(`${playerId}-${Date.now()}`, clipBlob);
+    // Key encodes player + exercise so the recap montage can label each clip.
+    if (clipBlob) clipsRef.current.set(`${playerId}|${trap.exercise}|${Date.now()}`, clipBlob);
 
     if (outcome === "success") {
       await supabase.from("workout_logs").insert({
@@ -450,12 +451,48 @@ function PodPage() {
         game_state: "playing",
         game_ends_at: newEnds.toISOString(),
         continue_deadline_at: null,
+        // Restart the boss clock too when the continue happens mid boss fight.
+        ...(room.phase === "boss" ? { boss_started_at: new Date().toISOString() } : {}),
       })
       .eq("code", code);
   };
 
+  // Main fuse ran out → continue countdown (pods drive this themselves so the
+  // gym screen doesn't have to be open).
+  useEffect(() => {
+    if (!endsAt || room.game_state !== "playing" || room.paused) return;
+    const i = setInterval(() => {
+      if (Date.now() < endsAt) return;
+      if (room.phase === "boss") return; // boss owns its own clock
+      void supabase
+        .from("rooms")
+        .update({
+          game_state: "timeout_continue",
+          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
+        })
+        .eq("code", code)
+        .eq("game_state", "playing")
+        .then(() => {});
+      clearInterval(i);
+    }, 1000);
+    return () => clearInterval(i);
+  }, [endsAt, room.game_state, room.paused, room.phase, code]);
 
-
+  // Continue countdown expired → game over.
+  useEffect(() => {
+    if (room.game_state !== "timeout_continue" || !continueAt) return;
+    const i = setInterval(() => {
+      if (Date.now() < continueAt) return;
+      void supabase
+        .from("rooms")
+        .update({ game_state: "game_over", continue_deadline_at: null })
+        .eq("code", code)
+        .eq("game_state", "timeout_continue")
+        .then(() => {});
+      clearInterval(i);
+    }, 500);
+    return () => clearInterval(i);
+  }, [room.game_state, continueAt, code]);
 
   // Render the timeout / game-over overlays on top of whatever phase is active.
   const overlay = (() => {
@@ -470,16 +507,20 @@ function PodPage() {
         />
       </div>
     );
+    // Fuse ran out (main game or boss) → continue countdown, never straight
+    // to the leaderboard. The leaderboard is only for pods that beat the boss.
     if (room.game_state === "timeout_continue" && continueAt) {
-      // Legacy state — collapse to game_over immediately.
-      void supabase
-        .from("rooms")
-        .update({ game_state: "game_over", continue_deadline_at: null })
-        .eq("code", code)
-        .then(() => {});
+      return (
+        <>
+          {pauseBtn}
+          <TimesOutOverlay
+            continueDeadlineAt={continueAt}
+            showContinue
+            onContinue={onContinue}
+          />
+        </>
+      );
     }
-    // Once the leaderboard ("victory") is showing, never re-render the
-    // game-over overlay on top of it.
     if (room.game_state === "game_over" && room.phase !== "victory") {
       return (
         <>
@@ -542,8 +583,13 @@ function PodPage() {
           players={ordered}
           winnerId={winnerId}
           clips={clipsRef.current}
-          onRestart={restart}
+          onRestart={() => {
+            void restart();
+            // Play Again always starts over from the player lobby.
+            window.location.assign(`/join/${code}`);
+          }}
         />
+
         {overlay}
       </>
     );
@@ -566,8 +612,12 @@ function PodPage() {
           players={ordered}
           winnerId={phase.winnerId}
           clips={clipsRef.current}
-          onRestart={restart}
+          onRestart={() => {
+            void restart();
+            window.location.assign(`/join/${code}`);
+          }}
         />
+
         {overlay}
       </>
     );
@@ -1952,7 +2002,18 @@ function WrapUp({
 }) {
   const winner = players.find((p) => p.id === winnerId)!;
   const ranked = [...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  const clipList = Array.from(clips.entries());
+  // Snapshot the clips + their object URLs ONCE, so re-renders (score polling,
+  // auth updates) don't recreate the URLs and blank out the <video> previews.
+  const clipList = useMemo(
+    () =>
+      Array.from(clips.entries()).map(([key, blob]) => {
+        const [playerId, exercise] = key.split("|");
+        return { key, blob, playerId, exercise: exercise || "Exercise", url: URL.createObjectURL(blob) };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  useEffect(() => () => clipList.forEach((c) => URL.revokeObjectURL(c.url)), [clipList]);
   const [spoken, setSpoken] = useState(false);
   const { user } = useAuth();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -2139,6 +2200,10 @@ function WrapUp({
                   rank: i + 1,
                 }}
                 total={localPlayers.length}
+                clips={(clipList.some((c) => c.playerId === p.id)
+                  ? clipList.filter((c) => c.playerId === p.id)
+                  : clipList
+                ).map((c) => ({ blob: c.blob, label: c.exercise }))}
               />
             ))}
         </div>
@@ -2154,14 +2219,11 @@ function WrapUp({
           <div className="text-sm opacity-60">No clips captured this round.</div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            {clipList.map(([key, blob], idx) => (
+            {clipList.map(({ key, blob, url, exercise }, idx) => (
               <div key={key} className="ink-border-sm rounded-xl p-2 flex flex-col gap-1">
-                <video
-                  src={URL.createObjectURL(blob)}
-                  controls
-                  playsInline
-                  className="w-full rounded-lg bg-black"
-                />
+                <video src={url} controls playsInline className="w-full rounded-lg bg-black" />
+                <div className="text-[10px] font-black truncate">{exercise}</div>
+
                 <div className="flex gap-1">
                   <button
                     onClick={() => shareClip(blob, idx)}

@@ -53,9 +53,9 @@ const BOSS_WEDGES: BossWedge[] = [
   { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard", mascot: bombHard },
   { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise", mascot: bombMascotImg },
   { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy", mascot: bombSetback },
-  { id: "group", label: "GROUP", multiplier: 1, color: "#3b82f6", tier: 2, pick: "group", mascot: bombBoost },
-  { id: "special", label: "SPECIAL ×2", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard", mascot: bombSpecial },
-  { id: "super", label: "SUPER ×3", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy", mascot: bombSuper },
+  { id: "group", label: "GROUP", multiplier: 1, podWide: true, color: "#3b82f6", tier: 2, pick: "group", mascot: bombBoost },
+  { id: "special", label: "SPECIAL", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard", mascot: bombSpecial },
+  { id: "super", label: "SUPER", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy", mascot: bombSuper },
 ];
 
 function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: string; tier: 1 | 2 | 3 } {
@@ -92,6 +92,8 @@ type Attack = {
   podWide?: boolean;
   /** Display label for the wedge (e.g. "SPECIAL MOVE"). */
   wedgeLabel?: string;
+  /** Mascot art for the wedge, shown on the switch screen. */
+  mascot?: string;
 };
 
 type InnerPhase =
@@ -203,6 +205,7 @@ export function BossPhase({
       multiplier: wedge.multiplier,
       podWide: wedge.podWide,
       wedgeLabel: wedge.label,
+      mascot: wedge.mascot,
     };
     setInner({ kind: "switch", attack });
   };
@@ -284,14 +287,18 @@ export function BossPhase({
     }, 3400);
   };
 
-  // Boss timeout → victory screen lost (game_over)
+  // Boss timeout → continue countdown (never straight to the leaderboard).
   useEffect(() => {
     if (remaining > 0) return;
     void (async () => {
       await supabase
         .from("rooms")
-        .update({ phase: "victory", game_state: "game_over" })
-        .eq("code", code);
+        .update({
+          game_state: "timeout_continue",
+          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
+        })
+        .eq("code", code)
+        .eq("game_state", "playing");
     })();
   }, [remaining, code]);
 
@@ -430,12 +437,27 @@ export function BossPhase({
 
       {inner.kind !== "death" && (
       <div className="absolute left-0 right-0 bottom-0 z-40 p-3 pointer-events-none">
-        <div className="flex items-center justify-between text-white text-[11px] font-black px-1 mb-1">
+        {/* Big boss countdown clock */}
+        <div className="flex justify-center mb-2">
+          <div
+            className={`ink-border rounded-2xl px-5 py-2 flex items-center gap-2 anim-ui-float ${remaining < 30_000 ? "arcade-low-time" : ""}`}
+            style={{
+              background: remaining < 30_000 ? "var(--boom-red)" : "var(--boom-yellow)",
+              color: remaining < 30_000 ? "#fff" : "var(--boom-ink)",
+            }}
+          >
+            <Flame size={28} />
+            <span
+              className="tabular-nums font-black leading-none"
+              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2rem, 11vw, 3.2rem)" }}
+            >
+              {mm}:{ss}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-white text-sm font-black px-1 mb-1">
           <span className="flex items-center gap-1" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}>
-            <Skull size={14} /> BOSS HP
-          </span>
-          <span style={{ fontFamily: "'Luckiest Guy', cursive", color: remaining < 30_000 ? "var(--boom-yellow)" : "#fff", textShadow: "1px 1px 0 #000" }}>
-            <Flame size={12} className="inline mb-1" /> {mm}:{ss}
+            <Skull size={18} /> BOSS HP
           </span>
         </div>
         <div className="relative h-10 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
@@ -493,52 +515,82 @@ function BossSwitch({
   }, [count]);
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 p-4 pb-20" style={{ background: "#ffffff" }}>
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-2 p-4 pb-16 overflow-hidden" style={{ background: "#ffffff" }}>
       <div aria-hidden className="pointer-events-none absolute inset-2 rounded-[2rem]" style={{ border: "8px solid #111" }} />
-      <div className="mt-2 text-center text-4xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
-        {attack.wedgeLabel ? `BOSS · ${attack.wedgeLabel}` : "BOSS ATTACK"}
-      </div>
-      <div
-        className="ink-border rounded-2xl bg-white px-5 py-3 text-center max-w-[92%]"
-      >
-        <div
-          className="font-black leading-tight"
-          style={{
-            fontFamily: "'Luckiest Guy', cursive",
-            color: "var(--boom-ink)",
-            fontSize: "clamp(1.5rem, 6vw, 2.25rem)",
-          }}
-        >
-          {attack.exercise}
-        </div>
-        <div className="font-bold" style={{ color: "var(--boom-ink)" }}>
-          {attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps`}
-        </div>
-        {attack.podWide && (
-          <div className="text-xs font-black mt-1" style={{ color: "var(--boom-red)" }}>
-            POD-WIDE · everyone hits together!
-          </div>
+
+      {/* Wedge mascot + banner */}
+      <div className="flex flex-col items-center gap-2 w-full relative z-10">
+        {attack.mascot && (
+          <img
+            src={attack.mascot}
+            alt=""
+            className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 -mb-2 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
+          />
         )}
+        <div
+          className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in anim-ui-float"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <span className="text-2xl font-black" style={{ color: "var(--boom-red)" }}>
+            {attack.wedgeLabel ? `BOSS · ${attack.wedgeLabel}` : "BOSS ATTACK"}
+          </span>
+        </div>
+        <div className="ink-border rounded-2xl bg-white px-5 py-2 text-center max-w-[92%] arcade-slam-in anim-ui-float">
+          <div
+            className="font-black leading-tight"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: "var(--boom-ink)",
+              fontSize: "clamp(1.6rem, 6vw, 2.25rem)",
+            }}
+          >
+            {attack.exercise}
+          </div>
+          <div
+            className="font-bold"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1rem, 4vw, 1.25rem)" }}
+          >
+            {attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps`}
+          </div>
+          {attack.podWide && (
+            <div className="text-sm font-black mt-1" style={{ color: "var(--boom-red)" }}>
+              POD-WIDE · everyone hits together!
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex items-center justify-around w-full max-w-md">
-        <div className="flex flex-col items-center gap-1 anim-fade-in">
-          <BossAvatar player={player} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
+
+      {/* Player → Judge handoff */}
+      <div className="flex items-center justify-between gap-2 w-full max-w-md relative z-10">
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
+          <BossAvatar player={player} size={112} />
+          <div className="text-base font-black uppercase tracking-wide" style={{ color: "var(--boom-ink)" }}>
             Player
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{player.username}</div>
+          <div
+            className="w-full text-center font-black leading-tight truncate"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1.1rem, 5vw, 1.6rem)" }}
+          >
+            {player.username}
+          </div>
         </div>
-        <div className="text-4xl">➡️</div>
-        <div className="flex flex-col items-center gap-1 anim-fade-in">
-          <BossAvatar player={judge} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
+        <div className="text-5xl shrink-0">➡️</div>
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
+          <BossAvatar player={judge} size={112} />
+          <div className="text-base font-black uppercase tracking-wide" style={{ color: "var(--boom-ink)" }}>
             Judge
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
+          <div
+            className="w-full text-center font-black leading-tight truncate"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1.1rem, 5vw, 1.6rem)" }}
+          >
+            {judge.username}
+          </div>
         </div>
       </div>
+
       <CountdownNumber value={count} />
-      <div className="text-sm font-bold opacity-90 text-center px-6" style={{ color: "var(--boom-ink)" }}>
+      <div className="text-base font-black text-center px-6 relative z-10" style={{ color: "var(--boom-ink)" }}>
         Pass the phone to {judge.username}
       </div>
     </div>
@@ -778,28 +830,39 @@ function BossJudge({
                 }
               : undefined
           }
-          className="absolute inset-6 rounded-full flex flex-col items-center justify-center active:scale-95 select-none"
+          className="absolute inset-5 rounded-full flex flex-col items-center justify-center gap-1 select-none arcade-press"
           style={{
             background: "var(--boom-red)",
             color: "white",
-            boxShadow: "0 0 0 4px #111, 0 8px 24px rgba(0,0,0,0.5)",
+            border: "4px solid #000",
+            boxShadow: "6px 6px 0 0 #000, 0 8px 24px rgba(0,0,0,0.5)",
           }}
         >
-          <span className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+          <span
+            className="font-black anim-ui-wiggle"
+            style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2rem, 9vw, 3rem)", lineHeight: 1, textShadow: "3px 3px 0 #000" }}
+          >
             ATTACK
           </span>
-          <span className="text-base font-bold">
+          <span className="text-xl font-black tabular-nums" style={{ textShadow: "2px 2px 0 #000" }}>
             {attack.unit === "reps"
               ? `${reps} / ${attack.reps}`
               : `${(holdMs / 1000).toFixed(1)}s / ${attack.reps}s`}
           </span>
-          <span className="text-xs opacity-80">
+          <span className="text-sm font-bold opacity-90">
             {attack.unit === "reps" ? "tap per rep" : "hold"}
           </span>
         </button>
       </div>
-      <div className="mt-2 text-white text-xs font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
-        {Math.ceil(remaining / 1000)}s
+      <div
+        className="mt-3 ink-border rounded-2xl px-4 py-2 text-xl font-black anim-ui-float"
+        style={{
+          fontFamily: "'Luckiest Guy', cursive",
+          background: remaining <= 5000 ? "var(--boom-red)" : "var(--boom-yellow)",
+          color: remaining <= 5000 ? "#fff" : "var(--boom-ink)",
+        }}
+      >
+        {Math.ceil(remaining / 1000)}s to attack
       </div>
     </div>
   );
@@ -1114,7 +1177,8 @@ function BossRoll({
                   transform={`rotate(${rot} ${lx} ${ly})`}
                   style={{
                     fontFamily: "'Luckiest Guy', cursive",
-                    fontSize: 11,
+                    fontSize: 9.5,
+                    letterSpacing: -0.3,
                     fill: "#111",
                     fontWeight: 900,
                   }}

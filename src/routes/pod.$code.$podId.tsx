@@ -771,14 +771,14 @@ function ProgressBar({
               <div
                 className="rounded-full overflow-hidden flex items-center justify-center"
                 style={{
-                  width: isActive ? 38 : 28,
-                  height: isActive ? 38 : 28,
+                  width: isActive ? 52 : 40,
+                  height: isActive ? 52 : 40,
                   background: color,
                   boxShadow: `0 0 0 2px #111${isActive ? ", 0 0 0 4px white, 0 0 0 6px " + color : ""}`,
                 }}
               >
                 {avatarIsMascot(p.avatar_url) ? (
-                  <Bomb size={isActive ? 22 : 16} color="white" fill="white" />
+                  <Bomb size={isActive ? 32 : 25} color="white" fill="white" />
                 ) : (
                   <img src={p.avatar_url!} alt="" className="w-full h-full object-cover" />
                 )}
@@ -864,7 +864,7 @@ function PlayerPhase({
     speak(`${player.username}, roll the dice.`, { volume: 1, rate: 0.8, pitch: 0.8 });
     setRolling(true);
     setFace(null);
-    sfx.play("hop");
+    sfx.play("rollJingle");
     // dice shake
     const start = Date.now();
     const interval = setInterval(() => {
@@ -951,7 +951,6 @@ function PlayerPhase({
         style={{
           fontSize: "clamp(1.25rem, 6vw, 2rem)",
           color: "var(--boom-ink)",
-          textShadow: "2px 2px 0 #fff, 4px 4px 0 #000",
         }}
       >
         Your turn
@@ -1048,7 +1047,7 @@ function SwitchPhase({
       onDone();
       return;
     }
-    sfx.play("countdown");
+    sfx.play("switchBig");
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [count, onDone, ftue.showing, paused]);
@@ -1075,7 +1074,7 @@ function SwitchPhase({
           className="w-44 h-44 max-w-[45vw] max-h-[45vw] object-contain anim-mascot-bounce arcade-slam-in drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
         />
         <div
-          className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in"
+          className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in anim-ui-float"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
         >
           <span
@@ -1085,7 +1084,7 @@ function SwitchPhase({
             {flavor.label}
           </span>
         </div>
-        <div className="text-center ink-border rounded-2xl bg-white px-4 py-2 max-w-[92%] arcade-slam-in">
+        <div className="text-center ink-border rounded-2xl bg-white px-4 py-2 max-w-[92%] arcade-slam-in anim-ui-float">
           <div
             className="font-black leading-tight"
             style={{
@@ -1327,17 +1326,17 @@ function HopOverlay({
                 </div>
                 {/* Other players parked on this cell */}
                 {others.length > 0 && (
-                  <div className="absolute -bottom-1 left-0 right-0 flex justify-center gap-0.5">
+                <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-1">
                     {others.slice(0, 3).map((op) => (
                       <div
                         key={op.id}
                         className="rounded-full bg-white"
                         style={{
-                          width: 14,
-                          height: 14,
-                          maxWidth: 14,
-                          maxHeight: 14,
-                          boxShadow: "0 0 0 1.5px #111",
+                          width: 26,
+                          height: 26,
+                          maxWidth: 26,
+                          maxHeight: 26,
+                          boxShadow: "0 0 0 2.5px #111",
                           overflow: "hidden",
                         }}
                         title={op.username}
@@ -1347,7 +1346,7 @@ function HopOverlay({
                             className="w-full h-full flex items-center justify-center"
                             style={{ background: mascotColor(op.avatar_url) }}
                           >
-                            <Bomb size={9} color="#fff" fill="#fff" />
+                            <Bomb size={17} color="#fff" fill="#fff" />
                           </div>
                         ) : op.avatar_url ? (
                           <img
@@ -1367,7 +1366,7 @@ function HopOverlay({
           {/* Active player avatar — positioned over the current cell */}
           {(() => {
             const c = cellCenter(currentSpace);
-            const SZ = 38;
+            const SZ = 46;
             return (
               <div
                 key={`hopper-${safeStep}`}
@@ -1661,7 +1660,7 @@ function JudgePhase({
       setDefuseFlash(true);
     } else {
       haptic("boom");
-      sfx.play("blowUp");
+      sfx.play("explodeJingle");
       speak(`${player.username} exploded! Back to start.`);
     }
     // Stop recorder & collect blob
@@ -2027,7 +2026,7 @@ function WrapUp({
   useEffect(() => {
     if (spoken) return;
     setSpoken(true);
-    sfx.play("win");
+    sfx.play("winJingle");
     speak(`${winner.username} wins!`);
   }, [spoken, winner.username]);
 
@@ -2078,7 +2077,7 @@ function WrapUp({
       </div>
 
       {/* Ranking */}
-      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2 anim-ui-float">
         <div className="text-xl arcade-heading text-white mb-1">Final Ranking</div>
         {[...localPlayers].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).map((p, i) => (
           <div key={p.id} className="arcade-card-sm bg-white flex items-center gap-3 py-2 px-3">
@@ -2117,7 +2116,7 @@ function WrapUp({
       </div>
 
       {/* Shareable recap videos — 2x2 sticker grid */}
-      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2 anim-ui-float">
         <div className="text-xl arcade-heading text-white mb-1">Share your recap</div>
         <div className="grid grid-cols-2 gap-3">
           {[...localPlayers]
@@ -2142,7 +2141,7 @@ function WrapUp({
       <GlobalLeaderboard highlightUserId={user?.id ?? null} />
 
       {/* Clips */}
-      <div className="arcade-card p-4 bg-white flex flex-col gap-2">
+      <div className="arcade-card p-4 bg-white flex flex-col gap-2 anim-ui-float">
         <div className="text-xl arcade-heading text-white mb-1">Judge Highlights</div>
         {clipList.length === 0 ? (
           <div className="text-sm opacity-60">No clips captured this round.</div>
@@ -2301,14 +2300,14 @@ function VsPhase({
         </div>
         <div className="flex flex-col items-center gap-2">
           <div className="text-white text-sm opacity-80 uppercase">Pass phone to judge</div>
-          <div className="bg-white ink-border rounded-full px-4 py-2 flex items-center gap-2">
+          <div className="bg-white ink-border rounded-full px-4 py-2 flex items-center gap-2 anim-ui-float">
             <Avatar player={judge} size={40} />
             <span className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{judge.username}</span>
           </div>
         </div>
         <button
           onClick={() => setStage("battle")}
-          className="w-full max-w-sm py-4 rounded-2xl ink-border bg-[var(--boom-yellow)] text-2xl font-black active:scale-95"
+          className="w-full max-w-sm py-4 rounded-2xl ink-border bg-[var(--boom-yellow)] text-2xl font-black active:scale-95 anim-ui-float"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
         >
           START BATTLE
@@ -2433,7 +2432,7 @@ function GroupPhase({
       </div>
       <button
         onClick={onComplete}
-        className="w-full max-w-sm py-5 rounded-2xl ink-border bg-[var(--boom-green)] text-white text-3xl font-black active:scale-95"
+        className="w-full max-w-sm py-5 rounded-2xl ink-border bg-[var(--boom-green)] text-white text-3xl font-black active:scale-95 anim-ui-float"
         style={{ fontFamily: "'Luckiest Guy', cursive" }}
       >
         WE DID IT!
@@ -2461,7 +2460,7 @@ function PausePhase({ player, onComplete }: { player: Player; onComplete: () => 
         PAUSE!
       </div>
       <div className="text-white text-xl font-bold">Take a breath, {player.username} 🌬️</div>
-      <button onClick={onComplete} className="px-6 py-3 rounded-full bg-white ink-border text-lg font-black active:scale-95">
+      <button onClick={onComplete} className="px-6 py-3 rounded-full bg-white ink-border text-lg font-black active:scale-95 anim-ui-float">
         Skip
       </button>
     </main>

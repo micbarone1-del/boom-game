@@ -13,7 +13,7 @@ import {
   TRAP_TIMEOUT_MS,
   type BoardOverrides,
 } from "@/lib/game";
-import {
+import { haptic,
   sfx,
   speak,
   repPop,
@@ -227,6 +227,7 @@ export function BossPhase({
       setTimeout(() => setBurst(null), 900);
       sfx.play("bossHit");
       sfx.play("blowUp");
+      haptic("boom");
       // Race-safe decrement.
       const newHp = Math.max(0, (room.boss_hp ?? 0) - damage);
       await supabase
@@ -840,6 +841,7 @@ function BossDeathOverlay() {
     const t2 = window.setTimeout(() => {
       setStage("win");
       speak("Boss defeated. Victory!", { pitch: 1.1, rate: 0.85 });
+      haptic("success");
       sfx.play("win");
     }, 4200);
     return () => {

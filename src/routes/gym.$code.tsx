@@ -261,6 +261,17 @@ function Lobby({ code, onJoinOpen }: { code: string; onJoinOpen: () => void }) {
         )}
       </header>
 
+      <Link
+        to="/join/$code"
+        params={{ code }}
+        search={{ auto: undefined, join: undefined }}
+        className="ink-border rounded-2xl px-4 py-3 text-lg font-black flex items-center justify-center gap-2 active:scale-95"
+        style={{ background: "var(--boom-yellow)", fontFamily: "'Luckiest Guy', cursive" }}
+      >
+        <Smartphone size={22} /> GO TO PLAYER LOBBY
+      </Link>
+
+
       {/* Join card */}
       <div className="ink-border rounded-2xl bg-white p-4 flex flex-col sm:flex-row gap-4 items-center">
         <div className="bg-white p-2 rounded-xl ink-border-sm">

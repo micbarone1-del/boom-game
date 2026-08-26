@@ -658,7 +658,7 @@ function PodPage() {
     const p = ordered.find((x) => x.id === phase.playerId)!;
     return (
       <>
-        <PausePhase player={p} onComplete={onPauseComplete} />
+        <PausePhase player={p} onComplete={onPauseComplete} paused={!!room.paused} />
         {overlay}
       </>
     );

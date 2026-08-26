@@ -456,8 +456,42 @@ function PodPage() {
       .eq("code", code);
   };
 
+  // Main fuse ran out → continue countdown (pods drive this themselves so the
+  // gym screen doesn't have to be open).
+  useEffect(() => {
+    if (!endsAt || room.game_state !== "playing" || room.paused) return;
+    const i = setInterval(() => {
+      if (Date.now() < endsAt) return;
+      if (room.phase === "boss") return; // boss owns its own clock
+      void supabase
+        .from("rooms")
+        .update({
+          game_state: "timeout_continue",
+          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
+        })
+        .eq("code", code)
+        .eq("game_state", "playing")
+        .then(() => {});
+      clearInterval(i);
+    }, 1000);
+    return () => clearInterval(i);
+  }, [endsAt, room.game_state, room.paused, room.phase, code]);
 
-
+  // Continue countdown expired → game over.
+  useEffect(() => {
+    if (room.game_state !== "timeout_continue" || !continueAt) return;
+    const i = setInterval(() => {
+      if (Date.now() < continueAt) return;
+      void supabase
+        .from("rooms")
+        .update({ game_state: "game_over", continue_deadline_at: null })
+        .eq("code", code)
+        .eq("game_state", "timeout_continue")
+        .then(() => {});
+      clearInterval(i);
+    }, 500);
+    return () => clearInterval(i);
+  }, [room.game_state, continueAt, code]);
 
   // Render the timeout / game-over overlays on top of whatever phase is active.
   const overlay = (() => {

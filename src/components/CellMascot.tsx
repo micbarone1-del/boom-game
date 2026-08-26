@@ -58,9 +58,14 @@ export function CellMascot({ type, username }: { type: CellType; username?: stri
   // Cartoon "pop!" + a trap-specific jingle whenever the mascot springs on screen.
   useEffect(() => {
     if (type === "finish") return;
+    const g = globalThis as typeof globalThis & { __boomLastMascotJingle?: string };
+    const key = `${type}:${Math.floor(Date.now() / 300)}`;
+    if (g.__boomLastMascotJingle === key) return;
+    g.__boomLastMascotJingle = key;
     sfx.play("trapPop");
-    window.setTimeout(() => sfx.play(TRAP_JINGLE[type]), 130);
+    const timer = window.setTimeout(() => sfx.play(TRAP_JINGLE[type]), 130);
     haptic(type === "setback" ? "fail" : "success");
+    return () => window.clearTimeout(timer);
   }, [type]);
   // Finish has its own dedicated explosion overlay — skip the cell splash.
   if (type === "finish") return null;

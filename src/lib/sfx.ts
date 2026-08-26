@@ -937,8 +937,16 @@ export function startArcadeMusic() {
 // Browsers routinely suspend the AudioContext (tab blur, phone call, iOS
 // interruptions) and the loop interval can be throttled away. Every 2s we
 // re-resume the context, restore a lost music timer, and clear a stuck duck.
-if (typeof window !== "undefined" && !(globalThis as any).__boomAudioWatchdog) {
-  (globalThis as any).__boomAudioWatchdog = window.setInterval(() => {
+if (typeof window !== "undefined") {
+  const globalAudio = globalThis as typeof globalThis & {
+    __boomAudioWatchdog?: number;
+    __boomAudioVisibilityHandler?: () => void;
+  };
+  if (globalAudio.__boomAudioWatchdog) window.clearInterval(globalAudio.__boomAudioWatchdog);
+  if (globalAudio.__boomAudioVisibilityHandler) {
+    document.removeEventListener("visibilitychange", globalAudio.__boomAudioVisibilityHandler);
+  }
+  globalAudio.__boomAudioWatchdog = window.setInterval(() => {
     if (muted || audioSuspended) return;
     const c = state.ctx;
     if (c && c.state === "suspended") void c.resume().catch(() => {});
@@ -955,12 +963,13 @@ if (typeof window !== "undefined" && !(globalThis as any).__boomAudioWatchdog) {
       );
     }
   }, 2000);
-  document.addEventListener("visibilitychange", () => {
+  globalAudio.__boomAudioVisibilityHandler = () => {
     if (document.visibilityState !== "visible" || muted || audioSuspended) return;
     const c = state.ctx;
     if (c && c.state === "suspended") void c.resume().catch(() => {});
     if (state.musicWanted && !state.arcadeTimer) startArcadeMusic();
-  });
+  };
+  document.addEventListener("visibilitychange", globalAudio.__boomAudioVisibilityHandler);
 }
 
 /** Swap the track to the one matching the current game phase. */

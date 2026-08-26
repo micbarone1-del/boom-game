@@ -1071,7 +1071,7 @@ function SwitchPhase({
           src={mascotImg}
           alt=""
           key={`cellmascot-${trap.cellType}`}
-          className="w-44 h-44 max-w-[45vw] max-h-[45vw] object-contain anim-mascot-bounce arcade-slam-in drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
+          className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 -mb-2 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
         />
         <div
           className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in anim-ui-float"
@@ -1282,7 +1282,7 @@ function HopOverlay({
             return (
               <div
                 key={cell.space}
-                className={`absolute rounded-xl flex items-center justify-center font-black overflow-hidden ${
+                className={`absolute rounded-xl flex items-center justify-center font-black ${
                   trapHit ? "anim-trap-land" : isCurrent ? "anim-mascot-bounce" : ""
                 }`}
                 style={{
@@ -1326,17 +1326,17 @@ function HopOverlay({
                 </div>
                 {/* Other players parked on this cell */}
                 {others.length > 0 && (
-                <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-1">
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex justify-center gap-1 z-10">
                     {others.slice(0, 3).map((op) => (
                       <div
                         key={op.id}
-                        className="rounded-full bg-white"
+                        className="rounded-full bg-white shrink-0"
                         style={{
-                          width: 26,
-                          height: 26,
-                          maxWidth: 26,
-                          maxHeight: 26,
-                          boxShadow: "0 0 0 2.5px #111",
+                          width: 38,
+                          height: 38,
+                          maxWidth: 38,
+                          maxHeight: 38,
+                          boxShadow: "0 0 0 3px #111, 0 3px 8px rgba(0,0,0,0.45)",
                           overflow: "hidden",
                         }}
                         title={op.username}
@@ -1346,7 +1346,7 @@ function HopOverlay({
                             className="w-full h-full flex items-center justify-center"
                             style={{ background: mascotColor(op.avatar_url) }}
                           >
-                            <Bomb size={17} color="#fff" fill="#fff" />
+                            <Bomb size={24} color="#fff" fill="#fff" />
                           </div>
                         ) : op.avatar_url ? (
                           <img
@@ -1354,7 +1354,14 @@ function HopOverlay({
                             alt=""
                             className="w-full h-full object-cover"
                           />
-                        ) : null}
+                        ) : (
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ background: "#ec4899" }}
+                          >
+                            <Bomb size={24} color="#fff" fill="#fff" />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -26,14 +26,26 @@ export function mascotForCell(type: CellType): string {
   return CELL_FLAVOR[type].img;
 }
 
+const TRAP_JINGLE: Record<CellType, Parameters<typeof sfx.play>[0]> = {
+  easy: "jingleEasy",
+  medium: "jingleMedium",
+  hard: "jingleHard",
+  boost: "jingleBoost",
+  setback: "jingleSetback",
+  surprise: "jingleSurprise",
+  crazy: "jingleCrazy",
+  group: "jingleGroup",
+  pause: "jinglePause",
+  start: "jingleStart",
+  finish: "winJingle",
+};
+
 export function CellMascot({ type, username }: { type: CellType; username?: string }) {
-  // Cartoon "pop!" + a short buzz whenever the trap mascot springs on screen.
+  // Cartoon "pop!" + a trap-specific jingle whenever the mascot springs on screen.
   useEffect(() => {
     if (type === "finish") return;
     sfx.play("trapPop");
-    if (type !== "boost" && type !== "start") {
-      window.setTimeout(() => sfx.play("trapFound"), 140);
-    }
+    window.setTimeout(() => sfx.play(TRAP_JINGLE[type]), 130);
     haptic(type === "setback" ? "fail" : "success");
   }, [type]);
   // Finish has its own dedicated explosion overlay — skip the cell splash.
@@ -45,17 +57,18 @@ export function CellMascot({ type, username }: { type: CellType; username?: stri
       style={{ top: "50%", left: "50%" }}
     >
       <div
-        className="ink-border rounded-3xl px-6 pb-5 pt-24 flex flex-col items-center gap-2 relative"
+        className="ink-border rounded-3xl px-6 pb-5 pt-28 flex flex-col items-center gap-2 relative"
         style={{ background: f.color, color: "white", minWidth: 260, overflow: "visible" }}
       >
-        {/* Mascot bursts out of the top of the frame instead of being clipped */}
+        {/* Mascot bursts way out of the top of the frame instead of being clipped */}
         <img
           src={f.img}
           alt=""
           width={1024}
           height={1024}
-          className={`absolute left-1/2 -translate-x-1/2 -top-24 w-48 h-48 object-contain pointer-events-none ${f.sad ? "" : "anim-mascot-bounce"} drop-shadow-[0_0_20px_rgba(0,0,0,0.55)]`}
+          className={`absolute left-1/2 -translate-x-1/2 -top-36 w-64 h-64 max-w-[70vw] max-h-[70vw] object-contain pointer-events-none z-10 ${f.sad ? "" : "anim-mascot-bounce"} drop-shadow-[0_10px_0_rgba(0,0,0,0.35)] drop-shadow-[0_0_24px_rgba(0,0,0,0.55)]`}
         />
+
         <div
           className="text-3xl font-black comic-shadow"
           style={{ fontFamily: "'Luckiest Guy', cursive", lineHeight: 1 }}

@@ -481,7 +481,7 @@ function PodPage() {
               void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
             }}
             onGiveUp={() => {
-              void navigate({ to: "/gym/$code", params: { code } });
+              void navigate({ to: "/join/$code", params: { code }, search: { auto: undefined, join: undefined } });
             }}
             onSignInClick={() => setPauseJoinOpen(true)}
           />
@@ -917,7 +917,16 @@ function PlayerPhase({
       )}
       {hopMascot && <CellMascot type={hopMascot} username={player.username} />}
       {powerUp && <PowerUpOverlay player={player} />}
-      <div className="text-sm font-bold opacity-70 uppercase tracking-widest">Your turn</div>
+      <div
+        className="font-black uppercase tracking-widest"
+        style={{
+          fontSize: "clamp(1.25rem, 6vw, 2rem)",
+          color: "var(--boom-ink)",
+          textShadow: "2px 2px 0 #fff, 4px 4px 0 #000",
+        }}
+      >
+        Your turn
+      </div>
       <Avatar player={player} size={150} />
       <div
         className="text-5xl font-black"

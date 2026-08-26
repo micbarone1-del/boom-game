@@ -53,6 +53,16 @@ function JoinView() {
   const { user, loading: authLoading } = useAuth();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
+  const [stampedSlot, setStampedSlot] = useState<number | null>(null);
+  // Fire the arcade "stamp" landing animation on a freshly populated slot.
+  const stampSlot = (idx: number) => {
+    setStampedSlot(idx);
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.add("anim-stamp-quake");
+      setTimeout(() => document.documentElement.classList.remove("anim-stamp-quake"), 400);
+    }
+    setTimeout(() => setStampedSlot((cur) => (cur === idx ? null : cur)), 900);
+  };
   const [guestProfile, setGuestProfile] = useState<
     { username: string; avatar_url: string; fitness?: number } | null
   >(null);
@@ -86,6 +96,7 @@ function JoinView() {
     });
     // The returning/authenticated player owns this card.
     setAttachToSlotIdx((cur) => (cur === null ? firstEmpty : cur));
+    stampSlot(firstEmpty);
   }, [guestProfile, slots]);
 
   // Remember a guest identity from a previous visit on this device.
@@ -124,6 +135,7 @@ function JoinView() {
     });
     if (typeof window !== "undefined") sessionStorage.removeItem(ATTACH_KEY);
     setAttachToSlotIdx(null);
+    stampSlot(idx);
   };
 
   const openJoinModal = (slotIdx?: number) => {
@@ -623,6 +635,28 @@ function SlotCard({
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+/** Small particle burst played when a player card stamps into the lobby. */
+function StampBurst() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-visible z-20">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <span
+          key={i}
+          className="absolute left-1/2 top-1/2 block rounded-full anim-stamp-spark"
+          style={{
+            width: 10,
+            height: 10,
+            background: i % 2 ? "var(--boom-yellow)" : "var(--boom-red)",
+            boxShadow: "0 0 0 2px #000",
+            ["--sx" as string]: `${Math.cos((i / 10) * Math.PI * 2) * 90}px`,
+            ["--sy" as string]: `${Math.sin((i / 10) * Math.PI * 2) * 60}px`,
+            animationDelay: `${i * 12}ms`,
+          }}
+        />
+      ))}
     </div>
   );
 }

@@ -1,4 +1,6 @@
-import { Bomb, Flame } from "lucide-react";
+import { Flame } from "lucide-react";
+import { BombAvatar } from "@/components/BombAvatar";
+
 
 // Colors chosen to NOT clash with cell backgrounds
 // (cell bg uses yellow/orange/red/blue/green/purple).

@@ -171,7 +171,6 @@ function Index() {
           }}
         >
           <video
-            src="/media/attract.mp4"
             autoPlay
             loop
             muted
@@ -179,7 +178,10 @@ function Index() {
             preload="auto"
             aria-label="BOOM! gameplay attract reel"
             className="block w-full h-auto max-h-[46vh] object-cover"
-          />
+          >
+            <source src="/media/attract.mp4" type="video/mp4" />
+            <source src="/media/attract.webm" type="video/webm" />
+          </video>
         </div>
       </div>
     </main>

@@ -28,7 +28,12 @@ type EffectName =
   | "wheelStop"
   | "bossHit"
   | "hopStep"
-  | "trapPop";
+  | "trapPop"
+  | "rollJingle"
+  | "trapFound"
+  | "winJingle"
+  | "explodeJingle"
+  | "switchBig";
 
 type BoomSfxGlobal = {
   ctx: AudioContext | null;
@@ -387,6 +392,51 @@ const effects: Record<EffectName, () => void> = {
   hopStep: () => {
     beep({ freq: 380, endFreq: 900, dur: 0.09, type: "square", gain: 0.16 });
     beep({ freq: 1200, dur: 0.04, type: "triangle", gain: 0.1, delay: 0.08 });
+  },
+
+  // --- Jingles -----------------------------------------------------------
+  // Rolling the dice: quick rising arcade arpeggio.
+  rollJingle: () => {
+    [523, 659, 784, 1047].forEach((f, i) =>
+      beep({ freq: f, dur: 0.08, type: "square", gain: 0.2, delay: i * 0.06 }),
+    );
+    beep({ freq: 1568, dur: 0.14, type: "triangle", gain: 0.18, delay: 0.26 });
+  },
+
+  // Trap discovered: ominous stinger + wobble.
+  trapFound: () => {
+    beep({ freq: 330, dur: 0.12, type: "sawtooth", gain: 0.22 });
+    beep({ freq: 262, dur: 0.14, type: "sawtooth", gain: 0.22, delay: 0.12 });
+    beep({ freq: 196, endFreq: 140, dur: 0.35, type: "square", gain: 0.24, delay: 0.26 });
+    noise({ dur: 0.2, gain: 0.16, lowpass: 1800, delay: 0.26 });
+  },
+
+  // Big win fanfare (longer than "win").
+  winJingle: () => {
+    const notes: [number, number][] = [
+      [523, 0], [659, 0.1], [784, 0.2], [1047, 0.3],
+      [880, 0.46], [1047, 0.56], [1319, 0.66], [1568, 0.8],
+    ];
+    notes.forEach(([f, t]) => {
+      beep({ freq: f, dur: 0.16, type: "square", gain: 0.2, delay: t });
+      beep({ freq: f * 2, dur: 0.12, type: "triangle", gain: 0.1, delay: t });
+    });
+  },
+
+  // Explosion jingle: boom then sad descending trombone.
+  explodeJingle: () => {
+    noise({ dur: 0.7, gain: 0.42, lowpass: 1400 });
+    beep({ freq: 120, endFreq: 35, dur: 0.7, type: "sawtooth", gain: 0.3 });
+    [392, 349, 311, 262].forEach((f, i) =>
+      beep({ freq: f, dur: 0.22, type: "sawtooth", gain: 0.2, delay: 0.6 + i * 0.18 }),
+    );
+  },
+
+  // Loud "pass the phone" countdown blast.
+  switchBig: () => {
+    beep({ freq: 440, dur: 0.18, type: "square", gain: 0.32 });
+    beep({ freq: 880, dur: 0.18, type: "square", gain: 0.22, delay: 0.02 });
+    noise({ dur: 0.1, gain: 0.14, lowpass: 4000 });
   },
 
   // Cartoon "pop!" when a trap / cell mascot springs onto the screen

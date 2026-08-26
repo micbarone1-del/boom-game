@@ -771,14 +771,14 @@ function ProgressBar({
               <div
                 className="rounded-full overflow-hidden flex items-center justify-center"
                 style={{
-                  width: isActive ? 38 : 28,
-                  height: isActive ? 38 : 28,
+                  width: isActive ? 52 : 40,
+                  height: isActive ? 52 : 40,
                   background: color,
                   boxShadow: `0 0 0 2px #111${isActive ? ", 0 0 0 4px white, 0 0 0 6px " + color : ""}`,
                 }}
               >
                 {avatarIsMascot(p.avatar_url) ? (
-                  <Bomb size={isActive ? 22 : 16} color="white" fill="white" />
+                  <Bomb size={isActive ? 32 : 25} color="white" fill="white" />
                 ) : (
                   <img src={p.avatar_url!} alt="" className="w-full h-full object-cover" />
                 )}
@@ -1366,7 +1366,7 @@ function HopOverlay({
           {/* Active player avatar — positioned over the current cell */}
           {(() => {
             const c = cellCenter(currentSpace);
-            const SZ = 38;
+            const SZ = 46;
             return (
               <div
                 key={`hopper-${safeStep}`}

@@ -571,6 +571,7 @@ function PodPage() {
           player={p}
           judge={j}
           trap={phase.trap}
+          paused={!!room.paused}
           onDone={() =>
             setPhase({ kind: "judge", playerId: phase.playerId, judgeId: phase.judgeId, trap: phase.trap })
           }
@@ -587,6 +588,7 @@ function PodPage() {
         <JudgePhase
           player={p}
           trap={phase.trap}
+          paused={!!room.paused}
           onComplete={onJudgeResult}
         />
         {overlay}
@@ -975,11 +977,13 @@ function SwitchPhase({
   player,
   judge,
   trap,
+  paused = false,
   onDone,
 }: {
   player: Player;
   judge: Player;
   trap: ActiveTrap;
+  paused?: boolean;
   onDone: () => void;
 }) {
   const [count, setCount] = useState(3);
@@ -989,7 +993,7 @@ function SwitchPhase({
   const ftue = useFtue(player.id, "switch");
 
   useEffect(() => {
-    if (ftue.showing) return;
+    if (ftue.showing || paused) return;
     if (spokeRef.current) return;
     spokeRef.current = true;
     const unit = trap.unit === "seconds" ? `${trap.reps} seconds` : `${trap.reps} reps`;
@@ -997,7 +1001,7 @@ function SwitchPhase({
   }, [player.username, judge.username, trap, ftue.showing]);
 
   useEffect(() => {
-    if (ftue.showing) return;
+    if (ftue.showing || paused) return;
     if (count <= 0) {
       onDone();
       return;
@@ -1005,7 +1009,7 @@ function SwitchPhase({
     sfx.play("countdown");
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [count, onDone, ftue.showing]);
+  }, [count, onDone, ftue.showing, paused]);
 
   return (
     <main
@@ -1473,10 +1477,12 @@ function PowerUpOverlay({ player }: { player: Player }) {
 function JudgePhase({
   player,
   trap,
+  paused = false,
   onComplete,
 }: {
   player: Player;
   trap: ActiveTrap;
+  paused?: boolean;
   onComplete: (outcome: "success" | "fail", clip: Blob | null) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -1498,8 +1504,11 @@ function JudgePhase({
   // Time spent reading the FTUE tip doesn't count against the defuse timer.
   const ftueOffsetRef = useRef(0);
   const ftueOpenedAtRef = useRef<number | null>(null);
-  if (ftue.showing && ftueOpenedAtRef.current === null) ftueOpenedAtRef.current = Date.now();
-  if (!ftue.showing && ftueOpenedAtRef.current !== null) {
+  // Frozen = a tutorial tip is up OR the room is paused. Neither counts
+  // against the defuse countdown.
+  const frozen = ftue.showing || paused;
+  if (frozen && ftueOpenedAtRef.current === null) ftueOpenedAtRef.current = Date.now();
+  if (!frozen && ftueOpenedAtRef.current !== null) {
     ftueOffsetRef.current += Date.now() - ftueOpenedAtRef.current;
     ftueOpenedAtRef.current = null;
   }
@@ -1552,15 +1561,16 @@ function JudgePhase({
   // Tick to redraw the ring + accumulate hold time
   useEffect(() => {
     const i = setInterval(() => {
+      if (frozen) return;
       if (holdingRef.current && trap.unit === "seconds") {
         setHoldMs((m) => m + 50);
       }
       force((n) => n + 1);
     }, 50);
     return () => clearInterval(i);
-  }, [trap.unit]);
+  }, [trap.unit, frozen]);
 
-  const pausedFor = ftue.showing && ftueOpenedAtRef.current ? Date.now() - ftueOpenedAtRef.current : 0;
+  const pausedFor = frozen && ftueOpenedAtRef.current ? Date.now() - ftueOpenedAtRef.current : 0;
   const elapsed = Date.now() - started - ftueOffsetRef.current - pausedFor;
   const remaining = Math.max(0, TRAP_TIMEOUT_MS - elapsed);
   const ringProgress = remaining / TRAP_TIMEOUT_MS;
@@ -1568,9 +1578,9 @@ function JudgePhase({
   // Timeout = fail
   useEffect(() => {
     if (completedRef.current) return;
-    if (ftue.showing) return;
+    if (frozen) return;
     if (remaining <= 0) finish("fail");
-  }, [remaining, ftue.showing]);
+  }, [remaining, frozen]);
 
 
   const finish = (outcome: "success" | "fail") => {

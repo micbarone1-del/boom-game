@@ -515,52 +515,82 @@ function BossSwitch({
   }, [count]);
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-3 p-4 pb-20" style={{ background: "#ffffff" }}>
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-2 p-4 pb-16 overflow-hidden" style={{ background: "#ffffff" }}>
       <div aria-hidden className="pointer-events-none absolute inset-2 rounded-[2rem]" style={{ border: "8px solid #111" }} />
-      <div className="mt-2 text-center text-4xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}>
-        {attack.wedgeLabel ? `BOSS · ${attack.wedgeLabel}` : "BOSS ATTACK"}
-      </div>
-      <div
-        className="ink-border rounded-2xl bg-white px-5 py-3 text-center max-w-[92%]"
-      >
-        <div
-          className="font-black leading-tight"
-          style={{
-            fontFamily: "'Luckiest Guy', cursive",
-            color: "var(--boom-ink)",
-            fontSize: "clamp(1.5rem, 6vw, 2.25rem)",
-          }}
-        >
-          {attack.exercise}
-        </div>
-        <div className="font-bold" style={{ color: "var(--boom-ink)" }}>
-          {attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps`}
-        </div>
-        {attack.podWide && (
-          <div className="text-xs font-black mt-1" style={{ color: "var(--boom-red)" }}>
-            POD-WIDE · everyone hits together!
-          </div>
+
+      {/* Wedge mascot + banner */}
+      <div className="flex flex-col items-center gap-2 w-full relative z-10">
+        {attack.mascot && (
+          <img
+            src={attack.mascot}
+            alt=""
+            className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 -mb-2 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
+          />
         )}
+        <div
+          className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in anim-ui-float"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <span className="text-2xl font-black" style={{ color: "var(--boom-red)" }}>
+            {attack.wedgeLabel ? `BOSS · ${attack.wedgeLabel}` : "BOSS ATTACK"}
+          </span>
+        </div>
+        <div className="ink-border rounded-2xl bg-white px-5 py-2 text-center max-w-[92%] arcade-slam-in anim-ui-float">
+          <div
+            className="font-black leading-tight"
+            style={{
+              fontFamily: "'Luckiest Guy', cursive",
+              color: "var(--boom-ink)",
+              fontSize: "clamp(1.6rem, 6vw, 2.25rem)",
+            }}
+          >
+            {attack.exercise}
+          </div>
+          <div
+            className="font-bold"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1rem, 4vw, 1.25rem)" }}
+          >
+            {attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps`}
+          </div>
+          {attack.podWide && (
+            <div className="text-sm font-black mt-1" style={{ color: "var(--boom-red)" }}>
+              POD-WIDE · everyone hits together!
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex items-center justify-around w-full max-w-md">
-        <div className="flex flex-col items-center gap-1 anim-fade-in">
-          <BossAvatar player={player} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-red)" }}>
+
+      {/* Player → Judge handoff */}
+      <div className="flex items-center justify-between gap-2 w-full max-w-md relative z-10">
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
+          <BossAvatar player={player} size={112} />
+          <div className="text-base font-black uppercase tracking-wide" style={{ color: "var(--boom-ink)" }}>
             Player
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{player.username}</div>
+          <div
+            className="w-full text-center font-black leading-tight truncate"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1.1rem, 5vw, 1.6rem)" }}
+          >
+            {player.username}
+          </div>
         </div>
-        <div className="text-4xl">➡️</div>
-        <div className="flex flex-col items-center gap-1 anim-fade-in">
-          <BossAvatar player={judge} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-yellow)" }}>
+        <div className="text-5xl shrink-0">➡️</div>
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
+          <BossAvatar player={judge} size={112} />
+          <div className="text-base font-black uppercase tracking-wide" style={{ color: "var(--boom-ink)" }}>
             Judge
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>
+          <div
+            className="w-full text-center font-black leading-tight truncate"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1.1rem, 5vw, 1.6rem)" }}
+          >
+            {judge.username}
+          </div>
         </div>
       </div>
+
       <CountdownNumber value={count} />
-      <div className="text-sm font-bold opacity-90 text-center px-6" style={{ color: "var(--boom-ink)" }}>
+      <div className="text-base font-black text-center px-6 relative z-10" style={{ color: "var(--boom-ink)" }}>
         Pass the phone to {judge.username}
       </div>
     </div>

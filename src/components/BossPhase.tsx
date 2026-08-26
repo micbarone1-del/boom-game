@@ -1177,7 +1177,8 @@ function BossRoll({
                   transform={`rotate(${rot} ${lx} ${ly})`}
                   style={{
                     fontFamily: "'Luckiest Guy', cursive",
-                    fontSize: 11,
+                    fontSize: 9.5,
+                    letterSpacing: -0.3,
                     fill: "#111",
                     fontWeight: 900,
                   }}

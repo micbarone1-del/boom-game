@@ -639,7 +639,7 @@ function musicBus(c: AudioContext, cfg: PhaseCfg): AudioNode {
 
 function powerChord(c: AudioContext, t0: number, root: number, dur: number, dest: AudioNode) {
   // Root + fifth + octave, slightly detuned = classic distorted power chord.
-  [1, 1.4983, 2, 2.0? 2 : 2].slice(0, 3).forEach(() => {});
+  
   const ratios = [1, 1.4983, 2];
   ratios.forEach((r, i) => {
     const o = c.createOscillator();

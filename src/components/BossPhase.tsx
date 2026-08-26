@@ -121,7 +121,7 @@ function BossAvatar({ player, size = 72 }: { player: Player; size?: number }) {
       {player.avatar_url && !player.avatar_url.startsWith("mascot:") ? (
         <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
       ) : (
-        <Bomb size={size * 0.6} color="white" fill="white" />
+        <BombAvatar color={color} size={size} />
       )}
     </div>
   );

@@ -135,6 +135,16 @@ export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: (
         <button onClick={onDismiss} className="btn-massive w-full" style={{ background: "var(--boom-green)" }}>
           GOT IT!
         </button>
+        <button
+          onClick={() => {
+            setFtueDisabled(true);
+            onDismiss();
+          }}
+          className="ink-border-sm rounded-xl bg-white px-4 py-2 text-base font-black uppercase active:scale-95"
+          style={{ color: "var(--boom-ink)" }}
+        >
+          Turn tips off
+        </button>
       </div>
     </div>
   );

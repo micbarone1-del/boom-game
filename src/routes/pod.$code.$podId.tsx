@@ -430,6 +430,23 @@ function PodPage() {
       .eq("code", code);
   };
 
+  // --- Audio: freeze everything while paused, and swap the BGM per phase ---
+  useEffect(() => {
+    setAudioSuspended(!!room.paused);
+    if (room.paused) haptic("warn");
+    return () => setAudioSuspended(false);
+  }, [room.paused]);
+
+  useEffect(() => {
+    if (room.phase === "boss") return setMusicPhase("boss");
+    if (room.phase === "victory") return setMusicPhase("victory");
+    if (phase.kind === "judge" || phase.kind === "vs" || phase.kind === "group") {
+      return setMusicPhase("judge");
+    }
+    if (phase.kind === "done") return setMusicPhase("victory");
+    setMusicPhase("play");
+  }, [room.phase, phase.kind]);
+
   // Render the timeout / game-over overlays on top of whatever phase is active.
   const overlay = (() => {
     // Always-on pause toggle in the top-right corner (z below PauseOverlay).

@@ -969,15 +969,18 @@ function SwitchPhase({
   const spokeRef = useRef(false);
   const mascotImg = mascotForCell(trap.cellType);
   const flavor = CELL_FLAVOR[trap.cellType];
+  const ftue = useFtue(player.id, "switch");
 
   useEffect(() => {
+    if (ftue.showing) return;
     if (spokeRef.current) return;
     spokeRef.current = true;
     const unit = trap.unit === "seconds" ? `${trap.reps} seconds` : `${trap.reps} reps`;
     speak(`Player ${player.username}. ${trap.exercise}, ${unit}. Judge: ${judge.username}.`);
-  }, [player.username, judge.username, trap]);
+  }, [player.username, judge.username, trap, ftue.showing]);
 
   useEffect(() => {
+    if (ftue.showing) return;
     if (count <= 0) {
       onDone();
       return;
@@ -985,13 +988,15 @@ function SwitchPhase({
     sfx.play("countdown");
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [count, onDone]);
+  }, [count, onDone, ftue.showing]);
 
   return (
     <main
       className="fixed inset-0 flex flex-col items-center justify-between p-4 gap-3"
       style={{ background: "#ffffff" }}
     >
+      {ftue.modal}
+
       {/* Thick rounded black frame so text reads clearly */}
       <div
         aria-hidden

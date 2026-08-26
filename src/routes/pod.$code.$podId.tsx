@@ -1645,10 +1645,12 @@ function JudgePhase({
     arcadeStopRef.current?.();
     arcadeStopRef.current = null;
     if (outcome === "success") {
+      haptic("success");
       playDefuseJingle();
       speak(`Well done ${player.username}! ${trap.reps} points!`);
       setDefuseFlash(true);
     } else {
+      haptic("boom");
       sfx.play("blowUp");
       speak(`${player.username} exploded! Back to start.`);
     }
@@ -1678,6 +1680,7 @@ function JudgePhase({
     if (trap.unit !== "reps") return;
     setReps((r) => {
       const next = r + 1;
+      haptic("light");
       repPop(next / trap.reps);
       const pid = Date.now() + Math.random();
       setPointPops((arr) => [...arr, { id: pid, n: next }]);
@@ -2259,6 +2262,7 @@ function VsPhase({
     const setter = who === "a" ? setA : setB;
     setter((n) => {
       const next = n + 1;
+      haptic("light");
       repPop(next / trap.reps);
       if (next >= trap.reps) {
         doneRef.current = true;

@@ -64,7 +64,20 @@ function Index() {
     const v = videoRef.current;
     if (!v) return;
     v.muted = true;
-    void v.play().catch(() => {});
+    v.defaultMuted = true;
+    v.playsInline = true;
+    const kick = () => { void v.play().catch(() => {}); };
+    kick();
+    v.addEventListener("canplay", kick);
+    v.addEventListener("loadeddata", kick);
+    const t = window.setTimeout(kick, 400);
+    document.addEventListener("visibilitychange", kick);
+    return () => {
+      v.removeEventListener("canplay", kick);
+      v.removeEventListener("loadeddata", kick);
+      document.removeEventListener("visibilitychange", kick);
+      window.clearTimeout(t);
+    };
   }, [attract]);
   const tryJoin = (e: React.FormEvent) => {
 
@@ -82,7 +95,8 @@ function Index() {
       setCreating(false);
       return;
     }
-    navigate({ to: "/join/$code", params: { code }, search: { auto: 1 } as never });
+    // Land in the player lobby (gym) — pods are created from there.
+    navigate({ to: "/gym/$code", params: { code } });
   };
   if (attract) {
     return (
@@ -97,7 +111,7 @@ function Index() {
           loop
           muted
           playsInline
-          preload="metadata"
+          preload="auto"
           aria-label="BOOM! gameplay attract reel"
           className="absolute inset-0 w-full h-full object-cover"
         >

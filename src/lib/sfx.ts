@@ -461,10 +461,7 @@ const effects: Record<EffectName, () => void> = {
     noise({ dur: 0.12, gain: 0.2, lowpass: 3200, delay: 0.02 });
     beep({ freq: 1568, dur: 0.09, type: "square", gain: 0.18, delay: 0.12 });
   },
-};
 
-export const sfx = {
-  play(name: EffectName) {
   // --- Per-trap jingles: every cell type gets its own musical signature ---
   jingleEasy: () => {
     [523, 659, 784].forEach((f, i) =>

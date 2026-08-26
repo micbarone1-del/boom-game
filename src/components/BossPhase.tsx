@@ -205,6 +205,7 @@ export function BossPhase({
       multiplier: wedge.multiplier,
       podWide: wedge.podWide,
       wedgeLabel: wedge.label,
+      mascot: wedge.mascot,
     };
     setInner({ kind: "switch", attack });
   };

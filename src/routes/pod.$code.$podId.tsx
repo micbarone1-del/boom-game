@@ -767,7 +767,8 @@ function Avatar({ player, size = 120 }: { player: Player; size?: number }) {
       }}
     >
       {avatarIsMascot(player.avatar_url) ? (
-        <Bomb size={size * 0.6} color="white" fill="white" />
+        <BombAvatar color={color} size={size} />
+
       ) : (
         <img src={player.avatar_url!} alt="" className="w-full h-full object-cover" />
       )}

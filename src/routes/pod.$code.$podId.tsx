@@ -1030,7 +1030,7 @@ function SwitchPhase({
           src={mascotImg}
           alt=""
           key={`cellmascot-${trap.cellType}`}
-          className="w-28 h-28 anim-mascot-bounce arcade-slam-in drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
+          className="w-44 h-44 max-w-[45vw] max-h-[45vw] object-contain anim-mascot-bounce arcade-slam-in drop-shadow-[0_6px_0_rgba(0,0,0,0.25)]"
         />
         <div
           className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in"
@@ -1067,18 +1067,29 @@ function SwitchPhase({
       </div>
 
       {/* Player → Judge handoff */}
-      <div className="flex items-center justify-around w-full max-w-md">
-        <div className="flex flex-col items-center gap-1 anim-fade-in">
-          <Avatar player={player} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-ink)" }}>
+      <div className="flex items-center justify-between gap-2 w-full max-w-md">
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
+          <Avatar player={player} size={112} />
+          <div
+            className="text-base font-black uppercase tracking-wide"
+            style={{ color: "var(--boom-ink)" }}
+          >
             Player
           </div>
-          <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{player.username}</div>
+          <div
+            className="w-full text-center font-black leading-tight truncate"
+            style={{ color: "var(--boom-ink)", fontSize: "clamp(1.1rem, 5vw, 1.6rem)" }}
+          >
+            {player.username}
+          </div>
         </div>
-        <div className="text-4xl">➡️</div>
-        <div className="flex flex-col items-center gap-1 anim-fade-in">
-          <Avatar player={judge} size={72} />
-          <div className="text-xs font-black uppercase" style={{ color: "var(--boom-ink)" }}>
+        <div className="text-5xl shrink-0">➡️</div>
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
+          <Avatar player={judge} size={112} />
+          <div
+            className="text-base font-black uppercase tracking-wide"
+            style={{ color: "var(--boom-ink)" }}
+          >
             Judge
           </div>
           <div className="text-sm font-bold" style={{ color: "var(--boom-ink)" }}>{judge.username}</div>

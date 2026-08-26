@@ -258,6 +258,29 @@
   }
   .anim-mascot-pop { animation: mascot-pop-in 0.45s cubic-bezier(.2,1.6,.4,1) both; }
 
+  @keyframes mascot-enter-left { from { transform: translateX(-130vw) rotate(-35deg) scale(.55); opacity: 0; } 70% { transform: translateX(8%) rotate(7deg) scale(1.1); opacity: 1; } to { transform: translateX(0) rotate(0) scale(1); opacity: 1; } }
+  @keyframes mascot-enter-slam { from { transform: translateY(-90vh) scale(1.5); opacity: 0; } 68% { transform: translateY(10%) scale(.92); opacity: 1; } 82% { transform: translateY(-5%) scale(1.08); } to { transform: translateY(0) scale(1); opacity: 1; } }
+  @keyframes mascot-enter-rocket { from { transform: translateY(100vh) rotate(-18deg) scale(.35); opacity: 0; } 72% { transform: translateY(-12%) rotate(5deg) scale(1.15); opacity: 1; } to { transform: translateY(0) rotate(0) scale(1); opacity: 1; } }
+  @keyframes mascot-enter-drop { from { transform: translateY(-85vh) rotate(25deg); opacity: 0; } 65% { transform: translateY(13%) rotate(-8deg); opacity: 1; } 82% { transform: translateY(-3%) rotate(3deg); } to { transform: translateY(0) rotate(0); opacity: 1; } }
+  @keyframes mascot-enter-spin { from { transform: scale(.1) rotate(-720deg); opacity: 0; } 75% { transform: scale(1.2) rotate(18deg); opacity: 1; } to { transform: scale(1) rotate(0); opacity: 1; } }
+  @keyframes mascot-enter-zigzag { 0% { transform: translate(-100vw, 50vh) rotate(-20deg) scale(.5); opacity: 0; } 42% { transform: translate(30vw, -20vh) rotate(15deg) scale(.8); opacity: 1; } 72% { transform: translate(-12vw, 5vh) rotate(-7deg) scale(1.15); } 100% { transform: translate(0) rotate(0) scale(1); opacity: 1; } }
+  @keyframes mascot-enter-wide { from { transform: scaleX(2.2) scaleY(.2); opacity: 0; } 70% { transform: scaleX(.9) scaleY(1.18); opacity: 1; } to { transform: scale(1); opacity: 1; } }
+  @keyframes mascot-enter-float { from { transform: translateY(45vh) scale(.7); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+  .mascot-enter-spring { animation: mascot-pop-in .5s cubic-bezier(.15,1.55,.35,1) both; }
+  .mascot-enter-left { animation: mascot-enter-left .55s cubic-bezier(.15,1.35,.3,1) both; }
+  .mascot-enter-slam { animation: mascot-enter-slam .62s cubic-bezier(.2,1.2,.3,1) both; }
+  .mascot-enter-rocket { animation: mascot-enter-rocket .58s cubic-bezier(.1,1.3,.3,1) both; }
+  .mascot-enter-drop { animation: mascot-enter-drop .65s cubic-bezier(.2,1.25,.35,1) both; }
+  .mascot-enter-spin { animation: mascot-enter-spin .7s cubic-bezier(.15,1.3,.3,1) both; }
+  .mascot-enter-zigzag { animation: mascot-enter-zigzag .72s ease-out both; }
+  .mascot-enter-wide { animation: mascot-enter-wide .55s cubic-bezier(.2,1.45,.35,1) both; }
+  .mascot-enter-float { animation: mascot-enter-float .7s ease-out both; }
+  .anim-mascot-sad-idle { animation: bomb-breathe 1.4s ease-in-out infinite .65s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    [class*="mascot-enter-"] { animation-duration: .01ms; }
+  }
+
   /* Mega screen-eating mascot explosion for the finish */
   @keyframes mascot-explode {
     0% { transform: scale(0.2); opacity: 0; filter: brightness(1); }

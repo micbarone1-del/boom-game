@@ -40,13 +40,32 @@ const TRAP_JINGLE: Record<CellType, Parameters<typeof sfx.play>[0]> = {
   finish: "winJingle",
 };
 
+const MASCOT_ENTRANCE: Record<CellType, string> = {
+  easy: "mascot-enter-spring",
+  medium: "mascot-enter-left",
+  hard: "mascot-enter-slam",
+  boost: "mascot-enter-rocket",
+  setback: "mascot-enter-drop",
+  surprise: "mascot-enter-spin",
+  crazy: "mascot-enter-zigzag",
+  group: "mascot-enter-wide",
+  pause: "mascot-enter-float",
+  start: "mascot-enter-spring",
+  finish: "mascot-enter-slam",
+};
+
 export function CellMascot({ type, username }: { type: CellType; username?: string }) {
   // Cartoon "pop!" + a trap-specific jingle whenever the mascot springs on screen.
   useEffect(() => {
     if (type === "finish") return;
+    const g = globalThis as typeof globalThis & { __boomLastMascotJingle?: string };
+    const key = `${type}:${Math.floor(Date.now() / 300)}`;
+    if (g.__boomLastMascotJingle === key) return;
+    g.__boomLastMascotJingle = key;
     sfx.play("trapPop");
-    window.setTimeout(() => sfx.play(TRAP_JINGLE[type]), 130);
+    const timer = window.setTimeout(() => sfx.play(TRAP_JINGLE[type]), 130);
     haptic(type === "setback" ? "fail" : "success");
+    return () => window.clearTimeout(timer);
   }, [type]);
   // Finish has its own dedicated explosion overlay — skip the cell splash.
   if (type === "finish") return null;
@@ -61,13 +80,19 @@ export function CellMascot({ type, username }: { type: CellType; username?: stri
         style={{ background: f.color, color: "white", minWidth: 260, overflow: "visible" }}
       >
         {/* Mascot bursts way out of the top of the frame instead of being clipped */}
-        <img
-          src={f.img}
-          alt=""
-          width={1024}
-          height={1024}
-          className={`absolute left-1/2 -translate-x-1/2 -top-36 w-64 h-64 max-w-[70vw] max-h-[70vw] object-contain pointer-events-none z-10 ${f.sad ? "" : "anim-mascot-bounce"} drop-shadow-[0_10px_0_rgba(0,0,0,0.35)] drop-shadow-[0_0_24px_rgba(0,0,0,0.55)]`}
-        />
+        <div
+          className="absolute left-1/2 -translate-x-1/2 -top-36 w-64 h-64 max-w-[70vw] max-h-[70vw] pointer-events-none z-10"
+        >
+          <div className={`w-full h-full ${MASCOT_ENTRANCE[type]}`}>
+            <img
+              src={f.img}
+              alt=""
+              width={1024}
+              height={1024}
+              className={`w-full h-full object-contain ${f.sad ? "anim-mascot-sad-idle" : "anim-mascot-bounce"} drop-shadow-[0_10px_0_rgba(0,0,0,0.35)] drop-shadow-[0_0_24px_rgba(0,0,0,0.55)]`}
+            />
+          </div>
+        </div>
 
         <div
           className="text-3xl font-black comic-shadow"

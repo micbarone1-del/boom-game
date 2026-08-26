@@ -11,7 +11,7 @@ import { FuseBar } from "@/components/FuseBar";
 import { GymMap, GymScoreboard } from "@/components/GymMap";
 import { PodActivityTicker } from "@/components/PodActivityTicker";
 import { TimesOutOverlay, GameOverOverlay } from "@/components/TimeoutOverlay";
-import { setBgmIntensity, startArcadeMusic } from "@/lib/sfx";
+import { setBgmIntensity, startArcadeMusic, setMusicPhase, setAudioSuspended } from "@/lib/sfx";
 import { PauseOverlay, PauseToggleButton } from "@/components/PauseOverlay";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { useAuth } from "@/hooks/use-auth";
@@ -465,6 +465,7 @@ function MapView({ room, players, pods, code, onJoinOpen }: { room: Room; player
 
   // Drive BGM intensity from fuse progress.
   useEffect(() => {
+    setMusicPhase(room.phase === "boss" ? "boss" : "play");
     startArcadeMusic();
     if (!startedAt || !endsAt) return;
     const i = setInterval(() => {
@@ -472,7 +473,13 @@ function MapView({ room, players, pods, code, onJoinOpen }: { room: Room; player
       setBgmIntensity(p);
     }, 1000);
     return () => clearInterval(i);
-  }, [startedAt, endsAt]);
+  }, [startedAt, endsAt, room.phase]);
+
+  // Freeze all audio while the room is paused.
+  useEffect(() => {
+    setAudioSuspended(!!room.paused);
+    return () => setAudioSuspended(false);
+  }, [room.paused]);
 
   // Watch for timeout: first client transitions room state.
   useEffect(() => {

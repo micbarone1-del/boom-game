@@ -830,28 +830,39 @@ function BossJudge({
                 }
               : undefined
           }
-          className="absolute inset-6 rounded-full flex flex-col items-center justify-center active:scale-95 select-none"
+          className="absolute inset-5 rounded-full flex flex-col items-center justify-center gap-1 select-none arcade-press"
           style={{
             background: "var(--boom-red)",
             color: "white",
-            boxShadow: "0 0 0 4px #111, 0 8px 24px rgba(0,0,0,0.5)",
+            border: "4px solid #000",
+            boxShadow: "6px 6px 0 0 #000, 0 8px 24px rgba(0,0,0,0.5)",
           }}
         >
-          <span className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+          <span
+            className="font-black anim-ui-wiggle"
+            style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2rem, 9vw, 3rem)", lineHeight: 1, textShadow: "3px 3px 0 #000" }}
+          >
             ATTACK
           </span>
-          <span className="text-base font-bold">
+          <span className="text-xl font-black tabular-nums" style={{ textShadow: "2px 2px 0 #000" }}>
             {attack.unit === "reps"
               ? `${reps} / ${attack.reps}`
               : `${(holdMs / 1000).toFixed(1)}s / ${attack.reps}s`}
           </span>
-          <span className="text-xs opacity-80">
+          <span className="text-sm font-bold opacity-90">
             {attack.unit === "reps" ? "tap per rep" : "hold"}
           </span>
         </button>
       </div>
-      <div className="mt-2 text-white text-xs font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
-        {Math.ceil(remaining / 1000)}s
+      <div
+        className="mt-3 ink-border rounded-2xl px-4 py-2 text-xl font-black anim-ui-float"
+        style={{
+          fontFamily: "'Luckiest Guy', cursive",
+          background: remaining <= 5000 ? "var(--boom-red)" : "var(--boom-yellow)",
+          color: remaining <= 5000 ? "#fff" : "var(--boom-ink)",
+        }}
+      >
+        {Math.ceil(remaining / 1000)}s to attack
       </div>
     </div>
   );

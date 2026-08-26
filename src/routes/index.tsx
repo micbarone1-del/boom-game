@@ -131,9 +131,10 @@ function Index() {
           playsInline
           preload="auto"
           aria-label="BOOM! gameplay attract reel"
-          src="/media/attract.mp4"
           className="absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         >
+          <source src="/media/attract.webm" type="video/webm" />
+          <source src="/media/attract.mp4" type="video/mp4" />
         </video>
 
         {/* Tap anywhere to reveal the player start/join screen. */}

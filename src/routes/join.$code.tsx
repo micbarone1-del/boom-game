@@ -338,7 +338,6 @@ function JoinView() {
     <main className="relative min-h-screen p-4 flex flex-col gap-4 overflow-hidden">
       <video
         ref={attractVideoRef}
-        src="/media/attract.mp4"
         autoPlay
         loop
         muted
@@ -346,7 +345,10 @@ function JoinView() {
         preload="auto"
         aria-hidden="true"
         className="fixed inset-0 h-full w-full object-cover pointer-events-none"
-      />
+      >
+        <source src="/media/attract.webm" type="video/webm" />
+        <source src="/media/attract.mp4" type="video/mp4" />
+      </video>
       <div className="fixed inset-0 bg-black/55 pointer-events-none" />
       <div className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-4">
       <header className="flex items-center gap-3 mt-2">

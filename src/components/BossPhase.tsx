@@ -92,6 +92,8 @@ type Attack = {
   podWide?: boolean;
   /** Display label for the wedge (e.g. "SPECIAL MOVE"). */
   wedgeLabel?: string;
+  /** Mascot art for the wedge, shown on the switch screen. */
+  mascot?: string;
 };
 
 type InnerPhase =

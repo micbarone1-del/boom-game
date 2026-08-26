@@ -85,6 +85,8 @@ let fallbackBeep: HTMLAudioElement | null = null;
 // Bumped key (v4) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
 const MUTE_KEY = "boom.sfx.muted.v4";
+const VOICE_KEY = "boom.robotVoice.enabled.v1";
+let robotVoiceEnabled = true;
 
 function fallbackAudio(): HTMLAudioElement | null {
   if (typeof window === "undefined" || typeof Audio === "undefined" || typeof btoa === "undefined") return null;
@@ -146,6 +148,7 @@ function fallbackPlay(audible: boolean) {
 if (typeof window !== "undefined") {
   try {
     muted = localStorage.getItem(MUTE_KEY) === "1";
+    robotVoiceEnabled = localStorage.getItem(VOICE_KEY) !== "0";
   } catch {}
   // Prime audio only from real user gestures; browsers block AudioContext
   // creation/resume from timers, realtime callbacks, and effects.
@@ -665,7 +668,7 @@ function pickRoboticVoice(): SpeechSynthesisVoice | undefined {
 }
 
 export function speak(text: string, opts: { pitch?: number; rate?: number; volume?: number } = {}) {
-  if (muted || audioSuspended) return;
+  if (muted || audioSuspended || !robotVoiceEnabled) return;
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   try {
     sfx.unlock();
@@ -711,6 +714,25 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
     }, 60);
   } catch {
     /* ignore */
+  }
+}
+
+export function isRobotVoiceEnabled() {
+  return robotVoiceEnabled;
+}
+
+export function setRobotVoiceEnabled(enabled: boolean) {
+  robotVoiceEnabled = enabled;
+  if (typeof window !== "undefined") {
+    try { localStorage.setItem(VOICE_KEY, enabled ? "1" : "0"); } catch {}
+    if (!enabled) {
+      try { window.speechSynthesis?.cancel(); } catch {}
+      if (_duckTimer) {
+        window.clearTimeout(_duckTimer);
+        _duckTimer = null;
+      }
+      duckMusic(false);
+    }
   }
 }
 

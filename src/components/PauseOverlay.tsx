@@ -1,7 +1,8 @@
-import { Pause, Play, UserPlus, Bomb, Flag } from "lucide-react";
-import { useMemo } from "react";
+import { Pause, Play, UserPlus, Bomb, Flag, Volume2, VolumeX } from "lucide-react";
+import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Player, Pod } from "@/hooks/use-room";
+import { isRobotVoiceEnabled, setRobotVoiceEnabled } from "@/lib/sfx";
 
 /**
  * Fullscreen "PAUSED" overlay shown to every connected client (host TV +
@@ -26,6 +27,7 @@ export function PauseOverlay({
   players?: Player[];
   pods?: Pod[];
 }) {
+  const [voiceEnabled, setVoiceEnabled] = useState(() => isRobotVoiceEnabled());
   
   const joinUrl = useMemo(() => {
     if (!code || typeof window === "undefined") return "";
@@ -76,6 +78,18 @@ export function PauseOverlay({
           <Flag size={26} fill="#fff" /> GIVE UP
         </button>
       )}
+      <button
+        onClick={() => {
+          const next = !voiceEnabled;
+          setRobotVoiceEnabled(next);
+          setVoiceEnabled(next);
+        }}
+        className="ink-border-sm rounded-xl bg-white text-[var(--boom-ink)] px-4 py-2 text-sm font-black flex items-center gap-2 active:scale-95"
+        aria-pressed={!voiceEnabled}
+      >
+        {voiceEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+        ROBOT VOICE {voiceEnabled ? "ON" : "OFF"}
+      </button>
       {onSignInClick && (
         <button
           onClick={onSignInClick}

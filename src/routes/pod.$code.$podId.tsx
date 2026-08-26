@@ -510,12 +510,7 @@ function PodPage() {
             onGiveUp={() => {
               void (async () => {
                 await supabase.from("rooms").update({ paused: false }).eq("code", code);
-                await navigate({
-                  to: "/join/$code",
-                  params: { code },
-                  search: { auto: undefined, join: undefined },
-                  replace: true,
-                });
+                window.location.assign(`/join/${encodeURIComponent(code)}`);
               })();
             }}
             onSignInClick={() => setPauseJoinOpen(true)}
@@ -1381,7 +1376,7 @@ function HopOverlay({
           {/* Active player avatar — positioned over the current cell */}
           {(() => {
             const c = cellCenter(currentSpace);
-            const SZ = 46;
+            const SZ = 58;
             return (
               <div
                 key={`hopper-${safeStep}`}
@@ -1397,27 +1392,24 @@ function HopOverlay({
                 }}
               >
                 <div
-                  className="rounded-full bg-white overflow-hidden"
+                  className="flex items-center justify-center"
                   style={{
                     width: SZ,
                     height: SZ,
-                    boxShadow: "0 0 0 3px #111, 0 0 14px rgba(255,230,60,0.95)",
+                    filter: "drop-shadow(0 4px 0 #111) drop-shadow(0 0 8px var(--boom-yellow))",
                   }}
                 >
                   {avatarIsMascot(player.avatar_url) ? (
-                    <div
-                      className="w-full h-full flex items-center justify-center"
-                      style={{ background: mascotColor(player.avatar_url) }}
-                    >
-                      <Bomb size={SZ * 0.6} color="#fff" fill="#fff" />
-                    </div>
+                    <BombAvatar color={mascotColor(player.avatar_url)} size={SZ} />
                   ) : player.avatar_url ? (
                     <img
                       src={player.avatar_url}
                       alt={player.username}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full rounded-full object-cover ink-border-sm"
                     />
-                  ) : null}
+                  ) : (
+                    <BombAvatar color={mascotColor(player.avatar_url)} size={SZ} />
+                  )}
                 </div>
               </div>
             );
@@ -2478,19 +2470,17 @@ function PausePhase({
   useEffect(() => {
     if (paused) return;
     const i = setInterval(() => {
-      setRemaining((r) => {
-        const next = r - 1;
-        if (next <= 3 && next > 0) sfx.play("timerTick");
-        if (next <= 0) {
-          clearInterval(i);
-          onComplete();
-          return 0;
-        }
-        return next;
-      });
+      setRemaining((r) => Math.max(0, r - 1));
     }, 1000);
     return () => clearInterval(i);
-  }, [onComplete, paused]);
+  }, [paused]);
+  useEffect(() => {
+    if (paused || remaining <= 0) return;
+    if (remaining <= 3) sfx.play("timerTick");
+  }, [paused, remaining]);
+  useEffect(() => {
+    if (!paused && remaining === 0) onComplete();
+  }, [onComplete, paused, remaining]);
   const low = remaining <= 3;
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center gap-6" style={{ background: "#06b6d4" }}>

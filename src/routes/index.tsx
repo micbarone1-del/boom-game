@@ -131,17 +131,16 @@ function Index() {
           playsInline
           preload="auto"
           aria-label="BOOM! gameplay attract reel"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         >
-
-          <source src="/media/attract.mp4" type="video/mp4" />
           <source src="/media/attract.webm" type="video/webm" />
+          <source src="/media/attract.mp4" type="video/mp4" />
         </video>
 
         {/* Tap anywhere to reveal the player start/join screen. */}
         <button
           onClick={() => setAttract(false)}
-          className="absolute inset-0 w-full h-full flex flex-col items-center justify-between py-8 px-4"
+          className="absolute inset-0 z-[1] w-full h-full flex flex-col items-center justify-between py-8 px-4"
           aria-label="Press to start"
           style={{ background: "linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.15) 40%, rgba(0,0,0,.7))" }}
         >

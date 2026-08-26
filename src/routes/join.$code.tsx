@@ -55,6 +55,21 @@ function JoinView() {
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
   const [stampedSlot, setStampedSlot] = useState<number | null>(null);
+  const attractVideoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const video = attractVideoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    const play = () => { void video.play().catch(() => {}); };
+    play();
+    video.addEventListener("canplay", play);
+    document.addEventListener("visibilitychange", play);
+    return () => {
+      video.removeEventListener("canplay", play);
+      document.removeEventListener("visibilitychange", play);
+    };
+  }, []);
   // Fire the arcade "stamp" landing animation on a freshly populated slot.
   const stampSlot = (idx: number) => {
     setStampedSlot(idx);
@@ -152,8 +167,10 @@ function JoinView() {
   const podSlots = useMemo(
     () =>
       [1, 2, 3].map((slot) => {
-        const pod = pods.find((p) => p.slot === slot) ?? null;
-        const count = pod ? players.filter((p) => p.pod_id === pod.id).length : 0;
+        const pod = pods.find((p) => Number(p.slot) === slot) ?? null;
+        const count = pod
+          ? players.filter((p) => (p.pod_id ?? p.team_id) === pod.id).length
+          : 0;
         return { slot, pod, count, full: !!pod && count >= POD_CAP };
       }),
     [pods, players],
@@ -318,7 +335,22 @@ function JoinView() {
   };
 
   return (
-    <main className="min-h-screen p-4 max-w-md mx-auto flex flex-col gap-4">
+    <main className="relative min-h-screen p-4 flex flex-col gap-4 overflow-hidden">
+      <video
+        ref={attractVideoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+        className="fixed inset-0 h-full w-full object-cover pointer-events-none"
+      >
+        <source src="/media/attract.webm" type="video/webm" />
+        <source src="/media/attract.mp4" type="video/mp4" />
+      </video>
+      <div className="fixed inset-0 bg-black/55 pointer-events-none" />
+      <div className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-4">
       <header className="flex items-center gap-3 mt-2">
         <img src={bombMascot} alt="" className="w-12 h-12 anim-fuse" />
         <div className="flex-1">
@@ -402,7 +434,7 @@ function JoinView() {
       {joiningExisting && currentPodSlot?.pod && (
         <div className="ink-border rounded-2xl p-3 bg-white flex flex-wrap gap-2">
           {players
-            .filter((p) => p.pod_id === currentPodSlot.pod!.id)
+            .filter((p) => (p.pod_id ?? p.team_id) === currentPodSlot.pod!.id)
             .map((p) => (
               <span
                 key={p.id}
@@ -468,7 +500,7 @@ function JoinView() {
         <Bomb className="inline mr-2" /> READY!
       </button>
       <p className="text-[11px] opacity-60 text-center">
-        {players.filter((p) => p.pod_id).length} players · {pods.length}/3 pods in this room
+        {players.filter((p) => p.pod_id ?? p.team_id).length} players · {pods.length}/3 pods in this room
       </p>
       <JoinAsModal
         open={joinModalOpen}
@@ -484,6 +516,7 @@ function JoinView() {
         title="Join the game"
         subtitle="Choose how you want to play"
       />
+      </div>
     </main>
   );
 }

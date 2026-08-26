@@ -286,6 +286,53 @@ export function RecapVideo({
   );
 }
 
+/** Draws one montage frame: a workout clip, cover-fitted, with sticker overlay. */
+function drawClipFrame(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  vid: HTMLVideoElement,
+  label: string,
+  idx: number,
+  count: number,
+  p: number,
+) {
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+  const vw = vid.videoWidth || 720;
+  const vh = vid.videoHeight || 1280;
+  const scale = Math.max(W / vw, H / vh);
+  const dw = vw * scale;
+  const dh = vh * scale;
+  try {
+    ctx.drawImage(vid, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  } catch {
+    /* frame not ready */
+  }
+  // Bottom scrim + exercise label sticker.
+  const g = ctx.createLinearGradient(0, H * 0.6, 0, H);
+  g.addColorStop(0, "rgba(0,0,0,0)");
+  g.addColorStop(1, "rgba(0,0,0,0.75)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, H * 0.6, W, H * 0.4);
+
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = "900 52px 'Luckiest Guy', system-ui";
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 10;
+  ctx.fillStyle = "#fff";
+  const y = H - 120 + (1 - Math.min(1, p / 0.15)) * 40;
+  ctx.strokeText(label.toUpperCase(), W / 2, y);
+  ctx.fillText(label.toUpperCase(), W / 2, y);
+  ctx.font = "900 30px 'Luckiest Guy', system-ui";
+  ctx.lineWidth = 6;
+  ctx.strokeText(`MOVE ${idx} / ${count}`, W / 2, y + 46);
+  ctx.fillStyle = "#ffd84d";
+  ctx.fillText(`MOVE ${idx} / ${count}`, W / 2, y + 46);
+  ctx.restore();
+}
+
 function drawFrame(
   ctx: CanvasRenderingContext2D,
   W: number,

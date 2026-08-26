@@ -502,9 +502,9 @@ function MapView({ room, players, pods, code, onJoinOpen }: { room: Room; player
       await supabase
         .from("rooms")
         .update({
-          // Fuse ran out → straight to GAME OVER (no continue prompt).
-          game_state: "game_over",
-          continue_deadline_at: null,
+          // Fuse ran out → offer a continue countdown first.
+          game_state: "timeout_continue",
+          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
         })
         .eq("code", code)
         .eq("game_state", "playing");

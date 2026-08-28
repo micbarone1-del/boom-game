@@ -295,7 +295,11 @@ export function BossPhase({
   // leaderboard). Runs once when the fuse hits zero.
   const timedOut = useRef(false);
   useEffect(() => {
-    if (remaining > 0 || timedOut.current) return;
+    if (remaining > 0) {
+      timedOut.current = false;
+      return;
+    }
+    if (timedOut.current) return;
     if (room.game_state === "timeout_continue" || room.game_state === "game_over") return;
     timedOut.current = true;
     sfx.play("blowUp");

@@ -46,7 +46,7 @@ export function TimesOutOverlay({
       onPointerDown={() => {
         // Tapping the screen makes the fuse burn faster.
         setBurned((b) => b + 1000);
-        sfx.play("tick");
+        sfx.play("timerTick");
         haptic("tap");
       }}
     >

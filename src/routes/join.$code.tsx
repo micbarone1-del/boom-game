@@ -61,12 +61,16 @@ function JoinView() {
     if (!video) return;
     video.muted = true;
     video.defaultMuted = true;
+    video.playsInline = true;
+    video.load();
     const play = () => { void video.play().catch(() => {}); };
     play();
     video.addEventListener("canplay", play);
+    video.addEventListener("loadeddata", play);
     document.addEventListener("visibilitychange", play);
     return () => {
       video.removeEventListener("canplay", play);
+      video.removeEventListener("loadeddata", play);
       document.removeEventListener("visibilitychange", play);
     };
   }, []);
@@ -343,6 +347,7 @@ function JoinView() {
         muted
         playsInline
         preload="auto"
+        poster="/media/attract-poster.jpg"
         aria-hidden="true"
         className="fixed inset-0 h-full w-full object-cover pointer-events-none"
       >

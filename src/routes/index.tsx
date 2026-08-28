@@ -67,6 +67,7 @@ function Index() {
     v.muted = true;
     v.defaultMuted = true;
     v.playsInline = true;
+    v.load();
     const kick = () => { void v.play().catch(() => {}); };
     kick();
     v.addEventListener("canplay", kick);
@@ -130,6 +131,7 @@ function Index() {
           muted
           playsInline
           preload="auto"
+          poster="/media/attract-poster.jpg"
           aria-label="BOOM! gameplay attract reel"
           className="absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         >

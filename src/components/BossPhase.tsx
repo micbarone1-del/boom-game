@@ -76,7 +76,7 @@ function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: 
 }
 
 /** Total HP per player joining the boss (shared HP pool). */
-const HP_PER_PLAYER = 220;
+const HP_PER_PLAYER = 110;
 /** Total seconds the pod has before the boss wins. */
 const BOSS_DURATION_MS = 5 * 60 * 1000;
 

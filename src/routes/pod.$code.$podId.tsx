@@ -116,7 +116,7 @@ function PodPage() {
     const finished = players.find((p) => p.current_space >= BOARD_SIZE);
     if (!finished) return;
     const total = Math.max(1, players.length);
-    const maxHp = total * 220;
+    const maxHp = total * 110;
     void supabase
       .from("rooms")
       .update({
@@ -229,7 +229,7 @@ function PodPage() {
     // immediately — don't finish/leaderboard the player.
     if (final >= BOARD_SIZE && (room.phase ?? "board") === "board") {
       const total = Math.max(1, players.length);
-      const maxHp = total * 220;
+      const maxHp = total * 110;
       await supabase
         .from("rooms")
         .update({
@@ -428,7 +428,7 @@ function PodPage() {
       if (trap.finalSpace >= BOARD_SIZE) {
         if ((room.phase ?? "board") === "board") {
           const total = Math.max(1, players.length);
-          const maxHp = total * 220;
+          const maxHp = total * 110;
           await supabase
             .from("rooms")
             .update({

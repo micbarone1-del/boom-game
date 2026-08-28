@@ -155,9 +155,52 @@ function PodPage() {
     setMusicPhase("play");
   }, [roomPhase, phaseKind]);
 
+  // --- Timeout watchers (must stay above the early return) ---------------
+  const endsAtMs = room?.game_ends_at ? new Date(room.game_ends_at).getTime() : null;
+  const continueAtMs = room?.continue_deadline_at
+    ? new Date(room.continue_deadline_at).getTime()
+    : null;
+  const gameState = room?.game_state ?? null;
+  const bossPhase = room?.phase === "boss";
 
+  // Main fuse ran out → continue countdown.
+  useEffect(() => {
+    if (!endsAtMs || gameState !== "playing" || roomPaused) return;
+    const i = setInterval(() => {
+      if (Date.now() < endsAtMs) return;
+      if (bossPhase) return; // boss owns its own clock
+      void supabase
+        .from("rooms")
+        .update({
+          game_state: "timeout_continue",
+          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
+        })
+        .eq("code", code)
+        .eq("game_state", "playing")
+        .then(() => {});
+      clearInterval(i);
+    }, 1000);
+    return () => clearInterval(i);
+  }, [endsAtMs, gameState, roomPaused, bossPhase, code]);
+
+  // Continue countdown expired → game over.
+  useEffect(() => {
+    if (gameState !== "timeout_continue" || !continueAtMs) return;
+    const i = setInterval(() => {
+      if (Date.now() < continueAtMs) return;
+      void supabase
+        .from("rooms")
+        .update({ game_state: "game_over", continue_deadline_at: null })
+        .eq("code", code)
+        .eq("game_state", "timeout_continue")
+        .then(() => {});
+      clearInterval(i);
+    }, 500);
+    return () => clearInterval(i);
+  }, [gameState, continueAtMs, code]);
 
   if (loading || !room || ordered.length === 0 || !phase) {
+
     return <div className="min-h-screen flex items-center justify-center text-2xl">Loading pod…</div>;
   }
 
@@ -457,42 +500,8 @@ function PodPage() {
       .eq("code", code);
   };
 
-  // Main fuse ran out → continue countdown (pods drive this themselves so the
-  // gym screen doesn't have to be open).
-  useEffect(() => {
-    if (!endsAt || room.game_state !== "playing" || room.paused) return;
-    const i = setInterval(() => {
-      if (Date.now() < endsAt) return;
-      if (room.phase === "boss") return; // boss owns its own clock
-      void supabase
-        .from("rooms")
-        .update({
-          game_state: "timeout_continue",
-          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
-        })
-        .eq("code", code)
-        .eq("game_state", "playing")
-        .then(() => {});
-      clearInterval(i);
-    }, 1000);
-    return () => clearInterval(i);
-  }, [endsAt, room.game_state, room.paused, room.phase, code]);
+  // (timeout watchers live above the early return so hook order stays stable)
 
-  // Continue countdown expired → game over.
-  useEffect(() => {
-    if (room.game_state !== "timeout_continue" || !continueAt) return;
-    const i = setInterval(() => {
-      if (Date.now() < continueAt) return;
-      void supabase
-        .from("rooms")
-        .update({ game_state: "game_over", continue_deadline_at: null })
-        .eq("code", code)
-        .eq("game_state", "timeout_continue")
-        .then(() => {});
-      clearInterval(i);
-    }, 500);
-    return () => clearInterval(i);
-  }, [room.game_state, continueAt, code]);
 
   // Render the timeout / game-over overlays on top of whatever phase is active.
   const overlay = (() => {

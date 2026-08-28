@@ -891,7 +891,9 @@ function BossJudge({
  * Boss death sequence — long shake, big explosion flash, fullscreen mascot
  * with "YOU WIN!" before the parent route flips to the leaderboard.
  */
-function BossDeathOverlay() {
+function BossDeathOverlay({ onFinish }: { onFinish: () => void }) {
+  const finishRef = useRef(onFinish);
+  finishRef.current = onFinish;
   const [stage, setStage] = useState<"shake" | "boom" | "win">("shake");
   // Spam many small explosion bursts during the shake phase.
   const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number; s: number }>>([]);
@@ -926,7 +928,10 @@ function BossDeathOverlay() {
       haptic("success");
       sfx.play("winJingle");
     }, 4200);
+    // Hold the victory card a few beats, then hand over to the leaderboard.
+    const t3 = window.setTimeout(() => finishRef.current(), 7600);
     return () => {
+      window.clearTimeout(t3);
       window.clearInterval(spawn);
       sfxTimers.forEach((t) => window.clearTimeout(t));
       window.clearTimeout(t1);

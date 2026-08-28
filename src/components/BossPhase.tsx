@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bomb, Flame, Skull } from "lucide-react";
+import { Bomb, Flame, Skull, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CountdownNumber } from "@/components/CountdownNumber";
 import { BombAvatar } from "@/components/BombAvatar";
@@ -76,7 +76,7 @@ function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: 
 }
 
 /** Total HP per player joining the boss (shared HP pool). */
-const HP_PER_PLAYER = 220;
+const HP_PER_PLAYER = 110;
 /** Total seconds the pod has before the boss wins. */
 const BOSS_DURATION_MS = 5 * 60 * 1000;
 
@@ -186,6 +186,19 @@ export function BossPhase({
     setInner({ kind: "roll", turnPlayer });
   };
 
+  // Flip the shared room into the victory/leaderboard screen. Idempotent.
+  const wentVictory = useRef(false);
+  const goVictory = () => {
+    if (wentVictory.current) return;
+    wentVictory.current = true;
+    void supabase
+      .from("rooms")
+      .update({ phase: "victory", boss_defeated_at: new Date().toISOString() })
+      .eq("code", code);
+  };
+
+
+
   const onWheelResult = (wedge: BossWedge) => {
     const turnPlayer = inner.kind === "roll" ? inner.turnPlayer : player;
     if (!turnPlayer) return;
@@ -257,21 +270,12 @@ export function BossPhase({
 
       // Boss dies: play local death sequence, then flip room phase.
       if (newHp <= 0) {
-        setTimeout(() => {
-          setInner({ kind: "death" });
-          // Hand off to BossDeathOverlay which owns the multi-stage spectacle.
-          setTimeout(() => {
-            void supabase
-              .from("rooms")
-              .update({
-                phase: "victory",
-                boss_defeated_at: new Date().toISOString(),
-              })
-              .eq("code", code);
-          }, 5800);
-        }, 1400);
+        setTimeout(() => setInner({ kind: "death" }), 1400);
+        // Safety net in case the overlay callback never fires.
+        setTimeout(goVictory, 9000);
         return;
       }
+
     } else {
       sfx.play("blowUp");
       speak(`${player.username} missed the boss.`);
@@ -287,20 +291,28 @@ export function BossPhase({
     }, 3400);
   };
 
-  // Boss timeout → continue countdown (never straight to the leaderboard).
+  // Boss timeout → explosion + continue countdown (never straight to the
+  // leaderboard). Runs once when the fuse hits zero.
+  const timedOut = useRef(false);
   useEffect(() => {
-    if (remaining > 0) return;
-    void (async () => {
-      await supabase
-        .from("rooms")
-        .update({
-          game_state: "timeout_continue",
-          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
-        })
-        .eq("code", code)
-        .eq("game_state", "playing");
-    })();
-  }, [remaining, code]);
+    if (remaining > 0) {
+      timedOut.current = false;
+      return;
+    }
+    if (timedOut.current) return;
+    if (room.game_state === "timeout_continue" || room.game_state === "game_over") return;
+    timedOut.current = true;
+    sfx.play("blowUp");
+    haptic("boom");
+    void supabase
+      .from("rooms")
+      .update({
+        game_state: "timeout_continue",
+        continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
+      })
+      .eq("code", code);
+  }, [remaining, code, room.game_state]);
+
 
   if (!player) {
     return (
@@ -393,12 +405,14 @@ export function BossPhase({
 
       {inner.kind === "switch" && (
         <BossSwitch
+          key={`${inner.attack.playerId}-${inner.attack.exercise}-${turnIdx}`}
           player={player}
           judge={judge}
           attack={inner.attack}
           onDone={onSwitchDone}
         />
       )}
+
 
       {inner.kind === "roll" && (
         <BossRoll
@@ -433,47 +447,51 @@ export function BossPhase({
         </div>
       )}
 
-      {inner.kind === "death" && <BossDeathOverlay />}
+      {inner.kind === "death" && <BossDeathOverlay onFinish={goVictory} />}
 
       {inner.kind !== "death" && (
-      <div className="absolute left-0 right-0 bottom-0 z-40 p-3 pointer-events-none">
-        {/* Big boss countdown clock */}
-        <div className="flex justify-center mb-2">
+      <>
+        {/* Boss countdown clock — pinned bottom-right, clear of the HP bar */}
+        <div className="fixed right-3 bottom-24 z-[60] pointer-events-none">
           <div
-            className={`ink-border rounded-2xl px-5 py-2 flex items-center gap-2 anim-ui-float ${remaining < 30_000 ? "arcade-low-time" : ""}`}
+            className={`ink-border rounded-2xl px-4 py-2 flex items-center gap-2 anim-ui-float ${remaining < 30_000 ? "arcade-low-time" : ""}`}
             style={{
               background: remaining < 30_000 ? "var(--boom-red)" : "var(--boom-yellow)",
               color: remaining < 30_000 ? "#fff" : "var(--boom-ink)",
             }}
           >
-            <Flame size={28} />
+            <Flame size={30} />
             <span
               className="tabular-nums font-black leading-none"
-              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2rem, 11vw, 3.2rem)" }}
+              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2.4rem, 12vw, 3.6rem)" }}
             >
               {mm}:{ss}
             </span>
           </div>
         </div>
-        <div className="flex items-center justify-between text-white text-sm font-black px-1 mb-1">
-          <span className="flex items-center gap-1" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}>
-            <Skull size={18} /> BOSS HP
-          </span>
-        </div>
-        <div className="relative h-10 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
-          <div
-            className="absolute inset-y-0 left-0 transition-all duration-500"
-            style={{
-              width: `${hpPct * 100}%`,
-              background: "linear-gradient(90deg, #16a34a 0%, #facc15 60%, #ef4444 100%)",
-            }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}>
-            {room.boss_hp ?? 0} / {room.boss_max_hp ?? 0}
+
+        <div className="absolute left-0 right-0 bottom-0 z-40 p-3 pointer-events-none">
+          <div className="flex items-center justify-between text-white text-sm font-black px-1 mb-1">
+            <span className="flex items-center gap-1" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}>
+              <Skull size={18} /> BOSS HP
+            </span>
+          </div>
+          <div className="relative h-10 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
+            <div
+              className="absolute inset-y-0 left-0 transition-all duration-500"
+              style={{
+                width: `${hpPct * 100}%`,
+                background: "linear-gradient(90deg, #16a34a 0%, #facc15 60%, #ef4444 100%)",
+              }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}>
+              {room.boss_hp ?? 0} / {room.boss_max_hp ?? 0}
+            </div>
           </div>
         </div>
-      </div>
+      </>
       )}
+
 
     </main>
   );
@@ -574,7 +592,12 @@ function BossSwitch({
             {player.username}
           </div>
         </div>
-        <div className="text-5xl shrink-0">➡️</div>
+        <div
+          className="shrink-0 ink-border rounded-2xl px-2 py-3 flex items-center justify-center arcade-tilt-r-sm anim-ui-float"
+          style={{ background: "var(--boom-yellow)" }}
+        >
+          <ArrowRight size={40} strokeWidth={4} color="#111" />
+        </div>
         <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
           <BossAvatar player={judge} size={112} />
           <div className="text-base font-black uppercase tracking-wide" style={{ color: "var(--boom-ink)" }}>
@@ -872,7 +895,9 @@ function BossJudge({
  * Boss death sequence — long shake, big explosion flash, fullscreen mascot
  * with "YOU WIN!" before the parent route flips to the leaderboard.
  */
-function BossDeathOverlay() {
+function BossDeathOverlay({ onFinish }: { onFinish: () => void }) {
+  const finishRef = useRef(onFinish);
+  finishRef.current = onFinish;
   const [stage, setStage] = useState<"shake" | "boom" | "win">("shake");
   // Spam many small explosion bursts during the shake phase.
   const [bursts, setBursts] = useState<Array<{ id: number; x: number; y: number; s: number }>>([]);
@@ -907,7 +932,10 @@ function BossDeathOverlay() {
       haptic("success");
       sfx.play("winJingle");
     }, 4200);
+    // Hold the victory card a few beats, then hand over to the leaderboard.
+    const t3 = window.setTimeout(() => finishRef.current(), 7600);
     return () => {
+      window.clearTimeout(t3);
       window.clearInterval(spawn);
       sfxTimers.forEach((t) => window.clearTimeout(t));
       window.clearTimeout(t1);
@@ -1124,7 +1152,7 @@ function BossRoll({
         </div>
       </div>
 
-      <div className="relative flex items-center justify-center" style={{ width: "min(80vw, 320px)", height: "min(80vw, 320px)" }}>
+      <div className="relative flex items-center justify-center" style={{ width: "min(94vw, 520px)", height: "min(94vw, 520px)" }}>
         {/* Pointer */}
         <div
           className="absolute -top-3 left-1/2 -translate-x-1/2 z-20"

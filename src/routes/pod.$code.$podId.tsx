@@ -39,7 +39,7 @@ import { BossPhase, BossVictory } from "@/components/BossPhase";
 void BossVictory;
 import { cellPos, cellBg, COLS, ROWS, POD_COLORS } from "@/components/GymMap";
 import { BOARD, CELL_LABEL } from "@/lib/game";
-import { Zap, ArrowLeft, HelpCircle, AlertTriangle, Users, Flame, Dumbbell, Trophy, Pause, Swords } from "lucide-react";
+import { Zap, ArrowLeft, HelpCircle, AlertTriangle, Users, Flame, Dumbbell, Trophy, Pause, Swords, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,
@@ -116,7 +116,7 @@ function PodPage() {
     const finished = players.find((p) => p.current_space >= BOARD_SIZE);
     if (!finished) return;
     const total = Math.max(1, players.length);
-    const maxHp = total * 220;
+    const maxHp = total * 110;
     void supabase
       .from("rooms")
       .update({
@@ -229,7 +229,7 @@ function PodPage() {
     // immediately — don't finish/leaderboard the player.
     if (final >= BOARD_SIZE && (room.phase ?? "board") === "board") {
       const total = Math.max(1, players.length);
-      const maxHp = total * 220;
+      const maxHp = total * 110;
       await supabase
         .from("rooms")
         .update({
@@ -248,7 +248,8 @@ function PodPage() {
     );
     if (
       opponents.length > 0 &&
-      ordered.length > 2 &&
+      ordered.length >= 2 &&
+
       (finalCell.type === "easy" ||
         finalCell.type === "medium" ||
         finalCell.type === "hard" ||
@@ -427,7 +428,7 @@ function PodPage() {
       if (trap.finalSpace >= BOARD_SIZE) {
         if ((room.phase ?? "board") === "board") {
           const total = Math.max(1, players.length);
-          const maxHp = total * 220;
+          const maxHp = total * 110;
           await supabase
             .from("rooms")
             .update({
@@ -526,6 +527,13 @@ function PodPage() {
             continueDeadlineAt={continueAt}
             showContinue
             onContinue={onContinue}
+            onGiveUp={() => {
+              void supabase
+                .from("rooms")
+                .update({ game_state: "game_over", continue_deadline_at: null })
+                .eq("code", code)
+                .then(() => {});
+            }}
           />
         </>
       );
@@ -536,6 +544,7 @@ function PodPage() {
           {pauseBtn}
           <GameOverOverlay
             onRestart={restart}
+            onHome={() => window.location.assign("/")}
             onLeaderboard={() => {
               void supabase
                 .from("rooms")
@@ -547,6 +556,7 @@ function PodPage() {
         </>
       );
     }
+
     if (room.paused) {
       return (
         <>
@@ -1186,7 +1196,13 @@ function SwitchPhase({
             {player.username}
           </div>
         </div>
-        <div className="text-5xl shrink-0">➡️</div>
+        <div
+          className="shrink-0 ink-border rounded-2xl px-2 py-3 flex items-center justify-center arcade-tilt-r-sm anim-ui-float"
+          style={{ background: "var(--boom-yellow)" }}
+        >
+          <ArrowRight size={40} strokeWidth={4} color="#111" />
+        </div>
+
         <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
           <Avatar player={judge} size={112} />
           <div
@@ -2023,6 +2039,12 @@ function WrapUp({
     [],
   );
   useEffect(() => () => clipList.forEach((c) => URL.revokeObjectURL(c.url)), [clipList]);
+  // Carry the victory jingle over from the boss win screen.
+  useEffect(() => {
+    sfx.play("winJingle");
+    setMusicPhase("victory");
+  }, []);
+
   const [spoken, setSpoken] = useState(false);
   const { user } = useAuth();
   const [joinModalOpen, setJoinModalOpen] = useState(false);

@@ -257,21 +257,12 @@ export function BossPhase({
 
       // Boss dies: play local death sequence, then flip room phase.
       if (newHp <= 0) {
-        setTimeout(() => {
-          setInner({ kind: "death" });
-          // Hand off to BossDeathOverlay which owns the multi-stage spectacle.
-          setTimeout(() => {
-            void supabase
-              .from("rooms")
-              .update({
-                phase: "victory",
-                boss_defeated_at: new Date().toISOString(),
-              })
-              .eq("code", code);
-          }, 5800);
-        }, 1400);
+        setTimeout(() => setInner({ kind: "death" }), 1400);
+        // Safety net in case the overlay callback never fires.
+        setTimeout(goVictory, 9000);
         return;
       }
+
     } else {
       sfx.play("blowUp");
       speak(`${player.username} missed the boss.`);

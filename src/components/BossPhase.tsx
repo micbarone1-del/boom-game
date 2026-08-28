@@ -287,20 +287,24 @@ export function BossPhase({
     }, 3400);
   };
 
-  // Boss timeout → continue countdown (never straight to the leaderboard).
+  // Boss timeout → explosion + continue countdown (never straight to the
+  // leaderboard). Runs once when the fuse hits zero.
+  const timedOut = useRef(false);
   useEffect(() => {
-    if (remaining > 0) return;
-    void (async () => {
-      await supabase
-        .from("rooms")
-        .update({
-          game_state: "timeout_continue",
-          continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
-        })
-        .eq("code", code)
-        .eq("game_state", "playing");
-    })();
-  }, [remaining, code]);
+    if (remaining > 0 || timedOut.current) return;
+    if (room.game_state === "timeout_continue" || room.game_state === "game_over") return;
+    timedOut.current = true;
+    sfx.play("blowUp");
+    haptic("boom");
+    void supabase
+      .from("rooms")
+      .update({
+        game_state: "timeout_continue",
+        continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
+      })
+      .eq("code", code);
+  }, [remaining, code, room.game_state]);
+
 
   if (!player) {
     return (

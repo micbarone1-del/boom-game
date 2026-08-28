@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bomb, Flame, Skull } from "lucide-react";
+import { Bomb, Flame, Skull, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CountdownNumber } from "@/components/CountdownNumber";
 import { BombAvatar } from "@/components/BombAvatar";
@@ -439,7 +439,7 @@ export function BossPhase({
         </div>
       )}
 
-      {inner.kind === "death" && <BossDeathOverlay />}
+      {inner.kind === "death" && <BossDeathOverlay onFinish={goVictory} />}
 
       {inner.kind !== "death" && (
       <>
@@ -584,7 +584,12 @@ function BossSwitch({
             {player.username}
           </div>
         </div>
-        <div className="text-5xl shrink-0">➡️</div>
+        <div
+          className="shrink-0 ink-border rounded-2xl px-2 py-3 flex items-center justify-center arcade-tilt-r-sm anim-ui-float"
+          style={{ background: "var(--boom-yellow)" }}
+        >
+          <ArrowRight size={40} strokeWidth={4} color="#111" />
+        </div>
         <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
           <BossAvatar player={judge} size={112} />
           <div className="text-base font-black uppercase tracking-wide" style={{ color: "var(--boom-ink)" }}>
@@ -1134,7 +1139,7 @@ function BossRoll({
         </div>
       </div>
 
-      <div className="relative flex items-center justify-center" style={{ width: "min(80vw, 320px)", height: "min(80vw, 320px)" }}>
+      <div className="relative flex items-center justify-center" style={{ width: "min(94vw, 520px)", height: "min(94vw, 520px)" }}>
         {/* Pointer */}
         <div
           className="absolute -top-3 left-1/2 -translate-x-1/2 z-20"

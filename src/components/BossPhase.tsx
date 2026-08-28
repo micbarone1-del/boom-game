@@ -397,12 +397,14 @@ export function BossPhase({
 
       {inner.kind === "switch" && (
         <BossSwitch
+          key={`${inner.attack.playerId}-${inner.attack.exercise}-${turnIdx}`}
           player={player}
           judge={judge}
           attack={inner.attack}
           onDone={onSwitchDone}
         />
       )}
+
 
       {inner.kind === "roll" && (
         <BossRoll

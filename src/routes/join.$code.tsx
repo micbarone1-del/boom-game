@@ -346,8 +346,9 @@ function JoinView() {
         aria-hidden="true"
         className="fixed inset-0 h-full w-full object-cover pointer-events-none"
       >
-        <source src="/media/attract.webm" type="video/webm" />
         <source src="/media/attract.mp4" type="video/mp4" />
+        <source src="/media/attract.webm" type="video/webm" />
+
       </video>
       <div className="fixed inset-0 bg-black/55 pointer-events-none" />
       <div className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-4">

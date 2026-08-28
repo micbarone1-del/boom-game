@@ -1187,7 +1187,13 @@ function SwitchPhase({
             {player.username}
           </div>
         </div>
-        <div className="text-5xl shrink-0">➡️</div>
+        <div
+          className="shrink-0 ink-border rounded-2xl px-2 py-3 flex items-center justify-center arcade-tilt-r-sm anim-ui-float"
+          style={{ background: "var(--boom-yellow)" }}
+        >
+          <ArrowRight size={40} strokeWidth={4} color="#111" />
+        </div>
+
         <div className="flex-1 min-w-0 flex flex-col items-center gap-2 anim-fade-in">
           <Avatar player={judge} size={112} />
           <div

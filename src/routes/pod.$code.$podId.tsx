@@ -527,6 +527,13 @@ function PodPage() {
             continueDeadlineAt={continueAt}
             showContinue
             onContinue={onContinue}
+            onGiveUp={() => {
+              void supabase
+                .from("rooms")
+                .update({ game_state: "game_over", continue_deadline_at: null })
+                .eq("code", code)
+                .then(() => {});
+            }}
           />
         </>
       );
@@ -537,6 +544,7 @@ function PodPage() {
           {pauseBtn}
           <GameOverOverlay
             onRestart={restart}
+            onHome={() => window.location.assign("/")}
             onLeaderboard={() => {
               void supabase
                 .from("rooms")
@@ -548,6 +556,7 @@ function PodPage() {
         </>
       );
     }
+
     if (room.paused) {
       return (
         <>

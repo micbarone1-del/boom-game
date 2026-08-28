@@ -186,6 +186,19 @@ export function BossPhase({
     setInner({ kind: "roll", turnPlayer });
   };
 
+  // Flip the shared room into the victory/leaderboard screen. Idempotent.
+  const wentVictory = useRef(false);
+  const goVictory = () => {
+    if (wentVictory.current) return;
+    wentVictory.current = true;
+    void supabase
+      .from("rooms")
+      .update({ phase: "victory", boss_defeated_at: new Date().toISOString() })
+      .eq("code", code);
+  };
+
+
+
   const onWheelResult = (wedge: BossWedge) => {
     const turnPlayer = inner.kind === "roll" ? inner.turnPlayer : player;
     if (!turnPlayer) return;

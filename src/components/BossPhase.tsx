@@ -442,44 +442,48 @@ export function BossPhase({
       {inner.kind === "death" && <BossDeathOverlay />}
 
       {inner.kind !== "death" && (
-      <div className="absolute left-0 right-0 bottom-0 z-40 p-3 pointer-events-none">
-        {/* Big boss countdown clock */}
-        <div className="flex justify-center mb-2">
+      <>
+        {/* Boss countdown clock — pinned bottom-right, clear of the HP bar */}
+        <div className="fixed right-3 bottom-24 z-[60] pointer-events-none">
           <div
-            className={`ink-border rounded-2xl px-5 py-2 flex items-center gap-2 anim-ui-float ${remaining < 30_000 ? "arcade-low-time" : ""}`}
+            className={`ink-border rounded-2xl px-4 py-2 flex items-center gap-2 anim-ui-float ${remaining < 30_000 ? "arcade-low-time" : ""}`}
             style={{
               background: remaining < 30_000 ? "var(--boom-red)" : "var(--boom-yellow)",
               color: remaining < 30_000 ? "#fff" : "var(--boom-ink)",
             }}
           >
-            <Flame size={28} />
+            <Flame size={30} />
             <span
               className="tabular-nums font-black leading-none"
-              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2rem, 11vw, 3.2rem)" }}
+              style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2.4rem, 12vw, 3.6rem)" }}
             >
               {mm}:{ss}
             </span>
           </div>
         </div>
-        <div className="flex items-center justify-between text-white text-sm font-black px-1 mb-1">
-          <span className="flex items-center gap-1" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}>
-            <Skull size={18} /> BOSS HP
-          </span>
-        </div>
-        <div className="relative h-10 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
-          <div
-            className="absolute inset-y-0 left-0 transition-all duration-500"
-            style={{
-              width: `${hpPct * 100}%`,
-              background: "linear-gradient(90deg, #16a34a 0%, #facc15 60%, #ef4444 100%)",
-            }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}>
-            {room.boss_hp ?? 0} / {room.boss_max_hp ?? 0}
+
+        <div className="absolute left-0 right-0 bottom-0 z-40 p-3 pointer-events-none">
+          <div className="flex items-center justify-between text-white text-sm font-black px-1 mb-1">
+            <span className="flex items-center gap-1" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "1px 1px 0 #000" }}>
+              <Skull size={18} /> BOSS HP
+            </span>
+          </div>
+          <div className="relative h-10 rounded-full ink-border-sm overflow-hidden bg-[#1a0000]">
+            <div
+              className="absolute inset-y-0 left-0 transition-all duration-500"
+              style={{
+                width: `${hpPct * 100}%`,
+                background: "linear-gradient(90deg, #16a34a 0%, #facc15 60%, #ef4444 100%)",
+              }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center text-white text-sm font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}>
+              {room.boss_hp ?? 0} / {room.boss_max_hp ?? 0}
+            </div>
           </div>
         </div>
-      </div>
+      </>
       )}
+
 
     </main>
   );

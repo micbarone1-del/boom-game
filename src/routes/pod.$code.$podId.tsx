@@ -2039,6 +2039,12 @@ function WrapUp({
     [],
   );
   useEffect(() => () => clipList.forEach((c) => URL.revokeObjectURL(c.url)), [clipList]);
+  // Carry the victory jingle over from the boss win screen.
+  useEffect(() => {
+    sfx.play("winJingle");
+    setMusicPhase("victory");
+  }, []);
+
   const [spoken, setSpoken] = useState(false);
   const { user } = useAuth();
   const [joinModalOpen, setJoinModalOpen] = useState(false);

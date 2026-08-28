@@ -86,7 +86,7 @@ let fallbackBeep: HTMLAudioElement | null = null;
 // sessions is reset to unmuted on next load.
 const MUTE_KEY = "boom.sfx.muted.v4";
 const VOICE_KEY = "boom.robotVoice.enabled.v1";
-let robotVoiceEnabled = true;
+let robotVoiceEnabled = false;
 
 function fallbackAudio(): HTMLAudioElement | null {
   if (typeof window === "undefined" || typeof Audio === "undefined" || typeof btoa === "undefined") return null;
@@ -148,7 +148,7 @@ function fallbackPlay(audible: boolean) {
 if (typeof window !== "undefined") {
   try {
     muted = localStorage.getItem(MUTE_KEY) === "1";
-    robotVoiceEnabled = localStorage.getItem(VOICE_KEY) !== "0";
+    robotVoiceEnabled = localStorage.getItem(VOICE_KEY) === "1";
   } catch {}
   // Prime audio only from real user gestures; browsers block AudioContext
   // creation/resume from timers, realtime callbacks, and effects.

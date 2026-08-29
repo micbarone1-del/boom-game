@@ -1,8 +1,9 @@
-import { Pause, Play, UserPlus, Bomb, Flag, Volume2, VolumeX } from "lucide-react";
+import { Pause, Play, UserPlus, Bomb, Flag, Volume2, VolumeX, GraduationCap } from "lucide-react";
 import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Player, Pod } from "@/hooks/use-room";
 import { isRobotVoiceEnabled, setRobotVoiceEnabled } from "@/lib/sfx";
+import { ftueDisabled, resetFtue, setFtueDisabled } from "@/components/Ftue";
 
 /**
  * Fullscreen "PAUSED" overlay shown to every connected client (host TV +

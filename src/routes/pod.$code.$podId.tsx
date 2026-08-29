@@ -1128,12 +1128,21 @@ function SwitchPhase({
     return () => clearTimeout(t);
   }, [count, onDone, ftue.showing, paused]);
 
+  // Tapping anywhere hurries the handoff countdown along.
+  const speedUp = () => {
+    if (ftue.showing || paused) return;
+    haptic("tap");
+    setCount((c) => Math.max(0, c - 1));
+  };
+
   return (
     <main
+      onClick={speedUp}
       className="fixed inset-0 flex flex-col items-center justify-between p-4 gap-3"
       style={{ background: "#ffffff" }}
     >
       {ftue.modal}
+
 
       {/* Thick rounded black frame so text reads clearly */}
       <div

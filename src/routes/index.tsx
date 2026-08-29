@@ -194,6 +194,16 @@ function Index() {
         </video>
 
 
+        {introMuted && (
+          <button
+            onClick={unmuteIntro}
+            className="absolute bottom-6 left-5 z-10 ink-border-sm rounded-xl px-4 py-2 text-sm font-black uppercase active:scale-95"
+            style={{ background: "var(--boom-yellow, #FFD23F)", fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            🔊 Tap for sound
+          </button>
+        )}
+
         <button
           onClick={endIntro}
           className="absolute bottom-6 right-5 z-10 ink-border-sm rounded-xl bg-white px-4 py-2 text-sm font-black uppercase active:scale-95"

@@ -10,6 +10,7 @@ import { JoinAsModal } from "@/components/JoinAsModal";
 import { saveGuestMap, loadGuestMap } from "@/lib/guest";
 import { fileToAvatarDataUrl } from "@/lib/image";
 import { useAttractVideo } from "@/hooks/use-attract-video";
+import { useFtue, replayFtue } from "@/components/Ftue";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,
@@ -58,6 +59,10 @@ function JoinView() {
   const [stampedSlot, setStampedSlot] = useState<number | null>(null);
   const attractVideoRef = useRef<HTMLVideoElement>(null);
   useAttractVideo(attractVideoRef, !loading && !!room);
+  // Contextual tutorials: welcome tip on the lobby, pod-building tip as soon
+  // as the player starts filling slots.
+  const lobbyFtue = useFtue(loading ? null : "room", "lobby");
+  const podFtue = useFtue(!loading && !lobbyFtue.showing && chosenSlot !== null ? "room" : null, "podform");
   // Fire the arcade "stamp" landing animation on a freshly populated slot.
   const stampSlot = (idx: number) => {
     setStampedSlot(idx);

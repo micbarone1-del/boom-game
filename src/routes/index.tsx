@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sfx, startArcadeMusic, setMusicPhase } from "@/lib/sfx";
 import { generateRoomCode } from "@/lib/game";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { useAttractVideo } from "@/hooks/use-attract-video";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -60,27 +61,7 @@ function Index() {
   const [creating, setCreating] = useState(false);
   const [attract, setAttract] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  // Some in-app/preview browsers ignore the autoplay attribute — nudge playback.
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.muted = true;
-    v.defaultMuted = true;
-    v.playsInline = true;
-    v.load();
-    const kick = () => { void v.play().catch(() => {}); };
-    kick();
-    v.addEventListener("canplay", kick);
-    v.addEventListener("loadeddata", kick);
-    const t = window.setTimeout(kick, 400);
-    document.addEventListener("visibilitychange", kick);
-    return () => {
-      v.removeEventListener("canplay", kick);
-      v.removeEventListener("loadeddata", kick);
-      document.removeEventListener("visibilitychange", kick);
-      window.clearTimeout(t);
-    };
-  }, [attract]);
+  useAttractVideo(videoRef, attract);
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
   // policies mean it can only start once the visitor touches the screen.
   useEffect(() => {
@@ -134,11 +115,7 @@ function Index() {
           poster="/media/attract-poster.jpg"
           aria-label="BOOM! gameplay attract reel"
           className="absolute inset-0 z-0 w-full h-full object-cover opacity-100"
-        >
-          <source src="/media/attract.mp4" type="video/mp4" />
-          <source src="/media/attract.webm" type="video/webm" />
-
-        </video>
+        />
 
         {/* Tap anywhere to reveal the player start/join screen. */}
         <button

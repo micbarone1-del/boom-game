@@ -568,10 +568,9 @@ function PodPage() {
               void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
             }}
             onGiveUp={() => {
-              // Leave the mounted game before changing shared pause state. If
-              // realtime delivers that update first, the old turn can briefly
-              // render with stale local phase data and trip the route boundary.
-              window.location.replace(`/join/${encodeURIComponent(code)}`);
+              // Give up leaves the active room entirely. A hard navigation
+              // avoids rendering stale realtime game state during teardown.
+              window.location.replace("/");
             }}
             onSignInClick={() => setPauseJoinOpen(true)}
           />

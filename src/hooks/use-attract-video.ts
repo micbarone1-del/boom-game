@@ -2,8 +2,8 @@ import { useEffect, type RefObject } from "react";
 
 // Version the reel URLs so phones do not keep an older, frozen transcode in
 // their media cache after a deployment.
-const MP4_SOURCE = "/media/attract.mp4?v=20260829c";
-const WEBM_SOURCE = "/media/attract.webm?v=20260829c";
+const MP4_SOURCE = "/media/attract.mp4?v=20260829g";
+const WEBM_SOURCE = "/media/attract.webm?v=20260829g";
 
 /** Keeps the muted attract reel moving in mobile and embedded browsers. */
 export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>, enabled = true) {

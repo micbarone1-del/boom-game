@@ -303,8 +303,24 @@ function Index() {
   }
 
   return (
-    <main className="h-[100svh] overflow-hidden flex flex-col items-center justify-center px-4 py-3 gap-3">
-      <div className="text-center">
+    <main className="relative h-[100svh] overflow-hidden flex flex-col items-center justify-center px-4 py-3 gap-3">
+      {/* Same attract reel keeps looping behind the start / join controls */}
+      <video
+        ref={startVideoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        poster="/media/attract-poster.jpg?v=20260829g"
+        aria-hidden="true"
+        className="attract-video absolute inset-0 z-0 w-full h-full object-cover"
+      />
+      <div
+        className="absolute inset-0 z-0"
+        style={{ background: "linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.35) 45%, rgba(0,0,0,.75))" }}
+      />
+      <div className="relative z-10 text-center">
         <img
           src={bombMascot}
           alt="BOOM mascot — excited cartoon bomb with a lit fuse"

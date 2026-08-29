@@ -1860,6 +1860,9 @@ function JudgePhase({
   return (
     <main className="fixed inset-0 bg-black overflow-hidden">
       {ftue.modal}
+      {/* The tap-to-defuse tip only appears once the first tip is cleared. */}
+      {!ftue.showing && ftueTap.modal}
+
       <video
 
         ref={videoRef}

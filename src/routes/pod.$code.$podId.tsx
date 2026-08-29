@@ -253,7 +253,7 @@ function PodPage() {
     );
     if (
       opponents.length > 0 &&
-      ordered.length >= 2 &&
+      ordered.length >= 3 &&
 
       (finalCell.type === "easy" ||
         finalCell.type === "medium" ||

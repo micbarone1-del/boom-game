@@ -55,17 +55,47 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+const INTRO_KEY = "boom.intro.seen.v1";
+
 function Index() {
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
   const [creating, setCreating] = useState(false);
   const [attract, setAttract] = useState(true);
+  const [intro, setIntro] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  useAttractVideo(videoRef, attract);
+  useAttractVideo(videoRef, attract && !intro);
+
+  // One-time intro sting: plays with sound the first time a visitor taps
+  // "press to start" on this device, then never again.
+  const startPressed = () => {
+    let seen = true;
+    try {
+      seen = window.localStorage.getItem(INTRO_KEY) === "1";
+    } catch {
+      /* private mode — skip the intro */
+    }
+    if (seen) {
+      setAttract(false);
+      return;
+    }
+    try {
+      window.localStorage.setItem(INTRO_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setIntro(true);
+  };
+  const endIntro = () => {
+    setIntro(false);
+    setAttract(false);
+  };
+
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
   // policies mean it can only start once the visitor touches the screen.
   useEffect(() => {
-    if (!attract) return;
+    if (!attract || intro) return;
+
     setMusicPhase("attract");
     const kick = () => {
       void sfx.unlock().then(() => startArcadeMusic());
@@ -77,7 +107,7 @@ function Index() {
       window.removeEventListener("pointerdown", kick);
       window.removeEventListener("keydown", kick);
     };
-  }, [attract]);
+  }, [attract, intro]);
 
   const tryJoin = (e: React.FormEvent) => {
 
@@ -98,7 +128,30 @@ function Index() {
     // Land in the player lobby — pods are created and joined from there.
     navigate({ to: "/join/$code", params: { code }, search: { auto: undefined, join: undefined } });
   };
+  if (intro) {
+    return (
+      <main className="fixed inset-0 bg-black overflow-hidden">
+        <video
+          src="/media/intro.mp4?v=20260829c"
+          autoPlay
+          playsInline
+          onEnded={endIntro}
+          onError={endIntro}
+          aria-label="BOOM! intro"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <button
+          onClick={endIntro}
+          className="absolute bottom-6 right-5 z-10 ink-border-sm rounded-xl bg-white px-4 py-2 text-sm font-black uppercase active:scale-95"
+        >
+          Skip
+        </button>
+      </main>
+    );
+  }
+
   if (attract) {
+
     return (
       <main
         className="fixed inset-0 overflow-hidden"
@@ -112,14 +165,14 @@ function Index() {
           muted
           playsInline
           preload="auto"
-          poster="/media/attract-poster.jpg?v=20260829b"
+          poster="/media/attract-poster.jpg?v=20260829c"
           aria-label="BOOM! gameplay attract reel"
           className="attract-video absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         />
 
         {/* Tap anywhere to reveal the player start/join screen. */}
         <button
-          onClick={() => setAttract(false)}
+          onClick={startPressed}
           className="absolute inset-0 z-[1] w-full h-full flex flex-col items-center justify-between py-8 px-4"
           aria-label="Press to start"
           style={{ background: "linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.15) 40%, rgba(0,0,0,.7))" }}

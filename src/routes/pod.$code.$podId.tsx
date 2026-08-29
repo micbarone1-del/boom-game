@@ -1652,12 +1652,15 @@ function JudgePhase({
   const holdStartRef = useRef(0);
   const [defuseFlash, setDefuseFlash] = useState(false);
   const ftue = useFtue(player.id, "judge");
+  // Second tip: how to actually score the reps (big finger on DEFUSE).
+  const ftueTap = useFtue(player.id, "defuse");
   // Time spent reading the FTUE tip doesn't count against the defuse timer.
   const ftueOffsetRef = useRef(0);
   const ftueOpenedAtRef = useRef<number | null>(null);
   // Frozen = a tutorial tip is up OR the room is paused. Neither counts
   // against the defuse countdown.
-  const frozen = ftue.showing || paused;
+  const frozen = ftue.showing || ftueTap.showing || paused;
+
   if (frozen && ftueOpenedAtRef.current === null) ftueOpenedAtRef.current = Date.now();
   if (!frozen && ftueOpenedAtRef.current !== null) {
     ftueOffsetRef.current += Date.now() - ftueOpenedAtRef.current;

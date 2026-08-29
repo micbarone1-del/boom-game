@@ -8,7 +8,7 @@ import { BombAvatar } from "@/components/BombAvatar";
  * Each tip is shown at most once per profile (per browser profile key) and
  * blocks the game with a big high-contrast modal until "GOT IT!" is tapped.
  */
-export type FtueKey = "roll" | "switch" | "judge" | "lobby" | "podform";
+export type FtueKey = "roll" | "switch" | "judge" | "defuse" | "lobby" | "podform";
 
 const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
   roll: {
@@ -26,6 +26,11 @@ const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
     body: "Do the exercise while the judge films you.",
     color: "var(--boom-red)",
   },
+  defuse: {
+    title: "TAP TO DEFUSE!",
+    body: "Judge: tap the big DEFUSE button once for every good rep — before the fuse runs out!",
+    color: "var(--boom-blue)",
+  },
   lobby: {
     title: "WELCOME!",
     body: "Sign in or pick a nickname, then jump into a pod. 2–4 players per pod.",
@@ -37,6 +42,7 @@ const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
     color: "var(--boom-blue)",
   },
 };
+
 
 /** Re-enables tips and clears every "seen" flag (used by the ? help button). */
 export function replayFtue() {

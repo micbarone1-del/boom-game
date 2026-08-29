@@ -63,11 +63,30 @@ function Index() {
   // The intro sting plays once every time the player lands on the home
   // screen, then the attract reel takes over behind "PRESS TO START".
   const [intro, setIntro] = useState(true);
+  const introRef = useRef<HTMLVideoElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   useAttractVideo(videoRef, attract && !intro);
 
   const startPressed = () => setAttract(false);
   const endIntro = () => setIntro(false);
+
+  useEffect(() => {
+    if (!intro) return;
+    const video = introRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.currentTime = 0;
+    video.load();
+    void video.play().catch(() => {});
+    const retry = () => void video.play().catch(() => {});
+    window.addEventListener("pointerdown", retry, { once: true });
+    const failSafe = window.setTimeout(endIntro, 10_000);
+    return () => {
+      window.removeEventListener("pointerdown", retry);
+      window.clearTimeout(failSafe);
+    };
+  }, [intro]);
 
 
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
@@ -112,25 +131,17 @@ function Index() {
       <main className="fixed inset-0 bg-black overflow-hidden">
         <video
           autoPlay
+          muted
           playsInline
           onEnded={endIntro}
           onError={endIntro}
-          ref={(el) => {
-            if (!el || el.dataset["kicked"]) return;
-            el.dataset["kicked"] = "1";
-            // Autoplay with sound is blocked on most phones — fall back to a
-            // muted playthrough instead of stalling on a black screen.
-            void el.play().catch(() => {
-              el.muted = true;
-              void el.play().catch(endIntro);
-            });
-          }}
+          ref={introRef}
           aria-label="BOOM! intro"
           className="absolute inset-0 w-full h-full object-cover"
         >
           {/* H.264 first for Safari/iOS, VP9 fallback for browsers without it */}
-          <source src="/media/intro.mp4?v=20260829d" type="video/mp4" />
-          <source src="/media/intro.webm?v=20260829d" type="video/webm" />
+          <source src="/media/intro.webm?v=20260829e" type="video/webm" />
+          <source src="/media/intro.mp4?v=20260829e" type="video/mp4" />
         </video>
 
         <button
@@ -205,13 +216,13 @@ function Index() {
             PRESS TO START
           </span>
 
-          <span className="text-xs font-black" style={{ color: "rgba(255,255,255,.8)" }}>
+          <span className="mb-12 text-xs font-black" style={{ color: "rgba(255,255,255,.8)" }}>
             Up to 3 pods · hot-potato workout chaos
           </span>
         </button>
 
         {/* Escape hatches — don't trigger the full-screen start button */}
-        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-4 z-10">
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-4 z-10">
           <button
             onClick={() => setAttract(false)}
             className="ink-border-sm rounded-xl px-3 py-1.5 bg-white text-xs font-black flex items-center gap-1"

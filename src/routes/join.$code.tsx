@@ -310,7 +310,7 @@ function JoinView() {
     }
     // If this is the first pod AND they came via auto (solo flow), auto-start
     // the room with the 15-min fuse so they don't need a host screen.
-    if (auto && pods.length === 0) {
+    if (!room.game_started_at || !room.game_ends_at) {
       const startedAt = new Date();
       const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
       await supabase

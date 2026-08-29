@@ -88,6 +88,7 @@ function PodPage() {
   // Local fallback so the victory screen always shows, even if the shared
   // room row never flips to `victory`.
   const [bossBeaten, setBossBeaten] = useState(false);
+  const [localBossTimeoutAt, setLocalBossTimeoutAt] = useState<number | null>(null);
   const clipsRef = useRef<Map<string, Blob>>(new Map());
 
   const [, force] = useState(0);
@@ -128,7 +129,7 @@ function PodPage() {
     const finished = players.find((p) => p.current_space >= BOARD_SIZE);
     if (!finished) return;
     const total = Math.max(1, players.length);
-    const maxHp = total * 110;
+    const maxHp = total * 55;
     void supabase
       .from("rooms")
       .update({
@@ -241,7 +242,7 @@ function PodPage() {
     // immediately — don't finish/leaderboard the player.
     if (final >= BOARD_SIZE && (room.phase ?? "board") === "board") {
       const total = Math.max(1, players.length);
-      const maxHp = total * 110;
+      const maxHp = total * 55;
       await supabase
         .from("rooms")
         .update({
@@ -440,7 +441,7 @@ function PodPage() {
       if (trap.finalSpace >= BOARD_SIZE) {
         if ((room.phase ?? "board") === "board") {
           const total = Math.max(1, players.length);
-          const maxHp = total * 110;
+          const maxHp = total * 55;
           await supabase
             .from("rooms")
             .update({
@@ -500,6 +501,7 @@ function PodPage() {
   };
 
   const onContinue = async () => {
+    setLocalBossTimeoutAt(null);
     const newEnds = new Date(Date.now() + 5 * 60 * 1000);
     await supabase
       .from("rooms")
@@ -531,12 +533,13 @@ function PodPage() {
     );
     // Fuse ran out (main game or boss) → continue countdown, never straight
     // to the leaderboard. The leaderboard is only for pods that beat the boss.
-    if (room.game_state === "timeout_continue" && continueAt) {
+    const effectiveContinueAt = continueAt ?? localBossTimeoutAt;
+    if ((room.game_state === "timeout_continue" || localBossTimeoutAt) && effectiveContinueAt) {
       return (
         <>
           {pauseBtn}
           <TimesOutOverlay
-            continueDeadlineAt={continueAt}
+            continueDeadlineAt={effectiveContinueAt}
             showContinue
             onContinue={onContinue}
             onGiveUp={() => {
@@ -633,6 +636,7 @@ function PodPage() {
           overrides={overrides}
           code={code}
           onVictory={() => setBossBeaten(true)}
+          onTimeout={(deadline) => setLocalBossTimeoutAt(deadline)}
         />
         {overlay}
       </>
@@ -906,7 +910,7 @@ function Avatar({
   return (
     <div className="relative">
     <div
-      className={`rounded-full overflow-hidden flex items-center justify-center ${lvl ? "anim-power-ring" : ""}`}
+      className={`rounded-full flex items-center justify-center ${avatarIsMascot(player.avatar_url) ? "overflow-visible" : "overflow-hidden"} ${lvl ? "anim-power-ring" : ""}`}
       style={{
         width: size,
         height: size,
@@ -915,7 +919,7 @@ function Avatar({
       }}
     >
       {avatarIsMascot(player.avatar_url) ? (
-        <BombAvatar color={color} size={size} />
+        <BombAvatar color={color} size={Math.round(size * 1.16)} className="-translate-y-[8%]" />
 
       ) : (
         <img src={player.avatar_url!} alt="" className="w-full h-full object-cover" />
@@ -2545,10 +2549,10 @@ function VsPhase({
           <div className="text-base font-bold">First to {trap.reps} reps wins 2×</div>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <div className="text-white text-sm opacity-80 uppercase">Pass phone to judge</div>
-          <div className="bg-white ink-border rounded-full px-4 py-2 flex items-center gap-2 anim-ui-float">
-            <Avatar player={judge} size={40} />
-            <span className="text-xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{judge.username}</span>
+          <div className="text-white text-2xl font-black uppercase text-center" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>Pass phone to judge</div>
+          <div className="bg-white ink-border rounded-full px-6 py-3 flex items-center gap-3 anim-ui-float max-w-[92vw]">
+            <Avatar player={judge} size={64} />
+            <span className="text-3xl font-black leading-tight break-words" style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}>{judge.username}</span>
           </div>
         </div>
         <button

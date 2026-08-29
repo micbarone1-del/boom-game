@@ -27,7 +27,10 @@ import bombBoost from "@/assets/bomb-boost.png";
 import bombSetback from "@/assets/bomb-setback.png";
 import bombSpecial from "@/assets/bomb-special.png";
 import bombSuper from "@/assets/bomb-super.png";
-import bombMascotImg from "@/assets/bomb-mascot.png";
+import bossSurpriseAsset from "@/assets/boss-surprise.png.asset.json";
+import bossCrazyAsset from "@/assets/boss-crazy.png.asset.json";
+import bossSpecialAsset from "@/assets/boss-special.png.asset.json";
+import bossGroupAsset from "@/assets/boss-group.png.asset.json";
 
 /** Wheel-of-fortune wedge definitions for the boss roll. */
 type BossWedge = {
@@ -51,10 +54,10 @@ const BOSS_WEDGES: BossWedge[] = [
   { id: "easy", label: "EASY", multiplier: 1, color: "#facc15", tier: 1, pick: "easy", mascot: bombEasy },
   { id: "medium", label: "MEDIUM", multiplier: 1, color: "#22c55e", tier: 2, pick: "medium", mascot: bombMedium },
   { id: "hard", label: "HARD", multiplier: 2, color: "#ef4444", tier: 3, pick: "hard", mascot: bombHard },
-  { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise", mascot: bombMascotImg },
-  { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy", mascot: bombSetback },
-  { id: "group", label: "GROUP", multiplier: 1, podWide: true, color: "#3b82f6", tier: 2, pick: "group", mascot: bombBoost },
-  { id: "special", label: "SPECIAL", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard", mascot: bombSpecial },
+  { id: "surprise", label: "SURPRISE", multiplier: 2, color: "#ec4899", tier: 2, pick: "surprise", mascot: bossSurpriseAsset.url },
+  { id: "crazy", label: "CRAZY", multiplier: 2, color: "#22d3ee", tier: 3, pick: "crazy", mascot: bossCrazyAsset.url },
+  { id: "group", label: "GROUP", multiplier: 1, podWide: true, color: "#3b82f6", tier: 2, pick: "group", mascot: bossGroupAsset.url },
+  { id: "special", label: "SPECIAL", multiplier: 2, color: "#a855f7", tier: 3, pick: "hard", mascot: bossSpecialAsset.url },
   { id: "super", label: "SUPER", multiplier: 3, podWide: true, color: "#f97316", tier: 3, pick: "crazy", mascot: bombSuper },
 ];
 
@@ -76,7 +79,7 @@ function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: 
 }
 
 /** Total HP per player joining the boss (shared HP pool). */
-const HP_PER_PLAYER = 110;
+const HP_PER_PLAYER = 55;
 /** Total seconds the pod has before the boss wins. */
 const BOSS_DURATION_MS = 5 * 60 * 1000;
 
@@ -90,6 +93,7 @@ type Attack = {
   multiplier?: number;
   /** When true the whole pod performs the move and damage = sum across all members. */
   podWide?: boolean;
+  groupExercise?: boolean;
   /** Display label for the wedge (e.g. "SPECIAL MOVE"). */
   wedgeLabel?: string;
   /** Mascot art for the wedge, shown on the switch screen. */
@@ -100,6 +104,7 @@ type InnerPhase =
   | { kind: "intro" }
   | { kind: "roll"; turnPlayer: Player }
   | { kind: "switch"; attack: Attack }
+  | { kind: "group"; attack: Attack }
   | { kind: "judge"; attack: Attack }
   | { kind: "hit"; attack: Attack; damage: number; outcome: "success" | "fail" }
   | { kind: "death" };
@@ -141,6 +146,7 @@ export function BossPhase({
   overrides,
   code,
   onVictory,
+  onTimeout,
 }: {
   room: Room;
   podPlayers: Player[];
@@ -148,6 +154,7 @@ export function BossPhase({
   code: string;
   /** Local fallback so the screen never freezes if the room row lags. */
   onVictory?: () => void;
+  onTimeout?: (continueDeadlineAt: number) => void;
 }) {
   const active = useMemo(
     () => podPlayers.filter((p) => p.status !== "out"),
@@ -222,6 +229,7 @@ export function BossPhase({
       tier: pick.tier,
       multiplier: wedge.multiplier,
       podWide: wedge.podWide,
+      groupExercise: wedge.id === "group",
       wedgeLabel: wedge.label,
       mascot: wedge.mascot,
     };
@@ -230,7 +238,7 @@ export function BossPhase({
 
   const onSwitchDone = () => {
     if (inner.kind !== "switch") return;
-    setInner({ kind: "judge", attack: inner.attack });
+    setInner({ kind: inner.attack.groupExercise ? "group" : "judge", attack: inner.attack });
   };
 
   const onJudgeDone = async (
@@ -309,14 +317,16 @@ export function BossPhase({
     timedOut.current = true;
     sfx.play("blowUp");
     haptic("boom");
+    const continueDeadlineAt = Date.now() + 20_000;
+    onTimeout?.(continueDeadlineAt);
     void supabase
       .from("rooms")
       .update({
         game_state: "timeout_continue",
-        continue_deadline_at: new Date(Date.now() + 20_000).toISOString(),
+        continue_deadline_at: new Date(continueDeadlineAt).toISOString(),
       })
       .eq("code", code);
-  }, [remaining, code, room.game_state]);
+  }, [remaining, code, room.game_state, onTimeout]);
 
 
   if (!player) {
@@ -437,6 +447,14 @@ export function BossPhase({
         />
       )}
 
+      {inner.kind === "group" && (
+        <BossGroupAttack
+          attack={inner.attack}
+          players={active}
+          onComplete={() => onJudgeDone("success", inner.attack.reps)}
+        />
+      )}
+
       {inner.kind === "hit" && (
         <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
           <div
@@ -537,8 +555,13 @@ function BossSwitch({
     return () => clearTimeout(t);
   }, [count]);
 
+  const speedUp = () => {
+    haptic("tap");
+    setCount((current) => Math.max(0, current - 1));
+  };
+
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-2 p-4 pb-16 overflow-hidden" style={{ background: "#ffffff" }}>
+    <div onClick={speedUp} className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-2 p-4 pb-10 overflow-hidden" style={{ background: "#ffffff" }}>
       <div aria-hidden className="pointer-events-none absolute inset-2 rounded-[2rem]" style={{ border: "8px solid #111" }} />
 
       {/* Wedge mascot + banner */}
@@ -618,9 +641,45 @@ function BossSwitch({
       </div>
 
       <CountdownNumber value={count} />
-      <div className="text-base font-black text-center px-6 relative z-10" style={{ color: "var(--boom-ink)" }}>
-        Pass the phone to {judge.username}
+      <div className="text-center px-4 pb-2 relative z-10 leading-tight" style={{ color: "var(--boom-ink)", fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(1.65rem, 7vw, 2.4rem)" }}>
+        {attack.groupExercise ? "Phone down — everybody together!" : `Pass the phone to ${judge.username}`}
       </div>
+    </div>
+  );
+}
+
+function BossGroupAttack({ attack, players, onComplete }: { attack: Attack; players: Player[]; onComplete: () => void }) {
+  const [remaining, setRemaining] = useState(60);
+  const done = useRef(false);
+  const finish = () => {
+    if (done.current) return;
+    done.current = true;
+    onComplete();
+  };
+  useEffect(() => {
+    speak(`Everybody together! ${attack.exercise}, ${attack.reps} ${attack.unit}.`);
+    sfx.play("gameStart");
+    const timer = window.setInterval(() => {
+      setRemaining((current) => {
+        const next = Math.max(0, current - 1);
+        if (next <= 5 && next > 0) sfx.play("timerTick");
+        if (next === 0) window.setTimeout(finish, 0);
+        return next;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-4 p-6 bg-[var(--boom-blue)]">
+      <div className="text-white text-xl font-black uppercase">All Together · phone down</div>
+      <img src={attack.mascot} alt="Group exercise mascot" width={1024} height={1024} loading="lazy" className="w-52 h-52 object-contain anim-mascot-bounce" />
+      <div className="ink-border rounded-2xl bg-white px-5 py-3 text-center">
+        <div className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{attack.exercise}</div>
+        <div className="text-xl font-bold">{attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps each`}</div>
+      </div>
+      <div className="ink-border rounded-2xl bg-[var(--boom-yellow)] px-6 py-2 text-5xl font-black tabular-nums">{remaining}s</div>
+      <div className="flex gap-3">{players.map((participant) => <BossAvatar key={participant.id} player={participant} size={56} />)}</div>
+      <button onClick={finish} className="btn-massive w-full max-w-sm bg-[var(--boom-green)]">WE DID IT!</button>
     </div>
   );
 }

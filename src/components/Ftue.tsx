@@ -250,18 +250,13 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
             >
               DEFUSE
             </div>
-            {/* Big finger tapping the button */}
+            {/* Big finger tapping the button — no spot/ring, just the clean hand */}
             <Pointer
               className="absolute -bottom-6 right-4 anim-tap-finger"
               size={86}
               strokeWidth={2.5}
               color="#111"
               fill="#fff"
-            />
-            <span
-              aria-hidden
-              className="absolute inset-0 rounded-3xl pointer-events-none anim-tap-ring"
-              style={{ border: "5px solid #fff" }}
             />
           </div>
         </div>

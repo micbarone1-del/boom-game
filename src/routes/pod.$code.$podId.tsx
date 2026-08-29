@@ -668,6 +668,10 @@ function PodPage() {
           player={player}
           players={ordered}
           onRoll={(d, resolved) => onRollComplete(player, d, resolved)}
+          power={powerLevels[player.id] ?? 0}
+          onPowerUp={() =>
+            setPowerLevels((m) => ({ ...m, [player.id]: Math.min(3, (m[player.id] ?? 0) + 1) }))
+          }
           code={code}
           onRestart={restart}
           startedAt={startedAt}
@@ -881,16 +885,33 @@ function ProgressBar({
   );
 }
 
-function Avatar({ player, size = 120 }: { player: Player; size?: number }) {
+// Power-up tiers: each boost cell upgrades the frame around the token.
+const POWER_RINGS = ["", "#22c55e", "#f59e0b", "#ec4899"];
+
+function Avatar({
+  player,
+  size = 120,
+  power = 0,
+}: {
+  player: Player;
+  size?: number;
+  power?: number;
+}) {
   const color = mascotColor(player.avatar_url);
+  const lvl = Math.max(0, Math.min(3, power));
+  const ringColor = POWER_RINGS[lvl];
+  const powerShadow = lvl
+    ? `, 0 0 0 ${14 + lvl * 4}px ${ringColor}, 0 0 0 ${17 + lvl * 4}px #111, 0 0 ${18 * lvl}px ${lvl * 2}px ${ringColor}`
+    : "";
   return (
+    <div className="relative">
     <div
-      className="rounded-full overflow-hidden flex items-center justify-center"
+      className={`rounded-full overflow-hidden flex items-center justify-center ${lvl ? "anim-power-ring" : ""}`}
       style={{
         width: size,
         height: size,
         background: color,
-        boxShadow: `0 0 0 4px #111, 0 0 0 8px ${color}, 0 0 0 10px #111`,
+        boxShadow: `0 0 0 4px #111, 0 0 0 8px ${color}, 0 0 0 10px #111${powerShadow}`,
       }}
     >
       {avatarIsMascot(player.avatar_url) ? (
@@ -899,6 +920,15 @@ function Avatar({ player, size = 120 }: { player: Player; size?: number }) {
       ) : (
         <img src={player.avatar_url!} alt="" className="w-full h-full object-cover" />
       )}
+    </div>
+    {lvl > 0 && (
+      <span
+        className="absolute -top-1 -right-1 ink-border-sm rounded-full px-2 py-0.5 text-xs font-black anim-ui-float"
+        style={{ background: ringColor, color: "#111" }}
+      >
+        {"\u26A1".repeat(lvl)}
+      </span>
+    )}
     </div>
   );
 }
@@ -911,6 +941,8 @@ function PlayerPhase({
   player,
   players,
   onRoll,
+  power = 0,
+  onPowerUp,
   code,
   onRestart,
   startedAt,
@@ -920,6 +952,8 @@ function PlayerPhase({
   player: Player;
   players: Player[];
   onRoll: (dice: number, resolved: number) => void | Promise<void>;
+  power?: number;
+  onPowerUp?: () => void;
   code: string;
   onRestart: () => void;
   startedAt: number | null;
@@ -1019,6 +1053,7 @@ function PlayerPhase({
     if (landingCell.type === "boost") {
       sfx.play("blast");
       speak(`${player.username}, power up!`, { volume: 1, rate: 0.85, pitch: 1.1 });
+      onPowerUp?.();
       setPowerUp(true);
       await new Promise((r) => setTimeout(r, 2200));
       setPowerUp(false);
@@ -1048,7 +1083,7 @@ function PlayerPhase({
       >
         Your turn
       </div>
-      <Avatar player={player} size={150} />
+      <Avatar player={player} size={150} power={power} />
       <div
         className="text-5xl font-black"
         style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-ink)" }}

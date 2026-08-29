@@ -546,7 +546,11 @@ export function duckMusicFor(ms: number) {
   _duckTimer = window.setTimeout(() => duckMusic(false), ms);
 }
 
-const DUCKING_EFFECTS = /^(jingle|trapPop|explodeJingle|winJingle|rollJingle|trapFound)/;
+// Anything that reads as a "jingle" should push the music right down so the
+// cue is clearly audible.
+const DUCKING_EFFECTS =
+  /^(jingle|trapPop|explodeJingle|winJingle|rollJingle|trapFound|defuse|powerUp|vsWin|bossWin|boom|explode)/i;
+
 
 export const sfx = {
   play(name: EffectName) {

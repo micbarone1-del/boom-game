@@ -144,18 +144,30 @@ function Index() {
       <main className="fixed inset-0 bg-black overflow-hidden">
         <video
           autoPlay
-          muted
           playsInline
+          preload="auto"
           onEnded={endIntro}
-          onError={endIntro}
+          onError={() => {
+            // Last-ditch: force the MP4 directly before giving up on the sting.
+            const v = introRef.current;
+            if (v && !v.dataset["fallback"]) {
+              v.dataset["fallback"] = "1";
+              v.src = "/media/intro.mp4?v=20260829f";
+              v.load();
+              void v.play().catch(() => endIntro());
+              return;
+            }
+            endIntro();
+          }}
           ref={introRef}
           aria-label="BOOM! intro"
           className="absolute inset-0 w-full h-full object-cover"
         >
           {/* H.264 first for Safari/iOS, VP9 fallback for browsers without it */}
-          <source src="/media/intro.webm?v=20260829e" type="video/webm" />
-          <source src="/media/intro.mp4?v=20260829e" type="video/mp4" />
+          <source src="/media/intro.mp4?v=20260829f" type="video/mp4" />
+          <source src="/media/intro.webm?v=20260829f" type="video/webm" />
         </video>
+
 
         <button
           onClick={endIntro}

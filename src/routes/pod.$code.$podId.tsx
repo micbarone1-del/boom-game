@@ -458,7 +458,7 @@ function PodPage() {
     // Auto-advance after a beat.
     setTimeout(() => {
       setPhase({ kind: "player", playerId: nextPlayerId(player.id) });
-    }, outcome === "success" ? 1300 : 2200);
+    }, outcome === "success" ? 1300 : 3400);
   };
 
   const restart = async () => {

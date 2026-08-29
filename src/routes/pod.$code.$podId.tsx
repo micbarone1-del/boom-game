@@ -2330,7 +2330,10 @@ function VsPhase({
   onComplete: (winnerId: string) => void;
 }) {
   const judge = podPlayers.find((p) => p.id !== playerA.id && p.id !== playerB.id) ?? null;
-  const [stage, setStage] = useState<"handoff" | "battle">(judge ? "handoff" : "battle");
+  const [stage, setStage] = useState<"handoff" | "battle" | "result">(judge ? "handoff" : "battle");
+  const [winner, setWinner] = useState<Player | null>(null);
+  const VS_TOTAL = 45;
+  const [remaining, setRemaining] = useState(VS_TOTAL);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [a, setA] = useState(0);
@@ -2341,6 +2344,25 @@ function VsPhase({
     speak(`Versus! ${playerA.username} against ${playerB.username}. ${trap.exercise}.`);
     sfx.play("blast");
   }, [stage, playerA.username, playerB.username, trap.exercise]);
+  // Battle clock — most reps when it runs out takes the duel.
+  useEffect(() => {
+    if (stage !== "battle") return;
+    const i = setInterval(() => {
+      setRemaining((r) => {
+        const next = r - 1;
+        if (next <= 5 && next > 0) sfx.play("timerTick");
+        if (next <= 0) {
+          clearInterval(i);
+          if (!doneRef.current) declare(a >= b ? "a" : "b");
+          return 0;
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, a, b]);
+
   // Camera background — best effort; falls back to dark gradient on denial.
   useEffect(() => {
     if (stage !== "battle") return;

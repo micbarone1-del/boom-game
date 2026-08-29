@@ -65,7 +65,10 @@ function Index() {
   const [intro, setIntro] = useState(true);
   const introRef = useRef<HTMLVideoElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const startVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [introMuted, setIntroMuted] = useState(false);
   useAttractVideo(videoRef, attract && !intro);
+  useAttractVideo(startVideoRef, !attract && !intro);
 
   const startPressed = () => setAttract(false);
   const endIntro = () => setIntro(false);
@@ -80,25 +83,47 @@ function Index() {
     // playback and unmute as soon as the visitor touches the screen.
     video.muted = false;
     video.volume = 1;
+    setIntroMuted(false);
     void video.play().catch(() => {
       video.muted = true;
       video.defaultMuted = true;
+      setIntroMuted(true);
       void video.play().catch(() => {});
     });
+    // Any interaction anywhere counts as the gesture browsers require, so
+    // keep retrying until the sound actually comes through.
     const retry = () => {
+      if (!video.muted) return;
       video.muted = false;
-      void video.play().catch(() => {
-        video.muted = true;
-        void video.play().catch(() => {});
-      });
+      video.volume = 1;
+      void video
+        .play()
+        .then(() => setIntroMuted(false))
+        .catch(() => {
+          video.muted = true;
+          setIntroMuted(true);
+          void video.play().catch(() => {});
+        });
     };
-    window.addEventListener("pointerdown", retry, { once: true });
-    const failSafe = window.setTimeout(endIntro, 12_000);
+    const events: (keyof WindowEventMap)[] = ["pointerdown", "touchstart", "click", "keydown"];
+    events.forEach((e) => window.addEventListener(e, retry));
+    const failSafe = window.setTimeout(endIntro, 14_000);
     return () => {
-      window.removeEventListener("pointerdown", retry);
+      events.forEach((e) => window.removeEventListener(e, retry));
       window.clearTimeout(failSafe);
     };
   }, [intro]);
+
+  const unmuteIntro = () => {
+    const video = introRef.current;
+    if (!video) return;
+    video.muted = false;
+    video.volume = 1;
+    void video
+      .play()
+      .then(() => setIntroMuted(false))
+      .catch(() => {});
+  };
 
 
 
@@ -169,6 +194,16 @@ function Index() {
         </video>
 
 
+        {introMuted && (
+          <button
+            onClick={unmuteIntro}
+            className="absolute bottom-6 left-5 z-10 ink-border-sm rounded-xl px-4 py-2 text-sm font-black uppercase active:scale-95"
+            style={{ background: "var(--boom-yellow, #FFD23F)", fontFamily: "'Luckiest Guy', cursive" }}
+          >
+            🔊 Tap for sound
+          </button>
+        )}
+
         <button
           onClick={endIntro}
           className="absolute bottom-6 right-5 z-10 ink-border-sm rounded-xl bg-white px-4 py-2 text-sm font-black uppercase active:scale-95"
@@ -194,7 +229,7 @@ function Index() {
           muted
           playsInline
           preload="auto"
-          poster="/media/attract-poster.jpg?v=20260829c"
+          poster="/media/attract-poster.jpg?v=20260829g"
           aria-label="BOOM! gameplay attract reel"
           className="attract-video absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         />
@@ -268,8 +303,24 @@ function Index() {
   }
 
   return (
-    <main className="h-[100svh] overflow-hidden flex flex-col items-center justify-center px-4 py-3 gap-3">
-      <div className="text-center">
+    <main className="relative h-[100svh] overflow-hidden flex flex-col items-center justify-center px-4 py-3 gap-3">
+      {/* Same attract reel keeps looping behind the start / join controls */}
+      <video
+        ref={startVideoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        poster="/media/attract-poster.jpg?v=20260829g"
+        aria-hidden="true"
+        className="attract-video absolute inset-0 z-0 w-full h-full object-cover"
+      />
+      <div
+        className="absolute inset-0 z-0"
+        style={{ background: "linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.35) 45%, rgba(0,0,0,.75))" }}
+      />
+      <div className="relative z-10 text-center">
         <img
           src={bombMascot}
           alt="BOOM mascot — excited cartoon bomb with a lit fuse"
@@ -289,12 +340,15 @@ function Index() {
         >
           BOOM!
         </h1>
-        <p className="mt-1 text-xs md:text-sm" style={{ color: "var(--boom-ink)" }}>
+        <p
+          className="mt-1 text-sm md:text-base font-black uppercase"
+          style={{ color: "white", fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}
+        >
           A gym room. Up to 3 pods. Hot-potato workout chaos.
         </p>
       </div>
 
-      <div className="flex flex-col gap-2 w-full max-w-xs">
+      <div className="relative z-10 flex flex-col gap-2 w-full max-w-xs">
         <button
           onClick={startSolo}
           disabled={creating}
@@ -343,16 +397,16 @@ function Index() {
         </form>
         <button
           onClick={() => setAttract(true)}
-          className="text-center text-xs font-black underline opacity-80"
-          style={{ color: "var(--boom-ink)" }}
+          className="text-center text-xs font-black underline opacity-90"
+          style={{ color: "white", textShadow: "1px 1px 0 #000" }}
         >
           ← Back to attract mode
         </button>
         <Link
           to="/gym/$code"
           params={{ code: "new" }}
-          className="text-center text-xs font-black underline opacity-80 flex items-center justify-center gap-1"
-          style={{ color: "var(--boom-ink)" }}
+          className="text-center text-xs font-black underline opacity-90 flex items-center justify-center gap-1"
+          style={{ color: "white", textShadow: "1px 1px 0 #000" }}
         >
           <Music size={12} /> Have a big screen? Host the gym →
         </Link>

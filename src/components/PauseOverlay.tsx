@@ -29,6 +29,7 @@ export function PauseOverlay({
   pods?: Pod[];
 }) {
   const [voiceEnabled, setVoiceEnabled] = useState(() => isRobotVoiceEnabled());
+  const [tutorialOn, setTutorialOn] = useState(() => !ftueDisabled());
   
   const joinUrl = useMemo(() => {
     if (!code || typeof window === "undefined") return "";

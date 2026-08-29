@@ -111,13 +111,13 @@ function Index() {
     return (
       <main className="fixed inset-0 bg-black overflow-hidden">
         <video
-          src="/media/intro.mp4?v=20260829c"
           autoPlay
           playsInline
           onEnded={endIntro}
           onError={endIntro}
           ref={(el) => {
-            if (!el) return;
+            if (!el || el.dataset["kicked"]) return;
+            el.dataset["kicked"] = "1";
             // Autoplay with sound is blocked on most phones — fall back to a
             // muted playthrough instead of stalling on a black screen.
             void el.play().catch(() => {
@@ -127,7 +127,11 @@ function Index() {
           }}
           aria-label="BOOM! intro"
           className="absolute inset-0 w-full h-full object-cover"
-        />
+        >
+          {/* H.264 first for Safari/iOS, VP9 fallback for browsers without it */}
+          <source src="/media/intro.mp4?v=20260829d" type="video/mp4" />
+          <source src="/media/intro.webm?v=20260829d" type="video/webm" />
+        </video>
 
         <button
           onClick={endIntro}

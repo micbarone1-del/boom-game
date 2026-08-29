@@ -74,19 +74,32 @@ function Index() {
     if (!intro) return;
     const video = introRef.current;
     if (!video) return;
-    video.muted = true;
-    video.defaultMuted = true;
     video.currentTime = 0;
     video.load();
-    void video.play().catch(() => {});
-    const retry = () => void video.play().catch(() => {});
+    // Try with sound first; browsers that block it fall back to muted
+    // playback and unmute as soon as the visitor touches the screen.
+    video.muted = false;
+    video.volume = 1;
+    void video.play().catch(() => {
+      video.muted = true;
+      video.defaultMuted = true;
+      void video.play().catch(() => {});
+    });
+    const retry = () => {
+      video.muted = false;
+      void video.play().catch(() => {
+        video.muted = true;
+        void video.play().catch(() => {});
+      });
+    };
     window.addEventListener("pointerdown", retry, { once: true });
-    const failSafe = window.setTimeout(endIntro, 10_000);
+    const failSafe = window.setTimeout(endIntro, 12_000);
     return () => {
       window.removeEventListener("pointerdown", retry);
       window.clearTimeout(failSafe);
     };
   }, [intro]);
+
 
 
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay

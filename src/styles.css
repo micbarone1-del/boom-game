@@ -920,13 +920,6 @@
 }
 .anim-tap-finger { animation: tap-finger 1.4s ease-in-out infinite; }
 
-@keyframes tap-ring {
-  0%, 55% { opacity: 0; transform: scale(1); }
-  62% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.18); }
-}
-.anim-tap-ring { animation: tap-ring 1.4s ease-out infinite; }
-
 /* --- Power-up token frame --- */
 @keyframes power-ring {
   0%, 100% { filter: brightness(1); }

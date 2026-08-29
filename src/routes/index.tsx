@@ -94,7 +94,8 @@ function Index() {
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
   // policies mean it can only start once the visitor touches the screen.
   useEffect(() => {
-    if (!attract) return;
+    if (!attract || intro) return;
+
     setMusicPhase("attract");
     const kick = () => {
       void sfx.unlock().then(() => startArcadeMusic());

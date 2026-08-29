@@ -112,9 +112,9 @@ function Index() {
           muted
           playsInline
           preload="auto"
-          poster="/media/attract-poster.jpg"
+          poster="/media/attract-poster.jpg?v=20260829b"
           aria-label="BOOM! gameplay attract reel"
-          className="absolute inset-0 z-0 w-full h-full object-cover opacity-100"
+          className="attract-video absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         />
 
         {/* Tap anywhere to reveal the player start/join screen. */}

@@ -153,6 +153,18 @@
       radial-gradient(circle at 10% 10%, color-mix(in oklab, var(--boom-yellow) 40%, transparent) 0, transparent 40%),
       radial-gradient(circle at 90% 80%, color-mix(in oklab, var(--boom-orange) 35%, transparent) 0, transparent 45%);
   }
+
+  /* Every game control has a soft balloon-like squeeze on touch. `scale` is
+     independent from existing transform-based tilts and idle animations. */
+  button:not(:disabled), [role="button"] {
+    transition: scale 100ms cubic-bezier(.2, 1.5, .4, 1), filter 100ms ease;
+    transform-origin: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled):active, [role="button"]:active {
+    scale: .93 1.07 !important;
+    filter: brightness(1.08);
+  }
 }
 
 @layer components {
@@ -770,6 +782,25 @@
     box-shadow: 2px 2px 0 0 #000;
   }
   .btn-massive:disabled { opacity: 0.55; }
+
+  .attract-video {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+  }
+
+  @keyframes control-float {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -4px; }
+  }
+  .lobby-buttons button:not(:disabled),
+  .pod-screen-buttons button:not(:disabled) {
+    animation: control-float 2.2s ease-in-out infinite;
+  }
+  .lobby-buttons button:nth-of-type(even),
+  .pod-screen-buttons button:nth-of-type(even) {
+    animation-delay: -1.1s;
+  }
 
   /* ===== Bomb character idle animations ===== */
   @keyframes bomb-sway {

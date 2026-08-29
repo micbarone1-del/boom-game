@@ -86,6 +86,11 @@ function PodPage() {
   const [, force] = useState(0);
   const tick = () => force((n) => n + 1);
 
+  useEffect(() => {
+    document.body.classList.add("pod-screen-buttons");
+    return () => document.body.classList.remove("pod-screen-buttons");
+  }, []);
+
   const ordered = useMemo(
     () =>
       players
@@ -1692,7 +1697,6 @@ function JudgePhase({
         setCamError(e instanceof Error ? e.message : "Camera denied");
       }
     })();
-    arcadeStopRef.current = startArcadeRise(TRAP_TIMEOUT_MS);
     return () => {
       cancelled = true;
       arcadeStopRef.current?.();
@@ -1720,6 +1724,27 @@ function JudgePhase({
   const elapsed = Date.now() - started - ftueOffsetRef.current - pausedFor;
   const remaining = Math.max(0, TRAP_TIMEOUT_MS - elapsed);
   const ringProgress = remaining / TRAP_TIMEOUT_MS;
+
+  // Start only when the countdown is actually running. This is important on
+  // first use: dismissing the tutorial is the user gesture that unlocks audio.
+  useEffect(() => {
+    if (frozen || completedRef.current) {
+      arcadeStopRef.current?.();
+      arcadeStopRef.current = null;
+      return;
+    }
+    let cancelled = false;
+    void sfx.unlock().then(() => {
+      if (cancelled || completedRef.current) return;
+      arcadeStopRef.current?.();
+      arcadeStopRef.current = startArcadeRise(remaining);
+    });
+    return () => {
+      cancelled = true;
+      arcadeStopRef.current?.();
+      arcadeStopRef.current = null;
+    };
+  }, [frozen]);
 
   // Timeout = fail
   useEffect(() => {

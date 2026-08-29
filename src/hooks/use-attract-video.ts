@@ -1,7 +1,9 @@
 import { useEffect, type RefObject } from "react";
 
-const MP4_SOURCE = "/media/attract.mp4";
-const WEBM_SOURCE = "/media/attract.webm";
+// Version the reel URLs so phones do not keep an older, frozen transcode in
+// their media cache after a deployment.
+const MP4_SOURCE = "/media/attract.mp4?v=20260829b";
+const WEBM_SOURCE = "/media/attract.webm?v=20260829b";
 
 /** Keeps the muted attract reel moving in mobile and embedded browsers. */
 export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>, enabled = true) {
@@ -10,12 +12,13 @@ export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>, enabled
     const video = ref.current;
     if (!video) return;
 
-    // Prefer MP4 (H.264 baseline) where the browser can decode it — that is
-    // every real mobile/desktop browser. Some builds (e.g. codec-free
-    // Chromium) can only do VP9, so fall back to WebM up front.
+    // Prefer VP9 when it is explicitly supported; it is the smallest and most
+    // reliable transcode in embedded Chromium. Safari/iOS naturally chooses
+    // the H.264 fallback.
     const canMp4 = video.canPlayType('video/mp4; codecs="avc1.42E01E"') !== "";
-    const primary = canMp4 ? MP4_SOURCE : WEBM_SOURCE;
-    const fallback = canMp4 ? WEBM_SOURCE : MP4_SOURCE;
+    const canWebm = video.canPlayType('video/webm; codecs="vp9"') !== "";
+    const primary = canWebm ? WEBM_SOURCE : MP4_SOURCE;
+    const fallback = canWebm && canMp4 ? MP4_SOURCE : WEBM_SOURCE;
     let usingFallback = false;
     let lastTime = -1;
     let stalledChecks = 0;
@@ -26,7 +29,10 @@ export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>, enabled
     video.src = primary;
     video.load();
 
-    const play = () => void video.play().catch(() => {});
+    const play = () => {
+      video.muted = true;
+      void video.play().catch(() => {});
+    };
     const recover = () => {
       if (document.visibilityState === "hidden") return;
       if (video.currentTime > lastTime + 0.05) {

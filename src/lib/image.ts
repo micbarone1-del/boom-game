@@ -7,6 +7,7 @@ export async function fileToAvatarDataUrl(
   file: File,
   maxSize = 512,
   maxBytes = 300_000,
+  mirror = false,
 ): Promise<string> {
   const bitmap = await loadImage(file);
   const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
@@ -18,6 +19,10 @@ export async function fileToAvatarDataUrl(
   canvas.height = h;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas unavailable");
+  if (mirror) {
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+  }
   ctx.drawImage(bitmap as CanvasImageSource, 0, 0, w, h);
   if ("close" in bitmap && typeof bitmap.close === "function") bitmap.close();
 

@@ -4,6 +4,7 @@ import bombMedium from "@/assets/bomb-medium.png";
 import bombHard from "@/assets/bomb-hard.png";
 import bombBoost from "@/assets/bomb-boost.png";
 import bombSetback from "@/assets/bomb-setback.png";
+import bombSleep from "@/assets/bomb-sleep.png";
 import { useEffect } from "react";
 import type { CellType } from "@/lib/game";
 import { sfx, haptic } from "@/lib/sfx";
@@ -17,7 +18,7 @@ export const CELL_FLAVOR: Record<CellType, { label: string; color: string; img: 
   surprise:{ label: "SURPRISE!",      color: "#ec4899",            img: bombDefault },
   crazy:   { label: "GO CRAZY!",      color: "#f97316",            img: bombHard },
   group:   { label: "ALL TOGETHER!",  color: "var(--boom-blue)",   img: bombDefault },
-  pause:   { label: "PAUSE PARTY!",   color: "#22d3ee",            img: bombDefault },
+  pause:   { label: "PAUSE PARTY!",   color: "#22d3ee",            img: bombSleep },
   start:   { label: "LET'S GO!",      color: "var(--boom-green)",  img: bombDefault },
   finish:  { label: "WINNER!",        color: "var(--boom-yellow)", img: bombDefault },
 };

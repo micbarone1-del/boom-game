@@ -1215,12 +1215,12 @@ function playKickAt(c: AudioContext, t0: number, dest: AudioNode) {
   o.stop(t0 + 0.22);
 }
 
-/** A sustained rising arcade tone — call once to start, returns a stop fn. */
+/** A fat, increasingly urgent arcade countdown — returns a stop function. */
 export function startArcadeRise(durationMs: number): () => void {
   const c = ac();
   if (!c || muted || audioSuspended) return () => {};
-  // Growing countdown: discrete ticks that speed up and rise in pitch as the
-  // timer drains — far less fatiguing than a continuous siren sweep.
+  // Two-layer arcade hits grow louder, higher and closer together as time
+  // drains. The short envelopes stay punchy rather than becoming a siren.
   const total = durationMs / 1000;
   const started = c.currentTime + 0.05;
   const nodes: OscillatorNode[] = [];
@@ -1228,21 +1228,30 @@ export function startArcadeRise(durationMs: number): () => void {
   while (t < total - 0.1) {
     const p = t / total; // 0 → 1 across the trap window
     const t0 = started + t;
-    const freq = 440 + p * 620;
+    const freq = 150 + p * 330;
     const o = c.createOscillator();
+    const upper = c.createOscillator();
     const g = c.createGain();
-    o.type = "triangle";
+    o.type = "square";
+    upper.type = "sawtooth";
     o.frequency.setValueAtTime(freq, t0);
-    const dur = 0.07;
+    o.frequency.exponentialRampToValueAtTime(Math.max(70, freq * 0.58), t0 + 0.13);
+    upper.frequency.setValueAtTime(freq * 2, t0);
+    upper.detune.setValueAtTime(9, t0);
+    const dur = 0.14;
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(0.05 + p * 0.09, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.16 + p * 0.34, t0 + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g).connect(out(c));
+    o.connect(g);
+    upper.connect(g);
+    g.connect(out(c));
     o.start(t0);
+    upper.start(t0);
     o.stop(t0 + dur + 0.02);
-    nodes.push(o);
-    // Interval shrinks from ~0.85s down to ~0.16s.
-    t += 0.85 - p * 0.69;
+    upper.stop(t0 + dur + 0.02);
+    nodes.push(o, upper);
+    // Interval shrinks from a heavy 0.9s pulse to a frantic 0.18s pulse.
+    t += 0.9 - p * 0.72;
   }
   return () => {
     nodes.forEach((o) => {

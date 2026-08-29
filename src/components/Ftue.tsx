@@ -44,8 +44,10 @@ export function replayFtue() {
   resetFtue();
 }
 
+const FTUE_VERSION = "v2";
+
 function storeKey(profile: string, key: FtueKey) {
-  return `boom.ftue.${profile}.${key}`;
+  return `boom.ftue.${FTUE_VERSION}.${profile}.${key}`;
 }
 
 const DISABLED_KEY = "boom.ftue.disabled";

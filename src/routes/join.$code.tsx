@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BombAvatar } from "@/components/BombAvatar";
 import { useRoom } from "@/hooks/use-room";
-import { Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Bomb, Camera as CameraIcon, Plus, Trash2, X } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAuth } from "@/hooks/use-auth";
 import { JoinAsModal } from "@/components/JoinAsModal";
@@ -328,7 +328,7 @@ function JoinView() {
   };
 
   return (
-    <main className="relative min-h-screen p-4 flex flex-col gap-4 overflow-hidden">
+    <main className="lobby-buttons relative min-h-screen p-4 flex flex-col gap-4 overflow-hidden">
       <video
         ref={attractVideoRef}
         autoPlay
@@ -338,9 +338,9 @@ function JoinView() {
         preload="auto"
         poster="/media/attract-poster.jpg"
         aria-hidden="true"
-        className="fixed inset-0 h-full w-full object-cover pointer-events-none"
+        className="attract-video fixed inset-0 z-0 h-full w-full object-cover pointer-events-none"
       />
-      <div className="fixed inset-0 bg-black/55 pointer-events-none" />
+      <div className="fixed inset-0 z-[1] bg-black/25 pointer-events-none" />
       {lobbyFtue.modal}
       {podFtue.modal}
       <button
@@ -357,6 +357,14 @@ function JoinView() {
       <div className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-4">
 
       <header className="flex items-center gap-3 mt-2">
+        <button
+          type="button"
+          onClick={() => window.location.assign("/")}
+          aria-label="Back to home"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white ink-border-sm"
+        >
+          <ArrowLeft size={26} strokeWidth={4} />
+        </button>
         <img src={bombMascot} alt="" className="w-12 h-12 anim-fuse" />
         <div className="flex-1">
           <h1
@@ -557,7 +565,9 @@ function SlotCard({
     }
     try {
       // Any size is fine — we downscale + recompress on device.
-      const dataUrl = await fileToAvatarDataUrl(f);
+      // The front-facing camera previews like a mirror; flip the captured
+      // pixels back so the saved profile photo has natural orientation.
+      const dataUrl = await fileToAvatarDataUrl(f, 512, 300_000, true);
       onChange({ avatar: dataUrl });
     } catch {
       alert("Could not read that photo. Try another one.");

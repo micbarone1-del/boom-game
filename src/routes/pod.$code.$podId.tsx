@@ -82,7 +82,14 @@ function PodPage() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase | null>(null);
   const [pauseJoinOpen, setPauseJoinOpen] = useState(false);
+  // Power-up tiers earned this game (one per boost cell) — drives the glowing
+  // frame around a player's token.
+  const [powerLevels, setPowerLevels] = useState<Record<string, number>>({});
+  // Local fallback so the victory screen always shows, even if the shared
+  // room row never flips to `victory`.
+  const [bossBeaten, setBossBeaten] = useState(false);
   const clipsRef = useRef<Map<string, Blob>>(new Map());
+
   const [, force] = useState(0);
   const tick = () => force((n) => n + 1);
 

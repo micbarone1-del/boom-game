@@ -236,6 +236,37 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
           </div>
         </div>
       )}
+      {tipKey === "defuse" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative">
+            <div
+              className="ink-border rounded-3xl px-10 py-6 text-3xl font-black anim-ui-float"
+              style={{
+                background: "var(--boom-green)",
+                color: "#fff",
+                fontFamily: "'Luckiest Guy', cursive",
+                textShadow: "2px 2px 0 #000",
+              }}
+            >
+              DEFUSE
+            </div>
+            {/* Big finger tapping the button */}
+            <Pointer
+              className="absolute -bottom-6 right-4 anim-tap-finger"
+              size={86}
+              strokeWidth={2.5}
+              color="#111"
+              fill="#fff"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-3xl pointer-events-none anim-tap-ring"
+              style={{ border: "5px solid #fff" }}
+            />
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }

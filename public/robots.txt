@@ -3,4 +3,4 @@ Allow: /
 Disallow: /gym/
 Disallow: /play/
 
-Sitemap: https://boom-game.lovable.app/sitemap.xml
+Sitemap: https://boomworkout.fun/sitemap.xml

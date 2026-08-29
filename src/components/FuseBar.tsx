@@ -40,7 +40,7 @@ export function FuseBar({
         </span>
       </div>
       <div
-        className="relative w-full ink-border-sm rounded-full overflow-hidden"
+        className="relative w-full ink-border-sm rounded-full overflow-visible"
         style={{ height, background: "#fff8e6" }}
       >
         {/* Charred trail */}

@@ -176,6 +176,24 @@ function PodPage() {
   const gameState = room?.game_state ?? null;
   const bossPhase = room?.phase === "boss";
 
+  // Repair active rooms created through a lobby path that did not stamp the
+  // shared fuse. This makes the bottom fuse authoritative again immediately.
+  useEffect(() => {
+    if (!room || room.status !== "playing") return;
+    if (room.game_started_at && room.game_ends_at) return;
+    const started = new Date();
+    const ends = new Date(started.getTime() + 15 * 60 * 1000);
+    void supabase
+      .from("rooms")
+      .update({
+        game_started_at: started.toISOString(),
+        game_ends_at: ends.toISOString(),
+        game_state: "playing",
+      })
+      .eq("code", code)
+      .then(() => {});
+  }, [room, code]);
+
   // Main fuse ran out → continue countdown.
   useEffect(() => {
     if (!endsAtMs || gameState !== "playing" || roomPaused) return;
@@ -814,7 +832,7 @@ function ProgressBar({
         </div>
       )}
       <div
-        className="relative h-10 rounded-full ink-border-sm overflow-hidden"
+        className="relative h-10 rounded-full ink-border-sm overflow-visible"
         style={{
           background:
             "repeating-linear-gradient(45deg, #f59e0b 0 8px, #fbbf24 8px 16px)",

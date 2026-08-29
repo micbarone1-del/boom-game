@@ -112,7 +112,7 @@ function BossAvatar({ player, size = 72 }: { player: Player; size?: number }) {
   const color = avatarColor(player.avatar_url);
   return (
     <div
-      className="rounded-full overflow-hidden flex items-center justify-center"
+      className={`rounded-full flex items-center justify-center ${player.avatar_url?.startsWith("mascot:") ? "overflow-visible" : "overflow-hidden"}`}
       style={{
         width: size,
         height: size,
@@ -123,7 +123,7 @@ function BossAvatar({ player, size = 72 }: { player: Player; size?: number }) {
       {player.avatar_url && !player.avatar_url.startsWith("mascot:") ? (
         <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
       ) : (
-        <BombAvatar color={color} size={size} />
+        <BombAvatar color={color} size={Math.round(size * 1.16)} className="-translate-y-[8%]" />
       )}
     </div>
   );
@@ -228,7 +228,7 @@ export function BossPhase({
       wedgeLabel: wedge.label,
       mascot: wedge.mascot,
     };
-    setInner({ kind: "switch", attack });
+    setInner({ kind: attack.groupExercise ? "group" : "switch", attack });
   };
 
   const onSwitchDone = () => {

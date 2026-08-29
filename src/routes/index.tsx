@@ -229,7 +229,7 @@ function Index() {
           muted
           playsInline
           preload="auto"
-          poster="/media/attract-poster.jpg?v=20260829c"
+          poster="/media/attract-poster.jpg?v=20260829g"
           aria-label="BOOM! gameplay attract reel"
           className="attract-video absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         />
@@ -340,12 +340,15 @@ function Index() {
         >
           BOOM!
         </h1>
-        <p className="mt-1 text-xs md:text-sm" style={{ color: "var(--boom-ink)" }}>
+        <p
+          className="mt-1 text-sm md:text-base font-black uppercase"
+          style={{ color: "white", fontFamily: "'Luckiest Guy', cursive", textShadow: "2px 2px 0 #000" }}
+        >
           A gym room. Up to 3 pods. Hot-potato workout chaos.
         </p>
       </div>
 
-      <div className="flex flex-col gap-2 w-full max-w-xs">
+      <div className="relative z-10 flex flex-col gap-2 w-full max-w-xs">
         <button
           onClick={startSolo}
           disabled={creating}
@@ -394,16 +397,16 @@ function Index() {
         </form>
         <button
           onClick={() => setAttract(true)}
-          className="text-center text-xs font-black underline opacity-80"
-          style={{ color: "var(--boom-ink)" }}
+          className="text-center text-xs font-black underline opacity-90"
+          style={{ color: "white", textShadow: "1px 1px 0 #000" }}
         >
           ← Back to attract mode
         </button>
         <Link
           to="/gym/$code"
           params={{ code: "new" }}
-          className="text-center text-xs font-black underline opacity-80 flex items-center justify-center gap-1"
-          style={{ color: "var(--boom-ink)" }}
+          className="text-center text-xs font-black underline opacity-90 flex items-center justify-center gap-1"
+          style={{ color: "white", textShadow: "1px 1px 0 #000" }}
         >
           <Music size={12} /> Have a big screen? Host the gym →
         </Link>

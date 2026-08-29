@@ -51,6 +51,11 @@ function JoinView() {
   const [chosenSlot, setChosenSlot] = useState<number | null>(null);
   const [podName, setPodName] = useState("");
   const [slots, setSlots] = useState<Slot[]>(() => [emptySlot(0), emptySlot(1)]);
+  // Declared before any early return so effects can safely call it while the
+  // room is still loading (otherwise it hits the temporal dead zone and the
+  // whole route crashes to the error page).
+  const setSlotField = (i: number, patch: Partial<Slot>) =>
+    setSlots((arr) => arr.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();

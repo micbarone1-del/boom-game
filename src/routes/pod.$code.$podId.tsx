@@ -86,6 +86,11 @@ function PodPage() {
   const [, force] = useState(0);
   const tick = () => force((n) => n + 1);
 
+  useEffect(() => {
+    document.body.classList.add("pod-screen-buttons");
+    return () => document.body.classList.remove("pod-screen-buttons");
+  }, []);
+
   const ordered = useMemo(
     () =>
       players

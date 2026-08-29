@@ -50,7 +50,9 @@ function storeKey(profile: string, key: FtueKey) {
   return `boom.ftue.${FTUE_VERSION}.${profile}.${key}`;
 }
 
-const DISABLED_KEY = "boom.ftue.disabled";
+// Version this preference alongside the refreshed tutorial so players who
+// disabled an older iteration still see the newly requested walkthrough once.
+const DISABLED_KEY = "boom.ftue.disabled.v2";
 
 /** Global kill-switch for all tutorial pop-ups (all profiles). */
 export function ftueDisabled() {

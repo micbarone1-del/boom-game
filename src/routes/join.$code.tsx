@@ -57,7 +57,7 @@ function JoinView() {
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
   const [stampedSlot, setStampedSlot] = useState<number | null>(null);
   const attractVideoRef = useRef<HTMLVideoElement>(null);
-  useAttractVideo(attractVideoRef);
+  useAttractVideo(attractVideoRef, !loading && !!room);
   // Fire the arcade "stamp" landing animation on a freshly populated slot.
   const stampSlot = (idx: number) => {
     setStampedSlot(idx);

@@ -61,7 +61,7 @@ function Index() {
   const [creating, setCreating] = useState(false);
   const [attract, setAttract] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  useAttractVideo(videoRef);
+  useAttractVideo(videoRef, attract);
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
   // policies mean it can only start once the visitor touches the screen.
   useEffect(() => {

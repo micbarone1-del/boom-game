@@ -4,8 +4,9 @@ const MP4_SOURCE = "/media/attract.mp4";
 const WEBM_SOURCE = "/media/attract.webm";
 
 /** Keeps the muted attract reel moving in mobile and embedded browsers. */
-export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>) {
+export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>, enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
     const video = ref.current;
     if (!video) return;
 
@@ -61,5 +62,5 @@ export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>) {
       window.removeEventListener("pointerdown", play);
       document.removeEventListener("visibilitychange", play);
     };
-  }, [ref]);
+  }, [ref, enabled]);
 }

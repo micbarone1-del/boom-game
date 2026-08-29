@@ -371,7 +371,7 @@ function JoinView() {
             className="text-3xl font-black leading-none"
             style={{ fontFamily: "'Luckiest Guy', cursive", color: "var(--boom-red)" }}
           >
-            JOIN A POD
+            CREATE A POD
           </h1>
           <p className="text-xs font-bold opacity-70">Room {code} · 2–4 players per pod</p>
         </div>

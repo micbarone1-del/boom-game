@@ -55,13 +55,42 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+const INTRO_KEY = "boom.intro.seen.v1";
+
 function Index() {
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
   const [creating, setCreating] = useState(false);
   const [attract, setAttract] = useState(true);
+  const [intro, setIntro] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  useAttractVideo(videoRef, attract);
+  useAttractVideo(videoRef, attract && !intro);
+
+  // One-time intro sting: plays with sound the first time a visitor taps
+  // "press to start" on this device, then never again.
+  const startPressed = () => {
+    let seen = true;
+    try {
+      seen = window.localStorage.getItem(INTRO_KEY) === "1";
+    } catch {
+      /* private mode — skip the intro */
+    }
+    if (seen) {
+      setAttract(false);
+      return;
+    }
+    try {
+      window.localStorage.setItem(INTRO_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setIntro(true);
+  };
+  const endIntro = () => {
+    setIntro(false);
+    setAttract(false);
+  };
+
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
   // policies mean it can only start once the visitor touches the screen.
   useEffect(() => {

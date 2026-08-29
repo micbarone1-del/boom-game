@@ -2653,6 +2653,8 @@ function PausePhase({
 }) {
   const TOTAL = 10;
   const [remaining, setRemaining] = useState(TOTAL);
+  const doneRef = useRef(false);
+  const mascotImg = mascotForCell("pause");
   useEffect(() => {
     const stop = playPauseMusic();
     speak(`Pause! Take a breather, ${player.username}.`);
@@ -2667,16 +2669,32 @@ function PausePhase({
   }, [paused]);
   useEffect(() => {
     if (paused || remaining <= 0) return;
-    if (remaining <= 3) sfx.play("timerTick");
+    if (remaining <= 3) {
+      sfx.play("timerTick");
+      haptic("light");
+    }
   }, [paused, remaining]);
   useEffect(() => {
-    if (!paused && remaining === 0) onComplete();
+    if (paused || remaining !== 0 || doneRef.current) return;
+    doneRef.current = true;
+    // No boom here — the breather just ends and the phone is handed on.
+    sfx.play("switchBig");
+    haptic("success");
+    const t = setTimeout(() => onComplete(), 450);
+    return () => clearTimeout(t);
   }, [onComplete, paused, remaining]);
   const low = remaining <= 3;
   return (
-    <main className="fixed inset-0 flex flex-col items-center justify-center gap-6" style={{ background: "#06b6d4" }}>
-      <div className="anim-mascot-bounce">
-        <Pause size={120} fill="#fff" color="#fff" />
+    <main className="fixed inset-0 flex flex-col items-center justify-center gap-5" style={{ background: "#06b6d4" }}>
+      <div className="relative anim-mascot-bounce">
+        <img
+          src={mascotImg}
+          alt=""
+          className="w-56 h-56 object-contain drop-shadow-[0_10px_0_rgba(0,0,0,.35)]"
+        />
+        <div className="absolute -bottom-2 -right-2 rounded-full bg-white ink-border p-2">
+          <Pause size={34} fill="#111" color="#111" />
+        </div>
       </div>
       <div className="text-white text-6xl font-black text-center px-6" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "4px 4px 0 #111" }}>
         PAUSE!
@@ -2685,8 +2703,8 @@ function PausePhase({
       <div
         className={`ink-border rounded-2xl px-8 py-3 text-6xl font-black tabular-nums ${low ? "anim-mascot-bounce" : "anim-ui-bob"}`}
         style={{
-          background: low ? "var(--boom-red)" : "var(--boom-yellow)",
-          color: low ? "#fff" : "var(--boom-ink)",
+          background: "var(--boom-yellow)",
+          color: "var(--boom-ink)",
           fontFamily: "'Luckiest Guy', cursive",
         }}
       >

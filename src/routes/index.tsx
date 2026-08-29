@@ -107,7 +107,7 @@ function Index() {
       window.removeEventListener("pointerdown", kick);
       window.removeEventListener("keydown", kick);
     };
-  }, [attract]);
+  }, [attract, intro]);
 
   const tryJoin = (e: React.FormEvent) => {
 

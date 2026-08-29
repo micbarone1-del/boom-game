@@ -2482,9 +2482,15 @@ function VsPhase({
       <div className="text-white text-6xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
         {count}/{trap.reps}
       </div>
-      <div className="text-white text-xs font-bold opacity-90">TAP PER REP</div>
+      <div
+        className="ink-border rounded-xl bg-white px-3 py-2 font-black uppercase tracking-wide"
+        style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(1.1rem, 5vw, 1.75rem)" }}
+      >
+        {trap.unit === "seconds" ? "TAP TO HOLD" : "TAP PER REP"}
+      </div>
     </button>
   );
+  const low = remaining <= 10;
   return (
     <main className="fixed inset-0 flex flex-col bg-black overflow-hidden">
       {/* Camera video background — judge holds the phone */}
@@ -2495,6 +2501,18 @@ function VsPhase({
         className="absolute inset-0 w-full h-full object-cover z-0"
       />
       <div className="absolute inset-0 bg-black/40 z-[1]" />
+      <div className="absolute inset-x-0 top-4 flex justify-center pointer-events-none z-20">
+        <div
+          className={`ink-border rounded-2xl px-6 py-2 text-4xl font-black tabular-nums ${low ? "anim-mascot-bounce" : "anim-ui-bob"}`}
+          style={{
+            background: low ? "var(--boom-red)" : "var(--boom-yellow)",
+            color: low ? "#fff" : "var(--boom-ink)",
+            fontFamily: "'Luckiest Guy', cursive",
+          }}
+        >
+          {remaining}s
+        </div>
+      </div>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
         <div className="bg-white ink-border rounded-full px-6 py-2 flex items-center gap-2 anim-ui-float">
           <Swords size={24} />
@@ -2503,6 +2521,7 @@ function VsPhase({
           </span>
         </div>
       </div>
+
       <div className="relative flex flex-1 z-10">
         <Side p={playerA} count={a} side="a" />
         <Side p={playerB} count={b} side="b" />

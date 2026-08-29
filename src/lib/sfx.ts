@@ -539,9 +539,19 @@ const effects: Record<EffectName, () => void> = {
   },
 };
 
+/** Momentarily silence the music bed (used so trap jingles cut through). */
+export function duckMusicFor(ms: number) {
+  duckMusic(true);
+  if (_duckTimer) { window.clearTimeout(_duckTimer); _duckTimer = null; }
+  _duckTimer = window.setTimeout(() => duckMusic(false), ms);
+}
+
+const DUCKING_EFFECTS = /^(jingle|trapPop|explodeJingle|winJingle|rollJingle|trapFound)/;
+
 export const sfx = {
   play(name: EffectName) {
     if (muted || audioSuspended) return;
+    if (typeof window !== "undefined" && DUCKING_EFFECTS.test(name)) duckMusicFor(1900);
     try {
       const c = ac();
       if (!c) {
@@ -1219,41 +1229,64 @@ function playKickAt(c: AudioContext, t0: number, dest: AudioNode) {
 export function startArcadeRise(durationMs: number): () => void {
   const c = ac();
   if (!c || muted || audioSuspended) return () => {};
-  // Two-layer arcade hits grow louder, higher and closer together as time
-  // drains. The short envelopes stay punchy rather than becoming a siren.
+  // Three-layer countdown: deep sub-bass thump + square body + saw bite.
+  // Grows louder, higher and closer together as the fuse burns down.
   const total = durationMs / 1000;
   const started = c.currentTime + 0.05;
   const nodes: OscillatorNode[] = [];
+  const hapticTimers: number[] = [];
   let t = 0;
   while (t < total - 0.1) {
     const p = t / total; // 0 → 1 across the trap window
     const t0 = started + t;
-    const freq = 150 + p * 330;
+    const freq = 110 + p * 240;
+    const sub = c.createOscillator();
     const o = c.createOscillator();
     const upper = c.createOscillator();
     const g = c.createGain();
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(900 + p * 1800, t0);
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(freq * 0.5, t0);
+    sub.frequency.exponentialRampToValueAtTime(Math.max(35, freq * 0.3), t0 + 0.18);
     o.type = "square";
     upper.type = "sawtooth";
     o.frequency.setValueAtTime(freq, t0);
-    o.frequency.exponentialRampToValueAtTime(Math.max(70, freq * 0.58), t0 + 0.13);
+    o.frequency.exponentialRampToValueAtTime(Math.max(55, freq * 0.55), t0 + 0.16);
     upper.frequency.setValueAtTime(freq * 2, t0);
     upper.detune.setValueAtTime(9, t0);
-    const dur = 0.14;
+    const dur = 0.2;
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(0.16 + p * 0.34, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.34 + p * 0.5, t0 + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g);
-    upper.connect(g);
+    sub.connect(g);
+    o.connect(lp);
+    upper.connect(lp);
+    lp.connect(g);
     g.connect(out(c));
-    o.start(t0);
-    upper.start(t0);
-    o.stop(t0 + dur + 0.02);
-    upper.stop(t0 + dur + 0.02);
-    nodes.push(o, upper);
-    // Interval shrinks from a heavy 0.9s pulse to a frantic 0.18s pulse.
-    t += 0.9 - p * 0.72;
+    [sub, o, upper].forEach((n) => {
+      n.start(t0);
+      n.stop(t0 + dur + 0.03);
+      nodes.push(n);
+    });
+    // Haptic pulse in lockstep with each audio hit, intensity ramping up.
+    if (typeof window !== "undefined") {
+      const delay = Math.max(0, (t0 - c.currentTime) * 1000);
+      const strength = Math.round(12 + p * 90);
+      const pattern = p > 0.75 ? [strength, 40, strength] : strength;
+      hapticTimers.push(
+        window.setTimeout(() => {
+          try { navigator.vibrate?.(pattern as number | number[]); } catch { /* ignore */ }
+        }, delay),
+      );
+    }
+    // Interval shrinks from a heavy 0.9s pulse to a frantic 0.16s pulse.
+    t += 0.9 - p * 0.74;
   }
   return () => {
+    hapticTimers.forEach((id) => window.clearTimeout(id));
+    try { navigator.vibrate?.(0); } catch { /* ignore */ }
     nodes.forEach((o) => {
       try {
         o.stop(c.currentTime);

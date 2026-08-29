@@ -10,10 +10,10 @@ export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>, enabled
     const video = ref.current;
     if (!video) return;
 
-    const supportsWebm = video.canPlayType('video/webm; codecs="vp9"') !== "";
-    const isAppleWebKit = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const primary = supportsWebm && !isAppleWebKit ? WEBM_SOURCE : MP4_SOURCE;
-    const fallback = primary === MP4_SOURCE ? WEBM_SOURCE : MP4_SOURCE;
+    // MP4 (H.264 baseline) plays everywhere, including iOS and embedded
+    // preview frames — keep it primary and fall back to WebM only if it stalls.
+    const primary = MP4_SOURCE;
+    const fallback = WEBM_SOURCE;
     let usingFallback = false;
     let lastTime = -1;
     let stalledChecks = 0;

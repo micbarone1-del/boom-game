@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Camera, Dice5, Dumbbell, Smartphone } from "lucide-react";
+import { ArrowRight, Camera, Dice5, Dumbbell, Plus, Smartphone, Users } from "lucide-react";
 import { BombAvatar } from "@/components/BombAvatar";
 
 /**
@@ -8,7 +8,7 @@ import { BombAvatar } from "@/components/BombAvatar";
  * Each tip is shown at most once per profile (per browser profile key) and
  * blocks the game with a big high-contrast modal until "GOT IT!" is tapped.
  */
-export type FtueKey = "roll" | "switch" | "judge";
+export type FtueKey = "roll" | "switch" | "judge" | "lobby" | "podform";
 
 const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
   roll: {
@@ -26,7 +26,23 @@ const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
     body: "Do the exercise while the judge films you.",
     color: "var(--boom-red)",
   },
+  lobby: {
+    title: "WELCOME!",
+    body: "Sign in or pick a nickname, then jump into a pod. 2–4 players per pod.",
+    color: "var(--boom-green)",
+  },
+  podform: {
+    title: "BUILD YOUR POD",
+    body: "Tap a free slot to add players. When everybody is in, hit READY.",
+    color: "var(--boom-blue)",
+  },
 };
+
+/** Re-enables tips and clears every "seen" flag (used by the ? help button). */
+export function replayFtue() {
+  setFtueDisabled(false);
+  resetFtue();
+}
 
 function storeKey(profile: string, key: FtueKey) {
   return `boom.ftue.${profile}.${key}`;
@@ -170,6 +186,26 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
           </div>
           <ArrowRight size={42} strokeWidth={4} />
           <BombAvatar color="#22d3ee" size={74} />
+        </div>
+      )}
+      {tipKey === "lobby" && (
+        <div className="absolute inset-0 flex items-center justify-center gap-4">
+          <BombAvatar color="#22d3ee" size={78} />
+          <div className="anim-ui-float rounded-2xl bg-white p-3 ink-border-sm">
+            <Users size={56} strokeWidth={3} />
+          </div>
+          <BombAvatar color="#f59e0b" size={78} persona="wild" />
+        </div>
+      )}
+      {tipKey === "podform" && (
+        <div className="absolute inset-0 flex items-center justify-center gap-3">
+          <BombAvatar color="#ec4899" size={64} />
+          <BombAvatar color="#22d3ee" size={64} />
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white ink-border-sm anim-ui-float">
+            <Plus size={40} strokeWidth={4} />
+          </div>
+          <ArrowRight size={36} strokeWidth={4} />
+          <div className="rounded-xl bg-white px-3 py-2 text-lg font-black ink-border-sm">READY</div>
         </div>
       )}
       {tipKey === "judge" && (

@@ -1219,30 +1219,42 @@ function playKickAt(c: AudioContext, t0: number, dest: AudioNode) {
 export function startArcadeRise(durationMs: number): () => void {
   const c = ac();
   if (!c || muted || audioSuspended) return () => {};
-  const t0 = c.currentTime + 0.01;
-  const tEnd = t0 + durationMs / 1000;
-  const o = c.createOscillator();
-  const g = c.createGain();
-  o.type = "sawtooth";
-  o.frequency.setValueAtTime(180, t0);
-  o.frequency.exponentialRampToValueAtTime(900, tEnd);
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.2);
-  g.gain.linearRampToValueAtTime(0.12, tEnd);
-  o.connect(g).connect(out(c));
-  o.start(t0);
-  o.stop(tEnd + 0.05);
+  // Growing countdown: discrete ticks that speed up and rise in pitch as the
+  // timer drains — far less fatiguing than a continuous siren sweep.
+  const total = durationMs / 1000;
+  const started = c.currentTime + 0.05;
+  const nodes: OscillatorNode[] = [];
+  let t = 0;
+  while (t < total - 0.1) {
+    const p = t / total; // 0 → 1 across the trap window
+    const t0 = started + t;
+    const freq = 440 + p * 620;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(freq, t0);
+    const dur = 0.07;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.05 + p * 0.09, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(out(c));
+    o.start(t0);
+    o.stop(t0 + dur + 0.02);
+    nodes.push(o);
+    // Interval shrinks from ~0.85s down to ~0.16s.
+    t += 0.85 - p * 0.69;
+  }
   return () => {
-    try {
-      const tn = c.currentTime + 0.01;
-      g.gain.cancelScheduledValues(tn);
-      g.gain.exponentialRampToValueAtTime(0.0001, tn + 0.1);
-      o.stop(tn + 0.12);
-    } catch {
-      /* ignore */
-    }
+    nodes.forEach((o) => {
+      try {
+        o.stop(c.currentTime);
+      } catch {
+        /* already stopped */
+      }
+    });
   };
 }
+
 
 // ---------------------------------------------------------------------------
 // Pause-cell jingle — bouncy major-scale chirp + handclap shaker, ~3 seconds.

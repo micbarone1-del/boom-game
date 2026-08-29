@@ -2330,7 +2330,10 @@ function VsPhase({
   onComplete: (winnerId: string) => void;
 }) {
   const judge = podPlayers.find((p) => p.id !== playerA.id && p.id !== playerB.id) ?? null;
-  const [stage, setStage] = useState<"handoff" | "battle">(judge ? "handoff" : "battle");
+  const [stage, setStage] = useState<"handoff" | "battle" | "result">(judge ? "handoff" : "battle");
+  const [winner, setWinner] = useState<Player | null>(null);
+  const VS_TOTAL = 45;
+  const [remaining, setRemaining] = useState(VS_TOTAL);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [a, setA] = useState(0);
@@ -2341,6 +2344,25 @@ function VsPhase({
     speak(`Versus! ${playerA.username} against ${playerB.username}. ${trap.exercise}.`);
     sfx.play("blast");
   }, [stage, playerA.username, playerB.username, trap.exercise]);
+  // Battle clock — most reps when it runs out takes the duel.
+  useEffect(() => {
+    if (stage !== "battle") return;
+    const i = setInterval(() => {
+      setRemaining((r) => {
+        const next = r - 1;
+        if (next <= 5 && next > 0) sfx.play("timerTick");
+        if (next <= 0) {
+          clearInterval(i);
+          if (!doneRef.current) declare(a >= b ? "a" : "b");
+          return 0;
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, a, b]);
+
   // Camera background — best effort; falls back to dark gradient on denial.
   useEffect(() => {
     if (stage !== "battle") return;
@@ -2365,6 +2387,18 @@ function VsPhase({
       streamRef.current = null;
     };
   }, [stage]);
+  function declare(who: "a" | "b") {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    const win = who === "a" ? playerA : playerB;
+    setWinner(win);
+    setStage("result");
+    haptic("success");
+    playDefuseJingle();
+    sfx.play("win");
+    speak(`${win.username} wins the duel!`);
+    setTimeout(() => onComplete(win.id), 3200);
+  }
   const tap = (who: "a" | "b") => {
     if (doneRef.current) return;
     const setter = who === "a" ? setA : setB;
@@ -2372,15 +2406,36 @@ function VsPhase({
       const next = n + 1;
       haptic("light");
       repPop(next / trap.reps);
-      if (next >= trap.reps) {
-        doneRef.current = true;
-        sfx.play("win");
-        speak(`${who === "a" ? playerA.username : playerB.username} wins the duel!`);
-        setTimeout(() => onComplete(who === "a" ? playerA.id : playerB.id), 900);
-      }
+      if (next >= trap.reps) declare(who);
       return next;
     });
   };
+  if (stage === "result" && winner) {
+    return (
+      <main
+        className="fixed inset-0 flex flex-col items-center justify-center gap-6 p-6 anim-explosion-flash"
+        style={{ background: "var(--boom-yellow)" }}
+      >
+        <div className="arcade-heading text-center" style={{ fontSize: "clamp(3rem, 16vw, 6rem)", lineHeight: 0.9 }}>
+          WINNER!
+        </div>
+        <div className="anim-mascot-bounce">
+          <Avatar player={winner} size={150} />
+        </div>
+        <div
+          className="ink-border rounded-2xl bg-white px-6 py-3 text-center anim-ui-float"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <div style={{ fontSize: "clamp(2rem, 9vw, 3rem)", lineHeight: 1 }}>{winner.username}</div>
+          <div className="text-xl font-bold">takes the duel · 2× points</div>
+        </div>
+        <div className="text-2xl font-black opacity-80" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+          {trap.exercise}
+        </div>
+      </main>
+    );
+  }
+
   if (stage === "handoff" && judge) {
     return (
       <main className="fixed inset-0 flex flex-col items-center justify-center gap-5 p-6" style={{ background: "var(--boom-ink)" }}>
@@ -2427,9 +2482,15 @@ function VsPhase({
       <div className="text-white text-6xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
         {count}/{trap.reps}
       </div>
-      <div className="text-white text-xs font-bold opacity-90">TAP PER REP</div>
+      <div
+        className="ink-border rounded-xl bg-white px-3 py-2 font-black uppercase tracking-wide"
+        style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(1.1rem, 5vw, 1.75rem)" }}
+      >
+        {trap.unit === "seconds" ? "TAP TO HOLD" : "TAP PER REP"}
+      </div>
     </button>
   );
+  const low = remaining <= 10;
   return (
     <main className="fixed inset-0 flex flex-col bg-black overflow-hidden">
       {/* Camera video background — judge holds the phone */}
@@ -2440,6 +2501,18 @@ function VsPhase({
         className="absolute inset-0 w-full h-full object-cover z-0"
       />
       <div className="absolute inset-0 bg-black/40 z-[1]" />
+      <div className="absolute inset-x-0 top-4 flex justify-center pointer-events-none z-20">
+        <div
+          className={`ink-border rounded-2xl px-6 py-2 text-4xl font-black tabular-nums ${low ? "anim-mascot-bounce" : "anim-ui-bob"}`}
+          style={{
+            background: low ? "var(--boom-red)" : "var(--boom-yellow)",
+            color: low ? "#fff" : "var(--boom-ink)",
+            fontFamily: "'Luckiest Guy', cursive",
+          }}
+        >
+          {remaining}s
+        </div>
+      </div>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
         <div className="bg-white ink-border rounded-full px-6 py-2 flex items-center gap-2 anim-ui-float">
           <Swords size={24} />
@@ -2448,6 +2521,7 @@ function VsPhase({
           </span>
         </div>
       </div>
+
       <div className="relative flex flex-1 z-10">
         <Side p={playerA} count={a} side="a" />
         <Side p={playerB} count={b} side="b" />

@@ -10,6 +10,7 @@ import { JoinAsModal } from "@/components/JoinAsModal";
 import { saveGuestMap, loadGuestMap } from "@/lib/guest";
 import { fileToAvatarDataUrl } from "@/lib/image";
 import { useAttractVideo } from "@/hooks/use-attract-video";
+import { useFtue, replayFtue } from "@/components/Ftue";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,
@@ -58,6 +59,10 @@ function JoinView() {
   const [stampedSlot, setStampedSlot] = useState<number | null>(null);
   const attractVideoRef = useRef<HTMLVideoElement>(null);
   useAttractVideo(attractVideoRef, !loading && !!room);
+  // Contextual tutorials: welcome tip on the lobby, pod-building tip as soon
+  // as the player starts filling slots.
+  const lobbyFtue = useFtue(loading ? null : "room", "lobby");
+  const podFtue = useFtue(!loading && !lobbyFtue.showing && chosenSlot !== null ? "room" : null, "podform");
   // Fire the arcade "stamp" landing animation on a freshly populated slot.
   const stampSlot = (idx: number) => {
     setStampedSlot(idx);
@@ -336,7 +341,21 @@ function JoinView() {
         className="fixed inset-0 h-full w-full object-cover pointer-events-none"
       />
       <div className="fixed inset-0 bg-black/55 pointer-events-none" />
+      {lobbyFtue.modal}
+      {podFtue.modal}
+      <button
+        onClick={() => {
+          replayFtue();
+          window.location.reload();
+        }}
+        aria-label="Replay tutorial tips"
+        className="fixed right-3 bottom-3 z-30 grid h-14 w-14 place-items-center rounded-full bg-white ink-border text-3xl font-black active:scale-95 anim-ui-float"
+        style={{ fontFamily: "'Luckiest Guy', cursive" }}
+      >
+        ?
+      </button>
       <div className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-4">
+
       <header className="flex items-center gap-3 mt-2">
         <img src={bombMascot} alt="" className="w-12 h-12 anim-fuse" />
         <div className="flex-1">

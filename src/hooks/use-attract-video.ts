@@ -36,8 +36,14 @@ export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>, enabled
       }
       stalledChecks += 1;
       play();
-      if (stalledChecks < 3 || usingFallback) return;
+      if (stalledChecks < 2 || usingFallback) return;
+      swapToFallback();
+    };
+
+    const swapToFallback = () => {
+      if (usingFallback) return;
       usingFallback = true;
+      stalledChecks = 0;
       video.src = fallback;
       video.load();
       play();
@@ -49,15 +55,19 @@ export function useAttractVideo(ref: RefObject<HTMLVideoElement | null>, enabled
     };
 
     play();
+    video.addEventListener("error", swapToFallback);
+    video.addEventListener("stalled", swapToFallback);
     video.addEventListener("canplay", play);
     video.addEventListener("loadeddata", play);
     video.addEventListener("ended", restart);
     window.addEventListener("pointerdown", play);
     document.addEventListener("visibilitychange", play);
-    const watchdog = window.setInterval(recover, 1500);
+    const watchdog = window.setInterval(recover, 800);
 
     return () => {
       window.clearInterval(watchdog);
+      video.removeEventListener("error", swapToFallback);
+      video.removeEventListener("stalled", swapToFallback);
       video.removeEventListener("canplay", play);
       video.removeEventListener("loadeddata", play);
       video.removeEventListener("ended", restart);

@@ -2387,6 +2387,18 @@ function VsPhase({
       streamRef.current = null;
     };
   }, [stage]);
+  function declare(who: "a" | "b") {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    const win = who === "a" ? playerA : playerB;
+    setWinner(win);
+    setStage("result");
+    haptic("success");
+    playDefuseJingle();
+    sfx.play("win");
+    speak(`${win.username} wins the duel!`);
+    setTimeout(() => onComplete(win.id), 3200);
+  }
   const tap = (who: "a" | "b") => {
     if (doneRef.current) return;
     const setter = who === "a" ? setA : setB;
@@ -2394,15 +2406,36 @@ function VsPhase({
       const next = n + 1;
       haptic("light");
       repPop(next / trap.reps);
-      if (next >= trap.reps) {
-        doneRef.current = true;
-        sfx.play("win");
-        speak(`${who === "a" ? playerA.username : playerB.username} wins the duel!`);
-        setTimeout(() => onComplete(who === "a" ? playerA.id : playerB.id), 900);
-      }
+      if (next >= trap.reps) declare(who);
       return next;
     });
   };
+  if (stage === "result" && winner) {
+    return (
+      <main
+        className="fixed inset-0 flex flex-col items-center justify-center gap-6 p-6 anim-explosion-flash"
+        style={{ background: "var(--boom-yellow)" }}
+      >
+        <div className="arcade-heading text-center" style={{ fontSize: "clamp(3rem, 16vw, 6rem)", lineHeight: 0.9 }}>
+          WINNER!
+        </div>
+        <div className="anim-mascot-bounce">
+          <Avatar player={winner} size={150} />
+        </div>
+        <div
+          className="ink-border rounded-2xl bg-white px-6 py-3 text-center anim-ui-float"
+          style={{ fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          <div style={{ fontSize: "clamp(2rem, 9vw, 3rem)", lineHeight: 1 }}>{winner.username}</div>
+          <div className="text-xl font-bold">takes the duel · 2× points</div>
+        </div>
+        <div className="text-2xl font-black opacity-80" style={{ fontFamily: "'Luckiest Guy', cursive" }}>
+          {trap.exercise}
+        </div>
+      </main>
+    );
+  }
+
   if (stage === "handoff" && judge) {
     return (
       <main className="fixed inset-0 flex flex-col items-center justify-center gap-5 p-6" style={{ background: "var(--boom-ink)" }}>

@@ -172,7 +172,7 @@ function Index() {
 
         {/* Tap anywhere to reveal the player start/join screen. */}
         <button
-          onClick={() => setAttract(false)}
+          onClick={startPressed}
           className="absolute inset-0 z-[1] w-full h-full flex flex-col items-center justify-between py-8 px-4"
           aria-label="Press to start"
           style={{ background: "linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.15) 40%, rgba(0,0,0,.7))" }}

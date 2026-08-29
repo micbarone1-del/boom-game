@@ -116,9 +116,19 @@ function Index() {
           playsInline
           onEnded={endIntro}
           onError={endIntro}
+          ref={(el) => {
+            if (!el) return;
+            // Autoplay with sound is blocked on most phones — fall back to a
+            // muted playthrough instead of stalling on a black screen.
+            void el.play().catch(() => {
+              el.muted = true;
+              void el.play().catch(endIntro);
+            });
+          }}
           aria-label="BOOM! intro"
           className="absolute inset-0 w-full h-full object-cover"
         />
+
         <button
           onClick={endIntro}
           className="absolute bottom-6 right-5 z-10 ink-border-sm rounded-xl bg-white px-4 py-2 text-sm font-black uppercase active:scale-95"

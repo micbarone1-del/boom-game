@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { saveGuestMap, loadGuestMap } from "@/lib/guest";
 import { fileToAvatarDataUrl } from "@/lib/image";
+import { useAttractVideo } from "@/hooks/use-attract-video";
 
 export const Route = createFileRoute("/join/$code")({
   component: JoinView,
@@ -56,24 +57,7 @@ function JoinView() {
   const [attachToSlotIdx, setAttachToSlotIdx] = useState<number | null>(null);
   const [stampedSlot, setStampedSlot] = useState<number | null>(null);
   const attractVideoRef = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    const video = attractVideoRef.current;
-    if (!video) return;
-    video.muted = true;
-    video.defaultMuted = true;
-    video.playsInline = true;
-    video.load();
-    const play = () => { void video.play().catch(() => {}); };
-    play();
-    video.addEventListener("canplay", play);
-    video.addEventListener("loadeddata", play);
-    document.addEventListener("visibilitychange", play);
-    return () => {
-      video.removeEventListener("canplay", play);
-      video.removeEventListener("loadeddata", play);
-      document.removeEventListener("visibilitychange", play);
-    };
-  }, []);
+  useAttractVideo(attractVideoRef);
   // Fire the arcade "stamp" landing animation on a freshly populated slot.
   const stampSlot = (idx: number) => {
     setStampedSlot(idx);
@@ -350,11 +334,7 @@ function JoinView() {
         poster="/media/attract-poster.jpg"
         aria-hidden="true"
         className="fixed inset-0 h-full w-full object-cover pointer-events-none"
-      >
-        <source src="/media/attract.mp4" type="video/mp4" />
-        <source src="/media/attract.webm" type="video/webm" />
-
-      </video>
+      />
       <div className="fixed inset-0 bg-black/55 pointer-events-none" />
       <div className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-4">
       <header className="flex items-center gap-3 mt-2">

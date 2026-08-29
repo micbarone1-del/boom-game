@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Dice5, Hand, Video } from "lucide-react";
+import { ArrowRight, Camera, Dice5, Dumbbell, Smartphone } from "lucide-react";
+import { BombAvatar } from "@/components/BombAvatar";
 
 /**
  * First-Time User Experience engine.
@@ -9,23 +10,20 @@ import { Dice5, Hand, Video } from "lucide-react";
  */
 export type FtueKey = "roll" | "switch" | "judge";
 
-const TIPS: Record<FtueKey, { title: string; body: string; icon: typeof Dice5; color: string }> = {
+const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
   roll: {
     title: "HOW IT WORKS",
     body: "Roll, hop, see your exercise.",
-    icon: Dice5,
     color: "var(--boom-yellow)",
   },
   switch: {
     title: "PASS THE PHONE",
     body: "Give the phone to the next player — they are the judge.",
-    icon: Hand,
     color: "var(--boom-orange)",
   },
   judge: {
     title: "SWEAT!",
     body: "Do the exercise while the judge films you.",
-    icon: Video,
     color: "var(--boom-red)",
   },
 };
@@ -107,19 +105,13 @@ export function useFtue(profile: string | null | undefined, key: FtueKey) {
 
 export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: () => void }) {
   const tip = TIPS[tipKey];
-  const Icon = tip.icon;
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-black/80">
       <div
         className="arcade-card arcade-vs-in w-full max-w-md bg-white p-6 flex flex-col items-center gap-5 text-center"
         style={{ boxShadow: "8px 8px 0 0 #000" }}
       >
-        <div
-          className="rounded-3xl p-5"
-          style={{ background: tip.color, border: "5px solid #111", boxShadow: "6px 6px 0 #111" }}
-        >
-          <Icon size={72} strokeWidth={2.8} style={{ color: "var(--boom-ink)" }} />
-        </div>
+        <TutorialIllustration tipKey={tipKey} color={tip.color} />
         <h2
           className="arcade-heading"
           style={{ color: tip.color, fontSize: "clamp(2rem, 9vw, 3rem)", lineHeight: 1 }}
@@ -146,6 +138,58 @@ export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: (
           Turn tips off
         </button>
       </div>
+    </div>
+  );
+}
+
+function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: string }) {
+  return (
+    <div
+      className="relative h-44 w-full overflow-hidden rounded-3xl ink-border-sm"
+      style={{ background: color }}
+      aria-label={tipKey === "judge" ? "A judge filming another player exercising" : undefined}
+    >
+      {tipKey === "roll" && (
+        <div className="absolute inset-0 flex items-center justify-center gap-4">
+          <div className="anim-ui-float rounded-2xl bg-white p-3 ink-border-sm">
+            <Dice5 size={62} strokeWidth={3} />
+          </div>
+          <ArrowRight size={42} strokeWidth={4} />
+          <div className="grid grid-cols-2 gap-1 rotate-3">
+            {["1", "2", "3", "4"].map((n) => (
+              <span key={n} className="grid h-12 w-12 place-items-center rounded-lg bg-white text-2xl font-black ink-border-sm">{n}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {tipKey === "switch" && (
+        <div className="absolute inset-0 flex items-center justify-around px-3">
+          <BombAvatar color="#ec4899" size={74} />
+          <div className="anim-ui-float rounded-2xl bg-white p-3 ink-border-sm">
+            <Smartphone size={58} strokeWidth={3} />
+          </div>
+          <ArrowRight size={42} strokeWidth={4} />
+          <BombAvatar color="#22d3ee" size={74} />
+        </div>
+      )}
+      {tipKey === "judge" && (
+        <div className="absolute inset-0 flex items-end justify-between px-5 pb-3">
+          <div className="relative flex flex-col items-center">
+            <div className="relative z-10 -mb-3 rounded-xl bg-white p-2 ink-border-sm anim-ui-float">
+              <Smartphone size={42} strokeWidth={3} />
+              <span className="absolute right-1 top-1 h-3 w-3 rounded-full bg-[var(--boom-red)] ring-2 ring-white" />
+            </div>
+            <BombAvatar color="#22d3ee" size={78} />
+            <span className="rounded-lg bg-white px-2 py-0.5 text-xs font-black ink-border-sm">JUDGE</span>
+          </div>
+          <Camera className="mb-14" size={38} strokeWidth={3} />
+          <div className="flex flex-col items-center">
+            <Dumbbell className="anim-ui-float" size={48} strokeWidth={3} />
+            <BombAvatar color="#ec4899" size={92} persona="wild" />
+            <span className="rounded-lg bg-white px-2 py-0.5 text-xs font-black ink-border-sm">PLAYER</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

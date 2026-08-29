@@ -310,7 +310,7 @@ function JoinView() {
     }
     // If this is the first pod AND they came via auto (solo flow), auto-start
     // the room with the 15-min fuse so they don't need a host screen.
-    if (auto && pods.length === 0) {
+    if (!room.game_started_at || !room.game_ends_at) {
       const startedAt = new Date();
       const endsAt = new Date(startedAt.getTime() + 15 * 60 * 1000);
       await supabase
@@ -597,7 +597,7 @@ function SlotCard({
       <div className="flex items-center gap-3">
         <button
           onClick={() => fileRef.current?.click()}
-          className="relative w-16 h-16 rounded-full overflow-hidden flex items-center justify-center shrink-0"
+          className={`relative w-16 h-16 rounded-full flex items-center justify-center shrink-0 ${isMascot ? "overflow-visible" : "overflow-hidden"}`}
           style={{
             background: isMascot ? mascotHex : "#eee",
             boxShadow: `0 0 0 3px ${mascotHex}, 0 0 0 5px #111`,
@@ -605,7 +605,7 @@ function SlotCard({
           aria-label="Choose photo or mascot"
         >
           {isMascot ? (
-            <BombAvatar color={mascotHex} size={64} />
+            <BombAvatar color={mascotHex} size={74} className="-translate-y-[8%]" />
           ) : (
             <img src={slot.avatar!} alt="" className="w-full h-full object-cover" />
           )}

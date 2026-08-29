@@ -61,7 +61,7 @@ export function BombAvatar({
       style={{ width: size, height: size }}
       aria-hidden
     >
-      <svg viewBox="0 0 100 100" width={size} height={size} style={{ display: "block" }}>
+      <svg viewBox="-8 -14 116 122" width={size} height={size} style={{ display: "block", overflow: "visible" }}>
         {/* body */}
         <circle cx="50" cy="56" r="38" fill={color} stroke="#111" strokeWidth="5" />
         {/* shine */}

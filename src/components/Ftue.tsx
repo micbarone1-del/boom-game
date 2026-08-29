@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Camera, Dice5, Dumbbell, Plus, Smartphone, Users } from "lucide-react";
+import { ArrowRight, Camera, Dice5, Dumbbell, Plus, Pointer, Smartphone, Users } from "lucide-react";
 import { BombAvatar } from "@/components/BombAvatar";
 
 /**
@@ -8,7 +8,7 @@ import { BombAvatar } from "@/components/BombAvatar";
  * Each tip is shown at most once per profile (per browser profile key) and
  * blocks the game with a big high-contrast modal until "GOT IT!" is tapped.
  */
-export type FtueKey = "roll" | "switch" | "judge" | "lobby" | "podform";
+export type FtueKey = "roll" | "switch" | "judge" | "defuse" | "lobby" | "podform";
 
 const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
   roll: {
@@ -26,6 +26,11 @@ const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
     body: "Do the exercise while the judge films you.",
     color: "var(--boom-red)",
   },
+  defuse: {
+    title: "TAP TO DEFUSE!",
+    body: "Judge: tap the big DEFUSE button once for every good rep — before the fuse runs out!",
+    color: "var(--boom-blue)",
+  },
   lobby: {
     title: "WELCOME!",
     body: "Sign in or pick a nickname, then jump into a pod. 2–4 players per pod.",
@@ -37,6 +42,7 @@ const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
     color: "var(--boom-blue)",
   },
 };
+
 
 /** Re-enables tips and clears every "seen" flag (used by the ? help button). */
 export function replayFtue() {
@@ -230,6 +236,37 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
           </div>
         </div>
       )}
+      {tipKey === "defuse" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative">
+            <div
+              className="ink-border rounded-3xl px-10 py-6 text-3xl font-black anim-ui-float"
+              style={{
+                background: "var(--boom-green)",
+                color: "#fff",
+                fontFamily: "'Luckiest Guy', cursive",
+                textShadow: "2px 2px 0 #000",
+              }}
+            >
+              DEFUSE
+            </div>
+            {/* Big finger tapping the button */}
+            <Pointer
+              className="absolute -bottom-6 right-4 anim-tap-finger"
+              size={86}
+              strokeWidth={2.5}
+              color="#111"
+              fill="#fff"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-3xl pointer-events-none anim-tap-ring"
+              style={{ border: "5px solid #fff" }}
+            />
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }

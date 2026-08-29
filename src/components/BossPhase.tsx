@@ -140,11 +140,14 @@ export function BossPhase({
   podPlayers,
   overrides,
   code,
+  onVictory,
 }: {
   room: Room;
   podPlayers: Player[];
   overrides: BoardOverrides;
   code: string;
+  /** Local fallback so the screen never freezes if the room row lags. */
+  onVictory?: () => void;
 }) {
   const active = useMemo(
     () => podPlayers.filter((p) => p.status !== "out"),
@@ -195,6 +198,8 @@ export function BossPhase({
       .from("rooms")
       .update({ phase: "victory", boss_defeated_at: new Date().toISOString() })
       .eq("code", code);
+    // Never wait for the realtime round-trip — advance this device now.
+    onVictory?.();
   };
 
 

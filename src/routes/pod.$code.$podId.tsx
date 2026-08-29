@@ -543,6 +543,7 @@ function PodPage() {
             showContinue
             onContinue={onContinue}
             onGiveUp={() => {
+              setLocalBossTimeoutAt(null);
               void supabase
                 .from("rooms")
                 .update({ game_state: "game_over", continue_deadline_at: null })

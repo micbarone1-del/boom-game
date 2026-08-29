@@ -23,9 +23,6 @@ import bossMascot from "@/assets/boss-mascot.png";
 import bombEasy from "@/assets/bomb-easy.png";
 import bombMedium from "@/assets/bomb-medium.png";
 import bombHard from "@/assets/bomb-hard.png";
-import bombBoost from "@/assets/bomb-boost.png";
-import bombSetback from "@/assets/bomb-setback.png";
-import bombSpecial from "@/assets/bomb-special.png";
 import bombSuper from "@/assets/bomb-super.png";
 import bossSurpriseAsset from "@/assets/boss-surprise.png.asset.json";
 import bossCrazyAsset from "@/assets/boss-crazy.png.asset.json";
@@ -78,8 +75,6 @@ function pickForWedge(wedge: BossWedge, overrides: BoardOverrides): { exercise: 
   }
 }
 
-/** Total HP per player joining the boss (shared HP pool). */
-const HP_PER_PLAYER = 55;
 /** Total seconds the pod has before the boss wins. */
 const BOSS_DURATION_MS = 5 * 60 * 1000;
 
@@ -245,7 +240,7 @@ export function BossPhase({
     outcome: "success" | "fail",
     achievedReps: number,
   ) => {
-    if (inner.kind !== "judge") return;
+    if (inner.kind !== "judge" && inner.kind !== "group") return;
     const attack = inner.attack;
     const baseMul = attack.multiplier ?? (attack.tier === 3 ? 3 : 2);
     const podMul = attack.podWide ? Math.max(1, active.length) : 1;

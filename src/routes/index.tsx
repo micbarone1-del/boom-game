@@ -65,7 +65,10 @@ function Index() {
   const [intro, setIntro] = useState(true);
   const introRef = useRef<HTMLVideoElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const startVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [introMuted, setIntroMuted] = useState(false);
   useAttractVideo(videoRef, attract && !intro);
+  useAttractVideo(startVideoRef, !attract && !intro);
 
   const startPressed = () => setAttract(false);
   const endIntro = () => setIntro(false);

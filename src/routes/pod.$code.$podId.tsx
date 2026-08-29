@@ -1010,7 +1010,10 @@ function PlayerPhase({
       setPowerUp(false);
     }
     setRolling(false);
+    // Always hand the button back showing the dice, never a stale number.
+    setFace(null);
     void onRoll(final, resolved);
+
     void start;
   };
 

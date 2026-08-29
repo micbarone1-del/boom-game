@@ -83,25 +83,47 @@ function Index() {
     // playback and unmute as soon as the visitor touches the screen.
     video.muted = false;
     video.volume = 1;
+    setIntroMuted(false);
     void video.play().catch(() => {
       video.muted = true;
       video.defaultMuted = true;
+      setIntroMuted(true);
       void video.play().catch(() => {});
     });
+    // Any interaction anywhere counts as the gesture browsers require, so
+    // keep retrying until the sound actually comes through.
     const retry = () => {
+      if (!video.muted) return;
       video.muted = false;
-      void video.play().catch(() => {
-        video.muted = true;
-        void video.play().catch(() => {});
-      });
+      video.volume = 1;
+      void video
+        .play()
+        .then(() => setIntroMuted(false))
+        .catch(() => {
+          video.muted = true;
+          setIntroMuted(true);
+          void video.play().catch(() => {});
+        });
     };
-    window.addEventListener("pointerdown", retry, { once: true });
-    const failSafe = window.setTimeout(endIntro, 12_000);
+    const events: (keyof WindowEventMap)[] = ["pointerdown", "touchstart", "click", "keydown"];
+    events.forEach((e) => window.addEventListener(e, retry));
+    const failSafe = window.setTimeout(endIntro, 14_000);
     return () => {
-      window.removeEventListener("pointerdown", retry);
+      events.forEach((e) => window.removeEventListener(e, retry));
       window.clearTimeout(failSafe);
     };
   }, [intro]);
+
+  const unmuteIntro = () => {
+    const video = introRef.current;
+    if (!video) return;
+    video.muted = false;
+    video.volume = 1;
+    void video
+      .play()
+      .then(() => setIntroMuted(false))
+      .catch(() => {});
+  };
 
 
 

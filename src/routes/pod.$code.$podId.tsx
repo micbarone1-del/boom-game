@@ -601,7 +601,7 @@ function PodPage() {
   })();
 
   // Boss fight + victory take over the screen.
-  if (room.phase === "victory") {
+  if (room.phase === "victory" || bossBeaten) {
     // Reuse the same WrapUp (leaderboard + recap videos + auth) shown at
     // game-over, so the post-game flow is identical whether the pod
     // defeated the boss or reached the finish line first.
@@ -627,11 +627,18 @@ function PodPage() {
   if (room.phase === "boss") {
     return (
       <>
-        <BossPhase room={room} podPlayers={ordered} overrides={overrides} code={code} />
+        <BossPhase
+          room={room}
+          podPlayers={ordered}
+          overrides={overrides}
+          code={code}
+          onVictory={() => setBossBeaten(true)}
+        />
         {overlay}
       </>
     );
   }
+
 
   // --- Render the active phase ---
 

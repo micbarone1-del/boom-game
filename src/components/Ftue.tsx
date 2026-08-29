@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Camera, Dice5, Dumbbell, Plus, Smartphone, Users } from "lucide-react";
+import { ArrowRight, Camera, Dice5, Dumbbell, Plus, Pointer, Smartphone, Users } from "lucide-react";
 import { BombAvatar } from "@/components/BombAvatar";
 
 /**

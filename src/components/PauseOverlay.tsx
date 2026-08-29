@@ -90,6 +90,19 @@ export function PauseOverlay({
         {voiceEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
         ROBOT VOICE {voiceEnabled ? "ON" : "OFF"}
       </button>
+      <button
+        onClick={() => {
+          const next = !tutorialOn;
+          setFtueDisabled(!next);
+          if (next) resetFtue();
+          setTutorialOn(next);
+        }}
+        className="ink-border-sm rounded-xl bg-white text-[var(--boom-ink)] px-4 py-2 text-sm font-black flex items-center gap-2 active:scale-95"
+        aria-pressed={tutorialOn}
+      >
+        <GraduationCap size={20} />
+        TUTORIAL {tutorialOn ? "ON" : "OFF"}
+      </button>
       {onSignInClick && (
         <button
           onClick={onSignInClick}

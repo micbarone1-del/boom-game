@@ -74,19 +74,32 @@ function Index() {
     if (!intro) return;
     const video = introRef.current;
     if (!video) return;
-    video.muted = true;
-    video.defaultMuted = true;
     video.currentTime = 0;
     video.load();
-    void video.play().catch(() => {});
-    const retry = () => void video.play().catch(() => {});
+    // Try with sound first; browsers that block it fall back to muted
+    // playback and unmute as soon as the visitor touches the screen.
+    video.muted = false;
+    video.volume = 1;
+    void video.play().catch(() => {
+      video.muted = true;
+      video.defaultMuted = true;
+      void video.play().catch(() => {});
+    });
+    const retry = () => {
+      video.muted = false;
+      void video.play().catch(() => {
+        video.muted = true;
+        void video.play().catch(() => {});
+      });
+    };
     window.addEventListener("pointerdown", retry, { once: true });
-    const failSafe = window.setTimeout(endIntro, 10_000);
+    const failSafe = window.setTimeout(endIntro, 12_000);
     return () => {
       window.removeEventListener("pointerdown", retry);
       window.clearTimeout(failSafe);
     };
   }, [intro]);
+
 
 
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
@@ -131,18 +144,30 @@ function Index() {
       <main className="fixed inset-0 bg-black overflow-hidden">
         <video
           autoPlay
-          muted
           playsInline
+          preload="auto"
           onEnded={endIntro}
-          onError={endIntro}
+          onError={() => {
+            // Last-ditch: force the MP4 directly before giving up on the sting.
+            const v = introRef.current;
+            if (v && !v.dataset["fallback"]) {
+              v.dataset["fallback"] = "1";
+              v.src = "/media/intro.mp4?v=20260829f";
+              v.load();
+              void v.play().catch(() => endIntro());
+              return;
+            }
+            endIntro();
+          }}
           ref={introRef}
           aria-label="BOOM! intro"
           className="absolute inset-0 w-full h-full object-cover"
         >
           {/* H.264 first for Safari/iOS, VP9 fallback for browsers without it */}
-          <source src="/media/intro.webm?v=20260829e" type="video/webm" />
-          <source src="/media/intro.mp4?v=20260829e" type="video/mp4" />
+          <source src="/media/intro.mp4?v=20260829f" type="video/mp4" />
+          <source src="/media/intro.webm?v=20260829f" type="video/webm" />
         </video>
+
 
         <button
           onClick={endIntro}

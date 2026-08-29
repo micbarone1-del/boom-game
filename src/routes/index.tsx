@@ -128,7 +128,30 @@ function Index() {
     // Land in the player lobby — pods are created and joined from there.
     navigate({ to: "/join/$code", params: { code }, search: { auto: undefined, join: undefined } });
   };
+  if (intro) {
+    return (
+      <main className="fixed inset-0 bg-black overflow-hidden">
+        <video
+          src="/media/intro.mp4?v=20260829c"
+          autoPlay
+          playsInline
+          onEnded={endIntro}
+          onError={endIntro}
+          aria-label="BOOM! intro"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <button
+          onClick={endIntro}
+          className="absolute bottom-6 right-5 z-10 ink-border-sm rounded-xl bg-white px-4 py-2 text-sm font-black uppercase active:scale-95"
+        >
+          Skip
+        </button>
+      </main>
+    );
+  }
+
   if (attract) {
+
     return (
       <main
         className="fixed inset-0 overflow-hidden"

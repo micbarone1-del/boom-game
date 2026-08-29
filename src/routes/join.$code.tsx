@@ -236,8 +236,8 @@ function JoinView() {
   // If a pod is already selected and locked in (post-create), redirect.
   // (Used when re-opening the join URL after creation.)
 
-  const setSlotField = (i: number, patch: Partial<Slot>) =>
-    setSlots((arr) => arr.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+
+
 
   const addPlayer = () => {
     if (slots.length >= 4) return;

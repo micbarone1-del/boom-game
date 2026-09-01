@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill } from "remotion";
 import { C } from "../theme";
-import { Kicker, Pow, Rays } from "../components/kit";
+import { Kicker, Phone, Pow, Rays } from "../components/kit";
 import { PodCircle } from "../components/PodCircle";
 import { Mascot } from "../components/Mascot";
 
@@ -28,5 +28,8 @@ export const A2Step2: React.FC = () => (
     </div>
     <Mascot src="bomb-mascot.png" size={170} delay={10} style={{ right: 28, bottom: 240 }} label="TICK TICK" labelColor={C.red} />
     <Mascot src="bomb-rest.png" size={140} delay={46} style={{ left: 28, bottom: 250 }} label="REST" labelColor={C.blue} />
+    <div style={{ position: "absolute", left: 24, bottom: -330, transform: "rotate(-8deg)" }}>
+      <Phone src="26-create-pod.png" height={620} aspect={0.462} />
+    </div>
   </AbsoluteFill>
 );

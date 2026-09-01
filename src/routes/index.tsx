@@ -122,7 +122,8 @@ function Index() {
     }, 1200);
     const failSafe = window.setTimeout(endIntro, 14_000);
     return () => {
-      events.forEach((e) => window.removeEventListener(e, retry));
+      events.forEach((e) => document.removeEventListener(e, retry, true));
+      window.clearInterval(nudge);
       window.clearTimeout(failSafe);
     };
   }, [intro]);

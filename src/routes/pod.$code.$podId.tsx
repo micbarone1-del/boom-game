@@ -2325,30 +2325,14 @@ function WrapUp({
   };
 
   const shareClip = async (blob: Blob, idx: number) => {
-    const file = new File([blob], `boom-clip-${idx + 1}.webm`, { type: blob.type });
-    const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
-    if (nav.canShare && nav.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: "BOOM! workout clip" });
-        return;
-      } catch (e) {
-        if ((e as DOMException)?.name === "AbortError") return;
-      }
-    }
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({
-          title: "BOOM! workout clip",
-          text: "Check out my BOOM! workout 💥",
-          url: "https://boomworkout.fun",
-        });
-        return;
-      } catch (e) {
-        if ((e as DOMException)?.name === "AbortError") return;
-      }
-    }
-    downloadClip(blob, idx);
+    const res = await shareClipBlob(blob, {
+      title: "BOOM! workout clip",
+      text: "Check out my BOOM! highlight 💥",
+      fileName: `boom-clip-${idx + 1}.webm`,
+    });
+    if (res === "failed") downloadClip(blob, idx);
   };
+
 
   return (
     <main className="min-h-screen p-4 max-w-md mx-auto flex flex-col gap-4">

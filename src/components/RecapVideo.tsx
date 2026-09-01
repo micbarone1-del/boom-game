@@ -390,19 +390,20 @@ function drawFrame(
 
   // Stats — rank + score counting up
   const score = Math.round(player.score * Math.min(1, t / 0.7));
-  ctx.font = "900 200px 'Luckiest Guy', system-ui";
+  ctx.font = "900 150px 'Luckiest Guy', system-ui";
   ctx.fillStyle = "#fff";
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 12;
-  const sy = H * 0.78;
+  const sy = H * 0.7;
   ctx.strokeText(String(score), W / 2, sy);
   ctx.fillText(String(score), W / 2, sy);
 
   ctx.font = "900 44px 'Luckiest Guy', system-ui";
   ctx.lineWidth = 6;
+  ctx.fillStyle = "#fff";
   const label = `RANK #${player.rank} of ${total}`;
-  ctx.strokeText(label, W / 2, sy + 60);
-  ctx.fillText(label, W / 2, sy + 60);
+  ctx.strokeText(label, W / 2, sy + 70);
+  ctx.fillText(label, W / 2, sy + 70);
 
   // Footer tag
   ctx.font = "700 28px system-ui";

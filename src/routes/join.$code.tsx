@@ -177,6 +177,9 @@ function JoinView() {
     () => podSlots.filter((s) => !s.full).map((s) => s.slot),
     [podSlots],
   );
+  // Names typed into the local slot cards count toward the chosen pod so the
+  // badge flips from "empty" to 1/4 as you fill the form.
+  const draftCount = slots.filter((s) => s.name.trim().length > 0).length;
   const currentPodSlot = useMemo(
     () => podSlots.find((s) => s.slot === chosenSlot) ?? null,
     [podSlots, chosenSlot],
@@ -406,8 +409,9 @@ function JoinView() {
           </p>
         ) : null}
         <div className="grid grid-cols-3 gap-2">
-          {podSlots.map(({ slot, pod, count, full }) => {
+          {podSlots.map(({ slot, count: baseCount, full }) => {
             const active = chosenSlot === slot;
+            const count = baseCount + (active ? draftCount : 0);
             return (
               <button
                 key={slot}
@@ -425,7 +429,7 @@ function JoinView() {
               >
                 POD {slot}
                 <div className="text-[10px] opacity-70">
-                  {full ? "FULL" : pod ? `${count}/${POD_CAP}` : "empty"}
+                  {full ? "FULL" : count > 0 ? `${Math.min(count, POD_CAP)}/${POD_CAP}` : "empty"}
                 </div>
               </button>
             );

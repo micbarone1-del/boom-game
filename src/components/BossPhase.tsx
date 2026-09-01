@@ -574,7 +574,7 @@ function BossSwitch({
           <img
             src={exerciseArt(attack.exercise) ?? attack.mascot}
             alt={attack.exercise}
-            className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 -mb-2 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
+            className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 mb-4 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
           />
         )}
 
@@ -677,7 +677,7 @@ function BossGroupAttack({ attack, players, onComplete }: { attack: Attack; play
   return (
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-4 p-6 bg-[var(--boom-blue)]">
       <div className="text-white text-xl font-black uppercase">All Together · phone down</div>
-      <img src={exerciseArt(attack.exercise) ?? attack.mascot} alt={attack.exercise} width={1024} height={1024} loading="lazy" className="w-52 h-52 object-contain anim-mascot-bounce" />
+      <img src={exerciseArt(attack.exercise) ?? attack.mascot} alt={attack.exercise} width={1024} height={1024} loading="lazy" className="w-52 h-52 object-contain mb-3 anim-mascot-bounce" />
       <div className="ink-border rounded-2xl bg-white px-5 py-3 text-center">
         <div className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{attack.exercise}</div>
         <div className="text-xl font-bold">{attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps each`}</div>
@@ -900,7 +900,7 @@ function BossJudge({
                 }
               : undefined
           }
-          className="absolute inset-4 rounded-full flex flex-col items-center justify-center select-none arcade-press overflow-hidden"
+          className="absolute inset-4 rounded-full flex flex-col items-center justify-center select-none arcade-press"
           style={{
             background: "var(--boom-red)",
             color: "white",
@@ -912,7 +912,7 @@ function BossJudge({
             <img
               src={bossMascot}
               alt="Boss"
-              className={`w-40 h-40 max-w-[70%] object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
+              className={`w-56 h-56 max-w-[130%] object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
               style={{
                 filter: flashing
                   ? "brightness(2.4) drop-shadow(0 0 18px #fff)"
@@ -1296,6 +1296,36 @@ function BossRoll({
           <circle cx={0} cy={0} r={32} fill="#fff" stroke="#111" strokeWidth={3} />
         </svg>
 
+        {/* Winning trap illustration pops on top of the wheel */}
+        {done && (
+          <div
+            className="absolute z-30 flex flex-col items-center justify-center rounded-[2rem] arcade-slam-in anim-ui-float"
+            style={{
+              width: "82%",
+              height: "82%",
+              background: done.color,
+              border: "8px solid #111",
+              boxShadow: "10px 10px 0 0 #000",
+              transform: "rotate(-7deg)",
+            }}
+          >
+            <img
+              src={done.mascot}
+              alt=""
+              width={1024}
+              height={1024}
+              className="w-[72%] h-[72%] object-contain anim-mascot-bounce drop-shadow-[0_8px_0_rgba(0,0,0,0.35)]"
+            />
+            <div
+              className="text-3xl font-black text-center px-3"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "#111" }}
+            >
+              {done.label}
+              {done.podWide && <div className="text-sm font-black">POD-WIDE STRIKE!</div>}
+            </div>
+          </div>
+        )}
+
         {/* SPIN hub — the button lives in the middle of the wheel */}
         {!done && (
           <button
@@ -1319,31 +1349,7 @@ function BossRoll({
         )}
       </div>
 
-      {!done ? (
-        <div className="h-6" />
-      ) : (
-
-        <div
-          className="ink-border rounded-2xl px-6 py-3 text-2xl font-black anim-pop text-center flex flex-col items-center gap-2"
-          style={{
-            background: done.color,
-            color: "#111",
-            fontFamily: "'Luckiest Guy', cursive",
-          }}
-        >
-          <img
-            src={done.mascot}
-            alt=""
-            width={1024}
-            height={1024}
-            className="w-28 h-28 anim-mascot-bounce drop-shadow-[0_0_14px_rgba(0,0,0,0.4)]"
-          />
-          {done.label}
-          {done.podWide && (
-            <div className="text-xs font-black mt-1">POD-WIDE STRIKE!</div>
-          )}
-        </div>
-      )}
+      <div className="h-6" />
     </div>
   );
 }

@@ -25,6 +25,8 @@ import {
 import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle, playPauseMusic, setMusicPhase, setAudioSuspended, haptic } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import bossGroupAsset from "@/assets/boss-group.png.asset.json";
+const groupMascot = bossGroupAsset.url;
 import { exerciseArt } from "@/lib/exercise-art";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -46,7 +48,7 @@ import { BossPhase, BossVictory } from "@/components/BossPhase";
 void BossVictory;
 import { cellPos, cellBg, COLS, ROWS, POD_COLORS } from "@/components/GymMap";
 import { BOARD, CELL_LABEL } from "@/lib/game";
-import { Zap, ArrowLeft, HelpCircle, AlertTriangle, Users, Flame, Dumbbell, Trophy, Pause, Swords, ArrowRight } from "lucide-react";
+import { Zap, ArrowLeft, HelpCircle, AlertTriangle, Flame, Dumbbell, Trophy, Pause, Swords, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,
@@ -699,8 +701,8 @@ function PodPage() {
           clips={clipsRef.current}
           onRestart={() => {
             void restart();
-            // Play Again always starts over from the player lobby.
-            window.location.assign(`/join/${code}`);
+            // Play Again always returns to the Home attract screen.
+            window.location.assign("/");
           }}
         />
 
@@ -1677,7 +1679,7 @@ function HopCellGlyph({ type }: { type: CellType }) {
     case "setback": return <ArrowLeft {...p} />;
     case "surprise": return <HelpCircle {...p} />;
     case "crazy": return <AlertTriangle {...p} />;
-    case "group": return <Users {...p} />;
+    case "group": return <img src={groupMascot} alt="" className="w-3/4 h-3/4 object-contain" />;
     case "pause": return <Pause {...p} />;
     case "finish": return <Trophy {...p} />;
     case "hard": return <Flame {...p} />;
@@ -2752,7 +2754,7 @@ function GroupPhase({
     <main className="fixed inset-0 flex flex-col items-center justify-between p-6 gap-3" style={{ background: "var(--boom-blue)" }}>
       <div className="text-white text-xs font-black uppercase opacity-90 mt-4">All Together · phone down</div>
       <div className="flex flex-col items-center gap-3 text-center">
-        <Users size={64} color="#fff" />
+        <img src={groupMascot} alt="" className="w-28 h-28 object-contain anim-mascot-bounce" />
         <div className="text-white text-5xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
           EVERYBODY!
         </div>

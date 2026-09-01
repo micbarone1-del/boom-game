@@ -1,11 +1,11 @@
 // Mascot illustrations of the mascot performing each default-board exercise.
 // Used to make the requested move instantly readable, alongside its name.
-import pushupsAsset from "@/assets/ex/pushups.asset.json";
-import situpsAsset from "@/assets/ex/situps.asset.json";
-import squatsAsset from "@/assets/ex/squats.asset.json";
-import jumpingJacksAsset from "@/assets/ex/jumping-jacks.asset.json";
-import highKneesAsset from "@/assets/ex/high-knees.asset.json";
-import jumpSquatsAsset from "@/assets/ex/jump-squats.asset.json";
+import pushups from "@/assets/ex/pushups.png";
+import situps from "@/assets/ex/situps.png";
+import squats from "@/assets/ex/squats.png";
+import jumpingJacks from "@/assets/ex/jumping-jacks.png";
+import highKnees from "@/assets/ex/high-knees.png";
+import jumpSquats from "@/assets/ex/jump-squats.png";
 import lunges from "@/assets/ex/lunges.png";
 import mountainClimbers from "@/assets/ex/mountain-climbers.png";
 import burpees from "@/assets/ex/burpees.png";
@@ -25,17 +25,17 @@ import marching from "@/assets/ex/marching.png";
 
 /** Exact names first, keyword fallbacks after. */
 const EXACT: Record<string, string> = {
-  "jumping jacks": jumpingJacksAsset.url,
-  "high knees": highKneesAsset.url,
-  "sit-ups": situpsAsset.url,
+  "jumping jacks": jumpingJacks,
+  "high knees": highKnees,
+  "sit-ups": situps,
   crunches: crunches,
-  squats: squatsAsset.url,
+  squats: squats,
   lunges: lunges,
-  "push-ups": pushupsAsset.url,
+  "push-ups": pushups,
   "mountain climbers": mountainClimbers,
   burpees: burpees,
   "plank-ups": plankUps,
-  "jump squats": jumpSquatsAsset.url,
+  "jump squats": jumpSquats,
   "pike push-ups": pikePushups,
   "spin & burpee": spinBurpee,
   "wheel & pushup": wheelPushup,
@@ -45,7 +45,7 @@ const EXACT: Record<string, string> = {
   "side-roll sit-ups": sideRollSitups,
   "donkey kick pushups": donkeyKickPushups,
   "inchworm burpee": inchwormBurpee,
-  "air squats": squatsAsset.url,
+  "air squats": squats,
   "wall sit": wallSit,
   "plank hold": plankUps,
   "marching in place": marching,
@@ -62,15 +62,15 @@ const KEYWORDS: [RegExp, string][] = [
   [/inchworm/i, inchwormBurpee],
   [/wall sit/i, wallSit],
   [/march/i, marching],
-  [/jumping ?jack|star jump/i, jumpingJacksAsset.url],
-  [/high knee|sprint|run/i, highKneesAsset.url],
-  [/sit-?up/i, situpsAsset.url],
+  [/jumping ?jack|star jump/i, jumpingJacks],
+  [/high knee|sprint|run/i, highKnees],
+  [/sit-?up/i, situps],
   [/crunch/i, crunches],
-  [/jump squat|squat jump/i, jumpSquatsAsset.url],
-  [/squat/i, squatsAsset.url],
+  [/jump squat|squat jump/i, jumpSquats],
+  [/squat/i, squats],
   [/lunge/i, lunges],
   [/pike/i, pikePushups],
-  [/push-?up|pushup|dip/i, pushupsAsset.url],
+  [/push-?up|pushup|dip/i, pushups],
   [/mountain climb/i, mountainClimbers],
   [/burpee/i, burpees],
   [/plank|hold/i, plankUps],

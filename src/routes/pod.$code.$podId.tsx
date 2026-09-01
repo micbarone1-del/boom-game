@@ -25,6 +25,8 @@ import {
 import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle, playPauseMusic, setMusicPhase, setAudioSuspended, haptic } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { exerciseArt } from "@/lib/exercise-art";
+
 import { useAuth } from "@/hooks/use-auth";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";

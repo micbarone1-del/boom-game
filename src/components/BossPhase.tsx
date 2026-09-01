@@ -912,7 +912,7 @@ function BossJudge({
             <img
               src={bossMascot}
               alt="Boss"
-              className={`w-40 h-40 max-w-[70%] object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
+              className={`w-56 h-56 max-w-[130%] object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
               style={{
                 filter: flashing
                   ? "brightness(2.4) drop-shadow(0 0 18px #fff)"

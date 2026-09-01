@@ -243,7 +243,7 @@ function PodPage() {
       clearInterval(i);
     }, 500);
     return () => clearInterval(i);
-  }, [gameState, continueAtMs, code]);
+  }, [gameState, continueAtMs, code, roomPaused]);
 
   if (loading || !room || ordered.length === 0 || !phase) {
 

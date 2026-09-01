@@ -193,15 +193,15 @@ export function PauseOverlay({
         </div>
       )}
       {code && (
-        <a
-          href={`/gym/${code}/customize`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={() => window.location.assign(`/gym/${code}/customize`)}
           className="ink-border-sm rounded-xl bg-white px-4 py-2 text-sm font-black flex items-center gap-2 active:scale-95"
         >
           CUSTOMISE
-        </a>
+        </button>
       )}
+
       <p className="text-white/70 font-bold text-xs">Music + timer on hold</p>
     </div>
   );

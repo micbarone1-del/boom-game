@@ -316,6 +316,48 @@ export function calcRepsForTier(tier: 1 | 2 | 3, fitnessLevel: number, multiplie
   return Math.max(2, Math.min(REP_CAP[tier], reps));
 }
 
+/** Max duration (seconds) for any isometric / hold exercise. */
+export const HOLD_SECONDS_CAP = 20;
+
+/**
+ * Isometric moves (plank hold, wall sit, hollow hold…) are timed, not counted.
+ * They are judged in seconds — the judge holds DEFUSE for the duration.
+ */
+export function isIsometricExercise(name: string): boolean {
+  return /\b(hold|plank|wall sit|wall-sit|hollow|superman|bridge|l-sit|dead ?hang|isometric|static)\b/i.test(
+    name ?? "",
+  );
+}
+
+/** Seconds to hold an isometric move, scaled by tier/fitness and capped at 20s. */
+export function calcHoldSeconds(
+  tier: 1 | 2 | 3,
+  fitnessLevel: number,
+  multiplier: number,
+): number {
+  const intensity = (fitnessLevel + multiplier) / 20;
+  const base = tier === 1 ? 12 : tier === 2 ? 16 : 20;
+  const secs = Math.round(base * (0.6 + intensity));
+  return Math.max(5, Math.min(HOLD_SECONDS_CAP, secs));
+}
+
+/**
+ * Target amount + unit for an exercise: reps for dynamic moves, capped
+ * seconds for isometric holds.
+ */
+export function calcTargetFor(
+  exercise: string,
+  tier: 1 | 2 | 3,
+  fitnessLevel: number,
+  multiplier: number,
+): { reps: number; unit: "reps" | "seconds" } {
+  if (isIsometricExercise(exercise)) {
+    return { reps: calcHoldSeconds(tier, fitnessLevel, multiplier), unit: "seconds" };
+  }
+  return { reps: calcRepsForTier(tier, fitnessLevel, multiplier), unit: "reps" };
+}
+
+
 /** Human-readable activity label for any cell — used on board + player UI. */
 export function describeCell(cell: Cell): string {
   switch (cell.type) {

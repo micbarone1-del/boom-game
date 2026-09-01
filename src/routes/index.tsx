@@ -114,9 +114,14 @@ function Index() {
     };
   }, [intro]);
 
-  const unmuteIntro = () => {
+  const toggleIntroSound = () => {
     const video = introRef.current;
     if (!video) return;
+    if (!video.muted) {
+      video.muted = true;
+      setIntroMuted(true);
+      return;
+    }
     video.muted = false;
     video.volume = 1;
     void video
@@ -124,6 +129,7 @@ function Index() {
       .then(() => setIntroMuted(false))
       .catch(() => {});
   };
+
 
 
 
@@ -194,15 +200,14 @@ function Index() {
         </video>
 
 
-        {introMuted && (
-          <button
-            onClick={unmuteIntro}
-            className="absolute bottom-6 left-5 z-10 ink-border-sm rounded-xl px-4 py-2 text-sm font-black uppercase active:scale-95"
-            style={{ background: "var(--boom-yellow, #FFD23F)", fontFamily: "'Luckiest Guy', cursive" }}
-          >
-            🔊 Tap for sound
-          </button>
-        )}
+        <button
+          onClick={toggleIntroSound}
+          className="absolute bottom-6 left-5 z-10 ink-border-sm rounded-xl px-4 py-2 text-sm font-black uppercase active:scale-95"
+          style={{ background: "var(--boom-yellow, #FFD23F)", fontFamily: "'Luckiest Guy', cursive" }}
+        >
+          {introMuted ? "🔇 Tap for sound" : "🔊 Tap to mute"}
+        </button>
+
 
         <button
           onClick={endIntro}

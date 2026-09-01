@@ -4,6 +4,7 @@ import { C } from "../theme";
 import { Kicker, Phone, Pow, Rays } from "../components/kit";
 import { PodCircle } from "../components/PodCircle";
 import { Mascot } from "../components/Mascot";
+import { RealPhoto } from "../components/RealPhoto";
 
 export const A2Step2: React.FC = () => (
   <AbsoluteFill>
@@ -26,6 +27,8 @@ export const A2Step2: React.FC = () => (
     <div style={{ position: "absolute", right: 56, top: 720 }}>
       <Pow text="GOT IT!" color={C.green} size={44} delay={34} rotate={8} />
     </div>
+    <RealPhoto src="real7.jpg" width={280} height={380} rotate={-6} delay={16} label="PASS IT" labelColor={C.purple} style={{ left: 18, top: 980 }} />
+    <RealPhoto src="real9.jpg" width={280} height={380} rotate={6} delay={34} label="YOUR TURN" labelColor={C.green} style={{ right: 18, top: 1000 }} />
     <Mascot src="bomb-mascot.png" size={170} delay={10} style={{ right: 28, bottom: 240 }} label="TICK TICK" labelColor={C.red} />
     <Mascot src="bomb-rest.png" size={140} delay={46} style={{ left: 28, bottom: 250 }} label="REST" labelColor={C.blue} />
     <div style={{ position: "absolute", left: 24, bottom: -330, transform: "rotate(-8deg)" }}>

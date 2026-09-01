@@ -1927,7 +1927,10 @@ function JudgePhase({
     if (rec && rec.state !== "inactive") {
       rec.onstop = () => {
         const blob = chunksRef.current.length
-          ? new Blob(chunksRef.current, { type: chunksRef.current[0].type || "video/webm" })
+          ? new Blob(chunksRef.current, {
+              // Keep the recorder's real container so the clip stays playable.
+              type: rec.mimeType || chunksRef.current[0].type || "video/webm",
+            })
           : null;
         done(blob);
       };

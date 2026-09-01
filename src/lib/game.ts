@@ -324,8 +324,13 @@ export const HOLD_SECONDS_CAP = 20;
  * They are judged in seconds — the judge holds DEFUSE for the duration.
  */
 export function isIsometricExercise(name: string): boolean {
+  const n = name ?? "";
+  // Dynamic moves that merely contain an isometric keyword are rep-based.
+  if (/plank[- ]?ups?|plank[- ]?jacks?|push[- ]?ups?|jumps?|climbers?|walks?|taps?|rows?|to[- ]?plank/i.test(n)) {
+    return false;
+  }
   return /\b(hold|plank|wall sit|wall-sit|hollow|superman|bridge|l-sit|dead ?hang|isometric|static)\b/i.test(
-    name ?? "",
+    n,
   );
 }
 

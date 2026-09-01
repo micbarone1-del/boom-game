@@ -541,12 +541,20 @@ const effects: Record<EffectName, () => void> = {
 
 /** Momentarily silence the music bed (used so trap jingles cut through). */
 export function duckMusicFor(ms: number) {
-  duckMusic(true);
-  if (_duckTimer) { window.clearTimeout(_duckTimer); _duckTimer = null; }
-  _duckTimer = window.setTimeout(() => duckMusic(false), ms);
+  duckUntil = Math.max(duckUntil, Date.now() + ms);
+  applyMusicGain();
 }
 
-// Anything that reads as a "jingle" should push the music right down so the
+/**
+ * Hard-stop the sequencer for `ms` so a jingle plays over silence (not just
+ * a quieter bed). The loop resumes automatically afterwards.
+ */
+export function stopMusicFor(ms: number) {
+  musicHoldUntil = Math.max(musicHoldUntil, Date.now() + ms);
+  applyMusicGain();
+}
+
+// Anything that reads as a "jingle" should stop the music entirely so the
 // cue is clearly audible.
 const DUCKING_EFFECTS =
   /^(jingle|trapPop|explodeJingle|winJingle|rollJingle|trapFound|defuse|powerUp|vsWin|bossWin|boom|explode)/i;
@@ -555,7 +563,8 @@ const DUCKING_EFFECTS =
 export const sfx = {
   play(name: EffectName) {
     if (muted || audioSuspended) return;
-    if (typeof window !== "undefined" && DUCKING_EFFECTS.test(name)) duckMusicFor(1900);
+    if (typeof window !== "undefined" && DUCKING_EFFECTS.test(name)) stopMusicFor(2600);
+
     try {
       const c = ac();
       if (!c) {
@@ -649,26 +658,52 @@ function primeSpeech() {
   }
 }
 
-// --- Speech ducking -------------------------------------------------------
+// --- Music level control --------------------------------------------------
 // Browsers (and iOS especially) drop the whole output level when
 // SpeechSynthesis and WebAudio play at once. Rather than fight it, mute the
 // music bed while the robot voice talks and bring it straight back after.
+// Everything is deadline-based and re-asserted by a watchdog, so a missed
+// callback can never leave the mix stuck quiet.
 let musicDucked = false;
 let _duckTimer: number | null = null;
-function duckMusic(on: boolean) {
-  musicDucked = on;
+/** Music bed silenced (ducked) until this timestamp. */
+let duckUntil = 0;
+/** Sequencer fully stopped (jingle playing) until this timestamp. */
+let musicHoldUntil = 0;
+
+function musicTargetGain() {
+  return PHASES[musicPhase].gain + musicIntensity * 0.35;
+}
+
+function musicIsSilenced() {
+  const now = Date.now();
+  if (now < duckUntil || now < musicHoldUntil) return true;
+  if (musicDucked) return true;
+  return false;
+}
+
+/** Re-assert the music bus gain from the current state. Idempotent. */
+function applyMusicGain() {
   const g = state.arcadeGain;
   const c = state.ctx;
   if (!g || !c) return;
+  const silence = musicIsSilenced();
+  const target = silence ? 0.0001 : musicTargetGain();
   try {
+    if (Math.abs(g.gain.value - target) < 0.0005) return;
     const t = c.currentTime + 0.01;
     g.gain.cancelScheduledValues(t);
-    g.gain.linearRampToValueAtTime(
-      on ? 0.0001 : PHASES[musicPhase].gain + musicIntensity * 0.35,
-      t + (on ? 0.08 : 0.35),
-    );
+    g.gain.setValueAtTime(g.gain.value, t);
+    g.gain.linearRampToValueAtTime(target, t + (silence ? 0.06 : 0.3));
   } catch { /* ignore */ }
 }
+
+function duckMusic(on: boolean) {
+  musicDucked = on;
+  if (!on) duckUntil = 0;
+  applyMusicGain();
+}
+
 
 function pickRoboticVoice(): SpeechSynthesisVoice | undefined {
   if (_voices.length === 0) loadVoices();
@@ -711,6 +746,7 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
     // Cancel any pending utterance so the new line doesn't queue up behind
     // a stale phase's narration (the #1 cause of "voice comes and goes").
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    duckUntil = Date.now() + 900; // covers the pre-speak delay + startup
     duckMusic(true);
     if (_duckTimer) { window.clearTimeout(_duckTimer); _duckTimer = null; }
     const unduck = () => {
@@ -919,6 +955,9 @@ function playArcadeLoopStep() {
   if (!c) return;
   if (c.state !== "running") return;
   state.lastMusicStepAt = Date.now();
+  // A jingle owns the mix — skip scheduling notes entirely so the music
+  // truly stops rather than just dipping under the cue.
+  if (Date.now() < musicHoldUntil) return;
   const cfg = PHASES[musicPhase];
   const bus = musicBus(c, cfg);
   const t0 = safeStart(c);
@@ -986,7 +1025,12 @@ if (typeof window !== "undefined") {
     if (muted || audioSuspended) return;
     const c = state.ctx;
     if (c && c.state === "suspended") void c.resume().catch(() => {});
-    if (!window.speechSynthesis?.speaking && musicDucked) duckMusic(false);
+    // Keep the master level pinned — some browsers/extensions ramp it down.
+    if (state.masterGain && Math.abs(state.masterGain.gain.value - MASTER_VOLUME) > 0.01) {
+      try { state.masterGain.gain.setValueAtTime(MASTER_VOLUME, (c ?? state.ctx)!.currentTime); } catch {}
+    }
+    if (!window.speechSynthesis?.speaking && musicDucked) musicDucked = false;
+    applyMusicGain();
     const loopStalled = !!state.arcadeTimer && Date.now() - state.lastMusicStepAt > 3500;
     if (loopStalled) {
       window.clearInterval(state.arcadeTimer as number);
@@ -998,7 +1042,7 @@ if (typeof window !== "undefined") {
         stepDurationMs(PHASES[musicPhase]),
       );
     }
-  }, 2000);
+  }, 700);
   globalAudio.__boomAudioVisibilityHandler = () => {
     if (document.visibilityState !== "visible" || muted || audioSuspended) return;
     const c = state.ctx;
@@ -1013,16 +1057,7 @@ export function setMusicPhase(phase: MusicPhase) {
   if (phase === musicPhase) return;
   musicPhase = phase;
   state.arcadeStep = 0;
-  const cfg = PHASES[phase];
-  const g = state.arcadeGain;
-  const c = ac();
-  if (g && c) {
-    try {
-      const t = c.currentTime + 0.02;
-      g.gain.cancelScheduledValues(t);
-      g.gain.linearRampToValueAtTime(cfg.gain + musicIntensity * 0.35, t + 0.25);
-    } catch {}
-  }
+  applyMusicGain();
   rescheduleLoop();
 }
 
@@ -1040,15 +1075,7 @@ export function setBgmIntensity(progress: number) {
   if (Math.abs(p - musicIntensity) < 0.02) return;
   musicIntensity = p;
   rescheduleLoop();
-  const g = state.arcadeGain;
-  const c = ac();
-  if (g && c) {
-    try {
-      const t = c.currentTime + 0.02;
-      g.gain.cancelScheduledValues(t);
-      g.gain.linearRampToValueAtTime(PHASES[musicPhase].gain + p * 0.35, t + 0.3);
-    } catch {}
-  }
+  applyMusicGain();
 }
 
 /**
@@ -1069,6 +1096,8 @@ export function setAudioSuspended(suspended: boolean) {
     if (c && c.state === "running") void c.suspend().catch(() => {});
   } else {
     if (c && c.state === "suspended") void c.resume().catch(() => {});
+    duckUntil = 0;
+    musicHoldUntil = 0;
     duckMusic(false);
     // Bring the soundtrack back — the pause tore the sequencer timer down.
     if (state.musicWanted && !state.arcadeTimer) startArcadeMusic();

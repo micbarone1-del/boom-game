@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Bomb, Music, LogIn, Play } from "lucide-react";
+import { Bomb, LogIn, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { sfx, startArcadeMusic, setMusicPhase } from "@/lib/sfx";
 import { generateRoomCode } from "@/lib/game";
@@ -302,15 +302,8 @@ function Index() {
             <LogIn size={12} /> Join with code
           </button>
           <FullscreenButton />
-          <Link
-            to="/gym/$code"
-            params={{ code: "new" }}
-            className="text-xs font-black underline flex items-center gap-1"
-            style={{ color: "white", textShadow: "1px 1px 0 #000" }}
-          >
-            <Music size={12} /> Host the gym
-          </Link>
         </div>
+
       </main>
     );
   }
@@ -415,14 +408,7 @@ function Index() {
         >
           ← Back to attract mode
         </button>
-        <Link
-          to="/gym/$code"
-          params={{ code: "new" }}
-          className="text-center text-xs font-black underline opacity-90 flex items-center justify-center gap-1"
-          style={{ color: "white", textShadow: "1px 1px 0 #000" }}
-        >
-          <Music size={12} /> Have a big screen? Host the gym →
-        </Link>
+
       </div>
     </main>
   );

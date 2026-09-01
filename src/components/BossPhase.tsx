@@ -978,6 +978,9 @@ function BossDeathOverlay({ onFinish }: { onFinish: () => void }) {
         },
       ]);
     }, 110);
+    // The whole victory sequence owns the mix — stop the soundtrack so the
+    // explosions + win jingle land on silence.
+    stopMusicFor(8200);
     // Layered explosion sounds during the shake.
     const sfxTimers: number[] = [];
     for (let i = 0; i < 14; i++) {

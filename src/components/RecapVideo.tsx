@@ -163,17 +163,12 @@ export function RecapVideo({
   };
 
 
-  const ext = blob?.type.includes("mp4") ? "mp4" : "webm";
-  const fileName = `boom-recap-${player.username.toLowerCase().replace(/\s+/g, "-")}.${ext}`;
+  const baseName = `boom-recap-${player.username.toLowerCase().replace(/\s+/g, "-")}`;
+  const fileName = blob ? clipFileName(blob, baseName) : baseName;
 
   const download = () => {
     if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveClipBlob(blob, baseName);
   };
 
   const share = async () => {

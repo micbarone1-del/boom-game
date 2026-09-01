@@ -2290,15 +2290,16 @@ function WrapUp({
       setJoinModalOpen(true);
       return;
     }
-    const { data, error } = await supabase
-      .from("players")
-      .update({ user_id: user.id })
-      .eq("id", playerId)
-      .select()
-      .single();
+    // Linking a player row to an account is validated server-side (row must be
+    // unclaimed, recent, and one per room) so scores can't be hijacked.
+    const { data, error } = await supabase.rpc("link_player_to_me", {
+      _player_id: playerId,
+    } as never);
     if (!error && data) {
-      setLocalPlayers((arr) => arr.map((p) => (p.id === playerId ? (data as Player) : p)));
+      const linked = data as unknown as Player;
+      setLocalPlayers((arr) => arr.map((p) => (p.id === playerId ? linked : p)));
     }
+
   };
 
   // After signing in via the modal, finish connecting the pending slot.

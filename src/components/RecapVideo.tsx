@@ -154,7 +154,7 @@ export function RecapVideo({
 
       rec.stop();
       await stopped;
-      const out = new Blob(chunks, { type: mime || "video/webm" });
+      const out = new Blob(chunks, { type: rec.mimeType || mime || "video/webm" });
       setBlob(out);
     } finally {
       urls.forEach((u) => URL.revokeObjectURL(u));

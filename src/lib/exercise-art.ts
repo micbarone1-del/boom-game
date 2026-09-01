@@ -12,6 +12,16 @@ import burpees from "@/assets/ex/burpees.png";
 import plankUps from "@/assets/ex/plank-ups.png";
 import pikePushups from "@/assets/ex/pike-pushups.png";
 import crunches from "@/assets/ex/crunches.png";
+import spinBurpee from "@/assets/ex/spin-burpee.png";
+import wheelPushup from "@/assets/ex/wheel-pushup.png";
+import crabPushups from "@/assets/ex/crab-pushups.png";
+import bearCrawlSquats from "@/assets/ex/bear-crawl-squats.png";
+import frogJumpsPlank from "@/assets/ex/frog-jumps-plank.png";
+import sideRollSitups from "@/assets/ex/side-roll-situps.png";
+import donkeyKickPushups from "@/assets/ex/donkey-kick-pushups.png";
+import inchwormBurpee from "@/assets/ex/inchworm-burpee.png";
+import wallSit from "@/assets/ex/wall-sit.png";
+import marching from "@/assets/ex/marching.png";
 
 /** Exact names first, keyword fallbacks after. */
 const EXACT: Record<string, string> = {
@@ -27,9 +37,31 @@ const EXACT: Record<string, string> = {
   "plank-ups": plankUps,
   "jump squats": jumpSquatsAsset.url,
   "pike push-ups": pikePushups,
+  "spin & burpee": spinBurpee,
+  "wheel & pushup": wheelPushup,
+  "crab-walk pushups": crabPushups,
+  "bear-crawl squats": bearCrawlSquats,
+  "frog jumps & plank": frogJumpsPlank,
+  "side-roll sit-ups": sideRollSitups,
+  "donkey kick pushups": donkeyKickPushups,
+  "inchworm burpee": inchwormBurpee,
+  "air squats": squatsAsset.url,
+  "wall sit": wallSit,
+  "plank hold": plankUps,
+  "marching in place": marching,
 };
 
 const KEYWORDS: [RegExp, string][] = [
+  [/spin.*burpee/i, spinBurpee],
+  [/wheel/i, wheelPushup],
+  [/crab/i, crabPushups],
+  [/bear.?crawl/i, bearCrawlSquats],
+  [/frog/i, frogJumpsPlank],
+  [/side.?roll/i, sideRollSitups],
+  [/donkey/i, donkeyKickPushups],
+  [/inchworm/i, inchwormBurpee],
+  [/wall sit/i, wallSit],
+  [/march/i, marching],
   [/jumping ?jack|star jump/i, jumpingJacksAsset.url],
   [/high knee|sprint|run/i, highKneesAsset.url],
   [/sit-?up/i, situpsAsset.url],
@@ -39,9 +71,9 @@ const KEYWORDS: [RegExp, string][] = [
   [/lunge/i, lunges],
   [/pike/i, pikePushups],
   [/push-?up|pushup|dip/i, pushupsAsset.url],
-  [/mountain climb|bear crawl|crab/i, mountainClimbers],
+  [/mountain climb/i, mountainClimbers],
   [/burpee/i, burpees],
-  [/plank|hold|wall sit/i, plankUps],
+  [/plank|hold/i, plankUps],
 ];
 
 /** Illustration URL for an exercise, or null when we have no art for it. */

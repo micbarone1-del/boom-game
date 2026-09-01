@@ -15,7 +15,12 @@ function extFor(blob: Blob) {
  */
 export async function uploadClip(blob: Blob, baseName = "boom-clip"): Promise<string | null> {
   try {
-    const path = `${crypto.randomUUID()}/${baseName}.${extFor(blob)}`;
+    // Clips live under the uploader's own folder; guests (not signed in) skip
+    // the upload entirely and fall back to a native file share.
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth?.user?.id;
+    if (!uid) return null;
+    const path = `${uid}/${crypto.randomUUID()}-${baseName}.${extFor(blob)}`;
     const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
       contentType: blob.type || "video/webm",
       upsert: false,
@@ -27,6 +32,7 @@ export async function uploadClip(blob: Blob, baseName = "boom-clip"): Promise<st
     return null;
   }
 }
+
 
 export type ShareResult = "shared" | "copied" | "failed";
 

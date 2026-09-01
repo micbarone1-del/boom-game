@@ -3,6 +3,8 @@ import { Bomb, Flame, Skull, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CountdownNumber } from "@/components/CountdownNumber";
 import { BombAvatar } from "@/components/BombAvatar";
+import { exerciseArt } from "@/lib/exercise-art";
+
 
 import type { Player, Room } from "@/hooks/use-room";
 import {

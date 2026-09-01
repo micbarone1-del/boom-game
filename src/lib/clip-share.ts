@@ -4,8 +4,48 @@ const BUCKET = "clips";
 /** Signed link lifetime — a year, so shared clips keep working. */
 const LINK_TTL = 60 * 60 * 24 * 365;
 
-function extFor(blob: Blob) {
+/** File extension that matches what the recorder actually produced. */
+export function extFor(blob: Blob) {
   return blob.type.includes("mp4") ? "mp4" : "webm";
+}
+
+/** Filename with the extension forced to match the blob's real type. */
+export function clipFileName(blob: Blob, base: string) {
+  return `${base.replace(/\.(webm|mp4)$/i, "")}.${extFor(blob)}`;
+}
+
+/**
+ * Save a clip to the device. `<a download>` is ignored on iOS, so there we
+ * hand the file to the share sheet (which offers "Save to Files"/Photos) and
+ * only fall back to opening the blob in a new tab.
+ */
+export async function saveClipBlob(blob: Blob, baseName: string): Promise<void> {
+  const name = clipFileName(blob, baseName);
+  const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+  const file = new File([blob], name, { type: blob.type || "video/webm" });
+  const iOS =
+    typeof navigator !== "undefined" &&
+    (/iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && (navigator as Navigator).maxTouchPoints > 1));
+
+  if (iOS && nav.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: name });
+      return;
+    } catch {
+      /* fall through to the link download */
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 /**

@@ -22,7 +22,9 @@ import { haptic,
   speak,
   repPop,
   startArcadeRise,
+  stopMusicFor,
 } from "@/lib/sfx";
+
 import bossMascot from "@/assets/boss-mascot.png";
 import bombEasy from "@/assets/bomb-easy.png";
 import bombMedium from "@/assets/bomb-medium.png";

@@ -8,8 +8,9 @@ export const A5Plus: React.FC = () => {
   const frame = useCurrentFrame();
   const t = useSpr(2, { damping: 200 });
   const shots = [
-    { src: "21-boss-you-win.png", rot: -6, x: -230 },
-    { src: "22-wrapup-leaderboard.png", rot: 5, x: 230 },
+    { src: "25-boss-wheel.png", rot: -8, x: -350 },
+    { src: "21-boss-you-win.png", rot: 1, x: 0 },
+    { src: "22-wrapup-leaderboard.png", rot: 8, x: 350 },
   ];
   return (
     <AbsoluteFill>
@@ -54,12 +55,12 @@ export const A5Plus: React.FC = () => {
             key={s.src}
             style={{
               position: "absolute",
-              left: 540 + s.x - 260,
+              left: 540 + s.x - 208,
               bottom: -180,
               transform: `translateY(${interpolate(sp, [0, 1], [900, Math.sin((frame + i * 20) / 24) * 10])}px) rotate(${s.rot}deg)`,
             }}
           >
-            <Phone src={s.src} height={1000} />
+            <Phone src={s.src} height={900} aspect={0.462} />
           </div>
         );
       })}

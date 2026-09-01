@@ -234,7 +234,7 @@ function Index() {
           muted
           playsInline
           preload="auto"
-          poster="/media/attract-poster.jpg?v=20260829g"
+          poster="/media/attract-poster.jpg?v=20260901a"
           aria-label="BOOM! gameplay attract reel"
           className="attract-video absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         />
@@ -317,7 +317,7 @@ function Index() {
         muted
         playsInline
         preload="auto"
-        poster="/media/attract-poster.jpg?v=20260829g"
+        poster="/media/attract-poster.jpg?v=20260901a"
         aria-hidden="true"
         className="attract-video absolute inset-0 z-0 w-full h-full object-cover"
       />

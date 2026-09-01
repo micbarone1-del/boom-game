@@ -24,7 +24,14 @@ export const A3Step3: React.FC = () => {
         />
       </AbsoluteFill>
       <div style={{ position: "absolute", left: 0, right: 0, bottom: -70, display: "flex", justifyContent: "center" }}>
-        <PhoneClip clips={[{ src: "judge", dur: 240, total: 255 }]} height={1320} rotate={2} />
+        <PhoneClip
+          clips={[
+            { src: "defuse", dur: 150, total: 240 },
+            { src: "judge", dur: 94, total: 255 },
+          ]}
+          height={1320}
+          rotate={2}
+        />
       </div>
       <div style={{ position: "absolute", right: -110, bottom: -60, transform: `translateX(${(1 - r) * 800}px)` }}>
         <Person src="judge.png" height={620} blob="#D9C6FF" blobScale={0.74} flip />

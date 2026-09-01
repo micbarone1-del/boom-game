@@ -2090,8 +2090,10 @@ function JudgePhase({
           >
             {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
           </div>
+          </div>
         </div>
       </div>
+
       <div className="absolute bottom-3 left-3 z-20 text-white text-xs font-bold opacity-90" style={{ textShadow: "1px 1px 0 #000" }}>
         boomworkout.fun
       </div>

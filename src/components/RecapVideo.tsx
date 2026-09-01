@@ -66,12 +66,13 @@ export function RecapVideo({
       const ctx = canvas.getContext("2d")!;
       const fps = 30;
       const stream = (canvas as HTMLCanvasElement).captureStream(fps);
-      const types = [
-        "video/webm;codecs=vp9",
-        "video/webm;codecs=vp8",
-        "video/webm",
-        "video/mp4",
-      ];
+      // Prefer a format the *device* can actually play back and share.
+      // iOS/Safari cannot open WebM, so MP4 is tried first there.
+      const probe = document.createElement("video");
+      const webmPlayable = !!probe.canPlayType("video/webm");
+      const types = webmPlayable
+        ? ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"]
+        : ["video/mp4", "video/mp4;codecs=avc1", "video/webm;codecs=vp8", "video/webm"];
       const mime = types.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
       const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       const chunks: BlobPart[] = [];

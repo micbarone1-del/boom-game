@@ -900,7 +900,7 @@ function BossJudge({
                 }
               : undefined
           }
-          className="absolute inset-4 rounded-full flex flex-col items-center justify-center select-none arcade-press overflow-hidden"
+          className="absolute inset-4 rounded-full flex flex-col items-center justify-center select-none arcade-press"
           style={{
             background: "var(--boom-red)",
             color: "white",

@@ -33,7 +33,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";
-import { shareClipBlob } from "@/lib/clip-share";
+import { shareClipBlob, saveClipBlob } from "@/lib/clip-share";
 
 import { mascotForCell, CELL_FLAVOR, CellMascot } from "@/components/CellMascot";
 import { BombAvatar } from "@/components/BombAvatar";

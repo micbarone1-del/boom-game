@@ -25,6 +25,8 @@ import {
 import { sfx, speak, repPop, startArcadeRise, startArcadeMusic, setBgmIntensity, startTechnoLayer, playDefuseJingle, playPauseMusic, setMusicPhase, setAudioSuspended, haptic } from "@/lib/sfx";
 import { Bomb, Dice5, Play, Share2, Download, RotateCcw } from "lucide-react";
 import bombMascot from "@/assets/bomb-mascot.png";
+import { exerciseArt } from "@/lib/exercise-art";
+
 import { useAuth } from "@/hooks/use-auth";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
@@ -1286,11 +1288,12 @@ function SwitchPhase({
       {/* Cell mascot + label banner */}
       <div className="flex flex-col items-center gap-2 mt-2 w-full">
         <img
-          src={mascotImg}
-          alt=""
-          key={`cellmascot-${trap.cellType}`}
+          src={exerciseArt(trap.exercise) ?? mascotImg}
+          alt={trap.exercise}
+          key={`cellmascot-${trap.cellType}-${trap.exercise}`}
           className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 -mb-2 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
         />
+
         <div
           className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in anim-ui-float"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
@@ -2056,10 +2059,19 @@ function JudgePhase({
       {/* Big readable exercise banner */}
       <div className="absolute top-16 left-0 right-0 z-20 flex justify-center px-4 pointer-events-none">
         <div
-          className="rounded-2xl ink-border px-5 py-2 text-center max-w-[92%] anim-ui-float"
+          className="rounded-2xl ink-border px-4 py-2 max-w-[92%] anim-ui-float flex items-center gap-3"
           style={{ background: "var(--boom-yellow)" }}
         >
+          {exerciseArt(trap.exercise) && (
+            <img
+              src={exerciseArt(trap.exercise)!}
+              alt={trap.exercise}
+              className="w-16 h-16 shrink-0 object-contain anim-mascot-bounce"
+            />
+          )}
+          <div className="text-center">
           <div
+
             className="font-black leading-tight"
             style={{
               fontFamily: "'Luckiest Guy', cursive",
@@ -2078,8 +2090,10 @@ function JudgePhase({
           >
             {trap.unit === "seconds" ? `Hold ${trap.reps}s` : `${trap.reps} reps`}
           </div>
+          </div>
         </div>
       </div>
+
       <div className="absolute bottom-3 left-3 z-20 text-white text-xs font-bold opacity-90" style={{ textShadow: "1px 1px 0 #000" }}>
         boomworkout.fun
       </div>
@@ -2621,8 +2635,12 @@ function VsPhase({
         <div className="text-white text-4xl font-black text-center" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>
           {playerA.username} vs {playerB.username}
         </div>
+        {exerciseArt(trap.exercise) && (
+          <img src={exerciseArt(trap.exercise)!} alt={trap.exercise} className="w-32 h-32 object-contain anim-mascot-bounce" />
+        )}
         <div className="bg-white ink-border rounded-2xl px-5 py-3 text-center anim-ui-float">
           <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{trap.exercise}</div>
+
           <div className="text-base font-bold">First to {trap.reps} reps wins 2×</div>
         </div>
         <div className="flex flex-col items-center gap-2">

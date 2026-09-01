@@ -3,6 +3,8 @@ import { Bomb, Flame, Skull, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CountdownNumber } from "@/components/CountdownNumber";
 import { BombAvatar } from "@/components/BombAvatar";
+import { exerciseArt } from "@/lib/exercise-art";
+
 
 import type { Player, Room } from "@/hooks/use-room";
 import {
@@ -566,13 +568,14 @@ function BossSwitch({
 
       {/* Wedge mascot + banner */}
       <div className="flex flex-col items-center gap-2 w-full relative z-10">
-        {attack.mascot && (
+        {(exerciseArt(attack.exercise) || attack.mascot) && (
           <img
-            src={attack.mascot}
-            alt=""
+            src={exerciseArt(attack.exercise) ?? attack.mascot}
+            alt={attack.exercise}
             className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 -mb-2 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
           />
         )}
+
         <div
           className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in anim-ui-float"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}
@@ -672,7 +675,7 @@ function BossGroupAttack({ attack, players, onComplete }: { attack: Attack; play
   return (
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-4 p-6 bg-[var(--boom-blue)]">
       <div className="text-white text-xl font-black uppercase">All Together · phone down</div>
-      <img src={attack.mascot} alt="Group exercise mascot" width={1024} height={1024} loading="lazy" className="w-52 h-52 object-contain anim-mascot-bounce" />
+      <img src={exerciseArt(attack.exercise) ?? attack.mascot} alt={attack.exercise} width={1024} height={1024} loading="lazy" className="w-52 h-52 object-contain anim-mascot-bounce" />
       <div className="ink-border rounded-2xl bg-white px-5 py-3 text-center">
         <div className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{attack.exercise}</div>
         <div className="text-xl font-bold">{attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps each`}</div>

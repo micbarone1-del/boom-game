@@ -2059,10 +2059,19 @@ function JudgePhase({
       {/* Big readable exercise banner */}
       <div className="absolute top-16 left-0 right-0 z-20 flex justify-center px-4 pointer-events-none">
         <div
-          className="rounded-2xl ink-border px-5 py-2 text-center max-w-[92%] anim-ui-float"
+          className="rounded-2xl ink-border px-4 py-2 max-w-[92%] anim-ui-float flex items-center gap-3"
           style={{ background: "var(--boom-yellow)" }}
         >
+          {exerciseArt(trap.exercise) && (
+            <img
+              src={exerciseArt(trap.exercise)!}
+              alt={trap.exercise}
+              className="w-16 h-16 shrink-0 object-contain anim-mascot-bounce"
+            />
+          )}
+          <div className="text-center">
           <div
+
             className="font-black leading-tight"
             style={{
               fontFamily: "'Luckiest Guy', cursive",

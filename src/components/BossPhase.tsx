@@ -1296,6 +1296,36 @@ function BossRoll({
           <circle cx={0} cy={0} r={32} fill="#fff" stroke="#111" strokeWidth={3} />
         </svg>
 
+        {/* Winning trap illustration pops on top of the wheel */}
+        {done && (
+          <div
+            className="absolute z-30 flex flex-col items-center justify-center rounded-[2rem] arcade-slam-in anim-ui-float"
+            style={{
+              width: "82%",
+              height: "82%",
+              background: done.color,
+              border: "8px solid #111",
+              boxShadow: "10px 10px 0 0 #000",
+              transform: "rotate(-7deg)",
+            }}
+          >
+            <img
+              src={done.mascot}
+              alt=""
+              width={1024}
+              height={1024}
+              className="w-[72%] h-[72%] object-contain anim-mascot-bounce drop-shadow-[0_8px_0_rgba(0,0,0,0.35)]"
+            />
+            <div
+              className="text-3xl font-black text-center px-3"
+              style={{ fontFamily: "'Luckiest Guy', cursive", color: "#111" }}
+            >
+              {done.label}
+              {done.podWide && <div className="text-sm font-black">POD-WIDE STRIKE!</div>}
+            </div>
+          </div>
+        )}
+
         {/* SPIN hub — the button lives in the middle of the wheel */}
         {!done && (
           <button

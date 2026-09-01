@@ -171,7 +171,17 @@ function PodPage() {
     return () => setAudioSuspended(false);
   }, [roomPaused]);
 
+  // Buzz on every game-phase / active-player change so the phone signals a
+  // handover even when the room is loud.
+  const activePlayerId =
+    phase && "playerId" in phase ? (phase as { playerId: string }).playerId : null;
   useEffect(() => {
+    if (!phaseKind) return;
+    haptic(phaseKind === "switch" ? "warn" : phaseKind === "done" ? "success" : "hop");
+  }, [phaseKind, activePlayerId, roomPhase]);
+
+  useEffect(() => {
+
     if (!roomPhase && !phaseKind) return;
     if (roomPhase === "boss") return setMusicPhase("boss");
     if (roomPhase === "victory") return setMusicPhase("victory");

@@ -675,7 +675,7 @@ function BossGroupAttack({ attack, players, onComplete }: { attack: Attack; play
   return (
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-between gap-4 p-6 bg-[var(--boom-blue)]">
       <div className="text-white text-xl font-black uppercase">All Together · phone down</div>
-      <img src={attack.mascot} alt="Group exercise mascot" width={1024} height={1024} loading="lazy" className="w-52 h-52 object-contain anim-mascot-bounce" />
+      <img src={exerciseArt(attack.exercise) ?? attack.mascot} alt={attack.exercise} width={1024} height={1024} loading="lazy" className="w-52 h-52 object-contain anim-mascot-bounce" />
       <div className="ink-border rounded-2xl bg-white px-5 py-3 text-center">
         <div className="text-3xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{attack.exercise}</div>
         <div className="text-xl font-bold">{attack.unit === "seconds" ? `Hold ${attack.reps}s` : `${attack.reps} reps each`}</div>

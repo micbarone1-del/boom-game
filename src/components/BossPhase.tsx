@@ -1183,12 +1183,19 @@ function BossRoll({
     setRotation(finalDeg);
     // Ratchet ticks during the spin — slow down to mimic deceleration.
     const tickTimes = [60, 140, 230, 330, 440, 560, 700, 860, 1040, 1240, 1460, 1700];
-    const timers = tickTimes.map((t) => window.setTimeout(() => sfx.play("wheelTick"), t));
+    const timers = tickTimes.map((t) =>
+      window.setTimeout(() => {
+        sfx.play("wheelTick");
+        haptic("tap");
+      }, t),
+    );
     setTimeout(() => {
       timers.forEach((id) => clearTimeout(id));
       setDone(wedge);
       sfx.play("wheelStop");
+      haptic("success");
       speak(wedge.label.replace("×", " times "));
+
       setTimeout(() => onResult(wedge), 900);
     }, 1900);
   };

@@ -230,7 +230,8 @@ function PodPage() {
 
   // Continue countdown expired → game over.
   useEffect(() => {
-    if (gameState !== "timeout_continue" || !continueAtMs) return;
+    if (gameState !== "timeout_continue" || !continueAtMs || roomPaused) return;
+
     const i = setInterval(() => {
       if (Date.now() < continueAtMs) return;
       void supabase

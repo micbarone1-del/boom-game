@@ -80,7 +80,7 @@ export const A6Board: React.FC = () => {
         height={330}
         rotate={-2}
         delay={10}
-        label="YOUR REAL CLIPS"
+        label="REAL CREW"
         labelColor={C.red}
         style={{ left: 330, top: 470 }}
       />

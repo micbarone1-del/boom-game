@@ -105,6 +105,7 @@ export function PauseOverlay({
         <GraduationCap size={20} />
         TUTORIAL {tutorialOn ? "ON" : "OFF"}
       </button>
+      <FullscreenButton className="px-4 py-2 !text-sm" />
       {onSignInClick && (
         <button
           onClick={onSignInClick}

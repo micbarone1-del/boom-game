@@ -9,7 +9,9 @@ import {
   pickCrazyExercise,
   pickSurpriseExercise,
   pickGroupExercise,
-  calcRepsForTier,
+  calcTargetFor,
+
+
   TRAP_TIMEOUT_MS,
   type BoardOverrides,
 } from "@/lib/game";
@@ -210,17 +212,18 @@ export function BossPhase({
     const turnPlayer = inner.kind === "roll" ? inner.turnPlayer : player;
     if (!turnPlayer) return;
     const pick = pickForWedge(wedge, overrides);
-    const reps = calcRepsForTier(
+    const target = calcTargetFor(
+      pick.exercise,
       pick.tier,
       turnPlayer.fitness_level,
       room.difficulty_multiplier,
     );
-    const isHold = /\bhold\b/i.test(pick.exercise);
     const attack: Attack = {
       playerId: turnPlayer.id,
       exercise: pick.exercise,
-      reps,
-      unit: isHold ? "seconds" : "reps",
+      reps: target.reps,
+      unit: target.unit,
+
       tier: pick.tier,
       multiplier: wedge.multiplier,
       podWide: wedge.podWide,
@@ -1190,10 +1193,10 @@ function BossRoll({
 
   return (
     <div
-      className="absolute inset-0 z-30 flex flex-col items-center justify-between p-4 pb-20"
+      className="absolute inset-0 z-30 flex flex-col items-center justify-between p-3 pb-10"
       style={{ background: "radial-gradient(ellipse at center, #2a0000 0%, #0a0000 80%)" }}
     >
-      <div className="text-center mt-4 anim-pop">
+      <div className="text-center mt-3 anim-pop">
         <div className="text-xs font-black uppercase tracking-widest text-white/80">
           Your turn
         </div>
@@ -1211,7 +1214,8 @@ function BossRoll({
         </div>
       </div>
 
-      <div className="relative flex items-center justify-center" style={{ width: "min(94vw, 520px)", height: "min(94vw, 520px)" }}>
+      <div className="relative flex items-center justify-center" style={{ width: "min(99vw, 640px)", height: "min(99vw, 640px)" }}>
+
         {/* Pointer */}
         <div
           className="absolute -top-3 left-1/2 -translate-x-1/2 z-20"
@@ -1275,24 +1279,36 @@ function BossRoll({
               </g>
             );
           })}
-          <circle cx={0} cy={0} r={18} fill="#fff" stroke="#111" strokeWidth={3} />
+          <circle cx={0} cy={0} r={32} fill="#fff" stroke="#111" strokeWidth={3} />
         </svg>
+
+        {/* SPIN hub — the button lives in the middle of the wheel */}
+        {!done && (
+          <button
+            onClick={spin}
+            disabled={spinning}
+            aria-label="Spin the wheel"
+            className="absolute z-20 rounded-full ink-border flex items-center justify-center font-black active:scale-95 transition-transform disabled:opacity-90"
+            style={{
+              width: "30%",
+              height: "30%",
+              background: "var(--boom-yellow)",
+              color: "var(--boom-ink)",
+              fontFamily: "'Luckiest Guy', cursive",
+              fontSize: "clamp(18px, 5.5vw, 34px)",
+              boxShadow: "0 6px 0 #111",
+              textShadow: "2px 2px 0 rgba(0,0,0,0.2)",
+            }}
+          >
+            {spinning ? "…" : "SPIN!"}
+          </button>
+        )}
       </div>
 
       {!done ? (
-        <button
-          onClick={spin}
-          disabled={spinning}
-          className="btn-massive w-[80vw] max-w-md"
-          style={{
-            background: "var(--boom-yellow)",
-            color: "var(--boom-ink)",
-            textShadow: "2px 2px 0 rgba(0,0,0,0.25)",
-          }}
-        >
-          {spinning ? "SPINNING…" : "SPIN!"}
-        </button>
+        <div className="h-6" />
       ) : (
+
         <div
           className="ink-border rounded-2xl px-6 py-3 text-2xl font-black anim-pop text-center flex flex-col items-center gap-2"
           style={{

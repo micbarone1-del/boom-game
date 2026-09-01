@@ -5,6 +5,9 @@ import { useRoom, type Player } from "@/hooks/use-room";
 import {
   rollDice,
   calcRepsForTier,
+  calcTargetFor,
+  HOLD_SECONDS_CAP,
+
   getCell,
   getEffectiveCell,
   BOARD_SIZE,
@@ -90,6 +93,11 @@ function PodPage() {
   const [bossBeaten, setBossBeaten] = useState(false);
   const [localBossTimeoutAt, setLocalBossTimeoutAt] = useState<number | null>(null);
   const clipsRef = useRef<Map<string, Blob>>(new Map());
+  /** Wall-clock moment this device saw the room go into pause. */
+  const pausedAtRef = useRef<number | null>(null);
+  /** Boss fuse length — mirrors BOSS_DURATION_MS in BossPhase. */
+  const BOSS_FUSE_MS = 5 * 60 * 1000;
+
 
   const [, force] = useState(0);
   const tick = () => force((n) => n + 1);
@@ -153,7 +161,13 @@ function PodPage() {
   const phaseKind = phase?.kind ?? null;
   useEffect(() => {
     setAudioSuspended(roomPaused);
-    if (roomPaused) haptic("warn");
+    if (roomPaused) {
+      if (pausedAtRef.current === null) pausedAtRef.current = Date.now();
+      haptic("warn");
+    } else {
+      pausedAtRef.current = null;
+    }
+
     return () => setAudioSuspended(false);
   }, [roomPaused]);
 
@@ -318,13 +332,13 @@ function PodPage() {
       finalCell.type === "hard"
     ) {
       const tier = finalCell.tier ?? 1;
-      const reps = calcRepsForTier(tier, player.fitness_level, room.difficulty_multiplier);
+      const name = finalCell.exercise ?? "Workout";
+      const target = calcTargetFor(name, tier, player.fitness_level, room.difficulty_multiplier);
       const overrideUnit = overrides[String(final)]?.unit;
-      const isHold = /\bhold\b/i.test(finalCell.exercise ?? "");
-      const unit: "reps" | "seconds" = overrideUnit ?? (isHold ? "seconds" : "reps");
+      const unit: "reps" | "seconds" = overrideUnit ?? target.unit;
       const trap: ActiveTrap = {
-        exercise: finalCell.exercise ?? "Workout",
-        reps,
+        exercise: name,
+        reps: unit === "seconds" ? Math.min(HOLD_SECONDS_CAP, target.reps) : target.reps,
         unit,
         finalSpace: final,
         cellType: finalCell.type,
@@ -337,12 +351,11 @@ function PodPage() {
         finalCell.type === "surprise"
           ? pickSurpriseExercise(overrides)
           : pickCrazyExercise();
-      const reps = calcRepsForTier(pick.tier, player.fitness_level, room.difficulty_multiplier);
-      const isHold = /\bhold\b/i.test(pick.exercise);
+      const target = calcTargetFor(pick.exercise, pick.tier, player.fitness_level, room.difficulty_multiplier);
       const trap: ActiveTrap = {
         exercise: pick.exercise,
-        reps,
-        unit: isHold ? "seconds" : "reps",
+        reps: target.reps,
+        unit: target.unit,
         finalSpace: final,
         cellType: finalCell.type,
       };
@@ -351,18 +364,18 @@ function PodPage() {
     }
     if (finalCell.type === "group") {
       const pick = pickGroupExercise();
-      const reps = calcRepsForTier(pick.tier, player.fitness_level, room.difficulty_multiplier);
-      const isHold = /\bhold\b/i.test(pick.exercise);
+      const target = calcTargetFor(pick.exercise, pick.tier, player.fitness_level, room.difficulty_multiplier);
       const trap: ActiveTrap = {
         exercise: pick.exercise,
-        reps,
-        unit: isHold ? "seconds" : "reps",
+        reps: target.reps,
+        unit: target.unit,
         finalSpace: final,
         cellType: "group",
       };
       setPhase({ kind: "group", playerId: player.id, trap });
       return;
     }
+
     if (finalCell.type === "pause") {
       setPhase({ kind: "pause", playerId: player.id, finalSpace: final });
       return;
@@ -518,20 +531,54 @@ function PodPage() {
     setPhase({ kind: "player", playerId: ordered[0].id });
   };
 
+  // CONTINUE = resume exactly where the pod left off, with 1 extra minute on
+  // whichever clock was running (board fuse or boss fuse).
   const onContinue = async () => {
     setLocalBossTimeoutAt(null);
-    const newEnds = new Date(Date.now() + 5 * 60 * 1000);
+    const isBoss = room.phase === "boss";
+    const newEnds = new Date(Date.now() + 60 * 1000);
     await supabase
       .from("rooms")
       .update({
         game_state: "playing",
         game_ends_at: newEnds.toISOString(),
         continue_deadline_at: null,
-        // Restart the boss clock too when the continue happens mid boss fight.
-        ...(room.phase === "boss" ? { boss_started_at: new Date().toISOString() } : {}),
+        // Boss clock: rewind the start so exactly 60s remain on the boss fuse.
+        ...(isBoss
+          ? { boss_started_at: new Date(Date.now() + 60_000 - BOSS_FUSE_MS).toISOString() }
+          : {}),
       })
       .eq("code", code);
   };
+
+  // Pause must freeze the shared fuse: when the room resumes we push every
+  // deadline forward by however long the pause lasted.
+  const resumeRoom = async () => {
+    const pausedMs = pausedAtRef.current ? Date.now() - pausedAtRef.current : 0;
+    pausedAtRef.current = null;
+    const shift = (iso: string | null | undefined) =>
+      iso ? new Date(new Date(iso).getTime() + pausedMs).toISOString() : iso ?? null;
+    await supabase
+      .from("rooms")
+      .update({
+        paused: false,
+        ...(pausedMs > 0
+          ? {
+              game_ends_at: shift(room.game_ends_at),
+              boss_started_at: shift(room.boss_started_at),
+              continue_deadline_at: shift(room.continue_deadline_at),
+            }
+          : {}),
+      })
+      .eq("code", code);
+  };
+
+  const pauseRoom = async () => {
+    pausedAtRef.current = Date.now();
+    haptic("warn");
+    await supabase.from("rooms").update({ paused: true }).eq("code", code);
+  };
+
 
   // (timeout watchers live above the early return so hook order stays stable)
 
@@ -544,7 +591,7 @@ function PodPage() {
         <PauseToggleButton
           paused={!!room.paused}
           onToggle={() => {
-            void supabase.from("rooms").update({ paused: !room.paused }).eq("code", code).then(() => {});
+            void (room.paused ? resumeRoom() : pauseRoom());
           }}
         />
       </div>
@@ -599,7 +646,7 @@ function PodPage() {
             players={players}
             pods={pods}
             onResume={() => {
-              void supabase.from("rooms").update({ paused: false }).eq("code", code).then(() => {});
+              void resumeRoom();
             }}
             onGiveUp={() => {
               // Give up leaves the active room entirely. A hard navigation

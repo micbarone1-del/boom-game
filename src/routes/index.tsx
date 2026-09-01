@@ -112,11 +112,18 @@ function Index() {
           void video.play().catch(() => {});
         });
     };
-    const events: (keyof WindowEventMap)[] = ["pointerdown", "touchstart", "click", "keydown"];
-    events.forEach((e) => window.addEventListener(e, retry));
+    // Capture phase on the document so the very first touch counts, even when
+    // it lands on a button (installed/standalone app included).
+    const events = ["pointerdown", "touchstart", "touchend", "click", "keydown"] as const;
+    events.forEach((e) => document.addEventListener(e, retry, true));
+    // Some engines only honour the unmute a tick after the gesture.
+    const nudge = window.setInterval(() => {
+      if (video.muted) retry();
+    }, 1200);
     const failSafe = window.setTimeout(endIntro, 14_000);
     return () => {
-      events.forEach((e) => window.removeEventListener(e, retry));
+      events.forEach((e) => document.removeEventListener(e, retry, true));
+      window.clearInterval(nudge);
       window.clearTimeout(failSafe);
     };
   }, [intro]);

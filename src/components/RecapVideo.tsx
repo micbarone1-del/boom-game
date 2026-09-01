@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Share2, Film, Loader2, Check } from "lucide-react";
-import { shareClipBlob } from "@/lib/clip-share";
+import { shareClipBlob, saveClipBlob, clipFileName } from "@/lib/clip-share";
 
 
 export type RecapPlayer = {
@@ -66,12 +66,13 @@ export function RecapVideo({
       const ctx = canvas.getContext("2d")!;
       const fps = 30;
       const stream = (canvas as HTMLCanvasElement).captureStream(fps);
-      const types = [
-        "video/webm;codecs=vp9",
-        "video/webm;codecs=vp8",
-        "video/webm",
-        "video/mp4",
-      ];
+      // Prefer a format the *device* can actually play back and share.
+      // iOS/Safari cannot open WebM, so MP4 is tried first there.
+      const probe = document.createElement("video");
+      const webmPlayable = !!probe.canPlayType("video/webm");
+      const types = webmPlayable
+        ? ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"]
+        : ["video/mp4", "video/mp4;codecs=avc1", "video/webm;codecs=vp8", "video/webm"];
       const mime = types.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
       const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       const chunks: BlobPart[] = [];
@@ -153,7 +154,7 @@ export function RecapVideo({
 
       rec.stop();
       await stopped;
-      const out = new Blob(chunks, { type: mime || "video/webm" });
+      const out = new Blob(chunks, { type: rec.mimeType || mime || "video/webm" });
       setBlob(out);
     } finally {
       urls.forEach((u) => URL.revokeObjectURL(u));
@@ -162,17 +163,12 @@ export function RecapVideo({
   };
 
 
-  const ext = blob?.type.includes("mp4") ? "mp4" : "webm";
-  const fileName = `boom-recap-${player.username.toLowerCase().replace(/\s+/g, "-")}.${ext}`;
+  const baseName = `boom-recap-${player.username.toLowerCase().replace(/\s+/g, "-")}`;
+  const fileName = blob ? clipFileName(blob, baseName) : baseName;
 
   const download = () => {
     if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveClipBlob(blob, baseName);
   };
 
   const share = async () => {

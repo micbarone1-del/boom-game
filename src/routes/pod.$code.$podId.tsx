@@ -33,7 +33,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";
-import { shareClipBlob } from "@/lib/clip-share";
+import { shareClipBlob, saveClipBlob } from "@/lib/clip-share";
 
 import { mascotForCell, CELL_FLAVOR, CellMascot } from "@/components/CellMascot";
 import { BombAvatar } from "@/components/BombAvatar";
@@ -1927,7 +1927,10 @@ function JudgePhase({
     if (rec && rec.state !== "inactive") {
       rec.onstop = () => {
         const blob = chunksRef.current.length
-          ? new Blob(chunksRef.current, { type: chunksRef.current[0].type || "video/webm" })
+          ? new Blob(chunksRef.current, {
+              // Keep the recorder's real container so the clip stays playable.
+              type: rec.mimeType || chunksRef.current[0].type || "video/webm",
+            })
           : null;
         done(blob);
       };
@@ -2320,20 +2323,17 @@ function WrapUp({
     speak(`${winner.username} wins!`);
   }, [spoken, winner.username]);
 
+  // The file extension must match what the recorder produced, otherwise
+  // phones refuse to open or share the saved clip.
   const downloadClip = (blob: Blob, idx: number) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `boom-clip-${idx + 1}.webm`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveClipBlob(blob, `boom-clip-${idx + 1}`);
   };
 
   const shareClip = async (blob: Blob, idx: number) => {
     const res = await shareClipBlob(blob, {
       title: "BOOM! workout clip",
       text: "Check out my BOOM! highlight 💥",
-      fileName: `boom-clip-${idx + 1}.webm`,
+      fileName: `boom-clip-${idx + 1}`,
     });
     if (res === "failed") downloadClip(blob, idx);
   };

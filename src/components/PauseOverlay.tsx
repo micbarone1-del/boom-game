@@ -1,4 +1,5 @@
 import { Pause, Play, UserPlus, Bomb, Flag, Volume2, VolumeX, GraduationCap } from "lucide-react";
+import { FullscreenButton } from "@/components/FullscreenButton";
 import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Player, Pod } from "@/hooks/use-room";

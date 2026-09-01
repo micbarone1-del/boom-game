@@ -2635,8 +2635,12 @@ function VsPhase({
         <div className="text-white text-4xl font-black text-center" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #000" }}>
           {playerA.username} vs {playerB.username}
         </div>
+        {exerciseArt(trap.exercise) && (
+          <img src={exerciseArt(trap.exercise)!} alt={trap.exercise} className="w-32 h-32 object-contain anim-mascot-bounce" />
+        )}
         <div className="bg-white ink-border rounded-2xl px-5 py-3 text-center anim-ui-float">
           <div className="text-2xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive" }}>{trap.exercise}</div>
+
           <div className="text-base font-bold">First to {trap.reps} reps wins 2×</div>
         </div>
         <div className="flex flex-col items-center gap-2">

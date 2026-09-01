@@ -4,6 +4,7 @@ import { C } from "../theme";
 import { Kicker, Person, Pow, Rays, useSpr } from "../components/kit";
 import { PhoneClip } from "../components/PhoneClip";
 import { Mascot } from "../components/Mascot";
+import { RealPhoto } from "../components/RealPhoto";
 
 export const A1Step1: React.FC = () => {
   const frame = useCurrentFrame();
@@ -27,7 +28,7 @@ export const A1Step1: React.FC = () => {
           clips={[
             { src: "roll", dur: 100, total: 120 },
             { src: "hop", dur: 100, total: 102 },
-            { src: "trap", dur: 106, total: 108 },
+            { src: "defuse", dur: 106, total: 240 },
           ]}
           height={1320}
         />
@@ -45,6 +46,7 @@ export const A1Step1: React.FC = () => {
           <Pow text="HOP HOP!" color={C.blue} size={50} delay={110} rotate={7} />
         </div>
       ) : null}
+      <RealPhoto src="real10.jpg" width={290} height={330} rotate={-5} delay={18} label="YOUR ROLL" style={{ left: 18, top: 700 }} />
       <Mascot src="bomb-easy.png" size={130} delay={30} style={{ right: 34, top: 980 }} label="EASY" labelColor={C.green} />
       <Mascot src="bomb-medium.png" size={130} delay={120} style={{ left: 34, top: 1010 }} label="MEDIUM" labelColor={C.yellow} />
       {frame > 195 ? (

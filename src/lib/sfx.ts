@@ -746,6 +746,7 @@ export function speak(text: string, opts: { pitch?: number; rate?: number; volum
     // Cancel any pending utterance so the new line doesn't queue up behind
     // a stale phase's narration (the #1 cause of "voice comes and goes").
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    duckUntil = Date.now() + 900; // covers the pre-speak delay + startup
     duckMusic(true);
     if (_duckTimer) { window.clearTimeout(_duckTimer); _duckTimer = null; }
     const unduck = () => {

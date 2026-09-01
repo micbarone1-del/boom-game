@@ -1349,31 +1349,7 @@ function BossRoll({
         )}
       </div>
 
-      {!done ? (
-        <div className="h-6" />
-      ) : (
-
-        <div
-          className="ink-border rounded-2xl px-6 py-3 text-2xl font-black anim-pop text-center flex flex-col items-center gap-2"
-          style={{
-            background: done.color,
-            color: "#111",
-            fontFamily: "'Luckiest Guy', cursive",
-          }}
-        >
-          <img
-            src={done.mascot}
-            alt=""
-            width={1024}
-            height={1024}
-            className="w-28 h-28 anim-mascot-bounce drop-shadow-[0_0_14px_rgba(0,0,0,0.4)]"
-          />
-          {done.label}
-          {done.podWide && (
-            <div className="text-xs font-black mt-1">POD-WIDE STRIKE!</div>
-          )}
-        </div>
-      )}
+      <div className="h-6" />
     </div>
   );
 }

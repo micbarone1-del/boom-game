@@ -409,7 +409,7 @@ function JoinView() {
           </p>
         ) : null}
         <div className="grid grid-cols-3 gap-2">
-          {podSlots.map(({ slot, pod, count: baseCount, full }) => {
+          {podSlots.map(({ slot, count: baseCount, full }) => {
             const active = chosenSlot === slot;
             const count = baseCount + (active ? draftCount : 0);
             return (

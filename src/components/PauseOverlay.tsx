@@ -1,4 +1,5 @@
 import { Pause, Play, UserPlus, Bomb, Flag, Volume2, VolumeX, GraduationCap } from "lucide-react";
+import { FullscreenButton } from "@/components/FullscreenButton";
 import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Player, Pod } from "@/hooks/use-room";
@@ -105,6 +106,7 @@ export function PauseOverlay({
         <GraduationCap size={20} />
         TUTORIAL {tutorialOn ? "ON" : "OFF"}
       </button>
+      <FullscreenButton className="px-4 py-2 !text-sm" />
       {onSignInClick && (
         <button
           onClick={onSignInClick}

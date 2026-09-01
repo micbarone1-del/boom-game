@@ -6,6 +6,8 @@ import { sfx, startArcadeMusic, setMusicPhase } from "@/lib/sfx";
 import { generateRoomCode } from "@/lib/game";
 import bombMascot from "@/assets/bomb-mascot.png";
 import { useAttractVideo } from "@/hooks/use-attract-video";
+import { enterFullscreen } from "@/lib/fullscreen";
+import { FullscreenButton } from "@/components/FullscreenButton";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -70,7 +72,12 @@ function Index() {
   useAttractVideo(videoRef, attract && !intro);
   useAttractVideo(startVideoRef, !attract && !intro);
 
-  const startPressed = () => setAttract(false);
+  // Tapping start is a user gesture, so it is the right moment to hide the
+  // browser chrome and make the game feel like a native app.
+  const startPressed = () => {
+    void enterFullscreen();
+    setAttract(false);
+  };
   const endIntro = () => setIntro(false);
 
   useEffect(() => {
@@ -234,7 +241,7 @@ function Index() {
           muted
           playsInline
           preload="auto"
-          poster="/media/attract-poster.jpg?v=20260901a"
+          poster="/media/attract-poster.jpg?v=20260901b"
           aria-label="BOOM! gameplay attract reel"
           className="attract-video absolute inset-0 z-0 w-full h-full object-cover opacity-100"
         />
@@ -294,6 +301,7 @@ function Index() {
           >
             <LogIn size={12} /> Join with code
           </button>
+          <FullscreenButton />
           <Link
             to="/gym/$code"
             params={{ code: "new" }}
@@ -317,7 +325,7 @@ function Index() {
         muted
         playsInline
         preload="auto"
-        poster="/media/attract-poster.jpg?v=20260901a"
+        poster="/media/attract-poster.jpg?v=20260901b"
         aria-hidden="true"
         className="attract-video absolute inset-0 z-0 w-full h-full object-cover"
       />

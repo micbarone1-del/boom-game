@@ -2320,20 +2320,17 @@ function WrapUp({
     speak(`${winner.username} wins!`);
   }, [spoken, winner.username]);
 
+  // The file extension must match what the recorder produced, otherwise
+  // phones refuse to open or share the saved clip.
   const downloadClip = (blob: Blob, idx: number) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `boom-clip-${idx + 1}.webm`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    void saveClipBlob(blob, `boom-clip-${idx + 1}`);
   };
 
   const shareClip = async (blob: Blob, idx: number) => {
     const res = await shareClipBlob(blob, {
       title: "BOOM! workout clip",
       text: "Check out my BOOM! highlight 💥",
-      fileName: `boom-clip-${idx + 1}.webm`,
+      fileName: `boom-clip-${idx + 1}`,
     });
     if (res === "failed") downloadClip(blob, idx);
   };

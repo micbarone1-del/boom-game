@@ -291,7 +291,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      link_player_to_me: {
+        Args: { _player_id: string }
+        Returns: {
+          avatar_url: string | null
+          current_space: number
+          finish_rank: number | null
+          finished_at: string | null
+          fitness_level: number
+          id: string
+          is_team_lead: boolean
+          joined_at: string
+          pod_id: string | null
+          room_code: string
+          score: number
+          status: string
+          team_id: string | null
+          user_id: string | null
+          username: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "players"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

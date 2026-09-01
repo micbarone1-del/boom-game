@@ -798,7 +798,7 @@ function BossJudge({
     });
   };
 
-  const ringSize = 200;
+  const ringSize = 260;
   const stroke = 14;
   const r = (ringSize - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -820,30 +820,8 @@ function BossJudge({
       />
       <div className="absolute inset-0 bg-black/40 -z-10" />
 
-      {/* Smaller moving boss overlay */}
-      <div className="absolute top-3 right-3 pointer-events-none">
-        <div className="boss-sway relative">
-          <img
-            src={bossMascot}
-            alt=""
-            className={`w-24 h-24 object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
-            style={{
-              filter: flashing
-                ? "brightness(2.4) drop-shadow(0 0 18px #fff)"
-                : "drop-shadow(0 4px 0 rgba(0,0,0,0.6))",
-            }}
-          />
-          {burst && (
-            <div
-              key={burst.id}
-              className="absolute inset-0 flex items-center justify-center anim-pop"
-              aria-hidden
-            >
-              <div className="text-4xl" style={{ filter: "drop-shadow(0 0 12px #fff)" }}>💥</div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Boss now lives inside the attack button itself (see below). */}
+
 
       {/* Player name tag */}
       <div className="absolute top-3 left-3 text-white">
@@ -920,7 +898,7 @@ function BossJudge({
                 }
               : undefined
           }
-          className="absolute inset-5 rounded-full flex flex-col items-center justify-center gap-1 select-none arcade-press"
+          className="absolute inset-4 rounded-full flex flex-col items-center justify-center select-none arcade-press overflow-hidden"
           style={{
             background: "var(--boom-red)",
             color: "white",
@@ -928,21 +906,40 @@ function BossJudge({
             boxShadow: "6px 6px 0 0 #000, 0 8px 24px rgba(0,0,0,0.5)",
           }}
         >
+          <div className="boss-sway pointer-events-none flex items-center justify-center">
+            <img
+              src={bossMascot}
+              alt="Boss"
+              className={`w-40 h-40 max-w-[70%] object-contain ${shaking ? "anim-shake" : "anim-mascot-bounce"}`}
+              style={{
+                filter: flashing
+                  ? "brightness(2.4) drop-shadow(0 0 18px #fff)"
+                  : "drop-shadow(0 4px 0 rgba(0,0,0,0.5))",
+              }}
+            />
+          </div>
+          {burst && (
+            <div
+              key={burst.id}
+              className="absolute inset-0 flex items-center justify-center anim-pop pointer-events-none"
+              aria-hidden
+            >
+              <div className="text-6xl" style={{ filter: "drop-shadow(0 0 12px #fff)" }}>💥</div>
+            </div>
+          )}
           <span
-            className="font-black anim-ui-wiggle"
-            style={{ fontFamily: "'Luckiest Guy', cursive", fontSize: "clamp(2rem, 9vw, 3rem)", lineHeight: 1, textShadow: "3px 3px 0 #000" }}
+            className="absolute bottom-6 text-2xl font-black tabular-nums"
+            style={{ textShadow: "2px 2px 0 #000" }}
           >
-            ATTACK
-          </span>
-          <span className="text-xl font-black tabular-nums" style={{ textShadow: "2px 2px 0 #000" }}>
             {attack.unit === "reps"
               ? `${reps} / ${attack.reps}`
               : `${(holdMs / 1000).toFixed(1)}s / ${attack.reps}s`}
           </span>
-          <span className="text-sm font-bold opacity-90">
+          <span className="absolute bottom-1.5 text-sm font-bold opacity-90" style={{ textShadow: "1px 1px 0 #000" }}>
             {attack.unit === "reps" ? "tap per rep" : "hold"}
           </span>
         </button>
+
       </div>
       <div
         className="mt-3 ink-border rounded-2xl px-4 py-2 text-xl font-black anim-ui-float"

@@ -574,7 +574,7 @@ function BossSwitch({
           <img
             src={exerciseArt(attack.exercise) ?? attack.mascot}
             alt={attack.exercise}
-            className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 -mb-2 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
+            className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 mb-4 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
           />
         )}
 

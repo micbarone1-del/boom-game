@@ -566,13 +566,14 @@ function BossSwitch({
 
       {/* Wedge mascot + banner */}
       <div className="flex flex-col items-center gap-2 w-full relative z-10">
-        {attack.mascot && (
+        {(exerciseArt(attack.exercise) || attack.mascot) && (
           <img
-            src={attack.mascot}
-            alt=""
+            src={exerciseArt(attack.exercise) ?? attack.mascot}
+            alt={attack.exercise}
             className="w-60 h-60 max-w-[62vw] max-h-[62vw] object-contain -mt-8 -mb-2 relative z-10 anim-mascot-bounce arcade-slam-in drop-shadow-[0_10px_0_rgba(0,0,0,0.3)]"
           />
         )}
+
         <div
           className="ink-border rounded-2xl px-4 py-1 bg-white arcade-tilt-l-sm arcade-slam-in anim-ui-float"
           style={{ fontFamily: "'Luckiest Guy', cursive" }}

@@ -326,7 +326,7 @@ export function BossPhase({
         continue_deadline_at: new Date(continueDeadlineAt).toISOString(),
       })
       .eq("code", code);
-  }, [remaining, code, room.game_state, onTimeout]);
+  }, [remaining, code, room.game_state, room.paused, onTimeout]);
 
 
   if (!player) {

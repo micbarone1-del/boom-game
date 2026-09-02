@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Share, X } from "lucide-react";
+import { Share, Volume2, X } from "lucide-react";
 import { isStandalone } from "@/lib/fullscreen";
 
 const DISMISS_KEY = "boom.a2hs.dismissed.v1";
@@ -47,6 +47,9 @@ export function IosInstallHint() {
         Play fullscreen: tap{" "}
         <Share size={13} className="inline -mt-0.5" /> then{" "}
         <span style={{ color: "var(--boom-red)" }}>Add to Home Screen</span>.
+        <br />
+        <Volume2 size={13} className="inline -mt-0.5" /> Sound? Flick the side switch{" "}
+        <span style={{ color: "var(--boom-red)" }}>off silent</span>.
       </div>
       <button
         onClick={dismiss}

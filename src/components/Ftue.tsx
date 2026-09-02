@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Camera, Dice5, Dumbbell, Plus, Pointer, Share, Smartphone, Volume2 } from "lucide-react";
+import { ArrowRight, Camera, Dice5, Dumbbell, Expand, Plus, Pointer, Share, Smartphone, Volume2 } from "lucide-react";
 import { BombAvatar } from "@/components/BombAvatar";
+import { enterFullscreen, setupNeeds } from "@/lib/device";
+
 
 /**
  * First-Time User Experience engine.
@@ -116,8 +118,15 @@ export function useFtue(profile: string | null | undefined, key: FtueKey) {
     if (!profile) return;
     if (ftueDisabled()) return;
     if (seen(id, key)) return;
+    // Device-aware: skip the setup card entirely when this phone needs nothing
+    // (already installed / no silent switch / already fullscreen).
+    if (key === "lobby") {
+      const n = setupNeeds();
+      if (!n.needsSilentSwitch && !n.needsAddToHomeScreen && !n.canOneTapFullscreen) return;
+    }
     setOpen(true);
   }, [profile, id, key]);
+
 
   const dismiss = useCallback(() => {
     try {
@@ -134,6 +143,18 @@ export function useFtue(profile: string | null | undefined, key: FtueKey) {
 
 export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: () => void }) {
   const tip = TIPS[tipKey];
+  // Setup card adapts to the actual device: iPhones get the ringer + Add to
+  // Home Screen steps, everyone else gets one tap to fullscreen.
+  const [needs] = useState(() => (tipKey === "lobby" ? setupNeeds() : null));
+  const [fs, setFs] = useState(false);
+  const body =
+    tipKey === "lobby" && needs
+      ? needs.platform === "ios"
+        ? needs.needsAddToHomeScreen
+          ? "Two quick iPhone settings so the game feels like a real app."
+          : "One quick iPhone setting so you can hear the game."
+        : "One tap and the game takes over your whole screen."
+      : tip.body;
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-black/80">
       <div
@@ -151,11 +172,22 @@ export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: (
           className="font-black"
           style={{ color: "var(--boom-ink)", fontSize: "clamp(1.15rem, 5vw, 1.5rem)", lineHeight: 1.2 }}
         >
-          {tip.body}
+          {body}
         </p>
+        {needs?.canOneTapFullscreen && (
+          <button
+            onClick={async () => setFs(await enterFullscreen())}
+            className="btn-massive w-full flex items-center justify-center gap-3"
+            style={{ background: fs ? "var(--boom-blue)" : "var(--boom-orange)" }}
+          >
+            <Expand size={30} strokeWidth={4} />
+            {fs ? "FULLSCREEN ON" : "GO FULLSCREEN"}
+          </button>
+        )}
         <button onClick={onDismiss} className="btn-massive w-full" style={{ background: "var(--boom-green)" }}>
           GOT IT!
         </button>
+
         <button
           onClick={() => {
             setFtueDisabled(true);
@@ -201,24 +233,8 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
           <BombAvatar color="#22d3ee" size={74} />
         </div>
       )}
-      {tipKey === "lobby" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4">
-          <div className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 ink-border-sm anim-ui-float">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-black text-white text-2xl font-black">1</div>
-            <div className="flex flex-1 items-center gap-2 text-left">
-              <Volume2 size={32} strokeWidth={3} />
-              <span className="text-base font-black leading-tight">Turn silent mode OFF for sound</span>
-            </div>
-          </div>
-          <div className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 ink-border-sm">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-black text-white text-2xl font-black">2</div>
-            <div className="flex flex-1 items-center gap-2 text-left">
-              <Share size={32} strokeWidth={3} />
-              <span className="text-base font-black leading-tight">Tap Share → Add to Home Screen for fullscreen</span>
-            </div>
-          </div>
-        </div>
-      )}
+      {tipKey === "lobby" && <LobbySetupSteps />}
+
       {tipKey === "podform" && (
         <div className="absolute inset-0 flex items-center justify-center gap-3">
           <BombAvatar color="#ec4899" size={64} />
@@ -275,5 +291,38 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
       )}
     </div>
 
+  );
+}
+
+/** Device-aware setup steps: only what this specific phone actually needs. */
+function LobbySetupSteps() {
+  const [needs] = useState(() => setupNeeds());
+  const steps: { icon: React.ReactNode; text: string }[] = [];
+  if (needs.needsSilentSwitch) {
+    steps.push({ icon: <Volume2 size={32} strokeWidth={3} />, text: "Flip the silent switch OFF for sound" });
+  }
+  if (needs.needsAddToHomeScreen) {
+    steps.push({ icon: <Share size={32} strokeWidth={3} />, text: "Tap Share → Add to Home Screen for fullscreen" });
+  }
+  if (needs.canOneTapFullscreen) {
+    steps.push({ icon: <Expand size={32} strokeWidth={3} />, text: "Tap GO FULLSCREEN below" });
+  }
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4">
+      {steps.map((s, i) => (
+        <div
+          key={i}
+          className={`flex w-full items-center gap-3 rounded-2xl bg-white p-3 ink-border-sm ${i === 0 ? "anim-ui-float" : ""}`}
+        >
+          <div className="grid h-12 w-12 place-items-center rounded-xl bg-black text-white text-2xl font-black">
+            {i + 1}
+          </div>
+          <div className="flex flex-1 items-center gap-2 text-left">
+            {s.icon}
+            <span className="text-base font-black leading-tight">{s.text}</span>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

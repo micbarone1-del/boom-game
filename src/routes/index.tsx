@@ -9,7 +9,6 @@ import { useAttractVideo } from "@/hooks/use-attract-video";
 import { enterFullscreen } from "@/lib/fullscreen";
 import { FullscreenButton } from "@/components/FullscreenButton";
 
-
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({

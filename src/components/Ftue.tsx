@@ -116,8 +116,15 @@ export function useFtue(profile: string | null | undefined, key: FtueKey) {
     if (!profile) return;
     if (ftueDisabled()) return;
     if (seen(id, key)) return;
+    // Device-aware: skip the setup card entirely when this phone needs nothing
+    // (already installed / no silent switch / already fullscreen).
+    if (key === "lobby") {
+      const n = setupNeeds();
+      if (!n.needsSilentSwitch && !n.needsAddToHomeScreen && !n.canOneTapFullscreen) return;
+    }
     setOpen(true);
   }, [profile, id, key]);
+
 
   const dismiss = useCallback(() => {
     try {

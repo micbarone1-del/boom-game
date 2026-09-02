@@ -38,10 +38,12 @@ export function BoomCamera({ onClose }: { onClose: () => void }) {
     let cancelled = false;
     const start = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: true,
-        });
+        const video = { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } };
+        // Mic capture can be blocked by the active audio session on iOS —
+        // retry silently rather than showing a "camera blocked" error.
+        const stream = await navigator.mediaDevices
+          .getUserMedia({ video, audio: true })
+          .catch(() => navigator.mediaDevices.getUserMedia({ video, audio: false }));
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
         if (videoRef.current) {

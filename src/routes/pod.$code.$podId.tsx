@@ -1822,10 +1822,17 @@ function JudgePhase({
     let cancelled = false;
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: true,
-        });
+        // iOS sometimes refuses mic capture while the game's audio session is
+        // active ("AudioSession category is not compatible with audio
+        // capture") — fall back to a silent video-only stream.
+        const stream = await navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: true })
+          .catch(() =>
+            navigator.mediaDevices.getUserMedia({
+              video: { facingMode: { ideal: "environment" } },
+              audio: false,
+            }),
+          );
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;

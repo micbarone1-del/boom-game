@@ -221,6 +221,24 @@ function Index() {
           <source src="/media/intro.webm?v=20260829f" type="video/webm" />
         </video>
 
+        {/* iOS blocks sound until a real tap: make the whole screen the tap
+            target so sound is on by default from the very first touch. */}
+        {introMuted && (
+          <button
+            onClick={toggleIntroSound}
+            aria-label="Tap for sound"
+            className="absolute inset-0 z-[9] flex items-end justify-center pb-32"
+            style={{ background: "rgba(0,0,0,.35)" }}
+          >
+            <span
+              className="ink-border-sm rounded-2xl px-6 py-3 text-xl font-black uppercase anim-press-start"
+              style={{ background: "var(--boom-yellow, #FFD23F)", fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              🔊 Tap for sound
+            </span>
+          </button>
+        )}
+
 
         <button
           onClick={toggleIntroSound}

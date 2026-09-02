@@ -926,3 +926,23 @@
   50% { filter: brightness(1.25); }
 }
 .anim-power-ring { animation: power-ring 1.1s ease-in-out infinite; }
+
+/* --- Mobile app feel: kill double-tap / pinch zoom and text selection --- */
+html,
+body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+button,
+[role="button"],
+canvas,
+video,
+img,
+.arcade-card,
+.arcade-card-sm {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

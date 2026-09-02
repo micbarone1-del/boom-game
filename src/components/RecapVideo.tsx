@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Share2, Film, Loader2, Check } from "lucide-react";
 import { shareClipBlob, saveClipBlob, clipFileName } from "@/lib/clip-share";
+import { drawBrand, preloadBrand } from "@/lib/clip-brand";
 
 
 export type RecapPlayer = {
@@ -80,7 +81,10 @@ export function RecapVideo({
       const stopped = new Promise<void>((res) => {
         rec.onstop = () => res();
       });
-      rec.start();
+      // Timeslice: Safari only flushes recorded data reliably when given one,
+      // otherwise the finished file is empty and cannot be shared or opened.
+      rec.start(500);
+      preloadBrand();
 
       const isMascot = player.avatar_url?.startsWith("mascot:");
       const mascotColor = isMascot ? player.avatar_url!.slice(7) : "#ec4899";
@@ -136,7 +140,7 @@ export function RecapVideo({
           const tick = () => {
             const p = Math.min(1, (performance.now() - start) / clipMs);
             setProgress(Math.min(1, (elapsedBefore + p * clipMs) / totalMs));
-            drawClipFrame(ctx, W, H, vid, montage[i].label ?? `MOVE ${i + 1}`, i + 1, montage.length, p);
+            drawClipFrame(ctx, W, H, vid, montage[i].label ?? `MOVE ${i + 1}`, i + 1, montage.length, p, player.username);
             if (p >= 1) {
               elapsedBefore += clipMs;
               resolve();
@@ -155,7 +159,12 @@ export function RecapVideo({
       rec.stop();
       await stopped;
       const out = new Blob(chunks, { type: rec.mimeType || mime || "video/webm" });
-      setBlob(out);
+      if (out.size < 1024) {
+        setStatus("Recording failed — try again");
+        setTimeout(() => setStatus(null), 2600);
+      } else {
+        setBlob(out);
+      }
     } finally {
       urls.forEach((u) => URL.revokeObjectURL(u));
       setBuilding(false);
@@ -265,6 +274,7 @@ function drawClipFrame(
   idx: number,
   count: number,
   p: number,
+  playerName: string,
 ) {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, W, H);
@@ -300,6 +310,7 @@ function drawClipFrame(
   ctx.fillStyle = "#ffd84d";
   ctx.fillText(`MOVE ${idx} / ${count}`, W / 2, y + 46);
   ctx.restore();
+  drawBrand(ctx, W, H, { playerName });
 }
 
 function drawFrame(
@@ -401,12 +412,8 @@ function drawFrame(
   ctx.strokeText(label, W / 2, sy + 70);
   ctx.fillText(label, W / 2, sy + 70);
 
-  // Footer tag
-  ctx.font = "700 28px system-ui";
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.lineWidth = 4;
-  ctx.strokeText("boomworkout.fun", W / 2, H - 40);
-  ctx.fillText("boomworkout.fun", W / 2, H - 40);
+  // Four-corner branding so the clip is recognisable when shared.
+  drawBrand(ctx, W, H, { playerName: player.username });
 }
 
 function easeOutBack(x: number) {

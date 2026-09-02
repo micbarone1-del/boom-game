@@ -1,7 +1,7 @@
 import { BOARD, BOARD_SIZE, CELL_LABEL, type CellType } from "@/lib/game";
 import type { Player, Pod } from "@/hooks/use-room";
 import { mascotForCell } from "@/components/CellMascot";
-import { Bomb, Trophy, HelpCircle, Zap, ArrowLeft, AlertTriangle, Users, Flame, Dumbbell } from "lucide-react";
+import { Bomb, Trophy, HelpCircle, Zap, OctagonAlert, AlertTriangle, Users, Flame, Dumbbell } from "lucide-react";
 import { Pause } from "lucide-react";
 
 export const POD_COLORS = ["#fbbf24", "#fb923c", "#4ade80"];
@@ -50,7 +50,7 @@ function CellGlyph({ type }: { type: CellType }) {
     case "boost":
       return <Zap {...props} fill="#fff" color="#fff" />;
     case "setback":
-      return <ArrowLeft {...props} color="#fff" />;
+      return <OctagonAlert {...props} color="#fff" />;
     case "surprise":
       return <HelpCircle {...props} color="#fff" />;
     case "crazy":

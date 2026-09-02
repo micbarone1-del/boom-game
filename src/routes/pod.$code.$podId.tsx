@@ -34,6 +34,7 @@ import { JoinAsModal } from "@/components/JoinAsModal";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 import { RecapVideo } from "@/components/RecapVideo";
 import { shareClipBlob, saveClipBlob } from "@/lib/clip-share";
+import { startBrandedRecording, type BrandedRecorder } from "@/lib/clip-brand";
 
 import { mascotForCell, CELL_FLAVOR, CellMascot } from "@/components/CellMascot";
 import { BombAvatar } from "@/components/BombAvatar";
@@ -48,7 +49,7 @@ import { BossPhase, BossVictory } from "@/components/BossPhase";
 void BossVictory;
 import { cellPos, cellBg, COLS, ROWS, POD_COLORS } from "@/components/GymMap";
 import { BOARD, CELL_LABEL } from "@/lib/game";
-import { Zap, ArrowLeft, HelpCircle, AlertTriangle, Flame, Dumbbell, Trophy, Pause, Swords, ArrowRight } from "lucide-react";
+import { Zap, ArrowLeft, HelpCircle, AlertTriangle, Flame, Dumbbell, Trophy, Pause, Swords, ArrowRight, Users, OctagonAlert } from "lucide-react";
 
 export const Route = createFileRoute("/pod/$code/$podId")({
   component: PodPage,
@@ -1676,10 +1677,10 @@ function HopCellGlyph({ type }: { type: CellType }) {
   };
   switch (type) {
     case "boost": return <Zap {...p} />;
-    case "setback": return <ArrowLeft {...p} />;
+    case "setback": return <OctagonAlert {...p} />;
     case "surprise": return <HelpCircle {...p} />;
     case "crazy": return <AlertTriangle {...p} />;
-    case "group": return <img src={groupMascot} alt="" className="w-3/4 h-3/4 object-contain" />;
+    case "group": return <Users {...p} />;
     case "pause": return <Pause {...p} />;
     case "finish": return <Trophy {...p} />;
     case "hard": return <Flame {...p} />;
@@ -1787,8 +1788,7 @@ function JudgePhase({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const brandedRef = useRef<BrandedRecorder | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
   const [reps, setReps] = useState(0);
   const [holdMs, setHoldMs] = useState(0); // for seconds mode
@@ -1835,15 +1835,14 @@ function JudgePhase({
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
         }
-        try {
-          const rec = new MediaRecorder(stream);
-          recorderRef.current = rec;
-          rec.ondataavailable = (e) => {
-            if (e.data.size > 0) chunksRef.current.push(e.data);
-          };
-          rec.start();
-        } catch {
-          /* MediaRecorder unsupported on some browsers */
+        // Record through a canvas so the saved clip carries the four-corner
+        // BOOM! branding (logo, mascot, site, player name).
+        if (videoRef.current) {
+          brandedRef.current = startBrandedRecording(
+            videoRef.current,
+            stream.getAudioTracks(),
+            { playerName: player.username, caption: trap.exercise },
+          );
         }
       } catch (e) {
         setCamError(e instanceof Error ? e.message : "Camera denied");
@@ -1856,7 +1855,7 @@ function JudgePhase({
       const s = streamRef.current;
       if (s) s.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
-      recorderRef.current = null;
+      brandedRef.current = null;
     };
   }, []);
 
@@ -1921,26 +1920,13 @@ function JudgePhase({
       sfx.play("explodeJingle");
       speak(`${player.username} exploded! Back to start.`);
     }
-    // Stop recorder & collect blob
-    const rec = recorderRef.current;
-    const done = (blob: Blob | null) => onComplete(outcome, blob);
-    if (rec && rec.state !== "inactive") {
-      rec.onstop = () => {
-        const blob = chunksRef.current.length
-          ? new Blob(chunksRef.current, {
-              // Keep the recorder's real container so the clip stays playable.
-              type: rec.mimeType || chunksRef.current[0].type || "video/webm",
-            })
-          : null;
-        done(blob);
-      };
-      try {
-        rec.stop();
-      } catch {
-        done(null);
-      }
+    // Stop recorder & collect the branded blob.
+    const branded = brandedRef.current;
+    brandedRef.current = null;
+    if (branded) {
+      void branded.stop().then((blob) => onComplete(outcome, blob));
     } else {
-      done(null);
+      onComplete(outcome, null);
     }
   };
 
@@ -2755,7 +2741,16 @@ function GroupPhase({
     <main className="fixed inset-0 flex flex-col items-center justify-between p-6 gap-3" style={{ background: "var(--boom-blue)" }}>
       <div className="text-white text-xs font-black uppercase opacity-90 mt-4">All Together · phone down</div>
       <div className="flex flex-col items-center gap-3 text-center">
-        <img src={groupMascot} alt="" className="w-28 h-28 object-contain anim-mascot-bounce" />
+        <div className="flex items-end justify-center gap-2">
+          <img src={groupMascot} alt="" className="w-28 h-28 object-contain anim-mascot-bounce" />
+          {exerciseArt(trap.exercise) && (
+            <img
+              src={exerciseArt(trap.exercise)!}
+              alt={trap.exercise}
+              className="w-32 h-32 object-contain anim-mascot-bounce"
+            />
+          )}
+        </div>
         <div className="text-white text-5xl font-black" style={{ fontFamily: "'Luckiest Guy', cursive", textShadow: "3px 3px 0 #111" }}>
           EVERYBODY!
         </div>

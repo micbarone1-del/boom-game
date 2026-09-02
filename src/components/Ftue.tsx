@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Camera, Dice5, Dumbbell, Plus, Pointer, Share, Smartphone, Volume2 } from "lucide-react";
+import { ArrowRight, Camera, Dice5, Dumbbell, Expand, Plus, Pointer, Share, Smartphone, Volume2 } from "lucide-react";
 import { BombAvatar } from "@/components/BombAvatar";
+import { enterFullscreen, setupNeeds } from "@/lib/device";
+
 
 /**
  * First-Time User Experience engine.

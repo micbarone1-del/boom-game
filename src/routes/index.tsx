@@ -8,6 +8,7 @@ import bombMascot from "@/assets/bomb-mascot.png";
 import { useAttractVideo } from "@/hooks/use-attract-video";
 import { enterFullscreen } from "@/lib/fullscreen";
 import { FullscreenButton } from "@/components/FullscreenButton";
+import { IosInstallHint } from "@/components/IosInstallHint";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -310,6 +311,7 @@ function Index() {
           </button>
           <FullscreenButton />
         </div>
+        <IosInstallHint />
 
       </main>
     );

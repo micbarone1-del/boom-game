@@ -32,8 +32,8 @@ const TIPS: Record<FtueKey, { title: string; body: string; color: string }> = {
     color: "var(--boom-blue)",
   },
   lobby: {
-    title: "WELCOME!",
-    body: "Sign in or pick a nickname, then jump into a pod. 2–4 players per pod.",
+    title: "PHONE CHECK",
+    body: "iPhone: flick the side switch OFF SILENT for sound. For fullscreen, tap Share → Add to Home Screen. Then pick a nickname and jump into a pod (2–4 players).",
     color: "var(--boom-green)",
   },
   podform: {

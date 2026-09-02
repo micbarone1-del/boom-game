@@ -605,7 +605,7 @@ function PodPage() {
   const overlay = (() => {
     // Always-on pause toggle in the top-right corner (z below PauseOverlay).
     const pauseBtn = (
-      <div className="fixed top-2 right-2 z-[100]">
+      <div className="fixed right-2 z-[100]" style={{ top: "calc(env(safe-area-inset-top, 0px) + 3.25rem)" }}>
         <PauseToggleButton
           paused={!!room.paused}
           onToggle={() => {
@@ -1822,10 +1822,17 @@ function JudgePhase({
     let cancelled = false;
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: true,
-        });
+        // iOS sometimes refuses mic capture while the game's audio session is
+        // active ("AudioSession category is not compatible with audio
+        // capture") — fall back to a silent video-only stream.
+        const stream = await navigator.mediaDevices
+          .getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: true })
+          .catch(() =>
+            navigator.mediaDevices.getUserMedia({
+              video: { facingMode: { ideal: "environment" } },
+              audio: false,
+            }),
+          );
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;

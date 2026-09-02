@@ -99,7 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
-      { rel: "apple-touch-icon", href: "/favicon.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bangers&family=Luckiest+Guy&display=swap" },
@@ -127,6 +127,27 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Installed (home-screen) apps get their own storage jar, and older jars can
+  // carry a stale "muted" / "tips off" flag. On the first launch inside the
+  // installed app, force sound and tutorials back ON.
+  useEffect(() => {
+    try {
+      const FLAG = "boom.standalone.init.v1";
+      const standalone =
+        window.matchMedia?.("(display-mode: standalone)").matches === true ||
+        window.matchMedia?.("(display-mode: fullscreen)").matches === true ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true;
+      if (standalone && localStorage.getItem(FLAG) !== "1") {
+        localStorage.setItem("boom.sfx.muted.v4", "0");
+        localStorage.setItem("boom.ftue.disabled.v4", "0");
+        localStorage.setItem("boom.robotVoice.enabled.v1", "1");
+        localStorage.setItem(FLAG, "1");
+      }
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
 
   // Make the web app behave like a native one on phones: no pinch zoom, no
   // double-tap zoom, and audio that plays even with the ringer switch off.

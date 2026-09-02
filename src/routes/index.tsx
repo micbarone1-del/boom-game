@@ -80,6 +80,14 @@ function Index() {
   };
   const endIntro = () => setIntro(false);
 
+  // Intro + attract are edge-to-edge video: black out the page backdrop so no
+  // cream strip shows under the safe areas on installed/iOS devices.
+  useEffect(() => {
+    const immersive = intro || attract;
+    document.body.classList.toggle("boom-immersive", immersive);
+    return () => document.body.classList.remove("boom-immersive");
+  }, [intro, attract]);
+
   useEffect(() => {
     if (!intro) return;
     const video = introRef.current;

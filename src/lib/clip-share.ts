@@ -126,7 +126,7 @@ export async function shareClipBlob(
   const file = new File([blob], clipFileName(blob, opts.fileName), {
     type: blob.type || "video/webm",
   });
-  if (nav.canShare?.({ files: [file] })) {
+  if (!iosUnsupported(blob) && nav.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: opts.title, text: opts.text });
       return "shared";

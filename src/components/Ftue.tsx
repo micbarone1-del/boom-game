@@ -202,15 +202,20 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
         </div>
       )}
       {tipKey === "lobby" && (
-        <div className="absolute inset-0 flex items-center justify-center gap-3">
-          <div className="anim-ui-float flex flex-col items-center gap-1 rounded-2xl bg-white px-3 py-2 ink-border-sm">
-            <Volume2 size={44} strokeWidth={3} />
-            <span className="text-[11px] font-black uppercase">Silent off</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4">
+          <div className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 ink-border-sm anim-ui-float">
+            <div className="grid h-12 w-12 place-items-center rounded-xl bg-black text-white text-2xl font-black">1</div>
+            <div className="flex flex-1 items-center gap-2 text-left">
+              <Volume2 size={32} strokeWidth={3} />
+              <span className="text-base font-black leading-tight">Turn silent mode OFF for sound</span>
+            </div>
           </div>
-          <BombAvatar color="#22d3ee" size={70} />
-          <div className="flex flex-col items-center gap-1 rounded-2xl bg-white px-3 py-2 ink-border-sm">
-            <Share size={44} strokeWidth={3} />
-            <span className="text-[11px] font-black uppercase">Add to home</span>
+          <div className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 ink-border-sm">
+            <div className="grid h-12 w-12 place-items-center rounded-xl bg-black text-white text-2xl font-black">2</div>
+            <div className="flex flex-1 items-center gap-2 text-left">
+              <Share size={32} strokeWidth={3} />
+              <span className="text-base font-black leading-tight">Tap Share → Add to Home Screen for fullscreen</span>
+            </div>
           </div>
         </div>
       )}

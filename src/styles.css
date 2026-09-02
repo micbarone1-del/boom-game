@@ -946,3 +946,10 @@ img,
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* --- Immersive screens: no cream page backdrop behind the safe areas --- */
+html:has(body.boom-immersive),
+body.boom-immersive {
+  background-color: #000;
+  background-image: none;
+}

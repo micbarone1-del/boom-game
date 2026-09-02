@@ -174,7 +174,12 @@ export function BossPhase({
   const [, force] = useState(0);
   useEffect(() => {
     const i = setInterval(() => force((n) => n + 1), 500);
-    return () => clearInterval(i);
+    // Immersive: kill the cream page backdrop so the safe-area strip is black.
+    document.body.classList.add("boom-immersive");
+    return () => {
+      clearInterval(i);
+      document.body.classList.remove("boom-immersive");
+    };
   }, []);
   const remaining = Math.max(0, bossEndsAt - Date.now());
 

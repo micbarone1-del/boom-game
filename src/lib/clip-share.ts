@@ -14,19 +14,45 @@ export function clipFileName(blob: Blob, base: string) {
   return `${base.replace(/\.(webm|mp4)$/i, "")}.${extFor(blob)}`;
 }
 
+/** True on iPhone/iPad, where only MP4 files can be saved or re-shared. */
+function isIOS() {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && (navigator as Navigator).maxTouchPoints > 1)
+  );
+}
+
+/** iOS refuses WebM everywhere (Photos, WhatsApp, Files preview). */
+function iosUnsupported(blob: Blob) {
+  return isIOS() && !(blob.type || "").includes("mp4");
+}
+
 /**
  * Save a clip to the device. `<a download>` is ignored on iOS, so there we
  * hand the file to the share sheet (which offers "Save to Files"/Photos) and
- * only fall back to opening the blob in a new tab.
+ * only fall back to opening the blob in a new tab. When the recording is a
+ * format iOS cannot read (WebM), we upload it and hand over a link instead —
+ * a link always opens, a WebM file never does.
  */
 export async function saveClipBlob(blob: Blob, baseName: string): Promise<void> {
   const name = clipFileName(blob, baseName);
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   const file = new File([blob], name, { type: blob.type || "video/webm" });
-  const iOS =
-    typeof navigator !== "undefined" &&
-    (/iP(hone|ad|od)/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && (navigator as Navigator).maxTouchPoints > 1));
+  const iOS = isIOS();
+
+  if (iosUnsupported(blob)) {
+    const url = await uploadClip(blob, baseName.replace(/\.(webm|mp4)$/i, ""));
+    if (url) {
+      try {
+        await navigator.clipboard?.writeText(url);
+      } catch {
+        /* ignore */
+      }
+      window.open(url, "_blank", "noopener");
+      return;
+    }
+  }
 
   if (iOS && nav.canShare?.({ files: [file] })) {
     try {
@@ -47,6 +73,7 @@ export async function saveClipBlob(blob: Blob, baseName: string): Promise<void> 
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
+
 
 /**
  * Upload a recorded clip and return a link that opens the *video itself*
@@ -99,7 +126,7 @@ export async function shareClipBlob(
   const file = new File([blob], clipFileName(blob, opts.fileName), {
     type: blob.type || "video/webm",
   });
-  if (nav.canShare?.({ files: [file] })) {
+  if (!iosUnsupported(blob) && nav.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: opts.title, text: opts.text });
       return "shared";

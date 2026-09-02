@@ -202,12 +202,16 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
         </div>
       )}
       {tipKey === "lobby" && (
-        <div className="absolute inset-0 flex items-center justify-center gap-4">
-          <BombAvatar color="#22d3ee" size={78} />
-          <div className="anim-ui-float rounded-2xl bg-white p-3 ink-border-sm">
-            <Users size={56} strokeWidth={3} />
+        <div className="absolute inset-0 flex items-center justify-center gap-3">
+          <div className="anim-ui-float flex flex-col items-center gap-1 rounded-2xl bg-white px-3 py-2 ink-border-sm">
+            <Volume2 size={44} strokeWidth={3} />
+            <span className="text-[11px] font-black uppercase">Silent off</span>
           </div>
-          <BombAvatar color="#f59e0b" size={78} persona="wild" />
+          <BombAvatar color="#22d3ee" size={70} />
+          <div className="flex flex-col items-center gap-1 rounded-2xl bg-white px-3 py-2 ink-border-sm">
+            <Share size={44} strokeWidth={3} />
+            <span className="text-[11px] font-black uppercase">Add to home</span>
+          </div>
         </div>
       )}
       {tipKey === "podform" && (

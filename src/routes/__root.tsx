@@ -126,9 +126,43 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // Make the web app behave like a native one on phones: no pinch zoom, no
+  // double-tap zoom, and audio that plays even with the ringer switch off.
+  useEffect(() => {
+    const stop = (e: Event) => e.preventDefault();
+    document.addEventListener("gesturestart", stop as EventListener);
+    document.addEventListener("gesturechange", stop as EventListener);
+    document.addEventListener("gestureend", stop as EventListener);
+    document.addEventListener("dblclick", stop as EventListener, { passive: false });
+
+    let lastTouch = 0;
+    const noDoubleTap = (e: TouchEvent) => {
+      const now = Date.now();
+      if (now - lastTouch <= 320) e.preventDefault();
+      lastTouch = now;
+    };
+    document.addEventListener("touchend", noDoubleTap, { passive: false });
+
+    try {
+      const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+      if (session) session.type = "playback";
+    } catch {
+      /* not supported */
+    }
+
+    return () => {
+      document.removeEventListener("gesturestart", stop as EventListener);
+      document.removeEventListener("gesturechange", stop as EventListener);
+      document.removeEventListener("gestureend", stop as EventListener);
+      document.removeEventListener("dblclick", stop as EventListener);
+      document.removeEventListener("touchend", noDoubleTap);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
     </QueryClientProvider>
   );
 }
+

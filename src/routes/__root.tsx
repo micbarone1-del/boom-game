@@ -128,6 +128,27 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // Installed (home-screen) apps get their own storage jar, and older jars can
+  // carry a stale "muted" / "tips off" flag. On the first launch inside the
+  // installed app, force sound and tutorials back ON.
+  useEffect(() => {
+    try {
+      const FLAG = "boom.standalone.init.v1";
+      const standalone =
+        window.matchMedia?.("(display-mode: standalone)").matches === true ||
+        window.matchMedia?.("(display-mode: fullscreen)").matches === true ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true;
+      if (standalone && localStorage.getItem(FLAG) !== "1") {
+        localStorage.setItem("boom.sfx.muted.v4", "0");
+        localStorage.setItem("boom.ftue.disabled.v4", "0");
+        localStorage.setItem("boom.robotVoice.enabled.v1", "1");
+        localStorage.setItem(FLAG, "1");
+      }
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
+
   // Make the web app behave like a native one on phones: no pinch zoom, no
   // double-tap zoom, and audio that plays even with the ringer switch off.
   useEffect(() => {

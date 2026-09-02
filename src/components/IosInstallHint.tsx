@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Share, X } from "lucide-react";
+import { Share, Volume2, X } from "lucide-react";
 import { isStandalone } from "@/lib/fullscreen";
 
 const DISMISS_KEY = "boom.a2hs.dismissed.v1";

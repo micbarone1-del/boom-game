@@ -293,3 +293,36 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
 
   );
 }
+
+/** Device-aware setup steps: only what this specific phone actually needs. */
+function LobbySetupSteps() {
+  const [needs] = useState(() => setupNeeds());
+  const steps: { icon: React.ReactNode; text: string }[] = [];
+  if (needs.needsSilentSwitch) {
+    steps.push({ icon: <Volume2 size={32} strokeWidth={3} />, text: "Flip the silent switch OFF for sound" });
+  }
+  if (needs.needsAddToHomeScreen) {
+    steps.push({ icon: <Share size={32} strokeWidth={3} />, text: "Tap Share → Add to Home Screen for fullscreen" });
+  }
+  if (needs.canOneTapFullscreen) {
+    steps.push({ icon: <Expand size={32} strokeWidth={3} />, text: "Tap GO FULLSCREEN below" });
+  }
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-4">
+      {steps.map((s, i) => (
+        <div
+          key={i}
+          className={`flex w-full items-center gap-3 rounded-2xl bg-white p-3 ink-border-sm ${i === 0 ? "anim-ui-float" : ""}`}
+        >
+          <div className="grid h-12 w-12 place-items-center rounded-xl bg-black text-white text-2xl font-black">
+            {i + 1}
+          </div>
+          <div className="flex flex-1 items-center gap-2 text-left">
+            {s.icon}
+            <span className="text-base font-black leading-tight">{s.text}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

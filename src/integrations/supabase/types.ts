@@ -291,6 +291,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_active_room: { Args: { _code: string }; Returns: boolean }
       link_player_to_me: {
         Args: { _player_id: string }
         Returns: {

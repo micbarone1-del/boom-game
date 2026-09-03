@@ -8,6 +8,9 @@ import bombMascot from "@/assets/bomb-mascot.png";
 import { useAttractVideo } from "@/hooks/use-attract-video";
 import { enterFullscreen } from "@/lib/fullscreen";
 import { FullscreenButton } from "@/components/FullscreenButton";
+import tutorialVideo from "@/assets/tutorial.mp4.asset.json";
+import tutorialWebm from "@/assets/tutorial.webm.asset.json";
+
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -65,12 +68,17 @@ function Index() {
   // The intro sting plays once every time the player lands on the home
   // screen, then the attract reel takes over behind "PRESS TO START".
   const [intro, setIntro] = useState(true);
+  // Guided tutorial reel: plays once for a first-time player, right after the
+  // intro sting, unless tutorials are switched off.
+  const [tutorial, setTutorial] = useState(false);
+  const [tutorialMuted, setTutorialMuted] = useState(false);
+  const tutorialRef = useRef<HTMLVideoElement | null>(null);
   const introRef = useRef<HTMLVideoElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const startVideoRef = useRef<HTMLVideoElement | null>(null);
   const [introMuted, setIntroMuted] = useState(false);
-  useAttractVideo(videoRef, attract && !intro);
-  useAttractVideo(startVideoRef, !attract && !intro);
+  useAttractVideo(videoRef, attract && !intro && !tutorial);
+  useAttractVideo(startVideoRef, !attract && !intro && !tutorial);
 
   // Tapping start is a user gesture, so it is the right moment to hide the
   // browser chrome and make the game feel like a native app.
@@ -78,15 +86,32 @@ function Index() {
     void enterFullscreen();
     setAttract(false);
   };
-  const endIntro = () => setIntro(false);
+  const endIntro = () => {
+    setIntro(false);
+    try {
+      const off = localStorage.getItem("boom.ftue.disabled.v5") === "1";
+      const seen = localStorage.getItem("boom.tutorialvideo.seen.v1") === "1";
+      if (!off && !seen) setTutorial(true);
+    } catch {
+      /* storage blocked */
+    }
+  };
+  const endTutorial = () => {
+    setTutorial(false);
+    try {
+      localStorage.setItem("boom.tutorialvideo.seen.v1", "1");
+    } catch {
+      /* storage blocked */
+    }
+  };
 
   // Intro + attract are edge-to-edge video: black out the page backdrop so no
   // cream strip shows under the safe areas on installed/iOS devices.
   useEffect(() => {
-    const immersive = intro || attract;
+    const immersive = intro || tutorial || attract;
     document.body.classList.toggle("boom-immersive", immersive);
     return () => document.body.classList.remove("boom-immersive");
-  }, [intro, attract]);
+  }, [intro, tutorial, attract]);
 
   useEffect(() => {
     if (!intro) return;
@@ -158,7 +183,7 @@ function Index() {
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
   // policies mean it can only start once the visitor touches the screen.
   useEffect(() => {
-    if (!attract || intro) return;
+    if (!attract || intro || tutorial) return;
 
     setMusicPhase("attract");
     const kick = () => {
@@ -171,7 +196,40 @@ function Index() {
       window.removeEventListener("pointerdown", kick);
       window.removeEventListener("keydown", kick);
     };
-  }, [attract, intro]);
+  }, [attract, intro, tutorial]);
+
+  // Tutorial reel plays with sound; browsers that block it start muted and
+  // unmute on the first touch.
+  useEffect(() => {
+    if (!tutorial) return;
+    const video = tutorialRef.current;
+    if (!video) return;
+    // React can reuse the intro's <video> node, so reload the sources first.
+    video.load();
+    video.currentTime = 0;
+    video.muted = false;
+    video.volume = 1;
+    setTutorialMuted(false);
+    void video.play().catch(() => {
+      video.muted = true;
+      setTutorialMuted(true);
+      void video.play().catch(() => {});
+    });
+    const retry = () => {
+      if (!video.muted) return;
+      video.muted = false;
+      void video
+        .play()
+        .then(() => setTutorialMuted(false))
+        .catch(() => {
+          video.muted = true;
+          setTutorialMuted(true);
+        });
+    };
+    const events = ["pointerdown", "touchstart", "click", "keydown"] as const;
+    events.forEach((e) => document.addEventListener(e, retry, true));
+    return () => events.forEach((e) => document.removeEventListener(e, retry, true));
+  }, [tutorial]);
 
   const tryJoin = (e: React.FormEvent) => {
 
@@ -196,6 +254,7 @@ function Index() {
     return (
       <main className="fixed inset-0 bg-black overflow-hidden">
         <video
+          key="intro-sting"
           autoPlay
           playsInline
           preload="auto"
@@ -251,6 +310,60 @@ function Index() {
 
         <button
           onClick={endIntro}
+          className="absolute bottom-6 right-5 z-10 ink-border-sm rounded-xl bg-white px-4 py-2 text-sm font-black uppercase active:scale-95"
+        >
+          Skip
+        </button>
+      </main>
+    );
+  }
+
+  if (tutorial) {
+    return (
+      <main className="fixed inset-0 overflow-hidden bg-black">
+        <video
+          key="tutorial-reel"
+          ref={tutorialRef}
+          autoPlay
+          playsInline
+          preload="auto"
+          onEnded={endTutorial}
+          onError={(e) => {
+            // <source> elements report their own errors; only give up when the
+            // video itself has exhausted every source.
+            if (e.target === tutorialRef.current) endTutorial();
+          }}
+          aria-label="How to play BOOM!"
+          className="absolute inset-0 h-full w-full object-cover"
+        >
+          {/* H.264 first for Safari/iOS, VP9 for browsers without it */}
+          <source src={tutorialVideo.url} type="video/mp4" />
+          <source src={tutorialWebm.url} type="video/webm" />
+        </video>
+
+        {tutorialMuted && (
+          <button
+            onClick={() => {
+              const v = tutorialRef.current;
+              if (!v) return;
+              v.muted = false;
+              v.volume = 1;
+              void v.play().then(() => setTutorialMuted(false)).catch(() => {});
+            }}
+            aria-label="Tap for sound"
+            className="absolute inset-0 z-[9] flex items-end justify-center pb-32"
+            style={{ background: "rgba(0,0,0,.3)" }}
+          >
+            <span
+              className="ink-border-sm rounded-2xl px-6 py-3 text-xl font-black uppercase anim-press-start"
+              style={{ background: "var(--boom-yellow, #FFD23F)", fontFamily: "'Luckiest Guy', cursive" }}
+            >
+              🔊 Tap for sound
+            </span>
+          </button>
+        )}
+        <button
+          onClick={endTutorial}
           className="absolute bottom-6 right-5 z-10 ink-border-sm rounded-xl bg-white px-4 py-2 text-sm font-black uppercase active:scale-95"
         >
           Skip

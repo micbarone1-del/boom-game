@@ -11,7 +11,7 @@ const browser = await openBrowser("chrome", {
   chromiumOptions: { args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"] },
   chromeMode: "chrome-for-testing",
 });
-const composition = await selectComposition({ serveUrl: bundled, id: "main", puppeteerInstance: browser });
+const composition = await selectComposition({ serveUrl: bundled, id: process.env.COMP ?? "main", puppeteerInstance: browser });
 await renderMedia({
   composition, serveUrl: bundled, codec: "h264", outputLocation: out,
   puppeteerInstance: browser, muted: true, concurrency: 1,

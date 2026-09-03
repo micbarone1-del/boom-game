@@ -52,7 +52,7 @@ export function replayFtue() {
   resetFtue();
 }
 
-const FTUE_VERSION = "v4";
+const FTUE_VERSION = "v5";
 
 function storeKey(profile: string, key: FtueKey) {
   return `boom.ftue.${FTUE_VERSION}.${profile}.${key}`;
@@ -61,7 +61,7 @@ function storeKey(profile: string, key: FtueKey) {
 // Version this preference alongside the refreshed tutorial so players who
 // disabled an older iteration still see the newly requested walkthrough once.
 // Tutorial is ON by default; only an explicit "1" turns it off.
-const DISABLED_KEY = "boom.ftue.disabled.v4";
+const DISABLED_KEY = "boom.ftue.disabled.v5";
 
 /** Global kill-switch for all tutorial pop-ups (all profiles). */
 export function ftueDisabled() {

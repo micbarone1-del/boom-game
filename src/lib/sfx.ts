@@ -84,8 +84,8 @@ export function isAudioSuspended() { return audioSuspended; }
 let fallbackBeep: HTMLAudioElement | null = null;
 // Bumped key (v4) so any previously-stuck "muted" state from earlier
 // sessions is reset to unmuted on next load.
-const MUTE_KEY = "boom.sfx.muted.v4";
-const VOICE_KEY = "boom.robotVoice.enabled.v1";
+const MUTE_KEY = "boom.sfx.muted.v5";
+const VOICE_KEY = "boom.robotVoice.enabled.v2";
 let robotVoiceEnabled = false;
 
 function fallbackAudio(): HTMLAudioElement | null {
@@ -148,7 +148,7 @@ function fallbackPlay(audible: boolean) {
 if (typeof window !== "undefined") {
   try {
     muted = localStorage.getItem(MUTE_KEY) === "1";
-    robotVoiceEnabled = localStorage.getItem(VOICE_KEY) === "1";
+    robotVoiceEnabled = localStorage.getItem(VOICE_KEY) !== "0";
   } catch {}
   // Prime audio only from real user gestures; browsers block AudioContext
   // creation/resume from timers, realtime callbacks, and effects.

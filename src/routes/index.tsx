@@ -90,7 +90,7 @@ function Index() {
     setIntro(false);
     try {
       const off = localStorage.getItem("boom.ftue.disabled.v5") === "1";
-      const seen = localStorage.getItem("boom.tutorialvideo.seen.v1") === "1";
+      const seen = localStorage.getItem("boom.tutorialvideo.seen.v2") === "1";
       if (!off && !seen) setTutorial(true);
     } catch {
       /* storage blocked */
@@ -99,7 +99,7 @@ function Index() {
   const endTutorial = () => {
     setTutorial(false);
     try {
-      localStorage.setItem("boom.tutorialvideo.seen.v1", "1");
+      localStorage.setItem("boom.tutorialvideo.seen.v2", "1");
     } catch {
       /* storage blocked */
     }

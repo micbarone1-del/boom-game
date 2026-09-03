@@ -133,15 +133,15 @@ function RootComponent() {
   // installed app, force sound and tutorials back ON.
   useEffect(() => {
     try {
-      const FLAG = "boom.standalone.init.v1";
+      const FLAG = "boom.standalone.init.v2";
       const standalone =
         window.matchMedia?.("(display-mode: standalone)").matches === true ||
         window.matchMedia?.("(display-mode: fullscreen)").matches === true ||
         (navigator as Navigator & { standalone?: boolean }).standalone === true;
       if (standalone && localStorage.getItem(FLAG) !== "1") {
-        localStorage.setItem("boom.sfx.muted.v4", "0");
-        localStorage.setItem("boom.ftue.disabled.v4", "0");
-        localStorage.setItem("boom.robotVoice.enabled.v1", "1");
+        localStorage.setItem("boom.sfx.muted.v5", "0");
+        localStorage.setItem("boom.ftue.disabled.v5", "0");
+        localStorage.setItem("boom.robotVoice.enabled.v2", "1");
         localStorage.setItem(FLAG, "1");
       }
     } catch {

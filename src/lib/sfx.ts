@@ -86,7 +86,7 @@ let fallbackBeep: HTMLAudioElement | null = null;
 // sessions is reset to unmuted on next load.
 const MUTE_KEY = "boom.sfx.muted.v5";
 const VOICE_KEY = "boom.robotVoice.enabled.v2";
-let robotVoiceEnabled = false;
+let robotVoiceEnabled = true;
 
 function fallbackAudio(): HTMLAudioElement | null {
   if (typeof window === "undefined" || typeof Audio === "undefined" || typeof btoa === "undefined") return null;

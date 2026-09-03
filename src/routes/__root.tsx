@@ -133,7 +133,7 @@ function RootComponent() {
   // installed app, force sound and tutorials back ON.
   useEffect(() => {
     try {
-      const FLAG = "boom.standalone.init.v1";
+      const FLAG = "boom.standalone.init.v2";
       const standalone =
         window.matchMedia?.("(display-mode: standalone)").matches === true ||
         window.matchMedia?.("(display-mode: fullscreen)").matches === true ||

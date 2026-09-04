@@ -2,7 +2,6 @@ import React from "react";
 import {
   AbsoluteFill,
   Img,
-  OffthreadVideo,
   Sequence,
   interpolate,
   spring,
@@ -96,9 +95,15 @@ const SwitchScreen: React.FC = () => {
 export const StepRollSquat: React.FC = () => (
   <AbsoluteFill style={{ background: cream }}>
     <Sequence durationInFrames={90}>
-      <OffthreadVideo src={staticFile("step-roll/roll-hop.mp4")} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <RollFrames />
     </Sequence>
     <Sequence from={90} durationInFrames={24}><TrapReveal /></Sequence>
     <Sequence from={114} durationInFrames={36}><SwitchScreen /></Sequence>
   </AbsoluteFill>
 );
+
+const RollFrames: React.FC = () => {
+  const frame = useCurrentFrame();
+  const index = Math.min(90, Math.max(1, frame + 1));
+  return <Img src={staticFile(`step-roll/frames/${String(index).padStart(4, "0")}.jpg`)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />;
+};

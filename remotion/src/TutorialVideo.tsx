@@ -6,9 +6,9 @@ import { C } from "./theme";
 import { BODY, DISPLAY, useSpr } from "./components/kit";
 
 /* ------------------------------------------------------------------ *
- * The tutorial is built from the real footage and real app screen
- * recordings. Nothing is drawn on top of the video except one clean
- * caption band, so the mechanics stay readable.
+ * One continuous team-to-game tutorial built from the supplied realistic
+ * footage and current app captures. Only instructional captions and genuine
+ * app screens are superimposed, keeping the mechanics easy to follow.
  * ------------------------------------------------------------------ */
 
 /** Full-bleed real footage (JPEG sequence — the compositor can't decode mp4). */
@@ -68,6 +68,30 @@ const AppStill: React.FC<{ src: string }> = ({ src }) => (
   </AbsoluteFill>
 );
 
+/** A current app screenshot floating over realistic footage. */
+const AppOverlay: React.FC<{ src: string }> = ({ src }) => {
+  const a = useSpr(10, { damping: 200 });
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 84,
+        right: 48,
+        height: 920,
+        border: `8px solid ${C.ink}`,
+        borderRadius: 28,
+        overflow: "hidden",
+        background: C.ink,
+        boxShadow: `12px 12px 0 ${C.ink}`,
+        opacity: a,
+        transform: `translateY(${interpolate(a, [0, 1], [70, 0])}px) rotate(2deg)`,
+      }}
+    >
+      <Img src={staticFile(`shots/${src}`)} style={{ height: "100%", width: "auto", display: "block" }} />
+    </div>
+  );
+};
+
 /** One clean caption band at the bottom. */
 const Caption: React.FC<{ step?: string; title: string; sub: string; color?: string }> = ({
   step,
@@ -113,82 +137,6 @@ const Caption: React.FC<{ step?: string; title: string; sub: string; color?: str
           {sub}
         </div>
       </div>
-    </AbsoluteFill>
-  );
-};
-
-/* 1. welcome — zoom on the home-screen icon ------------------------- */
-
-const TWelcome: React.FC = () => {
-  const frame = useCurrentFrame();
-  const zoom = interpolate(frame, [0, 70, 150], [1, 1.9, 2.05], { extrapolateRight: "clamp" });
-  const px = interpolate(frame, [0, 70], [0, -60], { extrapolateRight: "clamp" });
-  const py = interpolate(frame, [0, 70], [0, 210], { extrapolateRight: "clamp" });
-  const glow = interpolate(frame, [46, 70], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const title = useSpr(74, { damping: 200 });
-  const sub = useSpr(90, { damping: 200 });
-  return (
-    <AbsoluteFill style={{ background: "#000" }}>
-      <AbsoluteFill style={{ transform: `scale(${zoom}) translate(${px}px, ${py}px)` }}>
-        <Img
-          src={staticFile("shots/phone-homescreen.jpg")}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: 383,
-            top: 812,
-            width: 90,
-            height: 90,
-            borderRadius: 22,
-            overflow: "hidden",
-            background: C.yellow,
-            boxShadow: `0 0 ${glow * 70}px ${glow * 26}px rgba(255,198,26,${glow * 0.9})`,
-            transform: `scale(${1 + glow * 0.12})`,
-          }}
-        >
-          <Img src={staticFile("mascots/app-icon.png")} style={{ width: "100%", height: "100%" }} />
-        </div>
-      </AbsoluteFill>
-      <AbsoluteFill style={{ background: `rgba(18,16,14,${0.1 + glow * 0.5})` }} />
-      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
-        <div
-          style={{
-            fontFamily: DISPLAY,
-            fontSize: 138,
-            lineHeight: 0.9,
-            color: C.yellow,
-            textShadow: `10px 10px 0 ${C.ink}`,
-            opacity: title,
-            transform: `scale(${interpolate(title, [0, 1], [0.7, 1])})`,
-            textAlign: "center",
-            whiteSpace: "pre-line",
-          }}
-        >
-          {"WELCOME\nTO BOOM!"}
-        </div>
-        <div
-          style={{
-            marginTop: 34,
-            maxWidth: 880,
-            textAlign: "center",
-            fontFamily: BODY,
-            fontWeight: 900,
-            fontSize: 40,
-            color: C.ink,
-            background: C.cream,
-            border: `7px solid ${C.ink}`,
-            borderRadius: 20,
-            padding: "16px 28px",
-            boxShadow: `12px 12px 0 ${C.ink}`,
-            opacity: sub,
-            transform: `translateY(${interpolate(sub, [0, 1], [40, 0])}px)`,
-          }}
-        >
-          The first party workout game that makes fitness fun
-        </div>
-      </AbsoluteFill>
     </AbsoluteFill>
   );
 };
@@ -242,19 +190,13 @@ const TEnd: React.FC = () => {
 const TPodReal: React.FC = () => (
   <AbsoluteFill>
     <Clip name="press" total={240} rate={0.85} />
+    <AppOverlay src="26-create-pod.png" />
     <Caption
       step="STEP 1"
       title="MAKE A POD"
       sub="2 to 4 players, one phone. Add everyone's name and pick your bomb."
       color={C.blue}
     />
-  </AbsoluteFill>
-);
-
-const TPodApp: React.FC = () => (
-  <AbsoluteFill>
-    <AppStill src="26-create-pod.png" />
-    <Caption title="ADD THE PLAYERS" sub="Type the names — the pod fills up 1/4, 2/4… then hit READY." color={C.blue} />
   </AbsoluteFill>
 );
 
@@ -296,16 +238,16 @@ const TSwitch: React.FC = () => (
   </AbsoluteFill>
 );
 
-const TJudgeReal: React.FC = () => (
+const TJudgeKid: React.FC = () => (
   <AbsoluteFill>
-    <Clip name="podform" total={361} from={70} rate={1} />
-    <Caption title="THE JUDGE FILMS YOU" sub="You do the exercise, the judge keeps the camera on you." color={C.green} />
+    <Clip name="defuse" total={240} from={0} rate={0.72} />
+    <Caption title="THE JUDGE FILMS & COUNTS" sub="Keep the player in view and tap DEFUSE once for every completed rep." color={C.green} />
   </AbsoluteFill>
 );
 
 const TDefuse: React.FC = () => (
   <AbsoluteFill>
-    <Clip name="defuse" total={240} rate={0.9} />
+    <AppClip name="judge" total={255} from={75} rate={0.72} />
     <Caption
       step="STEP 5"
       title="DEFUSE THE BOMB"
@@ -333,14 +275,12 @@ const TBoard: React.FC = () => (
 
 const T = 9;
 const SCENES: { c: React.FC; d: number }[] = [
-  { c: TWelcome, d: 145 },
-  { c: TPodReal, d: 110 },
-  { c: TPodApp, d: 95 },
+  { c: TPodReal, d: 145 },
   { c: TRoll, d: 105 },
   { c: THop, d: 105 },
   { c: TTrap, d: 115 },
   { c: TSwitch, d: 100 },
-  { c: TJudgeReal, d: 110 },
+  { c: TJudgeKid, d: 145 },
   { c: TDefuse, d: 150 },
   { c: TBoss, d: 95 },
   { c: TBoard, d: 95 },

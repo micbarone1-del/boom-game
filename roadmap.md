@@ -1,0 +1,2 @@
+- [x] Export Roll & Hop ending after SQUATS trap reveal
+- [x] Record/export real app Switch countdown footage

@@ -364,7 +364,7 @@ function JoinView() {
       </button>
       <div className="relative z-10 w-full max-w-md mx-auto flex flex-col gap-4">
 
-      <header className="flex items-center gap-3 mt-2">
+      <header className="flex items-center gap-3 mt-2 ink-border rounded-2xl bg-white p-2">
         <button
           type="button"
           onClick={() => window.location.assign("/")}

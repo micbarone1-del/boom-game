@@ -260,9 +260,11 @@ function Index() {
           preload="auto"
           onTimeUpdate={(event) => {
             const video = event.currentTarget;
-            if (video.duration - video.currentTime <= 0.18) setIntroEnding(true);
+            // Let the final explosion dissolve into the next screen instead of
+            // cutting to white only after it has finished.
+            if (video.duration - video.currentTime <= 0.85) setIntroEnding(true);
           }}
-          onEnded={() => window.setTimeout(endIntro, 100)}
+          onEnded={() => window.setTimeout(endIntro, 180)}
           onError={() => {
             // Last-ditch: force the MP4 directly before giving up on the sting.
             const v = introRef.current;
@@ -284,7 +286,7 @@ function Index() {
 
         <div
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-0 z-[8] bg-white transition-opacity duration-150 ${introEnding ? "opacity-100" : "opacity-0"}`}
+          className={`pointer-events-none absolute inset-0 z-[8] bg-white transition-opacity duration-700 ease-in ${introEnding ? "opacity-100" : "opacity-0"}`}
         />
 
         {/* iOS blocks sound until a real tap: make the whole screen the tap

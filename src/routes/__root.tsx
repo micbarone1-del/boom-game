@@ -128,17 +128,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
-  // Installed (home-screen) apps get their own storage jar, and older jars can
-  // carry a stale "muted" / "tips off" flag. On the first launch inside the
-  // installed app, force sound and tutorials back ON.
+  // Older sessions (and the separate storage jar an installed home-screen app
+  // gets) can carry a stale "muted" / "tips off" flag, which is why some
+  // phones opened the game with no sound and no tutorial. Reset both to ON
+  // once per storage jar, on every device — not just installed ones.
   useEffect(() => {
     try {
-      const FLAG = "boom.standalone.init.v2";
-      const standalone =
-        window.matchMedia?.("(display-mode: standalone)").matches === true ||
-        window.matchMedia?.("(display-mode: fullscreen)").matches === true ||
-        (navigator as Navigator & { standalone?: boolean }).standalone === true;
-      if (standalone && localStorage.getItem(FLAG) !== "1") {
+      const FLAG = "boom.defaults.init.v3";
+      if (localStorage.getItem(FLAG) !== "1") {
         localStorage.setItem("boom.sfx.muted.v5", "0");
         localStorage.setItem("boom.ftue.disabled.v5", "0");
         localStorage.setItem("boom.robotVoice.enabled.v2", "1");
@@ -148,6 +145,7 @@ function RootComponent() {
       /* storage blocked */
     }
   }, []);
+
 
   // Make the web app behave like a native one on phones: no pinch zoom, no
   // double-tap zoom, and audio that plays even with the ringer switch off.

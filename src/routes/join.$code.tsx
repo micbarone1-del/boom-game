@@ -81,6 +81,12 @@ function JoinView() {
     { username: string; avatar_url: string; fitness?: number } | null
   >(null);
 
+  // Black page backdrop (no cream band behind the safe areas).
+  useEffect(() => {
+    document.body.classList.add("boom-immersive");
+    return () => document.body.classList.remove("boom-immersive");
+  }, []);
+
   // If the user is signed in, pull their profile info.
   useEffect(() => {
     if (!user) return;

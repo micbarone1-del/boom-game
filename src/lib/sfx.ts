@@ -180,6 +180,13 @@ function ac(): AudioContext | null {
 }
 
 function unlockAudio(): Promise<boolean> {
+  // iPhones honour the ringer switch for web audio unless the page declares a
+  // playback audio session; re-assert it on every gesture (it can be reset by
+  // camera capture and by returning from the background).
+  try {
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session && session.type !== "playback") session.type = "playback";
+  } catch { /* not supported */ }
   fallbackPlay(false);
   state.fallbackUnlocked = true;
   primeSpeech();

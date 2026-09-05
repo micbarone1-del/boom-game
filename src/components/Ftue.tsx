@@ -6,7 +6,7 @@ import cheerPeople from "@/assets/tutorial-people/user-pod.png.asset.json";
 import joinPerson from "@/assets/tutorial-people/user-lobby.png.asset.json";
 import judgePerson from "@/assets/tutorial-people/user-judge.png.asset.json";
 import rollPerson from "@/assets/tutorial-people/user-roll.png.asset.json";
-import diceIllustration from "@/assets/tutorial-dice.png.asset.json";
+import diceIllustration from "@/assets/tutorial-dice-clean.png";
 import defusePhoto from "@/assets/tutorial-people/tutorial-defuse-real.jpeg.asset.json";
 
 
@@ -234,7 +234,7 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
       style={{ background: color, boxShadow: "4px 4px 0 var(--boom-ink)" }}
     >
       <img
-        src={image.url}
+        src={typeof image === "string" ? image : image.url}
         alt={labels[tipKey]}
         className={`absolute inset-0 h-full w-full anim-ui-float ${tipKey === "defuse" ? "object-cover object-center" : "object-contain object-bottom"}`}
         style={{
@@ -246,7 +246,7 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
                 : tipKey === "defuse"
                   ? "scale(1.04)"
                   : tipKey === "roll"
-                    ? "scale(0.92)"
+                    ? "scale(0.82)"
                     : "scale(1.08)",
         }}
       />

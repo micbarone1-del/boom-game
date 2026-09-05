@@ -10,6 +10,7 @@ import { enterFullscreen } from "@/lib/fullscreen";
 import { FullscreenButton } from "@/components/FullscreenButton";
 import tutorialVideo from "@/assets/tutorial-captioned.mp4.asset.json";
 import tutorialWebm from "@/assets/tutorial-captioned.webm.asset.json";
+import introVideo from "@/assets/boom-intro-2026.mp4.asset.json";
 
 
 export const Route = createFileRoute("/")({
@@ -77,6 +78,7 @@ function Index() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const startVideoRef = useRef<HTMLVideoElement | null>(null);
   const [introMuted, setIntroMuted] = useState(false);
+  const [introEnding, setIntroEnding] = useState(false);
   useAttractVideo(videoRef, attract && !intro && !tutorial);
   useAttractVideo(startVideoRef, !attract && !intro && !tutorial);
 
@@ -88,6 +90,7 @@ function Index() {
   };
   const endIntro = () => {
     setIntro(false);
+    setIntroEnding(false);
     try {
       const off = localStorage.getItem("boom.ftue.disabled.v5") === "1";
       if (!off) setTutorial(true);
@@ -148,7 +151,7 @@ function Index() {
     const nudge = window.setInterval(() => {
       if (video.muted) retry();
     }, 1200);
-    const failSafe = window.setTimeout(endIntro, 14_000);
+    const failSafe = window.setTimeout(endIntro, 6_000);
     return () => {
       events.forEach((e) => document.removeEventListener(e, retry, true));
       window.clearInterval(nudge);
@@ -255,13 +258,17 @@ function Index() {
           autoPlay
           playsInline
           preload="auto"
-          onEnded={endIntro}
+          onTimeUpdate={(event) => {
+            const video = event.currentTarget;
+            if (video.duration - video.currentTime <= 0.18) setIntroEnding(true);
+          }}
+          onEnded={() => window.setTimeout(endIntro, 100)}
           onError={() => {
             // Last-ditch: force the MP4 directly before giving up on the sting.
             const v = introRef.current;
             if (v && !v.dataset["fallback"]) {
               v.dataset["fallback"] = "1";
-              v.src = "/media/intro.mp4?v=20260829f";
+              v.src = introVideo.url;
               v.load();
               void v.play().catch(() => endIntro());
               return;
@@ -272,10 +279,13 @@ function Index() {
           aria-label="BOOM! intro"
           className="absolute inset-0 w-full h-full object-cover"
         >
-          {/* H.264 first for Safari/iOS, VP9 fallback for browsers without it */}
-          <source src="/media/intro.mp4?v=20260829f" type="video/mp4" />
-          <source src="/media/intro.webm?v=20260829f" type="video/webm" />
+          <source src={introVideo.url} type="video/mp4" />
         </video>
+
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-0 z-[8] bg-white transition-opacity duration-150 ${introEnding ? "opacity-100" : "opacity-0"}`}
+        />
 
         {/* iOS blocks sound until a real tap: make the whole screen the tap
             target so sound is on by default from the very first touch. */}

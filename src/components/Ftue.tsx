@@ -3,10 +3,8 @@ import "@/lib/boot-defaults";
 import { Expand, Share, Volume2 } from "lucide-react";
 import { enterFullscreen, setupNeeds } from "@/lib/device";
 import cheerPeople from "@/assets/tutorial-people/user-pod.png.asset.json";
-import exercisePerson from "@/assets/tutorial-people/user-exercise.png.asset.json";
 import joinPerson from "@/assets/tutorial-people/user-lobby.png.asset.json";
 import judgePerson from "@/assets/tutorial-people/user-judge.png.asset.json";
-import passPeople from "@/assets/tutorial-people/user-pass.png.asset.json";
 import rollPerson from "@/assets/tutorial-people/user-roll.png.asset.json";
 import diceIllustration from "@/assets/tutorial-dice.png.asset.json";
 import defusePhoto from "@/assets/tutorial-people/tutorial-defuse-real.jpeg.asset.json";
@@ -222,10 +220,10 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
   }[tipKey];
 
   const labels: Record<FtueKey, string> = {
-    roll: "Player using the phone to roll",
+    roll: "A 3D dice",
     switch: "Players passing the phone",
     judge: "Judge filming the exercise",
-    defuse: "Player completing the exercise",
+    defuse: "Player tapping DEFUSE while completing an exercise",
     lobby: "Player holding the game phone",
     podform: "A pod ready to play",
   };

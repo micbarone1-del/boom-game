@@ -128,23 +128,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
-  // Older sessions (and the separate storage jar an installed home-screen app
-  // gets) can carry a stale "muted" / "tips off" flag, which is why some
-  // phones opened the game with no sound and no tutorial. Reset both to ON
-  // once per storage jar, on every device — not just installed ones.
-  useEffect(() => {
-    try {
-      const FLAG = "boom.defaults.init.v3";
-      if (localStorage.getItem(FLAG) !== "1") {
-        localStorage.setItem("boom.sfx.muted.v5", "0");
-        localStorage.setItem("boom.ftue.disabled.v5", "0");
-        localStorage.setItem("boom.robotVoice.enabled.v2", "1");
-        localStorage.setItem(FLAG, "1");
-      }
-    } catch {
-      /* storage blocked */
-    }
-  }, []);
+  // Sound / tutorial defaults are reset at import time in src/lib/boot-defaults.ts.
+
+
 
 
   // Make the web app behave like a native one on phones: no pinch zoom, no

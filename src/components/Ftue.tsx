@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Camera, Dice5, Dumbbell, Expand, Plus, Pointer, Share, Smartphone, Volume2 } from "lucide-react";
-import { BombAvatar } from "@/components/BombAvatar";
+import { Expand, Share, Volume2 } from "lucide-react";
 import { enterFullscreen, setupNeeds } from "@/lib/device";
+import cheerPeople from "@/assets/tutorial-people/cheer.png.asset.json";
+import exercisePerson from "@/assets/tutorial-people/exercise.png.asset.json";
+import joinPerson from "@/assets/tutorial-people/join.png.asset.json";
+import judgePerson from "@/assets/tutorial-people/judge.png.asset.json";
+import passPeople from "@/assets/tutorial-people/pass.png.asset.json";
+import rollPerson from "@/assets/tutorial-people/roll.png.asset.json";
 
 
 /**
@@ -204,93 +209,37 @@ export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: (
 }
 
 function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: string }) {
+  const image = {
+    roll: rollPerson,
+    switch: passPeople,
+    judge: judgePerson,
+    defuse: exercisePerson,
+    lobby: joinPerson,
+    podform: cheerPeople,
+  }[tipKey];
+
+  const labels: Record<FtueKey, string> = {
+    roll: "Player using the phone to roll",
+    switch: "Players passing the phone",
+    judge: "Judge filming the exercise",
+    defuse: "Player completing the exercise",
+    lobby: "Player holding the game phone",
+    podform: "A pod ready to play",
+  };
+
   return (
     <div
-      className="relative h-44 w-full overflow-hidden rounded-3xl ink-border-sm"
+      className="relative h-52 w-full overflow-hidden rounded-3xl ink-border-sm"
       style={{ background: color }}
-      aria-label={tipKey === "judge" ? "A judge filming another player exercising" : undefined}
     >
-      {tipKey === "roll" && (
-        <div className="absolute inset-0 flex items-center justify-center gap-4">
-          <div className="anim-ui-float rounded-2xl bg-white p-3 ink-border-sm">
-            <Dice5 size={62} strokeWidth={3} />
-          </div>
-          <ArrowRight size={42} strokeWidth={4} />
-          <div className="grid grid-cols-2 gap-1 rotate-3">
-            {["1", "2", "3", "4"].map((n) => (
-              <span key={n} className="grid h-12 w-12 place-items-center rounded-lg bg-white text-2xl font-black ink-border-sm">{n}</span>
-            ))}
-          </div>
-        </div>
-      )}
-      {tipKey === "switch" && (
-        <div className="absolute inset-0 flex items-center justify-around px-3">
-          <BombAvatar color="#ec4899" size={74} />
-          <div className="anim-ui-float rounded-2xl bg-white p-3 ink-border-sm">
-            <Smartphone size={58} strokeWidth={3} />
-          </div>
-          <ArrowRight size={42} strokeWidth={4} />
-          <BombAvatar color="#22d3ee" size={74} />
-        </div>
-      )}
+      <img
+        src={image.url}
+        alt={labels[tipKey]}
+        className="absolute inset-0 h-full w-full object-contain object-bottom anim-ui-float"
+        style={{ transform: tipKey === "judge" || tipKey === "defuse" ? "scale(1.2) translateY(7%)" : "scale(1.08)" }}
+      />
       {tipKey === "lobby" && <LobbySetupSteps />}
-
-      {tipKey === "podform" && (
-        <div className="absolute inset-0 flex items-center justify-center gap-3">
-          <BombAvatar color="#ec4899" size={64} />
-          <BombAvatar color="#22d3ee" size={64} />
-          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white ink-border-sm anim-ui-float">
-            <Plus size={40} strokeWidth={4} />
-          </div>
-          <ArrowRight size={36} strokeWidth={4} />
-          <div className="rounded-xl bg-white px-3 py-2 text-lg font-black ink-border-sm">READY</div>
-        </div>
-      )}
-      {tipKey === "judge" && (
-        <div className="absolute inset-0 flex items-end justify-between px-5 pb-3">
-          <div className="relative flex flex-col items-center">
-            <div className="relative z-10 -mb-3 rounded-xl bg-white p-2 ink-border-sm anim-ui-float">
-              <Smartphone size={42} strokeWidth={3} />
-              <span className="absolute right-1 top-1 h-3 w-3 rounded-full bg-[var(--boom-red)] ring-2 ring-white" />
-            </div>
-            <BombAvatar color="#22d3ee" size={78} />
-            <span className="rounded-lg bg-white px-2 py-0.5 text-xs font-black ink-border-sm">JUDGE</span>
-          </div>
-          <Camera className="mb-14" size={38} strokeWidth={3} />
-          <div className="flex flex-col items-center">
-            <Dumbbell className="anim-ui-float" size={48} strokeWidth={3} />
-            <BombAvatar color="#ec4899" size={92} persona="wild" />
-            <span className="rounded-lg bg-white px-2 py-0.5 text-xs font-black ink-border-sm">PLAYER</span>
-          </div>
-        </div>
-      )}
-      {tipKey === "defuse" && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative">
-            <div
-              className="ink-border rounded-3xl px-10 py-6 text-3xl font-black anim-ui-float"
-              style={{
-                background: "var(--boom-green)",
-                color: "#fff",
-                fontFamily: "'Luckiest Guy', cursive",
-                textShadow: "2px 2px 0 #000",
-              }}
-            >
-              DEFUSE
-            </div>
-            {/* Big finger tapping the button — no spot/ring, just the clean hand */}
-            <Pointer
-              className="absolute -bottom-6 right-4 anim-tap-finger"
-              size={86}
-              strokeWidth={2.5}
-              color="#111"
-              fill="#fff"
-            />
-          </div>
-        </div>
-      )}
     </div>
-
   );
 }
 

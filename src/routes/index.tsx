@@ -8,8 +8,8 @@ import bombMascot from "@/assets/bomb-mascot.png";
 import { useAttractVideo } from "@/hooks/use-attract-video";
 import { enterFullscreen } from "@/lib/fullscreen";
 import { FullscreenButton } from "@/components/FullscreenButton";
-import tutorialVideo from "@/assets/tutorial.mp4.asset.json";
-import tutorialWebm from "@/assets/tutorial.webm.asset.json";
+import tutorialVideo from "@/assets/tutorial-captioned.mp4.asset.json";
+import tutorialWebm from "@/assets/tutorial-captioned.webm.asset.json";
 
 
 export const Route = createFileRoute("/")({
@@ -68,8 +68,8 @@ function Index() {
   // The intro sting plays once every time the player lands on the home
   // screen, then the attract reel takes over behind "PRESS TO START".
   const [intro, setIntro] = useState(true);
-  // Guided tutorial reel: plays once for a first-time player, right after the
-  // intro sting, unless tutorials are switched off.
+  // Guided tutorial reel: plays after the intro every time Home is visited,
+  // unless tutorials are switched off from the pause screen or a tip card.
   const [tutorial, setTutorial] = useState(false);
   const [tutorialMuted, setTutorialMuted] = useState(false);
   const tutorialRef = useRef<HTMLVideoElement | null>(null);
@@ -90,19 +90,14 @@ function Index() {
     setIntro(false);
     try {
       const off = localStorage.getItem("boom.ftue.disabled.v5") === "1";
-       const seen = localStorage.getItem("boom.tutorialvideo.seen.v3") === "1";
-      if (!off && !seen) setTutorial(true);
+      if (!off) setTutorial(true);
     } catch {
-      /* storage blocked */
+      // If storage is blocked, tutorial defaults to ON.
+      setTutorial(true);
     }
   };
   const endTutorial = () => {
     setTutorial(false);
-    try {
-       localStorage.setItem("boom.tutorialvideo.seen.v3", "1");
-    } catch {
-      /* storage blocked */
-    }
   };
 
   // Intro + attract are edge-to-edge video: black out the page backdrop so no

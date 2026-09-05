@@ -1,2 +1,4 @@
 - [x] Export Roll & Hop ending after SQUATS trap reveal
 - [x] Record/export real app Switch countdown footage
+- [x] Install captioned tutorial after intro when tutorials are enabled
+- [x] Replace in-game FTUE illustrations with real-life cutout imagery

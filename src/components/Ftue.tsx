@@ -2,12 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import "@/lib/boot-defaults";
 import { Expand, Share, Volume2 } from "lucide-react";
 import { enterFullscreen, setupNeeds } from "@/lib/device";
-import cheerPeople from "@/assets/tutorial-people/cheer.png.asset.json";
-import exercisePerson from "@/assets/tutorial-people/exercise.png.asset.json";
-import joinPerson from "@/assets/tutorial-people/join.png.asset.json";
-import judgePerson from "@/assets/tutorial-people/judge.png.asset.json";
-import passPeople from "@/assets/tutorial-people/pass.png.asset.json";
-import rollPerson from "@/assets/tutorial-people/roll.png.asset.json";
+import cheerPeople from "@/assets/tutorial-people/user-pod.png.asset.json";
+import exercisePerson from "@/assets/tutorial-people/user-exercise.png.asset.json";
+import joinPerson from "@/assets/tutorial-people/user-lobby.png.asset.json";
+import judgePerson from "@/assets/tutorial-people/user-judge.png.asset.json";
+import passPeople from "@/assets/tutorial-people/user-pass.png.asset.json";
+import rollPerson from "@/assets/tutorial-people/user-roll.png.asset.json";
 
 
 /**

@@ -1,3 +1,4 @@
+import "@/lib/boot-defaults";
 /**
  * 80s arcade-style sound effects synthesized with the Web Audio API.
  * Zero assets, zero network, zero licensing. Each effect is a short

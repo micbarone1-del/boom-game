@@ -318,6 +318,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      record_my_game_result: {
+        Args: { _player_id: string }
+        Returns: {
+          avatar_url: string | null
+          created_at: string
+          finish_rank: number | null
+          id: string
+          pod_id: string | null
+          room_code: string
+          score: number
+          user_id: string
+          username: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "game_results"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

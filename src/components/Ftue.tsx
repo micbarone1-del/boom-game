@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import "@/lib/boot-defaults";
 import { Expand, Share, Volume2 } from "lucide-react";
 import { enterFullscreen, setupNeeds } from "@/lib/device";
 import cheerPeople from "@/assets/tutorial-people/cheer.png.asset.json";

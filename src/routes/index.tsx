@@ -178,7 +178,8 @@ function Index() {
   // Attract-mode soundtrack: retro techno bed under the reel. Autoplay
   // policies mean it can only start once the visitor touches the screen.
   useEffect(() => {
-    if (!attract || intro || tutorial) return;
+    if (intro) return;
+    if (!attract && !tutorial) return;
 
     setMusicPhase("attract");
     const kick = () => {
@@ -192,6 +193,7 @@ function Index() {
       window.removeEventListener("keydown", kick);
     };
   }, [attract, intro, tutorial]);
+
 
   // Tutorial reel plays with sound; browsers that block it start muted and
   // unmute on the first touch.

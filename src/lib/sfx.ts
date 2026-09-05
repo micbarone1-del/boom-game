@@ -1,3 +1,4 @@
+import "@/lib/boot-defaults";
 /**
  * 80s arcade-style sound effects synthesized with the Web Audio API.
  * Zero assets, zero network, zero licensing. Each effect is a short
@@ -179,6 +180,13 @@ function ac(): AudioContext | null {
 }
 
 function unlockAudio(): Promise<boolean> {
+  // iPhones honour the ringer switch for web audio unless the page declares a
+  // playback audio session; re-assert it on every gesture (it can be reset by
+  // camera capture and by returning from the background).
+  try {
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session && session.type !== "playback") session.type = "playback";
+  } catch { /* not supported */ }
   fallbackPlay(false);
   state.fallbackUnlocked = true;
   primeSpeech();
@@ -1105,8 +1113,10 @@ export function setAudioSuspended(suspended: boolean) {
 }
 
 /**
- * Haptic feedback. Uses the Vibration API where available (Android/Chrome);
- * silently no-ops on iOS Safari.
+ * Haptic feedback. Uses the Vibration API where available (Android/Chrome).
+ * iOS Safari has no Vibration API, but since iOS 17.4 toggling a hidden
+ * `<input type="checkbox" switch>` inside a <label> fires the system haptic,
+ * so we fall back to clicking one (repeated for multi-pulse patterns).
  */
 export type HapticKind = "tap" | "light" | "hop" | "success" | "fail" | "boom" | "warn";
 const HAPTICS: Record<HapticKind, number | number[]> = {
@@ -1118,14 +1128,71 @@ const HAPTICS: Record<HapticKind, number | number[]> = {
   boom: [0, 200, 80, 300],
   warn: [0, 30, 60, 30],
 };
-export function haptic(kind: HapticKind = "tap") {
-  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+
+let iosHapticSwitch: HTMLInputElement | null = null;
+let iosHapticTimers: number[] = [];
+
+function iosHapticEl(): HTMLInputElement | null {
+  if (typeof document === "undefined") return null;
+  if (iosHapticSwitch?.isConnected) return iosHapticSwitch;
   try {
-    navigator.vibrate(HAPTICS[kind]);
+    const label = document.createElement("label");
+    label.setAttribute("aria-hidden", "true");
+    label.style.cssText =
+      "position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.setAttribute("switch", "");
+    input.tabIndex = -1;
+    label.appendChild(input);
+    document.body.appendChild(label);
+    iosHapticSwitch = input;
+    return input;
   } catch {
-    /* ignore */
+    return null;
   }
 }
+
+/** Number of taps + rough spacing for the iOS switch fallback. */
+function iosPattern(kind: HapticKind): number[] {
+  const p = HAPTICS[kind];
+  if (typeof p === "number") return [0];
+  // Keep the "on" pulses only; map them to click offsets.
+  const offsets: number[] = [];
+  let t = 0;
+  p.forEach((ms, i) => {
+    if (i % 2 === 1) offsets.push(t);
+    t += ms;
+  });
+  return offsets.length ? offsets : [0];
+}
+
+export function haptic(kind: HapticKind = "tap") {
+  if (typeof navigator === "undefined") return;
+  if (typeof navigator.vibrate === "function") {
+    try {
+      if (navigator.vibrate(HAPTICS[kind])) return;
+    } catch {
+      /* fall through to the iOS path */
+    }
+  }
+  const el = iosHapticEl();
+  if (!el) return;
+  iosHapticTimers.forEach((id) => window.clearTimeout(id));
+  iosHapticTimers = [];
+  iosPattern(kind).forEach((delay) => {
+    iosHapticTimers.push(
+      window.setTimeout(() => {
+        try {
+          el.click();
+        } catch {
+          /* ignore */
+        }
+      }, delay),
+    );
+  });
+}
+
 
 /** Big robotic "TIME'S OUT!" with explosion. */
 export function playTimesOut() {

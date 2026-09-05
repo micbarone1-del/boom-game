@@ -1176,8 +1176,7 @@ export function haptic(kind: HapticKind = "tap") {
     iosHapticTimers.push(
       window.setTimeout(() => {
         try {
-          el.checked = !el.checked;
-          el.dispatchEvent(new Event("change", { bubbles: true }));
+          el.click();
         } catch {
           /* ignore */
         }

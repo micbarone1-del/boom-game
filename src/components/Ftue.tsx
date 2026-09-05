@@ -162,7 +162,7 @@ export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: (
         : "One tap and the game takes over your whole screen."
       : tip.body;
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-black/80">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-black p-5">
       <div
         className="arcade-card arcade-vs-in w-full max-w-md bg-white p-6 flex flex-col items-center gap-5 text-center"
         style={{ boxShadow: "8px 8px 0 0 #000" }}
@@ -230,8 +230,8 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
 
   return (
     <div
-      className="relative h-52 w-full overflow-hidden rounded-3xl ink-border-sm"
-      style={{ background: color }}
+      className="relative isolate h-52 w-full overflow-hidden rounded-3xl ink-border-sm"
+      style={{ background: color, boxShadow: "4px 4px 0 var(--boom-ink)" }}
     >
       <img
         src={image.url}
@@ -250,6 +250,11 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
                     : "scale(1.08)",
         }}
       />
+      {tipKey === "defuse" && (
+        <div className="anim-ftue-defuse-finger pointer-events-none absolute left-1/2 top-[62%] z-10 text-7xl" aria-hidden="true">
+          👆
+        </div>
+      )}
       {tipKey === "lobby" && <LobbySetupSteps />}
     </div>
   );

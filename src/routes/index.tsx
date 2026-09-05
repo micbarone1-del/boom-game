@@ -8,7 +8,7 @@ import bombMascot from "@/assets/bomb-mascot.png";
 import { useAttractVideo } from "@/hooks/use-attract-video";
 import { enterFullscreen } from "@/lib/fullscreen";
 import { FullscreenButton } from "@/components/FullscreenButton";
-import tutorialVideo from "@/assets/tutorial-captioned-v2.mp4.asset.json";
+import tutorialVideo from "@/assets/tutorial-captioned-v4.mp4.asset.json";
 import tutorialWebm from "@/assets/tutorial-captioned.webm.asset.json";
 import introVideo from "@/assets/boom-intro-2026.mp4.asset.json";
 

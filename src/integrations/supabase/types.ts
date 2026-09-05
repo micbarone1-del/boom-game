@@ -196,7 +196,7 @@ export type Database = {
           game_ends_at: string | null
           game_started_at: string | null
           game_state: string
-          host_id: string
+          host_id: string | null
           last_dice: number | null
           locked: boolean
           paused: boolean
@@ -218,7 +218,7 @@ export type Database = {
           game_ends_at?: string | null
           game_started_at?: string | null
           game_state?: string
-          host_id?: string
+          host_id?: string | null
           last_dice?: number | null
           locked?: boolean
           paused?: boolean
@@ -240,7 +240,7 @@ export type Database = {
           game_ends_at?: string | null
           game_started_at?: string | null
           game_state?: string
-          host_id?: string
+          host_id?: string | null
           last_dice?: number | null
           locked?: boolean
           paused?: boolean

@@ -1,0 +1,1 @@
+ALTER TABLE public.rooms ALTER COLUMN host_id DROP NOT NULL;

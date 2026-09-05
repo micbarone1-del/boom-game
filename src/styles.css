@@ -920,6 +920,29 @@
 }
 .anim-tap-finger { animation: tap-finger 1.4s ease-in-out infinite; }
 
+/* FTUE photo: a clear repeated press directly over the photographed DEFUSE button. */
+@keyframes ftue-defuse-finger {
+  0%, 18%, 100% {
+    opacity: 0;
+    transform: translate(-34%, 28%) scale(1.28) rotate(-12deg);
+    filter: brightness(1);
+  }
+  28%, 52% {
+    opacity: 1;
+    transform: translate(-34%, -8%) scale(1.28) rotate(-12deg);
+    filter: brightness(1.25) drop-shadow(4px 5px 0 var(--boom-ink));
+  }
+  62%, 80% {
+    opacity: 1;
+    transform: translate(-34%, 12%) scale(1.08) rotate(-12deg);
+    filter: brightness(1.7) drop-shadow(2px 3px 0 var(--boom-ink));
+  }
+}
+.anim-ftue-defuse-finger {
+  animation: ftue-defuse-finger 1.15s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
 /* --- Power-up token frame --- */
 @keyframes power-ring {
   0%, 100% { filter: brightness(1); }

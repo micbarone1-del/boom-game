@@ -8,6 +8,8 @@ import joinPerson from "@/assets/tutorial-people/user-lobby.png.asset.json";
 import judgePerson from "@/assets/tutorial-people/user-judge.png.asset.json";
 import passPeople from "@/assets/tutorial-people/user-pass.png.asset.json";
 import rollPerson from "@/assets/tutorial-people/user-roll.png.asset.json";
+import diceIllustration from "@/assets/tutorial-dice.png.asset.json";
+import defusePhoto from "@/assets/tutorial-people/tutorial-defuse-real.jpeg.asset.json";
 
 
 /**
@@ -211,10 +213,10 @@ export function FtueModal({ tipKey, onDismiss }: { tipKey: FtueKey; onDismiss: (
 
 function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: string }) {
   const image = {
-    roll: rollPerson,
-    switch: passPeople,
+    roll: diceIllustration,
+    switch: rollPerson,
     judge: judgePerson,
-    defuse: exercisePerson,
+    defuse: defusePhoto,
     lobby: joinPerson,
     podform: cheerPeople,
   }[tipKey];
@@ -236,8 +238,19 @@ function TutorialIllustration({ tipKey, color }: { tipKey: FtueKey; color: strin
       <img
         src={image.url}
         alt={labels[tipKey]}
-        className="absolute inset-0 h-full w-full object-contain object-bottom anim-ui-float"
-        style={{ transform: tipKey === "judge" || tipKey === "defuse" ? "scale(1.2) translateY(7%)" : "scale(1.08)" }}
+        className={`absolute inset-0 h-full w-full anim-ui-float ${tipKey === "defuse" ? "object-cover object-center" : "object-contain object-bottom"}`}
+        style={{
+          transform:
+            tipKey === "switch"
+              ? "scale(1.38) translateY(5%)"
+              : tipKey === "judge"
+                ? "scale(1.2) translateY(7%)"
+                : tipKey === "defuse"
+                  ? "scale(1.04)"
+                  : tipKey === "roll"
+                    ? "scale(0.92)"
+                    : "scale(1.08)",
+        }}
       />
       {tipKey === "lobby" && <LobbySetupSteps />}
     </div>

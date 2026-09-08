@@ -37,18 +37,29 @@ function BossTestPage() {
         const now = new Date();
         const ends = new Date(now.getTime() + 15 * 60 * 1000);
         const maxHp = hp && hp > 0 ? hp : 2 * 220;
+        // Rooms can only be created in the lobby state; flip to the boss
+        // phase with a follow-up update.
         const { error: rErr } = await supabase.from("rooms").insert({
           code,
-          status: "playing",
-          game_started_at: now.toISOString(),
-          game_ends_at: ends.toISOString(),
-          game_state: "playing",
-          phase: "boss",
-          boss_hp: maxHp,
-          boss_max_hp: maxHp,
-          boss_started_at: now.toISOString(),
+          status: "lobby",
+          locked: false,
         });
         if (rErr) throw rErr;
+        const { error: rUpErr } = await supabase
+          .from("rooms")
+          .update({
+            status: "playing",
+            game_started_at: now.toISOString(),
+            game_ends_at: ends.toISOString(),
+            game_state: "playing",
+            phase: "boss",
+            boss_hp: maxHp,
+            boss_max_hp: maxHp,
+            boss_started_at: now.toISOString(),
+          })
+          .eq("code", code);
+        if (rUpErr) throw rUpErr;
+
 
         setStatus("Creating pod…");
         const { data: pod, error: pErr } = await supabase
